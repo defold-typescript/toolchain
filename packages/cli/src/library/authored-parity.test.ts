@@ -1823,6 +1823,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "light_and_shadows.light_and_shadows",
       "monarch.monarch",
       "monarch.transitions.gui",
+      "mpeg.gui_video",
       "nakama",
       "nakama.session",
       "nakama.socket",
@@ -1838,11 +1839,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 131 is what makes that a closure rather than a target quietly dropping out of the
+  // 139 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 131", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 139", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(131);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(139);
   });
 });
 

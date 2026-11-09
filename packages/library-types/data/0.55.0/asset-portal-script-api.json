@@ -192,6 +192,22 @@
       ]
     },
     {
+      "id": "defsave",
+      "repo": "https://github.com/subsoap/defsave",
+      "ref": "v1.2.6",
+      "refKind": "release",
+      "refDate": "2024-03-26T00:57:17Z",
+      "license": "CC0-1.0",
+      "description": "A module to help you save / load config and player data between session.",
+      "docs": [
+        {
+          "path": "defsave/api/defsave_ext.script_api",
+          "namespace": "defsave_ext",
+          "page": "defsave_ext"
+        }
+      ]
+    },
+    {
       "id": "defvideoads",
       "repo": "https://github.com/AGulev/defold-extension-unity-ads",
       "ref": "4.21.1",

@@ -1,0 +1,527 @@
+{
+  "info": {
+    "namespace": "mpeg.gui_video",
+    "brief": "Plays an MPEG1 or AV1 video on a GUI box node, optionally with its sound.",
+    "description": "Plays an MPEG1 or AV1 video on a GUI box node, optionally with its sound.\nIt is built on the `mpeg` native extension. Call `init` from the GUI script's\n`init`, `update` from its `update` and `final` from its `final`, passing the\nscript's `self`: the module keeps each player on it. Map\n`/mpeg/video_yuv.material` in the GUI scene as `video_yuv` to convert frames on the\nGPU instead of the CPU."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Player",
+      "types": [
+        "Opaque<\"gui_video_player\">"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Options",
+      "types": [
+        "ResourceOptions",
+        "DataOptions"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Start a video player on `self`, replacing the one in the same `field`.",
+      "description": "Start a video player on `self`, replacing the one in the same `field`.\nIt shows the first frame at once and, with `sound`, decodes the whole audio track\nand starts it. Throws when the video, its material or its node cannot be used.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`, which holds the player.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "The node, the video and how to play it.",
+          "types": [
+            "Options"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Player"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Advance one video player.",
+      "description": "Advance one video player.\nIt moves by `dt` scaled by its playback speed or, while its sound plays, to the\nsound's position. A non-looping video that ends with `stop_on_last_frame` keeps its\nlast frame and is finished.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "The game frame's time step, in seconds.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "field",
+          "doc": "The player's `field`. Defaults to the single-video field.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Stop one video player and release what it holds.",
+      "description": "Stop one video player and release what it holds.\nIt stops the sound, closes the decoder and releases the runtime texture and atlas.\nCall it from `final`, or reopening the GUI leaks them.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "field",
+          "doc": "The player's `field`. Defaults to the single-video field.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_finished",
+      "brief": "Whether one video has stopped on its last frame.",
+      "description": "Whether one video has stopped on its last frame.\nA looping video, one with `stop_on_last_frame` off, or a `field` with no player\nnever has.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "field",
+          "doc": "The player's `field`. Defaults to the single-video field.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_many",
+      "brief": "Start several video players at once.",
+      "description": "Start several video players at once.\nWhen one fails, those already started are finalized before the error is rethrown.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options_list",
+          "doc": "One options table per video, each with its own `field`.",
+          "types": [
+            "Options[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Player[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_all",
+      "brief": "Advance the given video players, or every one `self` holds.",
+      "description": "Advance the given video players, or every one `self` holds.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "The game frame's time step, in seconds.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fields",
+          "doc": "The players' fields. Defaults to every player, in start order.",
+          "types": [
+            "string[]"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final_all",
+      "brief": "Finalize the given video players, or every one `self` holds, in reverse order.",
+      "description": "Finalize the given video players, or every one `self` holds, in reverse order.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fields",
+          "doc": "The players' fields. Defaults to every player.",
+          "types": [
+            "string[]"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "are_finished",
+      "brief": "Whether every given video has stopped on its last frame, or every one `self` holds.",
+      "description": "Whether every given video has stopped on its last frame, or every one `self` holds.\n`false` when there is none.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The GUI script's `self`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fields",
+          "doc": "The players' fields. Defaults to every player.",
+          "types": [
+            "string[]"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ResourceOptions",
+      "properties": [
+        {
+          "name": "video_resource",
+          "brief": "Path of the video in `custom_resources`.",
+          "description": "Path of the video in `custom_resources`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "video_data",
+          "brief": "The video's data; when given, it is played instead of loading `video_resource`.",
+          "description": "The video's data; when given, it is played instead of loading `video_resource`.",
+          "types": [
+            "string | Opaque<\"buffer\">"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "extends": [
+        "CommonOptions"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CommonOptions",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "Id of the box node that shows the video.",
+          "description": "Id of the box node that shows the video.",
+          "types": [
+            "string | Hash"
+          ]
+        },
+        {
+          "name": "field",
+          "brief": "Field on `self` that holds this player, for a GUI with several videos.",
+          "description": "Field on `self` that holds this player, for a GUI with several videos.\nDefaults to one shared field, so a single video needs none.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gui_url",
+          "brief": "URL of the GUI component the runtime atlas is added to. Defaults to `msg.url()`.",
+          "description": "URL of the GUI component the runtime atlas is added to. Defaults to `msg.url()`.",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sound",
+          "brief": "URL of a sound component to play the audio track through. Without it the video plays silently.",
+          "description": "URL of a sound component to play the audio track through. Without it the video plays silently.",
+          "types": [
+            "string | Hash | Url"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "audio_resource",
+          "brief": "A separate MPEG audio file to play instead of the video's own track.",
+          "description": "A separate MPEG audio file to play instead of the video's own track.\nIt is a `custom_resources` path. An AV1 video needs it for sound.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "audio_data",
+          "brief": "A separate MPEG audio file's data, used instead of `audio_resource`.",
+          "description": "A separate MPEG audio file's data, used instead of `audio_resource`.",
+          "types": [
+            "string | Opaque<\"buffer\">"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sound_resource",
+          "brief": "The sound resource the `sound` component plays.",
+          "description": "The sound resource the `sound` component plays.\nIts data is replaced with the decoded track. Defaults to\n`/mpeg/video_sound.wavc`; two videos with sound at once each need their own copy.",
+          "types": [
+            "string | Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gain",
+          "brief": "Gain of the sound. Defaults to `1`.",
+          "description": "Gain of the sound. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "yuv",
+          "brief": "Whether frames are converted to RGB by the YUV material.",
+          "description": "Whether frames are converted to RGB by the YUV material.\n`true` requires the material and throws when it is not mapped; `false` always\nconverts on the CPU. Defaults to using the material when it is mapped.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "yuv_material",
+          "brief": "Name of the YUV material in the GUI scene. Defaults to `video_yuv`.",
+          "description": "Name of the YUV material in the GUI scene. Defaults to `video_yuv`.",
+          "types": [
+            "string | Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "loop",
+          "brief": "Loop the video and its sound. Defaults to `true`.",
+          "description": "Loop the video and its sound. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "stop_on_last_frame",
+          "brief": "Stop a non-looping video on its last frame. Defaults to `true`.",
+          "description": "Stop a non-looping video on its last frame. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "blend_frames",
+          "brief": "Crossfade between neighbouring frames, using a clone of the node. Defaults to `false`.",
+          "description": "Crossfade between neighbouring frames, using a clone of the node. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "playback_speed",
+          "brief": "Speed multiplier, applied to the sound as well. Defaults to `1`.",
+          "description": "Speed multiplier, applied to the sound as well. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "playback_fps",
+          "brief": "Playback frame rate; when set, it overrides `playback_speed`.",
+          "description": "Playback frame rate; when set, it overrides `playback_speed`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fallback_fps",
+          "brief": "Frame rate to use when the file stores none. Defaults to `24`.",
+          "description": "Frame rate to use when the file stores none. Defaults to `24`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_frames_per_update",
+          "brief": "Most video frames decoded in one game frame. Defaults to `2`.",
+          "description": "Most video frames decoded in one game frame. Defaults to `2`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_lag",
+          "brief": "With sound, how far in seconds the picture may fall behind it.",
+          "description": "With sound, how far in seconds the picture may fall behind it.\nPast that it jumps to the nearest key frame. Defaults to `0.3`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "enable_node",
+          "brief": "Enable the node once the video is ready. Defaults to `true`.",
+          "description": "Enable the node once the video is ready. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "runtime_name",
+          "brief": "Base name of the runtime texture and atlas paths. Defaults to `gui_video`.",
+          "description": "Base name of the runtime texture and atlas paths. Defaults to `gui_video`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "texture_key",
+          "brief": "Key the runtime atlas is added to the GUI under. Defaults to `video`.",
+          "description": "Key the runtime atlas is added to the GUI under. Defaults to `video`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "animation_id",
+          "brief": "Id of the runtime atlas animation the node plays. Defaults to `white`.",
+          "description": "Id of the runtime atlas animation the node plays. Defaults to `white`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DataOptions",
+      "properties": [
+        {
+          "name": "video_data",
+          "brief": "The video's data.",
+          "description": "The video's data.",
+          "types": [
+            "string | Opaque<\"buffer\">"
+          ]
+        },
+        {
+          "name": "video_resource",
+          "brief": "Name of the video in error messages.",
+          "description": "Name of the video in error messages.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "extends": [
+        "CommonOptions"
+      ]
+    }
+  ]
+}
