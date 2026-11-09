@@ -3150,6 +3150,76 @@ describe("runResolve with a library data archive", () => {
     });
   });
 
+  describe("a library whose minCli is above the CLI", () => {
+    function gatedData(): string {
+      const folder = writeAuthoredLibraryData({ "mylib.core": declares("one") });
+      const file = join(folder, "owner", "mylib", "library.json");
+      const library = JSON.parse(readFileSync(file, "utf8"));
+      writeFileSync(file, JSON.stringify({ ...library, minCli: "0.62.0" }));
+      return folder;
+    }
+
+    for (const [cliVersion, reads] of [
+      ["0.61.0", false],
+      ["0.62.0", true],
+    ] as const) {
+      test(`a ${cliVersion} CLI ${reads ? "prints and pins it" : "neither prints nor pins it"}`, async () => {
+        const cwd = project();
+
+        const result = await runResolve({
+          cwd,
+          cacheDir: tmp(),
+          cliVersion,
+          libraryDataUrl: DATA_URL,
+          download: serving(packDataFolder(ONE, gatedData())).download,
+        });
+
+        expect(result.ok).toBe(true);
+        expect(namespaceOf(cwd).libraryData?.libraries?.["owner/mylib"]).toBe(
+          reads ? ONE : undefined,
+        );
+        expect(existsSync(surface(cwd))).toBe(reads);
+      });
+
+      test(`a ${cliVersion} CLI given the data folder ${reads ? "prints" : "does not print"} it`, async () => {
+        const cwd = project();
+
+        const result = await runResolve({
+          cwd,
+          cacheDir: tmp(),
+          cliVersion,
+          libraryDataDir: gatedData(),
+          download: serving(null).download,
+        });
+
+        expect(result.ok).toBe(true);
+        expect(existsSync(surface(cwd))).toBe(reads);
+      });
+    }
+
+    test("a CLI below it prints the other libraries though that one carries a field it refuses", async () => {
+      const cwd = project();
+      const folder = writeAuthoredLibraryData({
+        "mylib.core": declares("one"),
+        "other.core": "// other\n",
+      });
+      const file = join(folder, "owner", "other", "library.json");
+      const library = JSON.parse(readFileSync(file, "utf8"));
+      writeFileSync(file, JSON.stringify({ ...library, minCli: "0.62.0", forks: "x" }));
+
+      const result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        cliVersion: "0.61.0",
+        libraryDataDir: folder,
+        download: serving(null).download,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    });
+  });
+
   test("--update against a newer archive moves the library's pin and prints from it", async () => {
     const cwd = project();
     const cacheDir = tmp();

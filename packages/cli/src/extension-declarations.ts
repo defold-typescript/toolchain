@@ -123,11 +123,16 @@ export async function resolveExtensionDeclarations(
     // The library data folder index-slot notes and the pages they key on are read
     // from; without one, an extension's declaration carries no such notes.
     readonly libraryDataDir?: string | null;
+    // Leaves out the notes of each library whose `minCli` is above it.
+    readonly cliVersion?: string;
   },
 ): Promise<ExtensionDeclarations[]> {
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
-  const classifications = loadLibraryIndexSlotClassifications(opts.libraryDataDir ?? null);
+  const classifications = loadLibraryIndexSlotClassifications(
+    opts.libraryDataDir ?? null,
+    opts.cliVersion,
+  );
   const manifest = loadCuratedExtensionManifest(opts.libraryDataDir ?? null);
 
   const bundles: ExtensionDeclarations[] = [];

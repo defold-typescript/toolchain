@@ -5,24 +5,37 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ReadLibraryOptions } from "./library-data";
 import { printLibraryModules, servedModules } from "./print-library";
 
 const corpora = new Map<string, Promise<ReadonlyMap<string, string>>>();
 
-async function printAll(root: string): Promise<ReadonlyMap<string, string>> {
-  const { printed, unprintable } = await printLibraryModules(root, servedModules(root), null);
+async function printAll(
+  root: string,
+  read: ReadLibraryOptions,
+): Promise<ReadonlyMap<string, string>> {
+  const { printed, unprintable } = await printLibraryModules(
+    root,
+    servedModules(root, read),
+    null,
+    read,
+  );
   if (unprintable.length > 0) {
     throw new Error(`library data serves modules it cannot print: ${unprintable.join(", ")}`);
   }
   return new Map(printed.map(({ module, contents }) => [module, contents]));
 }
 
-// Memoized per root for the process: many suites read the whole corpus.
-export function printCorpus(root: string): Promise<ReadonlyMap<string, string>> {
-  let corpus = corpora.get(root);
+// Memoized per root and CLI version for the process: many suites read the whole corpus.
+export function printCorpus(
+  root: string,
+  read: ReadLibraryOptions = {},
+): Promise<ReadonlyMap<string, string>> {
+  const key = `${read.cliVersion ?? ""}\0${root}`;
+  let corpus = corpora.get(key);
   if (corpus === undefined) {
-    corpus = printAll(root);
-    corpora.set(root, corpus);
+    corpus = printAll(root, read);
+    corpora.set(key, corpus);
   }
   return corpus;
 }

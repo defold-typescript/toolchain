@@ -6,22 +6,11 @@
 // less than the pinned version. The authored lane prints its fork, which no
 // archive changes.
 
+import { type ReadLibraryOptions, readLibraryData } from "./library-data";
 import type { LibrarySourceTree } from "./source-tree";
-import {
-  type AuthoredTarget,
-  emitAuthoredDeclaration,
-  readAuthoredTargets,
-} from "./sync-authored-types";
-import {
-  emitLualsTargetDeclarations,
-  type LualsTarget,
-  readLualsTargets,
-} from "./sync-luals-types";
-import {
-  emitScriptApiDeclaration,
-  readScriptApiTargets,
-  type ScriptApiTarget,
-} from "./sync-script-api-types";
+import { type AuthoredTarget, emitAuthoredDeclaration } from "./sync-authored-types";
+import { emitLualsTargetDeclarations, type LualsTarget } from "./sync-luals-types";
+import { emitScriptApiDeclaration, type ScriptApiTarget } from "./sync-script-api-types";
 
 type ServedTarget =
   | { readonly lane: "luals"; readonly target: LualsTarget }
@@ -44,7 +33,7 @@ export interface PrintLibraryModulesResult {
   readonly unprintable: string[];
 }
 
-function servedTargets(root: string): Map<string, ServedTarget> {
+function servedTargets(root: string, read: ReadLibraryOptions): Map<string, ServedTarget> {
   const served = new Map<string, ServedTarget>();
   const add = (entry: ServedTarget): void => {
     const { moduleId } = entry.target;
@@ -56,27 +45,33 @@ function servedTargets(root: string): Map<string, ServedTarget> {
     }
     served.set(moduleId, entry);
   };
-  for (const target of readLualsTargets(root)) add({ lane: "luals", target });
-  for (const target of readScriptApiTargets(root)) add({ lane: "script-api", target });
-  for (const target of readAuthoredTargets(root)) add({ lane: "authored", target });
+  const libraries = readLibraryData(root, read);
+  for (const target of libraries.flatMap(({ luals }) => luals)) add({ lane: "luals", target });
+  for (const target of libraries.flatMap(({ scriptApi }) => scriptApi)) {
+    add({ lane: "script-api", target });
+  }
+  for (const target of libraries.flatMap(({ authored }) => authored)) {
+    add({ lane: "authored", target });
+  }
   return served;
 }
 
-export function servedModules(root: string): string[] {
-  return [...servedTargets(root).keys()];
+export function servedModules(root: string, read: ReadLibraryOptions = {}): string[] {
+  return [...servedTargets(root, read).keys()];
 }
 
 // With no tree, each lane reads the sources vendored in library data.
 async function printTarget(
   root: string,
   entry: ServedTarget,
+  read: ReadLibraryOptions,
   tree?: LibrarySourceTree,
 ): Promise<string> {
   switch (entry.lane) {
     case "luals":
-      return emitLualsTargetDeclarations(root, entry.target, tree);
+      return emitLualsTargetDeclarations(root, entry.target, tree, read);
     case "script-api":
-      return emitScriptApiDeclaration(root, entry.target, tree);
+      return emitScriptApiDeclaration(root, entry.target, tree, read);
     case "authored":
       return emitAuthoredDeclaration(root, entry.target);
   }
@@ -86,8 +81,9 @@ export async function printLibraryModules(
   root: string,
   modules: readonly string[],
   archive: LibrarySourceTree | null,
+  read: ReadLibraryOptions = {},
 ): Promise<PrintLibraryModulesResult> {
-  const served = servedTargets(root);
+  const served = servedTargets(root, read);
   const printed: PrintedLibraryModule[] = [];
   const unprintable: string[] = [];
   for (const module of modules) {
@@ -98,16 +94,16 @@ export async function printLibraryModules(
     }
     const { ref } = entry.target;
     if (archive === null || entry.lane === "authored") {
-      printed.push({ module, contents: await printTarget(root, entry), from: "pinned", ref });
+      printed.push({ module, contents: await printTarget(root, entry, read), from: "pinned", ref });
       continue;
     }
     try {
-      const contents = await printTarget(root, entry, archive);
+      const contents = await printTarget(root, entry, read, archive);
       printed.push({ module, contents, from: "archive", ref });
     } catch (error) {
       printed.push({
         module,
-        contents: await printTarget(root, entry),
+        contents: await printTarget(root, entry, read),
         from: "pinned",
         ref,
         reason: error instanceof Error ? error.message : String(error),

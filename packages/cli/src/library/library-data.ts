@@ -11,6 +11,13 @@ import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import { COMMIT_COMMENT } from "../extension-version";
 import { libraryName } from "../library-match";
+import {
+  compareTriples,
+  isUnversioned,
+  parseCliVersion,
+  parseTriple,
+  type Triple,
+} from "./data-folder";
 import type { AuthoredTarget } from "./sync-authored-types";
 import type { RefKind } from "./sync-defold-extensions";
 import type { LualsTarget } from "./sync-luals-types";
@@ -108,6 +115,9 @@ export type LibraryFollows = (typeof LIBRARY_FOLLOWS)[number];
 
 export interface LibraryJson {
   repo: string;
+  // The first CLI release that reads this library, `X.Y.Z`; an older one reads
+  // no data for it.
+  minCli?: string;
   license?: string;
   refKind?: RefKind;
   follows?: LibraryFollows;
@@ -646,8 +656,18 @@ function readFollows(file: string, follows: unknown, ref: string): LibraryFollow
   return follows as LibraryFollows;
 }
 
-function readLibrary(dataDir: string, dir: string): LibraryData {
-  const library = readJson<Partial<LibraryJson>>(dataDir, `${dir}/${LIBRARY_FILE}`);
+function readMinCli(dir: string, library: Partial<LibraryJson>): Triple | null {
+  if (library.minCli === undefined) return null;
+  const version = typeof library.minCli === "string" ? parseTriple(library.minCli) : null;
+  if (version === null) {
+    throw new Error(
+      `${dir}/${LIBRARY_FILE}: minCli must be a version X.Y.Z, got ${describeValue(library.minCli)}`,
+    );
+  }
+  return version;
+}
+
+function readLibrary(dataDir: string, dir: string, library: Partial<LibraryJson>): LibraryData {
   if (typeof library.repo !== "string") {
     throw new Error(`${dir}/${LIBRARY_FILE} names no repo`);
   }
@@ -699,6 +719,11 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
   };
 }
 
+export interface ReadLibraryOptions {
+  // The running CLI's version, which leaves out each library whose `minCli` is above it.
+  readonly cliVersion?: string | undefined;
+}
+
 /** A refusal of library data, naming the library folder at fault. */
 export class LibraryDataError extends Error {
   readonly library: string;
@@ -738,16 +763,28 @@ function libraryDirs(dataDir: string): string[] {
  * repo's `owner/repo` (a top-level folder included), on a missing `reviewed.json`,
  * on a malformed entry, on a module id or
  * path that leaves its folder, on a floor or parity exception for a module its
- * library does not measure, and on a module two folders name.
+ * library does not measure, on a module two folders name, and on a `minCli` that
+ * is not `X.Y.Z`.
+ *
+ * Given a released `cliVersion`, a library whose `minCli` is above it is left out
+ * before any other field is read, so a field a newer CLI adds cannot fail an older
+ * CLI's read; the module and index-slot checks cover only the libraries kept. No
+ * version, or `0.0.0`, reads every library.
  */
-export function readLibraryData(dataDir: string): LibraryData[] {
-  const libraries = libraryDirs(dataDir).map((dir) => {
+export function readLibraryData(dataDir: string, opts: ReadLibraryOptions = {}): LibraryData[] {
+  const cli = opts.cliVersion === undefined ? null : parseCliVersion(opts.cliVersion);
+  const gate = cli === null || isUnversioned(cli) ? null : cli;
+  const libraries: LibraryData[] = [];
+  for (const dir of libraryDirs(dataDir)) {
     try {
-      return readLibrary(dataDir, dir);
+      const library = readJson<Partial<LibraryJson>>(dataDir, `${dir}/${LIBRARY_FILE}`);
+      const minCli = readMinCli(dir, library);
+      if (gate !== null && minCli !== null && compareTriples(gate, minCli) < 0) continue;
+      libraries.push(readLibrary(dataDir, dir, library));
     } catch (error) {
       throw new LibraryDataError(dir, error instanceof Error ? error.message : String(error));
     }
-  });
+  }
   const owner = new Map<string, string>();
   for (const library of libraries) {
     for (const { moduleId } of [...library.luals, ...library.scriptApi, ...library.authored]) {
@@ -764,13 +801,19 @@ export function readLibraryData(dataDir: string): LibraryData[] {
   return libraries;
 }
 
-/** Every library's index slots, with those of the extension pages no library owns. */
-export function readIndexSlots(dataDir: string): Record<string, IndexSlotEntry> {
+/**
+ * Every library's index slots, with those of the extension pages no library owns.
+ * `cliVersion` leaves out the libraries `readLibraryData` would.
+ */
+export function readIndexSlots(
+  dataDir: string,
+  opts: ReadLibraryOptions = {},
+): Record<string, IndexSlotEntry> {
   const extensionFile = join(dataDir, EXTENSION_INDEX_SLOTS_FILE);
   const merged: Record<string, IndexSlotEntry> = existsSync(extensionFile)
     ? (JSON.parse(readFileSync(extensionFile, "utf8")) as Record<string, IndexSlotEntry>)
     : {};
-  for (const library of readLibraryData(dataDir)) {
+  for (const library of readLibraryData(dataDir, opts)) {
     for (const [key, entry] of Object.entries(library.indexSlots)) {
       if (key in merged) {
         throw new Error(`index slot ${key} is classified twice, once in ${library.dir}`);
