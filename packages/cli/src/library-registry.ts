@@ -20,8 +20,11 @@ import {
 // Every lane's modules, grouped by library name. Unreadable library data degrades
 // to no libraries rather than throwing, so `resolve` still types the rest of the
 // project.
-export function loadVendoredLibraryRegistry(dataDir: string | null): VendoredLibrary[] {
-  const libraries = readLibraryDataOrNone(dataDir);
+export function loadVendoredLibraryRegistry(
+  dataDir: string | null,
+  cliVersion?: string,
+): VendoredLibrary[] {
+  const libraries = readLibraryDataOrNone(dataDir, cliVersion);
   // Merge across lanes so one upstream repo split across lanes holds a single
   // `sourceId` entry; without it, `matchVendoredLibrary`'s first-match `find`
   // drops every later lane's modules for that source.
@@ -36,12 +39,13 @@ export function loadVendoredLibraryRegistry(dataDir: string | null): VendoredLib
   ]);
 }
 
-export function readLibraryDataOrNone(dataDir: string | null): LibraryData[] {
+// `cliVersion` leaves out each library whose `minCli` is above it.
+export function readLibraryDataOrNone(dataDir: string | null, cliVersion?: string): LibraryData[] {
   if (dataDir === null) {
     return [];
   }
   try {
-    return readLibraryData(dataDir);
+    return readLibraryData(dataDir, { cliVersion });
   } catch {
     return [];
   }
@@ -64,8 +68,9 @@ export function librariesMatching(
 export function librariesForDependencies(
   dataDir: string | null,
   urls: readonly string[],
+  cliVersion?: string,
 ): LibraryData[] {
-  return librariesMatching(readLibraryDataOrNone(dataDir), urls);
+  return librariesMatching(readLibraryDataOrNone(dataDir, cliVersion), urls);
 }
 
 // A native extension ships C++ and no Lua module, so it is matched by library name
@@ -79,11 +84,14 @@ export interface VendoredNativeExtension {
   readonly declarationPath: string;
 }
 
-export function loadVendoredNativeRegistry(dataDir: string | null): VendoredNativeExtension[] {
+export function loadVendoredNativeRegistry(
+  dataDir: string | null,
+  cliVersion?: string,
+): VendoredNativeExtension[] {
   if (dataDir === null) {
     return [];
   }
-  return readLibraryDataOrNone(dataDir).flatMap((library) =>
+  return readLibraryDataOrNone(dataDir, cliVersion).flatMap((library) =>
     library.native.map(({ repo, namespace, manifestDir, declaration }) => ({
       sourceId: libraryName(repo),
       namespace,
@@ -99,12 +107,13 @@ export function loadVendoredNativeRegistry(dataDir: string | null): VendoredNati
 // Unreadable library data degrades to no notes, mirroring the other lanes.
 export function loadLibraryIndexSlotClassifications(
   dataDir: string | null,
+  cliVersion?: string,
 ): LibraryIndexSlotClassifications {
   if (dataDir === null) {
     return new Map();
   }
   try {
-    return new Map(Object.entries(readIndexSlots(dataDir)));
+    return new Map(Object.entries(readIndexSlots(dataDir, { cliVersion })));
   } catch {
     return new Map();
   }

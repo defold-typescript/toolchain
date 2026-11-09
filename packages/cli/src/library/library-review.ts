@@ -3,7 +3,12 @@
 
 import { defaultReadZip, extensionCacheDir, resolveExtensionArchive } from "../extension-archive";
 import type { AddLibraryOptions } from "./library-add";
-import { readLibraryData, readLibraryReviews, writeReviewedJson } from "./library-data";
+import {
+  type ReadLibraryOptions,
+  readLibraryData,
+  readLibraryReviews,
+  writeReviewedJson,
+} from "./library-data";
 import { archiveFingerprint, recordReview } from "./library-fingerprint";
 
 export interface ReviewedLibrary {
@@ -32,9 +37,9 @@ export interface LibraryReviewResult {
 export async function reviewLibraries(
   dataDir: string,
   names: readonly string[],
-  opts: AddLibraryOptions,
+  opts: AddLibraryOptions & ReadLibraryOptions,
 ): Promise<LibraryReviewResult> {
-  const libraries = readLibraryData(dataDir);
+  const libraries = readLibraryData(dataDir, { cliVersion: opts.cliVersion });
   for (const name of names) {
     if (!libraries.some(({ dir }) => dir === name)) {
       throw new Error(`no library ${name} in ${dataDir}`);

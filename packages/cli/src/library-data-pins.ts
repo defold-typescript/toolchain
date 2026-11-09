@@ -100,7 +100,7 @@ async function readCommits(
 // The loaders check what no single commit could get wrong: a module named by two
 // libraries from different commits, or an index slot classified twice.
 function loadView(
-  cacheDir: string,
+  { cacheDir, cliVersion }: LibraryDataSource,
   reads: ReadonlyMap<string, LibraryDataAtCommit>,
   libraries: Readonly<Record<string, string>>,
   shared: string,
@@ -118,7 +118,7 @@ function loadView(
     return { dir: null, failure: `no folder holds ${view.missing.join(", ")}` };
   }
   try {
-    readIndexSlots(view.dir);
+    readIndexSlots(view.dir, { cliVersion });
     return { dir: view.dir };
   } catch (err) {
     return { dir: null, failure: errorMessage(err) };
@@ -128,11 +128,11 @@ function loadView(
 export async function selectLibraryPins(
   opts: SelectLibraryPinsOptions,
 ): Promise<LibraryPinSelection> {
-  const { cacheDir, urls, knownUrls, pins, update } = opts;
+  const { urls, knownUrls, pins, update } = opts;
   const main = await fetchNewestLibraryData(opts);
   const newest = main.dir !== null && !main.stale ? main : null;
   const mainTrouble = main.dir === null ? main.reason : main.warning;
-  const mainLibraries = readLibraryDataOrNone(main.dir);
+  const mainLibraries = readLibraryDataOrNone(main.dir, opts.cliVersion);
   const pinnedNames = new Set(Object.keys(pins?.libraries ?? {}));
   const names = [...new Set([...pinnedNames, ...mainLibraries.map(({ dir }) => dir)])];
   const nameOf = (url: string) => matchedLibraryName(url, names);
@@ -265,7 +265,7 @@ export async function selectLibraryPins(
   }
 
   const folders = foldersOf(main.dir !== null ? main : pins === null ? null : readOf(pins.shared));
-  const view = loadView(cacheDir, reads, libraries, shared);
+  const view = loadView(opts, reads, libraries, shared);
   if (view.dir !== null) {
     return { dir: view.dir, pins: { shared, libraries }, notices, ...warning, ...folders };
   }
@@ -274,7 +274,7 @@ export async function selectLibraryPins(
     return { dir: null, pins, notices: [], warning: `${conflict}; ${mainTrouble}` };
   }
   const atMain = Object.fromEntries([...covered].map((name) => [name, newest.commit]));
-  const fallback = loadView(cacheDir, reads, atMain, newest.commit);
+  const fallback = loadView(opts, reads, atMain, newest.commit);
   if (fallback.dir === null) {
     return { dir: null, pins, notices: [], warning: conflict };
   }
@@ -316,7 +316,7 @@ export async function frozenLibraryData(
   if (shared.dir === null) {
     return { dir: null, error: `the shared library data pin cannot be read: ${shared.reason}` };
   }
-  const view = loadView(source.cacheDir, reads, libraries, pins.shared);
+  const view = loadView(source, reads, libraries, pins.shared);
   return view.dir === null
     ? { dir: null, error: `the library data pins do not load: ${view.failure}` }
     : { dir: view.dir, ...foldersOf(shared) };

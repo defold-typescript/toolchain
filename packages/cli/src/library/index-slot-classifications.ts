@@ -1,9 +1,10 @@
 import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
 import { parseLibraryIndexSlotClassifications } from "@defold-typescript/types/library-runtime";
-import { readIndexSlots } from "./library-data";
+import { type ReadLibraryOptions, readIndexSlots } from "./library-data";
 
 export function readLibraryIndexSlotClassifications(
   dataDir: string,
+  read: ReadLibraryOptions = {},
 ): LibraryIndexSlotClassifications {
-  return parseLibraryIndexSlotClassifications(readIndexSlots(dataDir));
+  return parseLibraryIndexSlotClassifications(readIndexSlots(dataDir, read));
 }

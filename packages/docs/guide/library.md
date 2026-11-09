@@ -26,7 +26,7 @@ folder `library check` reads:
 
 | File | When | What it holds |
 | ---- | ---- | ------------- |
-| `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. You can add [`follows`](#what-library-update-does) by hand. |
+| `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. You can add [`follows`](#what-library-update-does) by hand, and `minCli`: the first CLI release that reads the library, as `X.Y.Z`, below which a CLI reads no data for it. |
 | `reviewed.json` | always | `ref`: the tag the URL names, or the commit a branch URL's archive was packed from. `reviews`: [the archive's hashes](#what-library-review-records) and its commit. |
 | `recipe.json` | when the library can generate a module | A starting entry, chosen below. |
 | `source/` | with `recipe.json` | The upstream files that entry reads, at the paths a later re-pin writes. |
@@ -226,6 +226,8 @@ every module afresh, so it reads no committed report and nothing outside
 [`resolve --library-data`](./resolve.md#flags): the highest folder at or below
 the CLI version. A relative `<dir>` resolves against the
 working directory. A `<dir>` with no folder for this CLI version is an error.
+`library check`, `library review` and `library update` leave out a library whose
+`minCli` is above this CLI's version, as `resolve` does.
 
 ## `--api-doc-out`
 

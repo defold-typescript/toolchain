@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import {
   LibraryDataError,
   libraryFolderName,
+  readIndexSlots,
   readLibraryData,
   readLibraryReviews,
   writeReviewedJson,
@@ -246,6 +247,133 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
 
       expect(() => readLibraryData(root)).toThrow(
         'flow/recipe.json: entry flow.layout is missing required field "sourceGlobs".',
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("readLibraryData leaves out a library whose minCli is above the CLI", () => {
+  function withGated(fields: Record<string, unknown> = {}): string {
+    const root = writeDataFolder();
+    write(root, "owner/gated/library.json", {
+      repo: "https://github.com/owner/gated",
+      license: "MIT",
+      minCli: "0.62.0",
+      ...fields,
+    });
+    write(root, "owner/gated/reviewed.json", { ref: "1.0" });
+    return root;
+  }
+
+  function readDirs(root: string, cliVersion?: string): string[] {
+    return readLibraryData(root, cliVersion === undefined ? {} : { cliVersion }).map(
+      ({ dir }) => dir,
+    );
+  }
+
+  function caught(read: () => unknown): unknown {
+    try {
+      read();
+    } catch (error) {
+      return error;
+    }
+    throw new Error("expected the read to throw");
+  }
+
+  test("a CLI below it reads every other library and not that one", () => {
+    const root = withGated();
+    try {
+      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  for (const cliVersion of ["0.62.0", "0.62.0-rc.1", "0.100.0", "1.0.0", "0.0.0"]) {
+    test(`a ${cliVersion} CLI reads it`, () => {
+      const root = withGated();
+      try {
+        expect(readDirs(root, cliVersion)).toEqual([
+          "owner/box2d",
+          "owner/gated",
+          "pause-games/flow",
+        ]);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+
+  test("a reader given no CLI version reads it", () => {
+    const root = withGated();
+    try {
+      expect(readDirs(root)).toEqual(["owner/box2d", "owner/gated", "pause-games/flow"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a CLI below it skips the library before reading a field it would refuse", () => {
+    const root = withGated({ forks: "x" });
+    try {
+      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+      const error = caught(() => readDirs(root, "0.62.0"));
+      expect(error).toBeInstanceOf(LibraryDataError);
+      expect((error as LibraryDataError).library).toBe("owner/gated");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  for (const minCli of ["0.62", 62]) {
+    for (const cliVersion of [undefined, "0.61.0", "0.62.0"]) {
+      test(`a minCli of ${JSON.stringify(minCli)} is refused by a ${cliVersion ?? "versionless"} reader, naming minCli`, () => {
+        const root = withGated({ minCli });
+        try {
+          const error = caught(() => readDirs(root, cliVersion));
+          expect(error).toBeInstanceOf(LibraryDataError);
+          expect((error as LibraryDataError).library).toBe("owner/gated");
+          expect((error as LibraryDataError).message).toContain("minCli");
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+    }
+  }
+
+  test("a module it shares with a library the CLI reads is no conflict below it", () => {
+    const root = withGated({
+      forks: [
+        {
+          authored: "fork/flow.ui.d.ts",
+          moduleId: "flow.ui",
+          namespace: "flow.ui",
+          apiDoc: "api-doc/flow.ui.json",
+          parityVerdict: { reason: "no-module-file", note: "the repo ships no module file" },
+        },
+      ],
+    });
+    try {
+      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+      expect(() => readDirs(root, "0.62.0")).toThrow(/flow\.ui.*\bowner\/gated\b/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an index slot it shares with a library the CLI reads is no conflict below it", () => {
+    const slot = "box2d/GetAABB:param:childIndex";
+    const root = withGated({
+      indexSlots: { [slot]: { class: "native-0", evidence: "gated.cpp:1 passes it on unchanged" } },
+    });
+    try {
+      expect(readIndexSlots(root, { cliVersion: "0.61.0" })[slot]?.evidence).toBe(
+        "fixture.cpp:229 passes it on unchanged",
+      );
+      expect(() => readIndexSlots(root, { cliVersion: "0.62.0" })).toThrow(
+        `index slot ${slot} is classified twice`,
       );
     } finally {
       rmSync(root, { recursive: true, force: true });
