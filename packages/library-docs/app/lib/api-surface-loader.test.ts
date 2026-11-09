@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -31,7 +32,7 @@ import { type LibraryListing, libraryOwnerGroups } from "./nav";
 
 const FIXTURE_ROOT = join(import.meta.dir, "__fixtures__/library-display");
 const dirsAt = (root: string): LibraryDirs => ({
-  dataDir: join(root, "data", "0.55.0"),
+  dataDir: join(root, "data", "0.61.0"),
   modelDir: join(root, "api-doc"),
 });
 const FIXTURE_DIRS = dirsAt(FIXTURE_ROOT);
@@ -53,7 +54,7 @@ function writeLibrary(
   },
 ): void {
   const { repo, ref, refKind, namespace, lane = "native" } = library;
-  const folder = join(dataDir, repo.split("/").pop() as string);
+  const folder = join(dataDir, ...repo.toLowerCase().split("/").slice(-2));
   mkdirSync(folder, { recursive: true });
   writeFileSync(
     join(folder, "library.json"),
@@ -212,7 +213,13 @@ describe("loadApiSurface library displayName", () => {
 describe("loadLibraryProvenance — curated native extensions", () => {
   const targets = readdirSync(REAL_DIRS.dataDir)
     .sort()
-    .map((dir) => join(REAL_DIRS.dataDir, dir))
+    .map((owner) => join(REAL_DIRS.dataDir, owner))
+    .filter((owner) => statSync(owner).isDirectory())
+    .flatMap((owner) =>
+      readdirSync(owner)
+        .sort()
+        .map((repo) => join(owner, repo)),
+    )
     .filter((dir) => existsSync(join(dir, "library.json")))
     .flatMap((dir) => {
       const { repo, license, native } = JSON.parse(

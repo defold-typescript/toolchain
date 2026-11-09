@@ -1,0 +1,39 @@
+{
+  "info": {
+    "namespace": "clipboard",
+    "brief": "Defold native extension to access the clipboard",
+    "description": "Defold native extension to access the clipboard"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "clipboard.copy",
+      "description": "Copy text to the clipboard.",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clipboard.paste",
+      "description": "Get text from the clipboard.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "ref": "v0.1.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "df5756e29829545e0944130c6f3051eda7865db7"
+      ],
+      "api": "18655ed34a174e1cea2d62ebd1a0204aabf12de46e1ca5a5675e9e7582666684",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "1bd3643341f74af712824d3082eff0c127fd2ff86ebf6e9eb9f218407270763e",
+      "members": {
+        "fontscale/src/fontscale.cpp": "5685352a52bc1826",
+        "fontscale/src/fontscale_android.cpp": "337a3a9dad265df5",
+        "fontscale/src/fontscale_ios.mm": "dc9a9de39dd1389a",
+        "fontscale/src/fontscale_jni.h": "194f9aa831330bc5",
+        "fontscale/src/fontscale_null.cpp": "43d9de3eebb51865",
+        "fontscale/src/fontscale_private.h": "dc21210009fd1fb0"
+      }
+    }
+  ]
+}

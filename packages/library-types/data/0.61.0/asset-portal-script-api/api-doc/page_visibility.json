@@ -1,0 +1,58 @@
+{
+  "info": {
+    "namespace": "page_visibility",
+    "brief": "The Page Visibility API for Defold",
+    "description": "The Page Visibility API for Defold"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "page_visibility.set_listener",
+      "description": "Sets or removes the listener for the page visibility change event.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The callback to be called when the page visibility changes.",
+          "types": [
+            "function"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "page_visibility.state",
+      "description": "Returns the current state of the page visibility.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "The current state of the page visibility.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "page_visibility.STATE_VISIBLE",
+      "brief": "The page is visible.",
+      "description": "The page is visible.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "page_visibility.STATE_HIDDEN",
+      "brief": "The page is hidden.",
+      "description": "The page is hidden.",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

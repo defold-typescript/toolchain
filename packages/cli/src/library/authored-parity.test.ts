@@ -70,7 +70,7 @@ function fixtureFork(): AuthoredTarget {
 }
 
 const SURFACE_TARGET: AuthoredTarget = {
-  repo: "",
+  repo: "https://github.com/example/mod",
   ref: "",
   license: "",
   authored: "mod/fork/mod.d.ts",
@@ -697,7 +697,7 @@ describe("a phantom field enters neither side of the coverage figure", () => {
     return buildAuthoredParity(
       root,
       {
-        repo: "",
+        repo: "https://github.com/example/mod",
         ref: "",
         license: "",
         authored: "mod/fork/mod.d.ts",
@@ -1153,10 +1153,6 @@ describe("a fork offering several call shapes is measured against the set", () =
       .filter((report) => report.overloadedMembers > 0)
       .map((report) => `${report.namespace}: ${report.overloadedMembers}`);
     expect(overloaded).toEqual([
-      "asobi.realtime: 3",
-      "asobi.http: 1",
-      "asobi.api.auth: 1",
-      "def_behavior_tree: 1",
       "operator.operator: 1",
       "operator.bezier: 1",
       "wrap.node: 1",
@@ -1168,6 +1164,10 @@ describe("a fork offering several call shapes is measured against the set", () =
       "wrap.gui_applet: 3",
       "wrap.wrap: 3",
       "monarch.transitions.gui: 1",
+      "def_behavior_tree: 1",
+      "asobi.realtime: 3",
+      "asobi.http: 1",
+      "asobi.api.auth: 1",
     ]);
   });
 });
@@ -1473,7 +1473,7 @@ describe("an upstream colon method is measured against the instance type's metho
     return buildAuthoredParity(
       root,
       {
-        repo: "",
+        repo: "https://github.com/example/mod",
         ref: "",
         license: "",
         authored: "mod/fork/mod.d.ts",
@@ -1754,7 +1754,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
     return buildAuthoredParity(
       root,
       {
-        repo: "",
+        repo: "https://github.com/example/mod",
         ref: "",
         license: "",
         authored: "mod/fork/mod.d.ts",
@@ -1850,7 +1850,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
 // Built live rather than read off `fidelity/authored/shutter.json`, so an edit to either
 // target input this suite reads -- the committed `api-doc/shutter.json` or the vendored
 // `shutter/shutter.lua` -- reds here immediately instead of waiting for a regen.
-// `buildAuthoredParity` never opens `defold-shutter/fork/shutter.shutter.d.ts`, so
+// `buildAuthoredParity` never opens `klaleus/defold-shutter/fork/shutter.shutter.d.ts`, so
 // a fork-only edit is caught one seam earlier instead: the api-doc gate in
 // `sync-authored-types.test.ts` re-lowers the vendored source and diffs it against the
 // committed `api-doc/` artifact, and `print-library.test.ts` serves the fork verbatim. The

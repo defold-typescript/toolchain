@@ -9,6 +9,20 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.61.0
+
+> Summary:
+>
+> - **[Libraries are named by `owner/repo`](./resolve.md#vendored-library-types)**, so two repositories sharing a name can both be typed.
+
+### Breaking
+
+- **Library data names each library by its lowercase `owner/repo`** ([Library data](./resolve.md#library-data)): lockfile pins, `resolve --update=<name>`, the `library` commands' `<name>` and folders, and the `--json` `source` of a `resolve` match all use it, so `--update=monarch` becomes `--update=britzl/monarch`. A pin an earlier CLI recorded under a bare repo name is dropped, and that library is pinned again at the newest data.
+
+### Improved
+
+- **A dependency matches the library holding its exact `owner/repo`, else the one library sharing its repo name**, so a fork keeps its upstream's types with a notice that they may not fit, and a repo name two libraries share types the dependency with neither, with a notice ([Vendored library types](./resolve.md#vendored-library-types)). `export-types` takes an `owner/repo` or a dependency URL.
+
 ## v0.60.0
 
 > Summary:

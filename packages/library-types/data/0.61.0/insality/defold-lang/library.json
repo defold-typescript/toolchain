@@ -1,0 +1,8 @@
+{
+  "repo": "https://github.com/Insality/defold-lang",
+  "license": "MIT",
+  "refKind": "tag",
+  "floors": {
+    "lang.lang": 1
+  }
+}

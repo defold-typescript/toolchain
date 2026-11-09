@@ -43,7 +43,7 @@ import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
-import { type RunResolveOptions, runResolve } from "./resolve";
+import { type RunResolveOptions, runResolve, unknownUpdateNames } from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 // The materialized library surface carries the generating toolchain version;
@@ -1010,7 +1010,7 @@ describe("runResolve library matching", () => {
     return writeAuthoredLibraryData({ "mylib.core": MYLIB });
   }
 
-  const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
+  const registry = [{ sourceId: "owner/mylib", modules: ["mylib.core"] }];
 
   // A plain asset-only archive that ships no Lua modules — a repo-name match
   // against this stays unverified because the module path is absent.
@@ -1052,7 +1052,13 @@ describe("runResolve library matching", () => {
     };
     expect(tsconfig.compilerOptions.types).toContain(LIBRARIES_DIR);
     expect(result.libraries).toEqual([
-      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
+      {
+        url,
+        source: "owner/mylib",
+        modules: ["mylib.core"],
+        provenance: "vendored",
+        verified: true,
+      },
     ]);
     // The dependency stays asset-only for the extension surface.
     expect(result.extensions[0]?.assetOnly).toBe(true);
@@ -1098,7 +1104,7 @@ describe("runResolve library matching", () => {
     expect(result.libraries).toEqual([
       {
         url,
-        source: "nakama-defold",
+        source: "heroiclabs/nakama-defold",
         modules: ["nakama.engine.defold", "nakama.nakama", "nakama.util.log"],
         provenance: "vendored",
         verified: true,
@@ -1133,7 +1139,7 @@ describe("runResolve library matching", () => {
     // No library surface is written for an unverified match.
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([
-      { url, source: "mylib", modules: [], provenance: "vendored", verified: false },
+      { url, source: "owner/mylib", modules: [], provenance: "vendored", verified: false },
     ]);
     expect(result.extensions[0]?.assetOnly).toBe(true);
   });
@@ -1380,7 +1386,7 @@ describe("runResolve corpus match precedes .script_api", () => {
   // another name takes, so the archive's `alpha` doc is the surface the curated
   // types replace.
   const registry = [
-    { sourceId: "mylib", modules: ["mylib.core"], namespaces: { "mylib.core": "alpha" } },
+    { sourceId: "owner/mylib", modules: ["mylib.core"], namespaces: { "mylib.core": "alpha" } },
   ];
 
   const BETA = ALPHA.replaceAll("alpha", "beta");
@@ -1416,7 +1422,13 @@ describe("runResolve corpus match precedes .script_api", () => {
       MYLIB,
     );
     expect(result.libraries).toEqual([
-      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
+      {
+        url,
+        source: "owner/mylib",
+        modules: ["mylib.core"],
+        provenance: "vendored",
+        verified: true,
+      },
     ]);
 
     expect(existsSync(join(cwd, ".defold-types", "extensions"))).toBe(false);
@@ -1446,7 +1458,13 @@ describe("runResolve corpus match precedes .script_api", () => {
 
     expect(result.ok).toBe(true);
     expect(result.libraries).toEqual([
-      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
+      {
+        url,
+        source: "owner/mylib",
+        modules: ["mylib.core"],
+        provenance: "vendored",
+        verified: true,
+      },
     ]);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", "extensions", "beta.d.ts"))).toBe(true);
@@ -1787,7 +1805,12 @@ describe("runResolve curated native extension", () => {
     const declarationPath = join(dir, "daabbcc.d.ts");
     writeFileSync(declarationPath, CURATED);
     return [
-      { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc", declarationPath },
+      {
+        sourceId: "selimanac/defold-daabbcc",
+        namespace: "daabbcc",
+        manifestDir: "daabbcc",
+        declarationPath,
+      },
     ];
   }
 
@@ -2027,7 +2050,7 @@ declare module "pixels" {
       {
         nativeRegistry: [
           {
-            sourceId: "defold-pixels",
+            sourceId: "king8fisher/defold-pixels",
             namespace: "pixels",
             manifestDir: "defold-pixels",
             declarationPath,
@@ -2060,8 +2083,8 @@ declare module "pixels" {
       cwd: exported,
       libraryDataDir: LIBRARY_DATA_DIR,
     });
-    const url = `https://github.com/owner/${target.sourceId}/archive/refs/heads/main.zip`;
-    const wrapper = `${target.sourceId}-main`;
+    const url = `https://github.com/${target.sourceId}/archive/refs/heads/main.zip`;
+    const wrapper = `${target.sourceId.split("/").pop()}-main`;
     const contents = Object.fromEntries(
       written.map((file) => [`${wrapper}/${file}`, readFileSync(join(exported, file), "utf8")]),
     );
@@ -2116,7 +2139,7 @@ declare module "pixels" {
           contents: { [shippedPath]: shipped },
         },
       }),
-      libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+      libraryRegistry: [{ sourceId: "owner/mylib", modules: ["mylib.core"] }],
       libraryDataDir: libraryData,
       nativeRegistry: [],
     });
@@ -2388,7 +2411,11 @@ describe("runResolve druid LuaLS library", () => {
   }
 
   const druidRegistry = [
-    { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
+    {
+      sourceId: "insality/druid",
+      modules: ["druid.druid"],
+      namespaces: { "druid.druid": "druid" },
+    },
   ];
 
   // An asset-only archive that ships `druid/druid.lua` under the GitHub wrapper
@@ -2421,7 +2448,13 @@ describe("runResolve druid LuaLS library", () => {
       readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts"), "utf8"),
     ).toBe(DRUID);
     expect(result.libraries).toEqual([
-      { url, source: "druid", modules: ["druid.druid"], provenance: "vendored", verified: true },
+      {
+        url,
+        source: "insality/druid",
+        modules: ["druid.druid"],
+        provenance: "vendored",
+        verified: true,
+      },
     ]);
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
@@ -2452,7 +2485,7 @@ describe("runResolve druid LuaLS library", () => {
     expect(result.ok).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([
-      { url, source: "druid", modules: [], provenance: "vendored", verified: false },
+      { url, source: "insality/druid", modules: [], provenance: "vendored", verified: false },
     ]);
   });
 });
@@ -2462,7 +2495,7 @@ describe("runResolve prints a LuaLS library from the dependency's archive", () =
   const wrapper = "lua-immutable-1.1";
   const own = "immutable/immutable.lua";
   const pinnedSource = readFileSync(
-    join(LIBRARY_DATA_DIR, "lua-immutable", "source", "immutable", own),
+    join(LIBRARY_DATA_DIR, "paweljarosz/lua-immutable", "source", "immutable", own),
     "utf8",
   );
   const insertBefore = "-- Metatable for the Immutable module";
@@ -2513,7 +2546,7 @@ describe("runResolve prints a LuaLS library from the dependency's archive", () =
     expect(result.libraries).toEqual([
       {
         url,
-        source: "lua-immutable",
+        source: "paweljarosz/lua-immutable",
         modules: ["immutable.immutable"],
         provenance: "vendored",
         verified: true,
@@ -2604,7 +2637,7 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
     expect(result.libraries).toEqual([
       {
         url,
-        source: "defold-saver",
+        source: "insality/defold-saver",
         modules: ["saver.saver", "saver.storage"],
         provenance: "vendored",
         verified: true,
@@ -2861,6 +2894,150 @@ instances {
   });
 });
 
+describe("runResolve matches a library by its owner/repo, else by its repo name", () => {
+  const BOOM = "declare module 'boom.boom' { export const boom: number; }\n";
+
+  function boomData(): string {
+    const folder = tmp();
+    mkdirSync(join(folder, "britzl/boom/fork"), { recursive: true });
+    writeFileSync(join(folder, "britzl/boom/fork/boom.boom.d.ts"), BOOM);
+    writeUndocumentedUpstreamLua(join(folder, "britzl/boom"), "source/upstream/boom.boom.lua");
+    writeLibraryTargets(folder, {
+      forks: [
+        {
+          repo: "https://github.com/britzl/boom",
+          ref: "1.0.0",
+          authored: "fork/boom.boom.d.ts",
+          moduleId: "boom.boom",
+          namespace: "boom.boom",
+          apiDoc: "api-doc/boom.boom.json",
+          upstreamLua: ["source/upstream/boom.boom.lua"],
+        },
+      ],
+    });
+    return folder;
+  }
+
+  // `defold/extension-admob` and `lerg/extension-admob` share a repo name, each with
+  // its own native declaration.
+  function admobData(): string {
+    const folder = tmp();
+    const owners = [
+      ["defold", "admob"],
+      ["lerg", "lergadmob"],
+    ] as const;
+    for (const [owner, namespace] of owners) {
+      mkdirSync(join(folder, owner, "extension-admob"), { recursive: true });
+      writeFileSync(
+        join(folder, owner, "extension-admob", "admob.d.ts"),
+        `declare namespace ${namespace} {\n  const owner: "${owner}";\n}\n`,
+      );
+    }
+    writeLibraryTargets(folder, {
+      native: owners.map(([owner, namespace]) => ({
+        repo: `https://github.com/${owner}/extension-admob`,
+        ref: "1.0.0",
+        namespace,
+        manifestDir: "admob",
+        declaration: "admob.d.ts",
+        upstreamSource: "source/upstream/src/extension.cpp",
+      })),
+    });
+    return folder;
+  }
+
+  const archiveOf = (url: string, entries: string[]): Record<string, FakeArchive> => ({
+    [extensionArchiveKey(url)]: { entries, contents: {} },
+  });
+  const repoNameNotices = (notices: readonly string[] | undefined) =>
+    (notices ?? []).filter((notice) => notice.includes("shares its repo name"));
+
+  async function resolveOne(url: string, archive: string[], libraryDataDir: string) {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(archiveOf(url, archive)),
+      libraryDataDir,
+    });
+    expect(result.ok).toBe(true);
+    return { cwd, result };
+  }
+
+  test("a fork prints its upstream's declarations, noting once that its types may not fit", async () => {
+    const url = "https://github.com/someone/boom/archive/main.zip";
+
+    const { cwd, result } = await resolveOne(url, ["boom-main/boom/boom.lua"], boomData());
+
+    expect(readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "boom.boom.d.ts"), "utf8")).toBe(
+      BOOM,
+    );
+    expect(result.libraries.map(({ source }) => source)).toEqual(["britzl/boom"]);
+    expect(repoNameNotices(result.notices)).toEqual([
+      `${url} uses the library data of britzl/boom, which shares its repo name; its types may not fit`,
+    ]);
+  });
+
+  test("the library's own owner/repo matches with no notice", async () => {
+    const url = "https://github.com/Britzl/boom/archive/main.zip";
+
+    const { result } = await resolveOne(url, ["boom-main/boom/boom.lua"], boomData());
+
+    expect(result.libraries.map(({ source }) => source)).toEqual(["britzl/boom"]);
+    expect(repoNameNotices(result.notices)).toEqual([]);
+  });
+
+  test("a repo name two libraries share types the dependency with neither, and says so", async () => {
+    const url = "https://github.com/someone/extension-admob/archive/main.zip";
+
+    const { cwd, result } = await resolveOne(
+      url,
+      ["extension-admob-main/admob/ext.manifest"],
+      admobData(),
+    );
+
+    expect(result.extensions[0]?.typeSurface).toBe("none");
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "admob.d.ts"))).toBe(false);
+    expect(repoNameNotices(result.notices)).toEqual([
+      `${url} shares its repo name with defold/extension-admob and lerg/extension-admob, so no library data types it`,
+    ]);
+  });
+
+  test("one of those owner/repos gets that library's declaration alone", async () => {
+    const url = "https://github.com/defold/extension-admob/archive/main.zip";
+
+    const { cwd, result } = await resolveOne(
+      url,
+      ["extension-admob-main/admob/ext.manifest"],
+      admobData(),
+    );
+
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["admob"]);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "admob.d.ts"), "utf8")).toContain(
+      '"defold"',
+    );
+    expect(repoNameNotices(result.notices)).toEqual([]);
+  });
+});
+
+describe("unknownUpdateNames", () => {
+  test("names each declared dependency by its owner/repo", () => {
+    const cwd = tmp();
+    writeProject(
+      cwd,
+      "[project]\ndependencies#0 = https://github.com/Britzl/boom/archive/main.zip\n",
+    );
+
+    expect(unknownUpdateNames(cwd, ["britzl/boom"])).toBeNull();
+    expect(unknownUpdateNames(cwd, ["boom"])).toBe(
+      "defold-typescript resolve: --update names no dependency called boom; declared: britzl/boom",
+    );
+  });
+});
+
 describe("runResolve with a library data archive", () => {
   const DATA_URL = "https://example.test/library-data/archive/refs/heads/main.zip";
   const DEP_URL = "https://github.com/owner/mylib/archive/main.zip";
@@ -2963,7 +3140,10 @@ describe("runResolve with a library data archive", () => {
 
     expect(result.ok).toBe(true);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
+    expect(namespaceOf(cwd).libraryData).toEqual({
+      shared: ONE,
+      libraries: { "owner/mylib": ONE },
+    });
     expect(namespaceOf(cwd).extensions?.[DEP_URL]).toEqual({
       commit: "3".repeat(40),
       files: anyFiles,
@@ -2988,7 +3168,7 @@ describe("runResolve with a library data archive", () => {
       download: serving(dataArchive(TWO, declares("two"))).download,
     });
 
-    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: TWO });
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "owner/mylib": TWO });
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
   });
 
@@ -3070,7 +3250,7 @@ describe("runResolve with a library data archive", () => {
     const cwd = project();
     writeProjectLock(cwd, {
       extensions: {},
-      libraryData: { shared: ONE, libraries: { mylib: ONE } },
+      libraryData: { shared: ONE, libraries: { "owner/mylib": ONE } },
     });
     const held = writeZipArchive([{ name: `library-data-${ONE}/README.md`, text: "# docs" }], {
       comment: ONE,
@@ -3087,7 +3267,7 @@ describe("runResolve with a library data archive", () => {
       }),
     });
 
-    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: TWO });
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "owner/mylib": TWO });
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
     expect(result.notices?.[0]).toContain(ONE);
     expect(result.notices?.[0]).toContain(TWO);
@@ -3149,12 +3329,15 @@ describe("runResolve with a library data archive", () => {
         lane: "authored",
         archive: [{ name: "newlib-main/newlib/core.lua", text: "return {}\n" }],
         write: (root) => {
-          mkdirSync(join(root, "newlib", "fork"), { recursive: true });
+          mkdirSync(join(root, "owner/newlib", "fork"), { recursive: true });
           writeFileSync(
-            join(root, "newlib", "fork", "newlib.core.d.ts"),
+            join(root, "owner/newlib", "fork", "newlib.core.d.ts"),
             'declare module "newlib.core" {\n  export const answer_probe: number;\n}\n',
           );
-          writeUndocumentedUpstreamLua(join(root, "newlib"), "source/upstream/newlib.core.lua");
+          writeUndocumentedUpstreamLua(
+            join(root, "owner/newlib"),
+            "source/upstream/newlib.core.lua",
+          );
           writeLibraryTargets(root, {
             forks: [
               {
@@ -3175,9 +3358,9 @@ describe("runResolve with a library data archive", () => {
         lane: "native",
         archive: [{ name: "newlib-main/newlib/ext.manifest", text: "name: newlib\n" }],
         write: (root) => {
-          mkdirSync(join(root, "newlib"), { recursive: true });
+          mkdirSync(join(root, "owner/newlib"), { recursive: true });
           writeFileSync(
-            join(root, "newlib", "newlib.d.ts"),
+            join(root, "owner/newlib", "newlib.d.ts"),
             "declare namespace newlib {\n  const answer_probe: number;\n}\n",
           );
           writeLibraryTargets(root, {
@@ -3212,7 +3395,10 @@ describe("runResolve with a library data archive", () => {
           }),
         });
       await run(dataArchive(ONE, declares("one")));
-      expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
+      expect(namespaceOf(cwd).libraryData).toEqual({
+        shared: ONE,
+        libraries: { "owner/mylib": ONE },
+      });
       const printedBefore = readFileSync(surface(cwd), "utf8");
 
       writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\ndependencies#1 = ${NEW_URL}\n`);
@@ -3222,7 +3408,7 @@ describe("runResolve with a library data archive", () => {
 
       expect(namespaceOf(cwd).libraryData).toEqual({
         shared: ONE,
-        libraries: { mylib: ONE, newlib: TWO },
+        libraries: { "owner/mylib": ONE, "owner/newlib": TWO },
       });
       expect(readFileSync(printed(cwd), "utf8")).toContain("answer_probe");
       expect(readFileSync(surface(cwd), "utf8")).toBe(printedBefore);
@@ -3262,7 +3448,7 @@ describe("runResolve with a library data archive", () => {
     });
 
     expect(frozen.ok).toBe(true);
-    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: ONE });
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "owner/mylib": ONE });
     expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
   });
 
@@ -3328,7 +3514,7 @@ describe("runResolve with a library data archive", () => {
     const cwd = project();
     writeProjectLock(cwd, {
       extensions: { [DEP_URL]: DEP_PIN },
-      libraryData: { shared: ONE, libraries: { mylib: ONE } },
+      libraryData: { shared: ONE, libraries: { "owner/mylib": ONE } },
     });
     const without = packDataFolder(ONE, writeAuthoredLibraryData({ "other.core": "// other\n" }));
     const { download, requests } = serving(without);
@@ -3355,13 +3541,13 @@ describe("runResolve with a library data archive", () => {
         [DEP_URL]: DEP_PIN,
         [OTHER_URL]: DEP_PIN,
       },
-      libraryData: { shared: ONE, libraries: { mylib: ONE, other: TWO } },
+      libraryData: { shared: ONE, libraries: { "owner/mylib": ONE, "owner/other": TWO } },
     });
     const naming = (library: string, plain: string) => {
       const folder = writeAuthoredLibraryData({ [`${plain}.core`]: "// plain\n" });
-      mkdirSync(join(folder, library, "fork"), { recursive: true });
-      writeFileSync(join(folder, library, "fork", "clash.d.ts"), "// clash\n");
-      writeUndocumentedUpstreamLua(join(folder, library), "source/upstream/clash.lua");
+      mkdirSync(join(folder, "owner", library, "fork"), { recursive: true });
+      writeFileSync(join(folder, "owner", library, "fork", "clash.d.ts"), "// clash\n");
+      writeUndocumentedUpstreamLua(join(folder, "owner", library), "source/upstream/clash.lua");
       writeLibraryTargets(folder, {
         forks: [
           {
@@ -3466,12 +3652,77 @@ describe("runResolve with a library data archive", () => {
     });
 
     test("--update=<name> does this for that URL alone", async () => {
-      const { lock, statusOf } = await drifted(["mylib"]);
+      const { lock, statusOf } = await drifted(["owner/mylib"]);
 
       expect(lock[DEP_URL]).toEqual(FETCHED_PIN);
       expect(lock[OTHER_URL]).toEqual(OLD_PIN);
       expect(statusOf(DEP_URL)).toBe("match");
       expect(statusOf(OTHER_URL)).toBe("drift");
+    });
+  });
+
+  describe("--update names a dependency by its owner/repo", () => {
+    const FORK_URL = "https://github.com/someone/mylib/archive/main.zip";
+    const OTHER_URL = "https://github.com/owner/other/archive/main.zip";
+    const OTHER_DEPENDENCY = writeZipArchive(
+      [{ name: "other-main/other/core.lua", text: "return {}\n" }],
+      { comment: "4".repeat(40) },
+    );
+    const data = (commit: string, version: string) =>
+      packDataFolder(
+        commit,
+        writeAuthoredLibraryData({
+          "mylib.core": declares(version),
+          "other.core": `// ${version}\n`,
+        }),
+      );
+
+    async function pinnedAtOne(urls: readonly string[]) {
+      const cwd = tmp();
+      const cacheDir = tmp();
+      writeProject(
+        cwd,
+        `[project]\n${urls.map((url, index) => `dependencies#${index} = ${url}\n`).join("")}`,
+      );
+      const run = (commit: string, version: string, update?: readonly string[]) =>
+        runResolve({
+          cwd,
+          cacheDir,
+          libraryDataUrl: DATA_URL,
+          ...(update === undefined ? {} : { update }),
+          download: async (url) => ({
+            status: "ok",
+            bytes:
+              url === DATA_URL
+                ? data(commit, version)
+                : url === OTHER_URL
+                  ? OTHER_DEPENDENCY
+                  : DEPENDENCY,
+          }),
+        });
+      await run(ONE, "one");
+      return { cwd, run };
+    }
+
+    test("an owner/repo moves that library's pin alone", async () => {
+      const { cwd, run } = await pinnedAtOne([DEP_URL, OTHER_URL]);
+
+      await run(TWO, "two", ["owner/mylib"]);
+
+      expect(namespaceOf(cwd).libraryData?.libraries).toEqual({
+        "owner/mylib": TWO,
+        "owner/other": ONE,
+      });
+    });
+
+    test("a fork's owner/repo moves the pin of the library it reads", async () => {
+      const { cwd, run } = await pinnedAtOne([FORK_URL]);
+      expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "owner/mylib": ONE });
+
+      await run(TWO, "two", ["someone/mylib"]);
+
+      expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "owner/mylib": TWO });
+      expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
     });
   });
 
@@ -3494,7 +3745,10 @@ describe("runResolve with a library data archive", () => {
     expect(result.ok).toBe(true);
     expect(result.warnings.filter((line) => line.includes(DATA_URL))).toHaveLength(1);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
+    expect(namespaceOf(cwd).libraryData).toEqual({
+      shared: ONE,
+      libraries: { "owner/mylib": ONE },
+    });
   });
 
   test("a project with no dependencies fetches nothing and records nothing", async () => {
@@ -4044,7 +4298,7 @@ describe("runResolve moves moving URLs to commits", () => {
         [OTHER_AT_ONE]: archive(`other-${ONE}`, ONE),
       });
 
-      await run(project, download, { update: ["mylib"] });
+      await run(project, download, { update: ["owner/mylib"] });
 
       expect(gameProject(project.cwd)).toBe(
         `[project]\ndependencies#0 = ${AT_TWO}\ndependencies#1 = ${OTHER_AT_ONE}\n`,
@@ -4240,7 +4494,7 @@ describe("runResolve reports each library's status", () => {
     reviews: readonly LibraryReview[] | null,
     folder = join(tmp(), "0.55.0"),
   ): string {
-    const library = join(folder, "statuslib");
+    const library = join(folder, "owner/statuslib");
     mkdirSync(join(library, "fork"), { recursive: true });
     if (lane === "fork") {
       writeFileSync(
@@ -4292,7 +4546,7 @@ describe("runResolve reports each library's status", () => {
       });
     }
     if (reviews !== null) {
-      writeReviewedJson(folder, "statuslib", { ref: "1.0.0", reviews: [...reviews] });
+      writeReviewedJson(folder, "owner/statuslib", { ref: "1.0.0", reviews: [...reviews] });
     }
     return folder;
   }
@@ -4380,16 +4634,20 @@ describe("runResolve reports each library's status", () => {
     const url = "https://github.com/paweljarosz/lua-immutable/archive/v1.1.zip";
     const own = "immutable/immutable.lua";
     const source = readFileSync(
-      join(LIBRARY_DATA_DIR, "lua-immutable", "source", "immutable", own),
+      join(LIBRARY_DATA_DIR, "paweljarosz/lua-immutable", "source", "immutable", own),
       "utf8",
     );
     const zipOf = (text: string) =>
       writeZipArchive([{ name: `lua-immutable-1.1/${own}`, text }], { comment: COMMIT_B });
     const folder = join(tmp(), "0.55.0");
-    cpSync(join(LIBRARY_DATA_DIR, "lua-immutable"), join(folder, "lua-immutable"), {
-      recursive: true,
-    });
-    writeReviewedJson(folder, "lua-immutable", {
+    cpSync(
+      join(LIBRARY_DATA_DIR, "paweljarosz/lua-immutable"),
+      join(folder, "paweljarosz/lua-immutable"),
+      {
+        recursive: true,
+      },
+    );
+    writeReviewedJson(folder, "paweljarosz/lua-immutable", {
       ref: "v1.1",
       reviews: reviewsOf([zipOf(source), COMMIT_A]),
     });
@@ -4480,11 +4738,11 @@ describe("runResolve reports each library's status", () => {
       "first.core": 'declare module "first.core" {}\n',
       "second.core": 'declare module "second.core" {}\n',
     });
-    writeReviewedJson(folder, "first", {
+    writeReviewedJson(folder, "owner/first", {
       ref: "1.0.0",
       reviews: reviewsOf([zipOf("first", COMMIT_A, luaModule(1)), COMMIT_A]),
     });
-    writeReviewedJson(folder, "second", {
+    writeReviewedJson(folder, "owner/second", {
       ref: "1.0.0",
       reviews: reviewsOf([zipOf("second", COMMIT_C, luaModule(1)), COMMIT_C]),
     });
@@ -4533,7 +4791,7 @@ describe("runResolve reports each library's status", () => {
         "fork",
         reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]),
       );
-      const library = join(dirname(folder), "0.60.0", "statuslib");
+      const library = join(dirname(folder), "0.60.0", "owner/statuslib");
       mkdirSync(library, { recursive: true });
       write(library);
       return folder;
@@ -4730,14 +4988,14 @@ describe("runResolve reports each library's status", () => {
         cwd,
         cacheDir: tmp(),
         libraryDataDir,
-        update: ["statuslib"],
+        update: ["owner/statuslib"],
         download,
       });
       const other = await runResolve({
         cwd,
         cacheDir: tmp(),
         libraryDataDir,
-        update: ["another"],
+        update: ["owner/another"],
         download,
       });
 

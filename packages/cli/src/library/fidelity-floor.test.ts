@@ -303,7 +303,7 @@ describe("raiseCommittedFloors", () => {
           upstreamLua: ["source/upstream/fork.lua"],
         },
       ],
-      floors: { lib: { "lib.fork": { callable: 0.5, field: 1 }, "lib.main": 0.5 } },
+      floors: { "owner/lib": { "lib.fork": { callable: 0.5, field: 1 }, "lib.main": 0.5 } },
     });
     mkdirSync(join(root, "fidelity", "openapi"), { recursive: true });
     const report = (coverage: number) =>
@@ -319,7 +319,7 @@ describe("raiseCommittedFloors", () => {
       const log = raiseCommittedFloors(join(root, "data", "0.1.0"), root);
 
       const library = JSON.parse(
-        readFileSync(join(root, "data", "0.1.0", "lib", "library.json"), "utf8"),
+        readFileSync(join(root, "data", "0.1.0", "owner/lib", "library.json"), "utf8"),
       );
       expect(library.repo).toBe("https://github.com/owner/lib");
       expect(library.forks).toHaveLength(1);

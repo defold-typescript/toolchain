@@ -1,0 +1,289 @@
+{
+  "info": {
+    "namespace": "voronoi",
+    "brief": "Creates bounded two-dimensional Voronoi diagrams using jc_voronoi 0.10.0.",
+    "description": "Creates bounded two-dimensional Voronoi diagrams using jc_voronoi 0.10.0."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.create",
+      "description": "Creates a reusable Voronoi diagram context for a rectangular area.",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "Width of the diagram bounds in coordinate units.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Height of the diagram bounds in coordinate units.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "diagram",
+          "doc": "Diagram context passed to the other voronoi functions.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "examples": "<p>local diagram = voronoi.create(800, 600)</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.destroy",
+      "description": "Releases a diagram context. Do not use the context after destroying it.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Diagram context returned by voronoi.create().",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<p>voronoi.destroy(diagram)</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.generate",
+      "description": "Replaces the diagram with sites generated from a flat list of x/y coordinates. Duplicate sites may be removed.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Diagram context returned by voronoi.create().",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "points",
+          "doc": "Flat coordinate array in the form { x1, y1, x2, y2, ... }.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<p>voronoi.generate(diagram, { 100, 100, 400, 300, 700, 500 })</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.relax",
+      "description": "Moves every input point toward the average of its site and cell vertices, then regenerates the diagram.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<p>voronoi.relax(diagram)</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_sites",
+      "description": "Returns every generated site. A site contains p, index, boundary, edges, and the convenience field area. The p field is { x, y }; index is the 1-based original input index; boundary reports whether the cell touches the clipping boundary; and edges contains counter-clockwise edge tables.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "sites",
+          "doc": "Array of site tables.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "examples": "<p>for _, site in ipairs(voronoi.get_sites(diagram)) do pprint(site) end</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_num_sites",
+      "description": "Returns diagram.numsites, the number of unique generated sites. This may be smaller than the input count when points are duplicated.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of unique generated sites.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_site",
+      "description": "Returns the generated site for a 1-based original input index. The site has the same fields as entries returned by get_sites().",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "1-based original input point index.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "site",
+          "doc": "Site table for the requested input point.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "examples": "<p>local site = voronoi.get_site(diagram, 1)</p>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_num_vertices",
+      "description": "Returns diagram.numvertices, the number of unique Voronoi vertices.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of unique vertices.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_vertices",
+      "description": "Returns all unique Voronoi vertices as { x, y } point tables. Edge vertex indices refer to this array.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "vertices",
+          "doc": "Array of point tables.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_edges",
+      "description": "Returns every diagram edge. Each edge contains sites, pos, and vertices. sites contains two 1-based input indices, with 0 denoting the clipping boundary. pos contains two { x, y } endpoints. vertices contains two 1-based indices into get_vertices(), with 0 denoting an invalid endpoint.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "edges",
+          "doc": "Array of edge tables.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_delauney_edges",
+      "description": "Returns the Delauney edges produced by the upstream jcv_delauney iterator. Each entry contains edge, sites, and pos fields matching jcv_delauney_edge. The upstream spelling \"delauney\" is preserved in the Lua function name.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "edges",
+          "doc": "Array of Delauney edge tables.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "voronoi.get_debug_image",
+      "description": "Rasterizes the current diagram into an RGB buffer matching the context dimensions.",
+      "parameters": [
+        {
+          "name": "diagram",
+          "doc": "Generated diagram context.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "image",
+          "doc": "Buffer with a uint8 rgb stream containing three components per pixel.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "examples": "<p>resource.set_texture(texture, texture_header, voronoi.get_debug_image(diagram))</p>"
+    }
+  ]
+}

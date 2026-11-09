@@ -1,0 +1,26 @@
+{
+  "ref": "v.1.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "43412de571fc880849f1b58a0ef52d65ca71e6c8"
+      ],
+      "api": "fa509ea384f90f89e34970695b6b7ef94b0f5fb4983dfc1865c40d806ff28dc4",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "07f418a03caca7a12916465fc85eaeb0ba1cae829aec04028f6e4c1794f94c46",
+      "members": {
+        "bzAnim/bzLibrary.lua#animate": "dadb0fff91e602df",
+        "bzAnim/bzLibrary.lua#animateSequence": "dadb0fff91e602df",
+        "bzAnim/bzLibrary.lua#cancel": "6fceb44bad4c9a3a",
+        "bzAnim/bzLibrary.lua#info": "53afa49906788416",
+        "bzAnim/bzLibrary.lua#isReady": "53afa49906788416",
+        "bzAnim/bzLibrary.lua#registerController": "78c25213819c77bf",
+        "bzAnim/bzLibrary.lua#setDebugLevel": "4be6961ad6fe90ef",
+        "bzAnim/bzLibrary.lua#setMaxPoints": "c4db3512e6099b7c",
+        "bzAnim/bzLibrary.lua#unregisterController": "78c25213819c77bf",
+        "bzAnim/easing_lookup.lua": "3c03631153b2f4f5"
+      }
+    }
+  ]
+}

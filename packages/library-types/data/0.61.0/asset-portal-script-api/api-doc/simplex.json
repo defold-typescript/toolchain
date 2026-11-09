@@ -1,0 +1,207 @@
+{
+  "info": {
+    "namespace": "simplex",
+    "brief": "Provides functions for generating Simplex noise.",
+    "description": "Provides functions for generating Simplex noise."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "simplex.seed",
+      "description": "Sets the seed for the noise generator.",
+      "parameters": [
+        {
+          "name": "seed",
+          "doc": "The integer seed value.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "simplex.noise2",
+      "description": "Computes 2D Simplex noise, optionally with fractal parameters.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The x-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "The y-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Number of noise layers (must be > 0). Defaults to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Amplitude decrease per octave. Defaults to 0.5.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Frequency increase per octave. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "noise_value",
+          "doc": "The calculated noise value. Output range is [0, 1].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "simplex.noise3",
+      "description": "Computes 3D Simplex noise, optionally with fractal parameters.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The x-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "The y-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "The z-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Number of noise layers (must be > 0). Defaults to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Amplitude decrease per octave. Defaults to 0.5.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Frequency increase per octave. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "noise_value",
+          "doc": "The calculated noise value. Output range is [0, 1].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "simplex.noise4",
+      "description": "Computes 4D Simplex noise, optionally with fractal parameters.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The x-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "The y-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "The z-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "w",
+          "doc": "The w-coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Number of noise layers (must be > 0). Defaults to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Amplitude decrease per octave. Defaults to 0.5.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Frequency increase per octave. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "noise_value",
+          "doc": "The calculated noise value. Output range is [0, 1].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

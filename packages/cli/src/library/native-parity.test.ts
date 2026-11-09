@@ -523,7 +523,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     const entry: NativeTarget = {
       ...shipped,
       namespace: "seal",
-      declaration: "fixture-native/fork/seal.d.ts",
+      declaration: "example/fixture-native/fork/seal.d.ts",
     };
     const source = shippedDeclaration(FIXTURE_DATA_DIR, shipped);
     const renamed = source.replaceAll('"stamp"', '"seal"');
@@ -589,7 +589,7 @@ describe("buildNativeParity over methods registered in several files", () => {
   ].join("\n");
 
   const SYNTHETIC: NativeTarget = {
-    repo: "https://example.invalid/m",
+    repo: "https://example.invalid/owner/m",
     ref: "v1",
     license: "MIT",
     namespace: "m",

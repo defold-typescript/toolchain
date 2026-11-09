@@ -185,22 +185,24 @@ describe("runExportTypes over the committed corpus", () => {
     }
   });
 
-  test("a dependency URL and the bare repo name export the same files", async () => {
+  test("an owner/repo name and its dependency URL export the same files", async () => {
     const target = firstNativeTarget();
     const byName = tmp();
     const byUrl = tmp();
 
-    await runExportTypes({
+    const named = await runExportTypes({
       libraryDataDir: LIBRARY_DATA_DIR,
       library: target.sourceId,
       cwd: byName,
     });
-    await runExportTypes({
+    const linked = await runExportTypes({
       libraryDataDir: LIBRARY_DATA_DIR,
-      library: `https://github.com/owner/${target.sourceId}/archive/refs/tags/v1.0.0.zip`,
+      library: `https://github.com/${target.sourceId}/archive/refs/tags/v1.0.0.zip`,
       cwd: byUrl,
     });
 
+    expect(target.sourceId).toContain("/");
+    expect(linked.sourceId).toBe(named.sourceId);
     expect(filesUnder(byUrl)).toEqual(filesUnder(byName));
     for (const file of filesUnder(byName)) {
       expect(readFileSync(join(byUrl, file), "utf8")).toBe(
@@ -215,12 +217,13 @@ describe("runExportTypes over the committed corpus", () => {
       const cwd = tmp();
       await runExportTypes({ libraryDataDir: LIBRARY_DATA_DIR, library: sourceId, cwd });
 
-      const entries = filesUnder(cwd).map((file) => `${sourceId}-main/${file}`);
+      const wrapper = `${sourceId.split("/").pop()}-main/`;
+      const entries = filesUnder(cwd).map((file) => `${wrapper}${file}`);
       const located = locateShippedDeclarations(entries);
       expect(located).toEqual([...entries].sort());
       const files = located.map((entry) => ({
         entry,
-        contents: readFileSync(join(cwd, entry.slice(`${sourceId}-main/`.length)), "utf8"),
+        contents: readFileSync(join(cwd, entry.slice(wrapper.length)), "utf8"),
       }));
       expect(selectShippedDeclarations(files)).toEqual(files);
       const messages = [...checkShippedDeclarations(files, typesRoot()).values()].flat();
@@ -233,7 +236,7 @@ describe("runExportTypes refusals", () => {
   const BAD_ONE = "declare namespace bad {\n  const h: hash;\n}\n";
   const BAD_TWO = "declare namespace bad {\n  const h: hash;\n  const g: hash;\n}\n";
   const CHECK_FAILURE =
-    "curated types for defold-bad were not exported: types/ would not compile against @defold-typescript/types: ";
+    "curated types for owner/defold-bad were not exported: types/ would not compile against @defold-typescript/types: ";
 
   function badCorpus(contents: string): string {
     return writeCorpus({
@@ -320,7 +323,7 @@ describe("runExportTypes refusals", () => {
     });
 
     await expect(runExportTypes({ library: "dup", cwd, libraryDataDir })).rejects.toThrow(
-      "two curated files for dup are both named dup.d.ts",
+      "two curated files for owner/dup are both named dup.d.ts",
     );
     expect(readdirSync(cwd)).toEqual([]);
   });
@@ -384,7 +387,7 @@ describe("runExportTypes over an existing types folder", () => {
   // Reads `cwd` back the way `resolve` reads a release archive of it: every
   // `written` file survives the selection, and the folder compiles.
   function expectReadsBackAsShipped(cwd: string, sourceId: string, written: readonly string[]) {
-    const wrapper = `${sourceId}-main/`;
+    const wrapper = `${sourceId.split("/").pop()}-main/`;
     const located = locateShippedDeclarations(filesUnder(cwd).map((file) => `${wrapper}${file}`));
     const files = located.map((entry) => ({
       entry,
@@ -465,7 +468,7 @@ describe("runExportTypes over an existing types folder", () => {
       runExportTypes({ library: "defold-glob", cwd, libraryDataDir }),
     );
     expect(message).toStartWith(
-      "curated types for defold-glob were not exported: types/ would not compile against @defold-typescript/types: types/broken.d.ts(2,",
+      "curated types for owner/defold-glob were not exported: types/ would not compile against @defold-typescript/types: types/broken.d.ts(2,",
     );
     expect(snapshot(cwd)).toEqual(before);
   });
@@ -485,7 +488,7 @@ describe("runExportTypes over an existing types folder", () => {
 
     const result = await runExportTypes({ library: "modlib", cwd, libraryDataDir });
 
-    expect(result).toEqual({ sourceId: "modlib", written: ["types/modlib.d.ts"] });
+    expect(result).toEqual({ sourceId: "owner/modlib", written: ["types/modlib.d.ts"] });
     expect(readFileSync(join(cwd, "types", "broken.d.ts"), "utf8")).toBe(BROKEN);
   });
 
@@ -535,7 +538,7 @@ describe("runExportTypes over an existing types folder", () => {
 
       const result = await runExportTypes({ library: "defold-glob", cwd, libraryDataDir });
 
-      expect(result).toEqual({ sourceId: "defold-glob", written: ["types/GLOB.d.ts"] });
+      expect(result).toEqual({ sourceId: "owner/defold-glob", written: ["types/GLOB.d.ts"] });
       expect(filesUnder(cwd)).toEqual(["types/GLOB.d.ts", "types/other.d.ts"]);
       expect(readFileSync(join(cwd, "types", "GLOB.d.ts"), "utf8")).toBe(GLOB_CURATED);
       expect(readFileSync(join(cwd, "types", "other.d.ts"), "utf8")).toBe(OTHER);

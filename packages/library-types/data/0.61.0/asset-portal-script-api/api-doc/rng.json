@@ -1,0 +1,31 @@
+{
+  "info": {
+    "namespace": "rnd",
+    "brief": "Factory of random number generator instances (non-global) for specific algorithms. Supports pcg32",
+    "description": "Factory of random number generator instances (non-global) for specific algorithms. Supports pcg32"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "rnd.pcg32",
+      "description": "Creates a pcg32 instance. Can specify init_state and init_seq to start with a seed, or nothing to get a random one",
+      "parameters": [
+        {
+          "name": "init_state",
+          "doc": "init_state is the starting state for the PCG32, you can pass any 64-bit value.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init_seq",
+          "doc": "init_seq selects the output sequence for the PCG32, you can pass any 64-bit value, although only the low 63 bits are significant.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

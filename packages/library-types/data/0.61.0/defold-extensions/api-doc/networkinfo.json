@@ -1,0 +1,32 @@
+{
+  "info": {
+    "namespace": "networkinfo",
+    "brief": "Functions to get information about the network configuration of the device.",
+    "description": "Functions to get information about the network configuration of the device."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "networkinfo.get_proxy_info",
+      "description": "Get information about proxies for a specific url.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The url to get proxy configurations for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "proxies",
+          "doc": "A list of proxies to try in order. Each proxy has three values\n  type: direct (no proxy), http, socks\n  host: proxy url\n  port: proxy port number\n",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

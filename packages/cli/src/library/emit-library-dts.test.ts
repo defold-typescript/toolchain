@@ -905,7 +905,7 @@ test("the printed declaration carries an overridden drag callback's full six-par
       },
     ],
   });
-  const source = join(dataDir, "swipe", "source", "swipe", "swipe");
+  const source = join(dataDir, "example/swipe", "source", "swipe", "swipe");
   mkdirSync(source, { recursive: true });
   writeFileSync(
     join(source, "swipe.lua"),

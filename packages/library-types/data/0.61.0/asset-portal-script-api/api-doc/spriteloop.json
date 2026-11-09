@@ -1,0 +1,577 @@
+{
+  "info": {
+    "namespace": "spriteloop",
+    "brief": "SpriteLoop component playback API.",
+    "description": "SpriteLoop component playback API."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.play_anim",
+      "description": "Plays an animation on a SpriteLoop component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "animation_id",
+          "doc": "Animation id or name to play. Exact ids are matched before names.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional table with loop and emit_events booleans. emit_events controls the full playback session and defaults to true.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "played",
+          "doc": "True when the animation id or name exists and playback started.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.stop_anim",
+      "description": "Stops playback on a SpriteLoop component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_time",
+      "description": "Sets playback time in seconds.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "seconds",
+          "doc": "Playback time.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional table with emit_events. Destination-frame events emit by default.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_frame",
+      "description": "Sets the current frame index.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "frame_index",
+          "doc": "Frame index.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional table with emit_events. Destination-frame events emit by default.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.consume_events",
+      "description": "Returns and clears SpriteLoop animation events collected since the previous call.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "events",
+          "doc": "Array of event tables with event_name, name, data, animation_id, animation_name, frame, and source_frame.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.listen",
+      "description": "Registers a Lua callback for a SpriteLoop animation event on one component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "event_name",
+          "doc": "Event name to listen for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Function called with the event table when dispatch_events consumes a matching event.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "listener_id",
+          "doc": "Numeric listener id that can be passed to unlisten.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.unlisten",
+      "description": "Removes SpriteLoop event listeners for one component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "listener_or_event_name",
+          "doc": "Optional listener id or event name. Omit to remove all listeners for the component.",
+          "types": [
+            "number",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "removed",
+          "doc": "True when one or more listener entries existed.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.dispatch_events",
+      "description": "Consumes queued events and calls matching Lua listeners registered with listen.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "events",
+          "doc": "Array of consumed event tables.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_playback_rate",
+      "description": "Sets playback rate multiplier.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "rate",
+          "doc": "Playback rate multiplier.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_visible",
+      "description": "Sets SpriteLoop component visibility.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "visible",
+          "doc": "Visibility state.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_tint",
+      "description": "Sets a whole-character runtime RGB tint multiplier.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "Red multiplier clamped to 0..1.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "Green multiplier clamped to 0..1.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "Blue multiplier clamped to 0..1.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.clear_tint",
+      "description": "Resets the whole-character runtime RGB tint multiplier to white.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_skin",
+      "description": "Sets the active runtime skin.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "skin_id",
+          "doc": "Skin id or name. Exact ids are matched before names.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "True when the skin id or name exists.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.set_variant",
+      "description": "Overrides one part variant. Pass \"default\" to clear the part's manual variant override.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "part_id",
+          "doc": "Part id, key, or name. Exact ids are matched before keys and names.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "variant_id",
+          "doc": "Variant id, key, or name for the selected part. Exact ids are matched before keys and names. If a real variant matches \"default\", it is selected instead of clearing the override.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "True when the part and variant resolve to a matching pair, or when \"default\" successfully clears the override.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.clear_variant",
+      "description": "Clears one part variant override.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "part_id",
+          "doc": "Part id, key, or name. Exact ids are matched before keys and names.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "True when the part id or name exists.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.clear_variants",
+      "description": "Clears all part variant overrides.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.get_part_transform",
+      "description": "Returns the current resolved component-local transform of an image or Empty Part.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "part_id",
+          "doc": "Part id, key, or name. Exact ids are matched before keys and names.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional origin setting. Use origin \"pivot\" (default) or \"center\" for the transformed base-image center.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "transform",
+          "doc": "Table with position, rotation, scale, skew, and opacity, or nil when the part is unavailable.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.debug_destroy_component",
+      "description": "Debug helper that releases one SpriteLoop component runtime instance.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "destroyed",
+          "doc": "True when a live component instance was destroyed.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.get_info",
+      "description": "Gets debug playback and package information.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "SpriteLoop component URL.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Package and playback information, including pending_event_count, max_pending_events, and dropped_event_count.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spriteloop.get_cache_info",
+      "description": "Gets shared package and texture cache diagnostics.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Cache entries, reference counts, texture counts, and approximate texture bytes.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

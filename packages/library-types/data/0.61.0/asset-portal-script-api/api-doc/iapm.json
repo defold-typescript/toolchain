@@ -1,0 +1,350 @@
+{
+  "info": {
+    "namespace": "iapm",
+    "brief": "Functions and constants for doing Myket in-app purchases.",
+    "description": "Functions and constants for doing Myket in-app purchases."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "iapm.buy",
+      "description": "Start a purchase for a Myket one-time product.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "product to buy",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iapm_listener(self, transaction, error)\n    if error == nil then\n      -- purchase is successful.\n      assert(transaction.verified)\n      print(transaction.date)\n      -- required if auto finish transactions is disabled in project settings\n      if (transaction.state == iapm.TRANS_STATE_PURCHASED) then\n        -- do server-side verification of purchase here..\n        iapm.finish(transaction)\n      end\n    else\n      print(error.error, error.reason)\n    end\n  end\n\n  function init(self)\n      iapm.set_listener(iapm_listener)\n      iapm.buy(\"my_iap_id\")\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.subscribe",
+      "description": "Start a purchase for a Myket subscription. The result is delivered to the listener registered with set_listener. Subscriptions are never consumed, regardless of the auto_finish_transactions setting. An error is delivered when the installed Myket client does not support subscriptions.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "subscription product identifier",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  function init(self)\n      iapm.set_listener(function(self, transaction, error)\n          if not error and transaction.type == \"subs\" then\n              print(\"Subscription active:\", transaction.ident)\n          end\n      end)\n      iapm.subscribe(\"monthly_vip\")\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.finish",
+      "description": "Consume a product transaction. Call this only for consumable products and only after content delivery succeeds. Calling iapm.finish is required for a consumable transaction if `auto_finish_transactions` is disabled in project settings. Calling this function with `auto_finish_transactions` enabled is ignored and a warning is printed. The `transaction.state` field must equal `iapm.TRANS_STATE_PURCHASED`. Calling this for a transaction whose `type` is `subs` is ignored.",
+      "parameters": [
+        {
+          "name": "transaction",
+          "doc": "transaction table parameter as supplied in listener callback",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.list",
+      "description": "Get details for the requested Myket one-time products and subscriptions.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "table (array) of identifiers to get products from",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "result callback taking the following parameters",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "products",
+              "doc": "a table keyed by product identifier describing the available Myket products.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "ident",
+                  "doc": "The product identifier.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "type",
+                  "doc": "Product type, either `inapp` or `subs`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "title",
+                  "doc": "The product title.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "description",
+                  "doc": "The product description.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "price",
+                  "doc": "The price of the product.",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "price_string",
+                  "doc": "The price of the product, as a formatted string (amount and currency symbol).",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "currency_code",
+                  "doc": "The currency code, this reflects the merchant's locale, instead of the user's.",
+                  "types": [
+                    "string"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. - `error` (the error message)",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iapm_callback(self, products, error)\n    if error == nil then\n      for k,p in pairs(products) do\n        -- present the product\n        print(p.title)\n        print(p.description)\n      end\n    else\n      print(error.error)\n    end\n  end\n\n  function init(self)\n      iapm.list({\"my_iap_id\"}, iapm_callback)\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.restore",
+      "description": "Restore owned, unconsumed products and active subscriptions. Results are sent to the listener registered with set_listener. Subscriptions are never consumed.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "value is `true` if current store supports handling restored transactions, otherwise `false`.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.set_public_key",
+      "description": "Set or replace the Base64-encoded Myket application public key used for local SHA1withRSA purchase-signature verification. Call this before set_listener, buy, or restore. Prefer the `iap.public_key` game.project setting so the key is available while pending purchases are processed.",
+      "parameters": [
+        {
+          "name": "public_key",
+          "doc": "The application public key from the Myket developer panel.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "true when the value is a valid Base64-encoded RSA public key; false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapm.set_listener",
+      "description": "Set the callback function to receive purchase transaction events.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "listener callback function. Pass an empty function if you no longer wish to receive callbacks.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "transaction",
+              "doc": "a table describing the transaction.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "ident",
+                  "doc": "The product identifier.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "type",
+                  "doc": "Transaction product type, either `inapp` or `subs`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "state",
+                  "doc": "The transaction state. One of the following\n- `iapm.TRANS_STATE_FAILED`\n- `iapm.TRANS_STATE_PURCHASED`\n- `iapm.TRANS_STATE_PURCHASING`\n- `iapm.TRANS_STATE_RESTORED`\n- `iapm.TRANS_STATE_UNVERIFIED`",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "date",
+                  "doc": "The date and time for the transaction.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "trans_ident",
+                  "doc": "The transaction identifier. This field is only set when `state` is `TRANS_STATE_RESTORED`, `TRANS_STATE_UNVERIFIED` or `TRANS_STATE_PURCHASED`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "receipt",
+                  "doc": "The transaction receipt. This field is only set when `state` is `TRANS_STATE_PURCHASED` or `TRANS_STATE_UNVERIFIED`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "signature",
+                  "doc": "The Myket signature for the raw receipt. It has already passed local verification; verify it again on a trusted server before granting valuable content.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "verified",
+                  "doc": "true when the receipt signature passed local verification. Transactions with an invalid signature are rejected and delivered as an error instead.",
+                  "types": [
+                    "boolean"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. `error` - the error message. `reason` - the reason for the error, value can be one of the following constants\n- `iapm.REASON_UNSPECIFIED`\n- `iapm.REASON_USER_CANCELED`",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.REASON_UNSPECIFIED",
+      "brief": "unspecified error reason",
+      "description": "unspecified error reason",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.REASON_USER_CANCELED",
+      "brief": "user canceled reason",
+      "description": "user canceled reason",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.TRANS_STATE_FAILED",
+      "brief": "transaction failed state",
+      "description": "transaction failed state",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.TRANS_STATE_PURCHASED",
+      "brief": "transaction purchased state",
+      "description": "transaction purchased state",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.TRANS_STATE_PURCHASING",
+      "brief": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent.",
+      "description": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.TRANS_STATE_RESTORED",
+      "brief": "transaction restored state This is only available on store providers supporting restoring purchases.",
+      "description": "transaction restored state This is only available on store providers supporting restoring purchases.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapm.TRANS_STATE_UNVERIFIED",
+      "brief": "transaction unverified state, requires verification of purchase",
+      "description": "transaction unverified state, requires verification of purchase",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

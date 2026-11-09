@@ -1,0 +1,453 @@
+{
+  "info": {
+    "namespace": "mpeg",
+    "brief": "Functions to play MPEG1 videos",
+    "description": "Functions to play MPEG1 videos"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.open",
+      "description": "Open a video for decoding. MPEG1 (.mpg) or AV1 in an IVF file (.ivf), recognized by its header.",
+      "parameters": [
+        {
+          "name": "video",
+          "doc": "The video data as a buffer or string. Ownership of the buffer is not transferred.",
+          "types": [
+            "buffer",
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional video settings. `loop` loops the video. `format` is \"rgb\" (default, frames converted to RGB on the CPU) or \"yuv\" (packed YUV planes for the video_yuv shader). `decode_ahead` (AV1, default true) decodes on a worker thread into a queue. `threads` (AV1) sets the decoder threads, by default 1 up to 1080p, 2 up to 1440p and 4 above. `audio` (MPEG1) makes this decoder decode the audio track too, but the samples are not played - use decode_audio() and a sound component for sound.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "handle",
+          "doc": "Returns video handle. Use in subsequent calls.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "err",
+          "doc": "Error message if video failed to open.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.close",
+      "description": "Close an opened video. This will release an memory allocated by the videoplayer.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to close.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.decode",
+      "description": "Advance the internal timer by seconds and decode video/audio up to this time.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to decode.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seconds",
+          "doc": "Number of seconds to advance.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "has_new_frame",
+          "doc": "Returns true if decode produced at least one new video frame.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.write",
+      "description": "Write data to the internal stream buffer of a video started with stream(). Use the `streaming_buffer_bytes_remaining` and `streaming_buffer_capacity` to determine how much data to write to the buffer.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to write to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "Bytes with stream data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "bytes_written",
+          "doc": "The number of written bytes or nil if writing failed.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error message if writing failed for some reason.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.seek",
+      "description": "Seek to the specified time. Will seek to the last intra frame just before the desired time.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to seek on.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "time",
+          "doc": "Time to seek to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seek_exact",
+          "doc": "If value is true the function will seek to the exact time, otherwise it will seek to the last intra frame just before the desired time. Exact seeking can be slow, because all frames up to the seeked one have to be decoded on top of the previous intra frame. Defaults to false.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.rewind",
+      "description": "Rewind video to the beginning.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to rewind.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_frame",
+      "description": "Get the video frame buffer. The video frame buffer will be updated when decode() is called and enough data has been decoded to produce a frame.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to get frame buffer for.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "frame",
+          "doc": "The decoded video frame buffer or nil if no video frame buffer is available. The ownership of the buffer is not transferred to the caller.",
+          "types": [
+            "buffer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_frame_serial",
+      "description": "Get a monotonically increasing serial number for decoded video frames.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to query.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "serial",
+          "doc": "The serial number of the latest decoded frame.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_time",
+      "description": "Get the current playback time of a video. Same as get_info().time, without creating a table.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to query.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "time",
+          "doc": "Current playback time in seconds.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.decode_audio",
+      "description": "Decode the whole MPEG audio track of a video, or of an audio-only MPEG file, into a 16-bit stereo PCM WAV file in memory, ready for resource.set_sound() or resource.create_sound_data(). Uses its own decoder, so an opened video handle is not affected.",
+      "parameters": [
+        {
+          "name": "video",
+          "doc": "The video data as a buffer or string.",
+          "types": [
+            "buffer",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "wav",
+          "doc": "The WAV file, or nil if the video has no audio track.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "info",
+          "doc": "Table with `samplerate`, `channels`, `duration` (exact, in seconds) and `decode_ms`, or an error message if wav is nil.",
+          "types": [
+            "table",
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_info",
+      "description": "Get information about an opened video.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video to get info for.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Video information",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "codec",
+              "doc": "\"mpeg1\" or \"av1\".",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "width",
+              "doc": "Video width.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "height",
+              "doc": "Video height.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "bytes_per_pixel",
+              "doc": "The number of bytes per pixel.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "framerate",
+              "doc": "The frame rate (frames per second) of the video stream.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "samplerate",
+              "doc": "The sample rate (samples per second) of the audio stream.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "time",
+              "doc": "Current playback time in seconds.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "duration",
+              "doc": "Estimated duration in seconds - the span between the first and the last timestamp in the file. Accurate on long videos, can be short by up to a second on short clips.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "convert_ms",
+              "doc": "Time the last frame took to convert to RGB or copy as YUV planes, in milliseconds.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "format",
+              "doc": "\"rgb\" or \"yuv\", as passed to open().",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "texture_width",
+              "doc": "Width of the frame buffer. For \"yuv\" it is larger than the video.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "texture_height",
+              "doc": "Height of the frame buffer. For \"yuv\" it is larger than the video.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "matrix",
+              "doc": "\"bt601\" or \"bt709\": the YUV to RGB matrix of the video. For AV1 known after the first frame.",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "full_range",
+              "doc": "Whether the video uses full range YUV instead of limited (studio) range.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "threads",
+              "doc": "AV1 only - number of decoder threads.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "queue_frames",
+              "doc": "AV1 only - size of the decode-ahead queue, 0 when decoding synchronously.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "decode_ms",
+              "doc": "AV1 only - how long the last frame shown took to decode, in milliseconds.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "is_looping",
+              "doc": "If the video is looping or not.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "is_streaming",
+              "doc": "If the video is opened in streaming mode.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "eos",
+              "doc": "If the video has reached the end of stream.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "streaming_buffer_bytes_remaining",
+              "doc": "The number of unread bytes remaining in the stream buffer when streaming.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "streaming_buffer_capacity",
+              "doc": "The capacity of the stream buffer in bytes.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import {
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
   type LualsTargets,
+  libraryName,
+  matchLibraryName,
   matchVendoredLibrary,
   mergeVendoredLibrariesBySourceId,
   normalizeSourceId,
@@ -17,9 +19,63 @@ import {
 // committed corpus lives in `library-registry.test.ts`, where the composed
 // multi-lane registry it depends on is already loaded.
 const registry: VendoredLibrary[] = [
-  { sourceId: "boom", modules: ["boom.boom"] },
-  { sourceId: "gooey", modules: ["gooey.gooey"] },
+  { sourceId: "whiteboxdev/boom", modules: ["boom.boom"] },
+  { sourceId: "britzl/gooey", modules: ["gooey.gooey"] },
 ];
+
+describe("libraryName", () => {
+  test("names a library by its lowercased owner/repo, whatever the URL shape", () => {
+    expect(libraryName("https://github.com/Britzl/Boom/archive/refs/tags/v1.0.zip")).toBe(
+      "britzl/boom",
+    );
+    expect(libraryName("https://github.com/britzl/boom.git")).toBe("britzl/boom");
+    expect(libraryName("britzl/boom")).toBe("britzl/boom");
+    expect(libraryName("https://codeberg.org/Klaleus/defold-checkpoint")).toBe(
+      "klaleus/defold-checkpoint",
+    );
+  });
+
+  test("keeps the bare repo for a URL with no owner segment", () => {
+    expect(libraryName("https://example.com/lib.zip")).toBe("lib");
+  });
+});
+
+describe("matchLibraryName", () => {
+  const names = ["britzl/boom", "insality/druid"];
+
+  test("an owner/repo a library holds is exact", () => {
+    expect(
+      matchLibraryName("https://github.com/britzl/boom/archive/refs/tags/v1.0.zip", names),
+    ).toEqual({ kind: "exact", name: "britzl/boom" });
+  });
+
+  test("another owner's repo of the same name falls back to that library as a fork", () => {
+    expect(matchLibraryName("https://github.com/someone/boom/archive/main.zip", names)).toEqual({
+      kind: "fork",
+      name: "britzl/boom",
+    });
+  });
+
+  test("a repo no library holds matches nothing", () => {
+    expect(matchLibraryName("https://github.com/someone/other/archive/main.zip", names)).toBe(null);
+  });
+
+  test("a repo name two libraries share matches neither, unless the owner is exact", () => {
+    const admob = ["defold/extension-admob", "lerg/extension-admob"];
+    expect(
+      matchLibraryName("https://github.com/defold/extension-admob/archive/main.zip", admob),
+    ).toEqual({ kind: "exact", name: "defold/extension-admob" });
+    expect(
+      matchLibraryName("https://github.com/someone/extension-admob/archive/main.zip", admob),
+    ).toEqual({ kind: "shared", names: ["defold/extension-admob", "lerg/extension-admob"] });
+  });
+
+  test("a name with no owner takes no part in the repo-name fallback", () => {
+    expect(
+      matchLibraryName("https://github.com/someone/boom/archive/main.zip", ["boom", "britzl/boom"]),
+    ).toEqual({ kind: "fork", name: "britzl/boom" });
+  });
+});
 
 describe("matchVendoredLibrary", () => {
   test("matches a declared archive URL to its vendored module list", () => {
@@ -27,7 +83,17 @@ describe("matchVendoredLibrary", () => {
       "https://github.com/whiteboxdev/boom/archive/main.zip",
       registry,
     );
-    expect(match?.modules).toEqual(["boom.boom"]);
+    expect(match).toEqual({ library: registry[0] as VendoredLibrary, kind: "exact" });
+  });
+
+  test("returns null for a repo name two libraries share", () => {
+    const shared: VendoredLibrary[] = [
+      { sourceId: "defold/extension-admob", modules: ["admob.a"] },
+      { sourceId: "lerg/extension-admob", modules: ["admob.b"] },
+    ];
+    expect(
+      matchVendoredLibrary("https://github.com/someone/extension-admob/archive/main.zip", shared),
+    ).toBe(null);
   });
 
   test("returns null for a native or unknown library without throwing", () => {
@@ -51,7 +117,7 @@ describe("matchVendoredLibrary", () => {
       "https://GitHub.com/whiteboxdev/boom",
     ];
     for (const url of variants) {
-      expect(matchVendoredLibrary(url, registry)?.modules).toEqual(["boom.boom"]);
+      expect(matchVendoredLibrary(url, registry)?.library.modules).toEqual(["boom.boom"]);
     }
   });
 });
@@ -80,7 +146,11 @@ describe("buildLualsRegistryEntries", () => {
 
   test("maps a LuaLS target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildLualsRegistryEntries(druidTargets)).toEqual([
-      { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
+      {
+        sourceId: "insality/druid",
+        modules: ["druid.druid"],
+        namespaces: { "druid.druid": "druid" },
+      },
     ]);
   });
 
@@ -94,7 +164,7 @@ describe("buildLualsRegistryEntries", () => {
         },
       ],
     });
-    expect(entry?.sourceId).toBe("druid");
+    expect(entry?.sourceId).toBe("insality/druid");
   });
 
   test("returns no entries for an empty target list", () => {
@@ -118,7 +188,7 @@ describe("buildLualsRegistryEntries", () => {
     };
     expect(buildLualsRegistryEntries(saverTargets)).toEqual([
       {
-        sourceId: "defold-saver",
+        sourceId: "insality/defold-saver",
         modules: ["saver.saver", "saver.storage"],
         namespaces: { "saver.saver": "saver.saver", "saver.storage": "saver.storage" },
       },
@@ -137,9 +207,13 @@ describe("buildLualsRegistryEntries", () => {
       ],
     };
     expect(buildLualsRegistryEntries(twoRepos)).toEqual([
-      { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
       {
-        sourceId: "defold-saver",
+        sourceId: "insality/druid",
+        modules: ["druid.druid"],
+        namespaces: { "druid.druid": "druid" },
+      },
+      {
+        sourceId: "insality/defold-saver",
         modules: ["saver.saver"],
         namespaces: { "saver.saver": "saver.saver" },
       },
@@ -161,7 +235,7 @@ describe("buildScriptApiRegistryEntries", () => {
   test("maps a script_api target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildScriptApiRegistryEntries(bridgeTargets)).toEqual([
       {
-        sourceId: "bridge-defold",
+        sourceId: "playgama/bridge-defold",
         modules: ["bridge.bridge"],
         namespaces: { "bridge.bridge": "bridge" },
       },
@@ -181,7 +255,7 @@ describe("buildScriptApiRegistryEntries", () => {
     };
     expect(buildScriptApiRegistryEntries(sameRepo)).toEqual([
       {
-        sourceId: "thing",
+        sourceId: "acme/thing",
         modules: ["thing.a", "thing.b"],
         namespaces: { "thing.a": "thing.a", "thing.b": "thing.b" },
       },
@@ -203,7 +277,7 @@ describe("buildAuthoredRegistryEntries", () => {
   test("maps an authored target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildAuthoredRegistryEntries(defconTargets)).toEqual([
       {
-        sourceId: "defcon",
+        sourceId: "britzl/defcon",
         modules: ["defcon.console"],
         namespaces: { "defcon.console": "defcon" },
       },
@@ -217,19 +291,26 @@ describe("buildAuthoredRegistryEntries", () => {
 
 describe("matchVendoredLibrary against a LuaLS entry", () => {
   const druidEntry: VendoredLibrary = {
-    sourceId: "druid",
+    sourceId: "insality/druid",
     modules: ["druid.druid"],
     namespaces: { "druid.druid": "druid" },
   };
 
-  test("matches druid's declared archive URL and its moving/forked refs", () => {
+  test("matches druid's declared archive URL and its moving refs exactly, and a fork as one", () => {
     for (const url of [
       "https://github.com/Insality/druid/archive/1.2.5.zip",
       "https://github.com/Insality/druid/archive/main.zip",
-      "https://github.com/someone/druid/archive/refs/heads/main.zip?token=x",
     ]) {
-      expect(matchVendoredLibrary(url, [druidEntry])).toEqual(druidEntry);
+      expect(matchVendoredLibrary(url, [druidEntry])).toEqual({
+        library: druidEntry,
+        kind: "exact",
+      });
     }
+    expect(
+      matchVendoredLibrary("https://github.com/someone/druid/archive/refs/heads/main.zip?token=x", [
+        druidEntry,
+      ]),
+    ).toEqual({ library: druidEntry, kind: "fork" });
   });
 
   test("returns null for an unrelated URL", () => {
@@ -241,10 +322,14 @@ describe("matchVendoredLibrary against a LuaLS entry", () => {
 
 describe("VendoredLibrary namespaces is optional", () => {
   test("a pure-Lua entry round-trips unchanged without namespaces", () => {
-    const pureLua: VendoredLibrary = { sourceId: "dicebag", modules: ["dicebag.dicebag"] };
+    const pureLua: VendoredLibrary = {
+      sourceId: "paulomrpp/dicebag",
+      modules: ["dicebag.dicebag"],
+    };
     expect(pureLua.namespaces).toBeUndefined();
     expect(
-      matchVendoredLibrary("https://github.com/paulomrpp/dicebag/archive/main.zip", [pureLua]),
+      matchVendoredLibrary("https://github.com/paulomrpp/dicebag/archive/main.zip", [pureLua])
+        ?.library,
     ).toEqual(pureLua);
   });
 });
@@ -252,37 +337,37 @@ describe("VendoredLibrary namespaces is optional", () => {
 describe("mergeVendoredLibrariesBySourceId", () => {
   test("folds a stemless and a stemmed entry sharing a sourceId into one, stems only for the stemmed module", () => {
     const merged = mergeVendoredLibrariesBySourceId([
-      { sourceId: "r", modules: ["a"] },
-      { sourceId: "r", modules: ["b"], namespaces: { b: "ns" } },
+      { sourceId: "o/r", modules: ["a"] },
+      { sourceId: "o/r", modules: ["b"], namespaces: { b: "ns" } },
     ]);
-    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"], namespaces: { b: "ns" } }]);
+    expect(merged).toEqual([{ sourceId: "o/r", modules: ["a", "b"], namespaces: { b: "ns" } }]);
   });
 
   test("passes disjoint sourceIds through unchanged in first-seen order", () => {
     const entries: VendoredLibrary[] = [
-      { sourceId: "second", modules: ["b.b"], namespaces: { "b.b": "b" } },
-      { sourceId: "first", modules: ["a.a"] },
+      { sourceId: "o/second", modules: ["b.b"], namespaces: { "b.b": "b" } },
+      { sourceId: "o/first", modules: ["a.a"] },
     ];
     expect(mergeVendoredLibrariesBySourceId(entries)).toEqual([
-      { sourceId: "second", modules: ["b.b"], namespaces: { "b.b": "b" } },
-      { sourceId: "first", modules: ["a.a"] },
+      { sourceId: "o/second", modules: ["b.b"], namespaces: { "b.b": "b" } },
+      { sourceId: "o/first", modules: ["a.a"] },
     ]);
   });
 
   test("merges two entries without namespaces into one with no namespaces key on the result", () => {
     const merged = mergeVendoredLibrariesBySourceId([
-      { sourceId: "r", modules: ["a"] },
-      { sourceId: "r", modules: ["b"] },
+      { sourceId: "o/r", modules: ["a"] },
+      { sourceId: "o/r", modules: ["b"] },
     ]);
-    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"] }]);
+    expect(merged).toEqual([{ sourceId: "o/r", modules: ["a", "b"] }]);
     expect(merged[0]?.namespaces).toBeUndefined();
   });
 
   test("dedupes a module id shared across the two entries and sorts the merged modules", () => {
     const merged = mergeVendoredLibrariesBySourceId([
-      { sourceId: "r", modules: ["c", "a"] },
-      { sourceId: "r", modules: ["a", "b"] },
+      { sourceId: "o/r", modules: ["c", "a"] },
+      { sourceId: "o/r", modules: ["a", "b"] },
     ]);
-    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b", "c"] }]);
+    expect(merged).toEqual([{ sourceId: "o/r", modules: ["a", "b", "c"] }]);
   });
 });

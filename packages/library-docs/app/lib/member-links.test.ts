@@ -79,7 +79,7 @@ describe("a member key two libraries share", () => {
   rewrite("demo.two.json", "demo.two", [element("demo.two.wave", "Waves after demo.one.greet.")]);
 
   const dirs: LibraryDirs = {
-    dataDir: join(root, "data", "0.55.0"),
+    dataDir: join(root, "data", "0.61.0"),
     modelDir: join(root, "api-doc"),
   };
   const app = new Hono();

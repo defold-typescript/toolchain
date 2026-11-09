@@ -1,0 +1,20 @@
+{
+  "ref": "1.2.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "b7911fab6478ca12294da8f3f26058eed15ceeee"
+      ],
+      "api": "4a648943120703836c482d7e84fd0752a49a94a77fad5c848015fb924229b429",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "162ccf46d99e13ea5f877039ad009ececa346121df871545e4e3d775d90e0940",
+      "members": {
+        "png/include/lodepng.h": "d5cf9a146fb9db5e",
+        "png/include/png_private.h": "5c2328bd2c7aff3e",
+        "png/src/lodepng.c": "b7db777a42ecc0e4",
+        "png/src/png.cpp": "656138e16880d516"
+      }
+    }
+  ]
+}

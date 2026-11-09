@@ -1,0 +1,99 @@
+{
+  "info": {
+    "namespace": "permissions",
+    "brief": "Functions and constants for interacting with permissions related APIs",
+    "description": "Functions and constants for interacting with permissions related APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "permissions.check",
+      "description": "Determine whether you have been granted a particular permission.",
+      "parameters": [
+        {
+          "name": "permission",
+          "doc": "A constant that represent permission, for example `android.permission.ACCESS_NETWORK_STATE`",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "A result can be one of the predefined constants below\n- `permissions.PERMISSION_GRANTED`\n- `permissions.PERMISSION_DENIED`\n- `permissions.PERMISSION_SHOW_RATIONALE`",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local result = permissions.check(\"android.permission.ACCESS_NETWORK_STATE\")\nif result == permissions.PERMISSION_DENIED then\n    -- You can directly ask for the permission.\nelseif result == permissions.PERMISSION_GRANTED then\n    -- You can use the API that requires the permission.\nelseif result == permissions.PERMISSION_SHOW_RATIONALE then\n    -- In an educational UI, explain to the user why your app requires this\n    -- permission for a specific feature to behave as expected, and what\n    -- features are disabled if it's declined. In this UI, include a\n    -- \"cancel\" or \"no thanks\" button that lets the user continue\n    -- using your app without granting the permission.\nend\n</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "permissions.request",
+      "description": "Requests permissions to be granted to this application.",
+      "parameters": [
+        {
+          "name": "request_tbl",
+          "doc": "An array with constants that represent permissions.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "A callback taking the following parameters",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "A table where key is permission string and key is one of the following constants\n- `permissions.PERMISSION_GRANTED`\n- `permissions.PERMISSION_DENIED`",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions_table = {\"android.permission.WRITE_EXTERNAL_STORAGE\", \"android.permission.READ_CONTACTS\"}\npermissions.request(permissions_table,\n    function(self, result)\n        for permission, result in pairs(result) do\n          if result == permissions.PERMISSION_DENIED then\n              -- You can directly ask for the permission.\n          elseif result == permissions.PERMISSION_GRANTED then\n              -- You can use the API that requires the permission.\n          elseif result == permissions.PERMISSION_SHOW_RATIONALE then\n              -- In an educational UI, explain to the user why your app requires this\n              -- permission for a specific feature to behave as expected, and what\n              -- features are disabled if it's declined. In this UI, include a\n              -- \"cancel\" or \"no thanks\" button that lets the user continue\n              -- using your app without granting the permission.\n          end\n        end\n    end)</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_GRANTED",
+      "brief": "The permission has been granted to the given package.",
+      "description": "The permission has been granted to the given package.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_DENIED",
+      "brief": "The permission has not been granted to the given package.",
+      "description": "The permission has not been granted to the given package.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_SHOW_RATIONALE",
+      "brief": "Explain why your app needs the permission [Android doc](https://developer.android.com/training/permissions/requesting#explain)",
+      "description": "Explain why your app needs the permission [Android doc](https://developer.android.com/training/permissions/requesting#explain)",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

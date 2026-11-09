@@ -1,8 +1,10 @@
 // Which data repo commit each library a project uses is read from. A library moves
 // only when asked to, or when its pin cannot serve this CLI, so a data merge never
 // changes a project's types on its own and moving one library leaves the others'
-// bytes alone. A pin is keyed by library folder, which is a dependency's
-// `normalizeSourceId` as `libraryFolderName` derives both from the repo.
+// bytes alone. A pin is keyed by library name, `owner/repo`, the folder the library
+// sits in. A dependency uses the pin its URL matches among the pinned names and
+// main's libraries (`matchLibraryName`), so a fork keeps the pin of the library it
+// reads.
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -15,8 +17,8 @@ import {
   libraryFolderChange,
 } from "./library-data-archive";
 import { assembleLibraryDataView, SHARED_DATA_FILES } from "./library-data-view";
-import { normalizeSourceId } from "./library-match";
-import { librariesForDependencies } from "./library-registry";
+import { matchedLibraryName } from "./library-match";
+import { librariesMatching, readLibraryDataOrNone } from "./library-registry";
 import type { LibraryDataPins } from "./project-lock";
 
 // `true` moves everything; names move those dependencies alone.
@@ -130,9 +132,13 @@ export async function selectLibraryPins(
   const main = await fetchNewestLibraryData(opts);
   const newest = main.dir !== null && !main.stale ? main : null;
   const mainTrouble = main.dir === null ? main.reason : main.warning;
-  const used = new Set(urls.map(normalizeSourceId));
+  const mainLibraries = readLibraryDataOrNone(main.dir);
+  const pinnedNames = new Set(Object.keys(pins?.libraries ?? {}));
+  const names = [...new Set([...pinnedNames, ...mainLibraries.map(({ dir }) => dir)])];
+  const nameOf = (url: string) => matchedLibraryName(url, names);
+  const used = new Set(urls.map(nameOf));
   const pinned = Object.entries(pins?.libraries ?? {}).filter(([name]) => used.has(name));
-  const covered = new Set(librariesForDependencies(main.dir, urls).map(({ dir }) => dir));
+  const covered = new Set(librariesMatching(mainLibraries, urls).map(({ dir }) => dir));
 
   const reads = await readCommits(
     opts,
@@ -213,13 +219,12 @@ export async function selectLibraryPins(
     );
   }
 
-  const pinnedNames = new Set(Object.keys(pins?.libraries ?? {}));
   const fromMain = [...covered].filter((name) => !pinnedNames.has(name));
   if (main.dir !== null) {
     for (const name of fromMain) {
       libraries[name] = main.commit;
     }
-    const known = new Set(knownUrls.map(normalizeSourceId));
+    const known = new Set(knownUrls.map(nameOf));
     const nowCovered = fromMain.filter((name) => known.has(name));
     if (nowCovered.length > 0) {
       notices.push(
@@ -230,8 +235,10 @@ export async function selectLibraryPins(
 
   const lockedUrls = new Set(knownUrls);
   const newUrlUncovered = urls.some((url) => {
-    const name = normalizeSourceId(url);
-    return !lockedUrls.has(url) && !covered.has(name) && !pinnedNames.has(name);
+    const name = nameOf(url);
+    return (
+      !lockedUrls.has(url) && (name === null || (!covered.has(name) && !pinnedNames.has(name)))
+    );
   });
   const updateHeld = update === true || pinned.some(([name]) => wantsUpdate(update, name));
   const uncheckedMain =
@@ -293,7 +300,8 @@ export async function frozenLibraryData(
         "--frozen needs recorded library data: run a plain `defold-typescript resolve` and commit the file",
     };
   }
-  const used = new Set(urls.map(normalizeSourceId));
+  const pinnedNames = Object.keys(pins.libraries);
+  const used = new Set(urls.map((url) => matchedLibraryName(url, pinnedNames)));
   const libraries = Object.fromEntries(
     Object.entries(pins.libraries).filter(([name]) => used.has(name)),
   );

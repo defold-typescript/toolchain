@@ -49,7 +49,7 @@ function writeLibrary(
   writeLibraryTargets(dataDir, {
     forks: [
       {
-        repo: `https://github.com/owner/${library}`,
+        repo: `https://github.com/${library}`,
         ref: "1.0.0",
         authored,
         moduleId,
@@ -67,7 +67,7 @@ function writeSharedSlots(dataDir: string, slots: Record<string, IndexSlotEntry>
   writeFileSync(join(dataDir, EXTENSION_INDEX_SLOTS_FILE), JSON.stringify(slots));
 }
 
-// `monarch` and `druid` at both commits, each with bytes naming its commit, so a
+// `owner/monarch` and `owner/druid` at both commits, each with bytes naming its commit, so a
 // library read from the wrong commit prints the wrong declaration.
 function writeTwoCommits(cacheDir: string): { a: string; b: string } {
   const a = folderAt(cacheDir, COMMIT_A);
@@ -78,11 +78,16 @@ function writeTwoCommits(cacheDir: string): { a: string; b: string } {
   ] as const) {
     writeLibrary(
       folder,
-      "monarch",
+      "owner/monarch",
       "monarch.core",
       `declare module 'monarch.core' { /* ${tag} */ }\n`,
     );
-    writeLibrary(folder, "druid", "druid.core", `declare module 'druid.core' { /* ${tag} */ }\n`);
+    writeLibrary(
+      folder,
+      "owner/druid",
+      "druid.core",
+      `declare module 'druid.core' { /* ${tag} */ }\n`,
+    );
   }
   return { a, b };
 }
@@ -102,15 +107,15 @@ describe("assembleLibraryDataView", () => {
     const result = assembleLibraryDataView({
       cacheDir,
       libraries: [
-        { name: "monarch", folderDir: a },
-        { name: "druid", folderDir: b },
+        { name: "owner/monarch", folderDir: a },
+        { name: "owner/druid", folderDir: b },
       ],
       shared: null,
     });
     const view = assembled(result);
 
     expect(result.missing).toEqual([]);
-    expect(readLibraryData(view).map(({ dir }) => dir)).toEqual(["druid", "monarch"]);
+    expect(readLibraryData(view).map(({ dir }) => dir)).toEqual(["owner/druid", "owner/monarch"]);
     const { printed } = await printLibraryModules(view, ["monarch.core", "druid.core"], null);
     const fromA = await printLibraryModules(a, ["monarch.core"], null);
     const fromB = await printLibraryModules(b, ["druid.core"], null);
@@ -131,7 +136,7 @@ describe("assembleLibraryDataView", () => {
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: b,
       }),
     );
@@ -142,7 +147,7 @@ describe("assembleLibraryDataView", () => {
   test("with no shared source the file is absent and the read holds only library slots", () => {
     const cacheDir = tmp();
     const a = folderAt(cacheDir, COMMIT_A);
-    writeLibrary(a, "monarch", "monarch.core", "declare module 'monarch.core' {}\n", {
+    writeLibrary(a, "owner/monarch", "monarch.core", "declare module 'monarch.core' {}\n", {
       "monarch/core:param:x": SLOT,
     });
     writeSharedSlots(a, { "extension/page:param:x": SLOT });
@@ -150,7 +155,7 @@ describe("assembleLibraryDataView", () => {
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: null,
       }),
     );
@@ -166,12 +171,13 @@ describe("assembleLibraryDataView", () => {
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: b,
       }),
     );
 
-    expect(readdirSync(view)).toEqual(["monarch"]);
+    expect(readdirSync(view)).toEqual(["owner"]);
+    expect(readdirSync(join(view, "owner"))).toEqual(["monarch"]);
   });
 
   test("the extension page map comes from the shared folder with the same bytes", () => {
@@ -183,7 +189,7 @@ describe("assembleLibraryDataView", () => {
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: b,
       }),
     );
@@ -204,21 +210,22 @@ describe("assembleLibraryDataView", () => {
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: b,
       }),
     );
 
     expect(readdirSync(view).sort()).toEqual(
-      [DEFOLD_EXTENSIONS_FILE, EXTENSION_INDEX_SLOTS_FILE, "monarch"].sort(),
+      [DEFOLD_EXTENSIONS_FILE, EXTENSION_INDEX_SLOTS_FILE, "owner"].sort(),
     );
+    expect(readdirSync(join(view, "owner"))).toEqual(["monarch"]);
   });
 
   test.each([
     ["has no folder", () => {}],
     [
       "has a folder that is no library",
-      (folder: string) => mkdirSync(join(folder, "absent"), { recursive: true }),
+      (folder: string) => mkdirSync(join(folder, "owner/absent"), { recursive: true }),
     ],
   ])("a library that %s at its commit is missing, and no view is written", (_name, arrange) => {
     const cacheDir = tmp();
@@ -228,21 +235,21 @@ describe("assembleLibraryDataView", () => {
     const result = assembleLibraryDataView({
       cacheDir,
       libraries: [
-        { name: "monarch", folderDir: a },
-        { name: "absent", folderDir: b },
+        { name: "owner/monarch", folderDir: a },
+        { name: "owner/absent", folderDir: b },
       ],
       shared: null,
     });
 
-    expect(result).toEqual({ dir: null, missing: ["absent"] });
+    expect(result).toEqual({ dir: null, missing: ["owner/absent"] });
     expect(existsSync(join(cacheDir, "views"))).toBe(false);
   });
 
   test("the same inputs in any order give the same path with no second write", () => {
     const cacheDir = tmp();
     const { a, b } = writeTwoCommits(cacheDir);
-    const monarch = { name: "monarch", folderDir: a };
-    const druid = { name: "druid", folderDir: b };
+    const monarch = { name: "owner/monarch", folderDir: a };
+    const druid = { name: "owner/druid", folderDir: b };
 
     const first = assembled(
       assembleLibraryDataView({ cacheDir, libraries: [monarch, druid], shared: null }),
@@ -265,7 +272,7 @@ describe("assembleLibraryDataView", () => {
       assembled(
         assembleLibraryDataView({
           cacheDir,
-          libraries: [{ name: "monarch", folderDir: monarch }],
+          libraries: [{ name: "owner/monarch", folderDir: monarch }],
           shared,
         }),
       );
@@ -281,7 +288,7 @@ describe("assembleLibraryDataView", () => {
       assembled(
         assembleLibraryDataView({
           cacheDir,
-          libraries: [{ name: "monarch", folderDir: a }],
+          libraries: [{ name: "owner/monarch", folderDir: a }],
           shared: b,
         }),
       );
@@ -302,7 +309,7 @@ describe("assembleLibraryDataView", () => {
         assembleLibraryDataView({ cacheDir, libraries: [{ name, folderDir: a }], shared: null }),
       );
 
-    expect(view("monarch")).not.toBe(view("druid"));
+    expect(view("owner/monarch")).not.toBe(view("owner/druid"));
   });
 
   test("the key does not depend on where the cache sits", () => {
@@ -312,7 +319,7 @@ describe("assembleLibraryDataView", () => {
       const view = assembled(
         assembleLibraryDataView({
           cacheDir,
-          libraries: [{ name: "monarch", folderDir: a }],
+          libraries: [{ name: "owner/monarch", folderDir: a }],
           shared: null,
         }),
       );
@@ -327,7 +334,7 @@ describe("assembleLibraryDataView", () => {
     const { a } = writeTwoCommits(cacheDir);
     const options = {
       cacheDir,
-      libraries: [{ name: "monarch", folderDir: a }],
+      libraries: [{ name: "owner/monarch", folderDir: a }],
       shared: null,
     };
     const view = assembled(assembleLibraryDataView(options));
@@ -355,7 +362,7 @@ describe("assembleLibraryDataView", () => {
     expect(() =>
       assembleLibraryDataView({
         cacheDir,
-        libraries: [{ name: "monarch", folderDir: a }],
+        libraries: [{ name: "owner/monarch", folderDir: a }],
         shared: null,
         copy: () => {
           throw new Error("disk full");
@@ -370,15 +377,15 @@ describe("assembleLibraryDataView", () => {
     const cacheDir = tmp();
     const a = folderAt(cacheDir, COMMIT_A);
     const b = folderAt(cacheDir, COMMIT_B);
-    writeLibrary(a, "monarch", "taken.core", "declare module 'taken.core' {}\n");
-    writeLibrary(b, "druid", "taken.core", "declare module 'taken.core' {}\n");
+    writeLibrary(a, "owner/monarch", "taken.core", "declare module 'taken.core' {}\n");
+    writeLibrary(b, "owner/druid", "taken.core", "declare module 'taken.core' {}\n");
 
     const view = assembled(
       assembleLibraryDataView({
         cacheDir,
         libraries: [
-          { name: "monarch", folderDir: a },
-          { name: "druid", folderDir: b },
+          { name: "owner/monarch", folderDir: a },
+          { name: "owner/druid", folderDir: b },
         ],
         shared: null,
       }),

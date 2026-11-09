@@ -1,0 +1,425 @@
+{
+  "info": {
+    "namespace": "astar",
+    "brief": "A* Path Finding",
+    "description": "A* Path Finding"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "astar.new_map_id",
+      "description": "Get a new self-incrementing map_id.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "map_id",
+          "doc": "ID of a new map.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.delete_map",
+      "description": "Delete a map by its ID. This will free the memory used by the map.",
+      "parameters": [
+        {
+          "name": "map_id",
+          "doc": "ID of the map to delete. Has to be an integer from 0 to 2^16 - 1.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.setup",
+      "description": "Initial setup. You have to setup the astar before calling any other methods.",
+      "parameters": [
+        {
+          "name": "map_width",
+          "doc": "Width of your map. This is generally width of your tilemap.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "map_height",
+          "doc": "Height of your map. This is generally width of your tilemap.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "direction",
+          "doc": "Movement direction (astar.DIRECTION_FOUR or astar.DIRECTION_EIGHT)\n`astar.DIRECTION_FOUR` - on a square grid that allows 4 directions of movement using Manhattan distance.\n`astar.DIRECTION_EIGHT` - on a square grid that allows 8 directions of movement using Euclidean distance.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "allocate",
+          "doc": "How many states should be internally allocated at a time. This can be hard to get correct. The higher the value, the more memory Patfinder will use.\n- If you have a small map (a few thousand states?) it may make sense to pass in the maximum value. This will cache everything, and MicroPather will only need one main memory allocation. For a chess board, allocate  would be set to 8x8 (64)\n- If your map is large, something like 1/4 the number of possible states is good.\n- If your state space is huge, use a multiple (5-10x) of the normal path. \"Occasionally\" call `astar.reset_cache()` to free unused memory.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "typical_adjacent",
+          "doc": "Used to determine cache size. The typical number of adjacent states to a given state. (On a chessboard, 8.) Higher values use a little more memory.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cache[optional]",
+          "doc": "Turn on path caching. Uses more memory (yet again) but at a huge speed advantage if you may call the pather with the same path or sub-path, which is common for pathing over maps in games.  Default is `true`",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "use_zero[optional]",
+          "doc": "Toggle start index 0 or 1 for tables and tile positions. Also you can set it by call `astar.use_zero()`.  Default is `false`",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "map_vflip[optional]",
+          "doc": "Flips the map vertically. This doesn't flip the coordinates. Also you can set it by call `astar.map_vflip()`. Default is `false`",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">\nlocal map_width = 5\nlocal map_height = 4\nlocal direction = astar.DIRECTION_EIGHT\nlocal allocate = map_width * map_height\nlocal typical_adjacent = 8\nlocal cache = true     -- Optional. Default is true\nlocal flip_map = false -- Optional. Default is false\n\nastar.setup(\"my_map\", map_width, map_height, direction, allocate, typical_adjacent, cache, flip_map)\n</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.use_zero",
+      "brief": "Toggle start index 0 or 1 for tables and tile positions.\nIf set to `false`, [astar.solve](#astarsolvestart_x-start_y-end_x-end_y), [astar.solve_near](#astarsolve_nearstart_x-start_y-max_cost), [astar.get_at](#astarget_atx-y), [astar.set_at](#astarset_atx-y-value) methods expect positions start with 1 and returns table indexes from **1**.\nDefault is `false` = 1",
+      "description": "Toggle start index 0 or 1 for tables and tile positions.\nIf set to `false`, [astar.solve](#astarsolvestart_x-start_y-end_x-end_y), [astar.solve_near](#astarsolve_nearstart_x-start_y-max_cost), [astar.get_at](#astarget_atx-y), [astar.set_at](#astarset_atx-y-value) methods expect positions start with 1 and returns table indexes from **1**.\nDefault is `false` = 1",
+      "types": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.set_map",
+      "description": "Set your map data.\n* Setting new map data reset the current cache.",
+      "parameters": [
+        {
+          "name": "world",
+          "doc": "Your tilemap data. Keep it simple as much as you can.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.set_costs",
+      "description": "Set costs for walkable tiles on your `world` table. This table keys determine the walkable area.\nTable's sum must be the `astar.DIRECTION_FOUR` or `astar.DIRECTION_EIGHT`.",
+      "parameters": [
+        {
+          "name": "costs",
+          "doc": "Table of costs for directions.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.solve",
+      "description": "Solves the path.",
+      "parameters": [
+        {
+          "name": "start_x",
+          "doc": "Start tile X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "start_y",
+          "doc": "Start tile Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "end_x",
+          "doc": "End tile X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "end_y",
+          "doc": "End tile Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "Result code (`astar.SOLVED`, `astar.NO_SOLUTION`, `astar.START_END_SAME`).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size",
+          "doc": "Size of the path.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "total_cost",
+          "doc": "Total cost of the path.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Table with x and y coordinates. First value is the given start point.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.solve_near",
+      "description": "Finds the neighbours according to a given cost.",
+      "parameters": [
+        {
+          "name": "start_x",
+          "doc": "Start tile X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "start_y",
+          "doc": "Start tile Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_cost",
+          "doc": "Maximum cost for finding neighbours.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "near_result",
+          "doc": "Result code (`astar.SOLVED`, `astar.NO_SOLUTION`, `astar.START_END_SAME`).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "near_size",
+          "doc": "Size of the found neighbours.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "nears",
+          "doc": "Table with x and y coordinates. First value is the given start point.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.reset_cache",
+      "description": "If your state space is huge, occasionally call `astar.reset_cache()` to free unused memory.",
+      "parameters": [
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.get_at",
+      "description": "Returns the value from the map array by coordinates.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "Tile X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Tile Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The value at the specified coordinates.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "astar.set_at",
+      "description": "Set your value to the map array by coordinates.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "Tile X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Tile Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "The value to set.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "map_id[optional]",
+          "doc": "ID of the map. Has to be an integer from 0 to 2^16 - 1. Default is `0`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.SOLVED",
+      "brief": "Represents a solved path result.",
+      "description": "Represents a solved path result.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.NO_SOLUTION",
+      "brief": "Represents a result where no path is found.",
+      "description": "Represents a result where no path is found.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.START_END_SAME",
+      "brief": "Represents a result where the start and end points are the same.",
+      "description": "Represents a result where the start and end points are the same.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.DIRECTION_FOUR",
+      "brief": "Represents the four-direction movement option.",
+      "description": "Represents the four-direction movement option.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "astar.DIRECTION_EIGHT",
+      "brief": "Represents the eight-direction movement option.",
+      "description": "Represents the eight-direction movement option.",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

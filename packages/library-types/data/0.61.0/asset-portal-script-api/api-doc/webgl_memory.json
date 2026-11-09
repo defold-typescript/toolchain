@@ -1,0 +1,24 @@
+{
+  "info": {
+    "namespace": "webgl_memory",
+    "brief": "C++ helper functions",
+    "description": "C++ helper functions"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "webgl_memory.get_info",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

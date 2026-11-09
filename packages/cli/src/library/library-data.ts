@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import { COMMIT_COMMENT } from "../extension-version";
+import { libraryName } from "../library-match";
 import type { AuthoredTarget } from "./sync-authored-types";
 import type { RefKind } from "./sync-defold-extensions";
 import type { LualsTarget } from "./sync-luals-types";
@@ -167,10 +168,13 @@ export const EXTENSION_INDEX_SLOTS_FILE = "index-slot-classifications.json";
 // Which page of the API reference documents each extension `.script_api`.
 export const DEFOLD_EXTENSIONS_FILE = "defold-extensions.json";
 
-/** The folder a repo's library data sits in: its URL's last path segment, lowercased, without `.git`. */
+/** The folder a repo's library data sits in: its library name, `owner/repo`. */
 export function libraryFolderName(repo: string): string {
-  const segment = repo.replace(/\/+$/, "").split("/").pop() ?? "";
-  return segment.replace(/\.git$/, "").toLowerCase();
+  const name = libraryName(repo);
+  if (!name.includes("/")) {
+    throw new Error(`repo ${repo} names no owner, so it has no owner/repo folder`);
+  }
+  return name;
 }
 
 /** The `library.json` a repo's entries live in, relative to the data folder. */
@@ -706,21 +710,38 @@ export class LibraryDataError extends Error {
   }
 }
 
+// Each `<owner>/<repo>` folder holding a `library.json`, with `/` on every OS. A
+// top-level folder holding one is returned too, for `readLibrary` to refuse.
+function libraryDirs(dataDir: string): string[] {
+  const dirs: string[] = [];
+  for (const entry of readdirSync(dataDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (existsSync(join(dataDir, entry.name, LIBRARY_FILE))) {
+      dirs.push(entry.name);
+      continue;
+    }
+    for (const repo of readdirSync(join(dataDir, entry.name), { withFileTypes: true })) {
+      if (repo.isDirectory() && existsSync(join(dataDir, entry.name, repo.name, LIBRARY_FILE))) {
+        dirs.push(`${entry.name}/${repo.name}`);
+      }
+    }
+  }
+  return dirs.sort();
+}
+
 /**
- * Every library folder under `dataDir` in folder-name order. Paths the targets
- * name are relative to `dataDir` (`flow/fork/flow.ui.d.ts`); `apiDoc` and
+ * Every library folder under `dataDir`, `<owner>/<repo>`, in folder-name order.
+ * Paths the targets name are relative to `dataDir`
+ * (`pause-games/flow/fork/flow.ui.d.ts`); `apiDoc` and
  * `fidelity` stay relative to the library-types package root, where the toolchain
  * writes them. Throws a `LibraryDataError` on a folder whose name is not its
- * repo's, on a missing `reviewed.json`, on a malformed entry, on a module id or
+ * repo's `owner/repo` (a top-level folder included), on a missing `reviewed.json`,
+ * on a malformed entry, on a module id or
  * path that leaves its folder, on a floor or parity exception for a module its
  * library does not measure, and on a module two folders name.
  */
 export function readLibraryData(dataDir: string): LibraryData[] {
-  const dirs = readdirSync(dataDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && existsSync(join(dataDir, entry.name, LIBRARY_FILE)))
-    .map((entry) => entry.name)
-    .sort();
-  const libraries = dirs.map((dir) => {
+  const libraries = libraryDirs(dataDir).map((dir) => {
     try {
       return readLibrary(dataDir, dir);
     } catch (error) {
