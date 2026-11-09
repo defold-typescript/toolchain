@@ -5,6 +5,7 @@ import {
   functionAnchorText,
   groupOverloadForms,
   qualify,
+  symbolNamespace,
 } from "./api-surface";
 import { slugify } from "./headings";
 import { stripPlatformMarkers } from "./platform-icons";
@@ -50,40 +51,69 @@ export function memberAnchors(page: ApiPage): Map<string, string> {
   return anchors;
 }
 
+export interface SymbolIndexOptions {
+  /**
+   * What a key that more than one page produces resolves to: `"last"` (the
+   * default) keeps the last page's entry, `"drop"` leaves the key out, so a
+   * name several libraries share never silently names one of them.
+   */
+  ambiguous?: "last" | "drop";
+}
+
+// One page's keys: its own entry under the page key, and each member qualified
+// by the namespace the page documents.
+function pageSymbolEntries(page: ApiPage): Map<string, SymbolEntry> {
+  const { namespace, route, module } = page;
+  const entries = new Map<string, SymbolEntry>();
+  entries.set(namespace, {
+    brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
+    route,
+  });
+  const memberNamespace = symbolNamespace(page);
+  const anchors = memberAnchors(page);
+  const valueKeys = new Set<string>();
+  for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+    const key = qualify(memberNamespace, symbol.name);
+    // A type row sharing its key with a value member (`vmath.vector`, the
+    // function and the type it returns) leaves the key to the value. One key
+    // cannot name both; signatures link the type through its own anchor in
+    // `apiSignatureSymbolLinks`.
+    if (symbol.kind === "type") {
+      if (valueKeys.has(key)) continue;
+    } else {
+      valueKeys.add(key);
+    }
+    entries.set(key, {
+      brief: stripPlatformMarkers(symbol.docMarkdown),
+      route: `${route}#${anchors.get(`${symbol.kind}:${symbol.name}`)}`,
+    });
+  }
+  return entries;
+}
+
 /**
  * Flat lookup registry from an inline-code key to the symbol it documents,
  * derived from the already-parsed API surface. The namespace itself (`go`) and
  * every function/variable/constant/property (`go.get_position`) become keys.
  * Member routes carry the heading-slug anchor so a same-page cross-reference
  * (e.g. `camera.screen_to_world` mentioned inside `camera.world_to_screen`)
- * jumps to the right section rather than the top of the page.
+ * jumps to the right section rather than the top of the page. A library page's
+ * members are keyed by the namespace it documents ({@link symbolNamespace}).
  */
-export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> {
+export function buildSymbolIndex(
+  pages: ApiPage[],
+  options: SymbolIndexOptions = {},
+): Record<string, SymbolEntry> {
   const index: Record<string, SymbolEntry> = {};
+  const shared = new Set<string>();
   for (const page of pages) {
-    const { namespace, route, module } = page;
-    index[namespace] = {
-      brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
-      route,
-    };
-    const anchors = memberAnchors(page);
-    const valueKeys = new Set<string>();
-    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
-      const key = qualify(namespace, symbol.name);
-      // A type row sharing its key with a value member (`vmath.vector`, the
-      // function and the type it returns) leaves the key to the value. One key
-      // cannot name both; signatures link the type through its own anchor in
-      // `apiSignatureSymbolLinks`.
-      if (symbol.kind === "type") {
-        if (valueKeys.has(key)) continue;
-      } else {
-        valueKeys.add(key);
-      }
-      index[key] = {
-        brief: stripPlatformMarkers(symbol.docMarkdown),
-        route: `${route}#${anchors.get(`${symbol.kind}:${symbol.name}`)}`,
-      };
+    for (const [key, entry] of pageSymbolEntries(page)) {
+      if (Object.hasOwn(index, key)) shared.add(key);
+      index[key] = entry;
     }
+  }
+  if (options.ambiguous === "drop") {
+    for (const key of shared) delete index[key];
   }
   return index;
 }
