@@ -112,7 +112,7 @@ describe("addLibrary", () => {
     addLibrary(url, dataDir, { cacheDir, download: serving(bytes) });
 
   const json = (file: string): unknown =>
-    JSON.parse(readFileSync(join(dataDir, "mylib", file), "utf8"));
+    JSON.parse(readFileSync(join(dataDir, "owner/mylib", file), "utf8"));
 
   function fingerprintOf(bytes: Uint8Array) {
     const zipPath = join(base, "fingerprint.zip");
@@ -129,7 +129,7 @@ describe("addLibrary", () => {
       ref: "1.2.3",
       reviews: [{ ...fingerprintOf(bytes), commits: [COMMIT] }],
     });
-    expect(readLibraryReviews(dataDir, "mylib")).toHaveLength(1);
+    expect(readLibraryReviews(dataDir, "owner/mylib")).toHaveLength(1);
   });
 
   test("an archive with no commit records its hashes with no commits", async () => {
@@ -146,13 +146,13 @@ describe("addLibrary", () => {
   test("annotated Lua writes a folder the reader and the check accept", async () => {
     const { folder } = await add(archive({ files: { "mylib/mylib.lua": ANNOTATED } }));
 
-    expect(folder).toBe("mylib");
+    expect(folder).toBe("owner/mylib");
     expect(json("library.json")).toEqual({ repo: "https://github.com/owner/MyLib" });
     expect(json("reviewed.json")).toMatchObject({ ref: "1.2.3" });
     expect(json("recipe.json")).toEqual({
       luals: [{ sourceGlobs: ["mylib/**/*.lua"], moduleId: "mylib.mylib", namespace: "mylib" }],
     });
-    expect(readFileSync(join(dataDir, "mylib/source/mylib/mylib/mylib.lua"), "utf8")).toBe(
+    expect(readFileSync(join(dataDir, "owner/mylib/source/mylib/mylib/mylib.lua"), "utf8")).toBe(
       ANNOTATED,
     );
 
@@ -161,7 +161,7 @@ describe("addLibrary", () => {
     // The floor check runs only once the print and the compile are clean, and a new
     // library has no floor yet.
     expect(await checkLibraryData(dataDir)).toEqual([
-      { library: "mylib", check: "floor", message: expect.stringContaining("mylib.mylib") },
+      { library: "owner/mylib", check: "floor", message: expect.stringContaining("mylib.mylib") },
     ]);
   });
 
@@ -201,8 +201,8 @@ describe("addLibrary", () => {
         },
       ],
     });
-    expect(existsSync(join(dataDir, "mylib/source/api/mylib/example/demo.lua"))).toBe(false);
-    expect(existsSync(join(dataDir, "mylib/source/api/mylib/mylib.lua"))).toBe(true);
+    expect(existsSync(join(dataDir, "owner/mylib/source/api/mylib/example/demo.lua"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/source/api/mylib/mylib.lua"))).toBe(true);
     const problems = await checkLibraryData(dataDir);
     expect(problems.filter(({ check }) => check !== "floor")).toEqual([]);
   });
@@ -214,7 +214,7 @@ describe("addLibrary", () => {
       }),
     );
 
-    expect(existsSync(join(dataDir, "mylib/recipe.json"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/recipe.json"))).toBe(false);
     expect(notes.join("\n")).toContain("authoring-forked-library-types");
   });
 
@@ -235,11 +235,11 @@ describe("addLibrary", () => {
         },
       ],
     });
-    expect(readFileSync(join(dataDir, "mylib/source/mylib.mylib.script_api"), "utf8")).toBe(
+    expect(readFileSync(join(dataDir, "owner/mylib/source/mylib.mylib.script_api"), "utf8")).toBe(
       SCRIPT_API,
     );
     expect(await checkLibraryData(dataDir)).toEqual([
-      { library: "mylib", check: "floor", message: expect.stringContaining("mylib.mylib") },
+      { library: "owner/mylib", check: "floor", message: expect.stringContaining("mylib.mylib") },
     ]);
   });
 
@@ -264,11 +264,11 @@ describe("addLibrary", () => {
       }),
     );
 
-    expect(existsSync(join(dataDir, "mylib/recipe.json"))).toBe(false);
-    expect(existsSync(join(dataDir, "mylib/source"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/recipe.json"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/source"))).toBe(false);
     expect(notes.join("\n")).toContain("mylib/api/iap.script_api");
     expect(notes.join("\n")).toContain("extensions.md");
-    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["mylib"]);
+    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["owner/mylib"]);
   });
 
   test("only the .script_api files with a Lua module get an entry", async () => {
@@ -285,7 +285,7 @@ describe("addLibrary", () => {
     expect(json("recipe.json")).toEqual({
       scriptApi: [expect.objectContaining({ moduleId: "mylib.mylib" })],
     });
-    expect(existsSync(join(dataDir, "mylib/source/mylib.native.script_api"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/source/mylib.native.script_api"))).toBe(false);
     expect(notes.join("\n")).toContain("mylib/api/native.script_api");
   });
 
@@ -315,24 +315,45 @@ describe("addLibrary", () => {
 
     expect(json("library.json")).toEqual({ repo: "https://github.com/owner/MyLib" });
     expect(json("reviewed.json")).toMatchObject({ ref: "1.2.3" });
-    expect(existsSync(join(dataDir, "mylib/recipe.json"))).toBe(false);
-    expect(existsSync(join(dataDir, "mylib/source"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/recipe.json"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/source"))).toBe(false);
     expect(notes.join("\n")).toContain("native extension");
     expect(notes.join("\n")).toContain("authoring-forked-library-types");
-    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["mylib"]);
+    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["owner/mylib"]);
   });
 
   test("unannotated Lua writes no recipe and names the fork page", async () => {
     const { notes } = await add(archive({ files: { "mylib/mylib.lua": UNANNOTATED } }));
 
-    expect(existsSync(join(dataDir, "mylib/recipe.json"))).toBe(false);
+    expect(existsSync(join(dataDir, "owner/mylib/recipe.json"))).toBe(false);
     expect(notes.join("\n")).toContain("authoring-forked-library-types");
-    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["mylib"]);
+    expect(readLibraryData(dataDir).map(({ dir }) => dir)).toEqual(["owner/mylib"]);
+  });
+
+  test("writes the library at its owner/repo folder", async () => {
+    await add(archive({ files: { "mylib/mylib.lua": ANNOTATED } }));
+
+    expect(existsSync(join(dataDir, "owner/mylib/library.json"))).toBe(true);
+  });
+
+  test("a folder another host's repo holds throws naming that repo and writes nothing", async () => {
+    mkdirSync(join(dataDir, "owner/mylib"), { recursive: true });
+    writeFileSync(
+      join(dataDir, "owner/mylib", "library.json"),
+      JSON.stringify({ repo: "https://codeberg.org/owner/mylib" }),
+    );
+    const before = snapshot(dataDir);
+
+    await expect(add(archive({ files: { "mylib/mylib.lua": ANNOTATED } }))).rejects.toThrow(
+      "https://codeberg.org/owner/mylib",
+    );
+
+    expect(snapshot(dataDir)).toEqual(before);
   });
 
   test("an existing folder throws naming it and writes nothing", async () => {
-    mkdirSync(join(dataDir, "mylib"));
-    writeFileSync(join(dataDir, "mylib", "keep.txt"), "kept");
+    mkdirSync(join(dataDir, "owner/mylib"), { recursive: true });
+    writeFileSync(join(dataDir, "owner/mylib", "keep.txt"), "kept");
     const before = snapshot(dataDir);
 
     await expect(add(archive({ files: { "mylib/mylib.lua": ANNOTATED } }))).rejects.toThrow(
@@ -346,8 +367,8 @@ describe("addLibrary", () => {
     const bytes = archive({ files: { "mylib/mylib.lua": ANNOTATED } });
     let during: Record<string, string> = {};
     const download: DownloadExtensionArchive = async () => {
-      const root = join(dataDir, "mylib");
-      mkdirSync(root);
+      const root = join(dataDir, "owner/mylib");
+      mkdirSync(root, { recursive: true });
       writeFileSync(join(root, "library.json"), "sentinel library");
       writeFileSync(join(root, "reviewed.json"), "sentinel reviewed");
       writeFileSync(join(root, "keep.txt"), "kept");
@@ -356,13 +377,13 @@ describe("addLibrary", () => {
     };
 
     await expect(addLibrary(TAG_URL, dataDir, { cacheDir, download })).rejects.toThrow(
-      "library folder mylib already exists",
+      "library folder owner/mylib already exists",
     );
 
     expect(Object.keys(during).sort()).toEqual([
-      "mylib/keep.txt",
-      "mylib/library.json",
-      "mylib/reviewed.json",
+      "owner/mylib/keep.txt",
+      "owner/mylib/library.json",
+      "owner/mylib/reviewed.json",
     ]);
     expect(snapshot(dataDir)).toEqual(during);
   });
@@ -437,7 +458,7 @@ describe("addLibrary", () => {
       "mylib.mylib",
     );
 
-    expect(readdirSync(dataDir)).toEqual(["first-copy"]);
+    expect(readdirSync(dataDir)).toEqual(["other"]);
   });
 
   for (const [what, text, license] of [
@@ -483,9 +504,9 @@ describe("addLibrary", () => {
     });
 
     expect(Object.keys(snapshot(dataDir)).sort()).toEqual(before);
-    expect(readFileSync(join(dataDir, "mylib/source/mylib/mylib/nested/helper.lua"), "utf8")).toBe(
-      "-- re-pinned\n",
-    );
+    expect(
+      readFileSync(join(dataDir, "owner/mylib/source/mylib/mylib/nested/helper.lua"), "utf8"),
+    ).toBe("-- re-pinned\n");
   });
 
   test("a .script_api re-pin finds the file add wrote and adds none", async () => {
@@ -502,7 +523,7 @@ describe("addLibrary", () => {
     });
 
     expect(Object.keys(snapshot(dataDir)).sort()).toEqual(before);
-    expect(readFileSync(join(dataDir, "mylib/source/mylib.mylib.script_api"), "utf8")).toBe(
+    expect(readFileSync(join(dataDir, "owner/mylib/source/mylib.mylib.script_api"), "utf8")).toBe(
       "# re-pinned\n",
     );
   });

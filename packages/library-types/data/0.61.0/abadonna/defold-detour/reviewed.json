@@ -1,0 +1,45 @@
+{
+  "ref": "95ce965cb404cecfacd5ba1fc8115a6bb7341a85",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "95ce965cb404cecfacd5ba1fc8115a6bb7341a85"
+      ],
+      "api": "b0e84a50bec68726c286deed7b82d3a01113a5d5972900b6b0b2173702b359bc",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "d2748d604b1d5272ce27231b3ad7d4acb42329b963aa1b7065aa46b5d536aa09",
+      "members": {
+        "detour/include/DetourAlloc.h": "5f617c7f162069c3",
+        "detour/include/DetourAssert.h": "2859e197e1877d3c",
+        "detour/include/DetourCommon.h": "24d69468f7378271",
+        "detour/include/DetourCrowd.h": "66053c29eddcdb87",
+        "detour/include/DetourLocalBoundary.h": "61a0bef8538a48de",
+        "detour/include/DetourMath.h": "1251390f71e85b8b",
+        "detour/include/DetourNavMesh.h": "7f10ae6ac7df76a9",
+        "detour/include/DetourNavMeshBuilder.h": "e2734317981bb9df",
+        "detour/include/DetourNavMeshQuery.h": "fa80858bb80c984f",
+        "detour/include/DetourNode.h": "7c295c61f09dff0d",
+        "detour/include/DetourObstacleAvoidance.h": "f3c6e39dd4b8c60a",
+        "detour/include/DetourPathCorridor.h": "f252e962a4b3aef1",
+        "detour/include/DetourPathQueue.h": "7c48d76be6a59a9e",
+        "detour/include/DetourProximityGrid.h": "b98a88367f2eb29e",
+        "detour/include/DetourStatus.h": "7255e33173c4bdb2",
+        "detour/src/Detour/DetourAlloc.cpp": "ddf4d9857e9e1714",
+        "detour/src/Detour/DetourAssert.cpp": "3caf6f89119fab5b",
+        "detour/src/Detour/DetourCommon.cpp": "c28eb2d5fd251e1b",
+        "detour/src/Detour/DetourNavMesh.cpp": "e82c9a13cf01bea8",
+        "detour/src/Detour/DetourNavMeshBuilder.cpp": "159b4bacae86bdb2",
+        "detour/src/Detour/DetourNavMeshQuery.cpp": "5f90926c5031698e",
+        "detour/src/Detour/DetourNode.cpp": "067ffb9a81f7315f",
+        "detour/src/DetourCrowd/DetourCrowd.cpp": "c0d5164dabc3e68e",
+        "detour/src/DetourCrowd/DetourLocalBoundary.cpp": "ecb0196533c654d4",
+        "detour/src/DetourCrowd/DetourObstacleAvoidance.cpp": "a385493b551ea6a7",
+        "detour/src/DetourCrowd/DetourPathCorridor.cpp": "09fd84d977b48789",
+        "detour/src/DetourCrowd/DetourPathQueue.cpp": "69360fd1e15efb42",
+        "detour/src/DetourCrowd/DetourProximityGrid.cpp": "ba4acb2161cfca60",
+        "detour/src/detour.cpp": "2bbee4eb120dc711"
+      }
+    }
+  ]
+}

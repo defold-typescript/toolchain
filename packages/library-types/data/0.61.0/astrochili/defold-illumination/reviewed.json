@@ -1,0 +1,22 @@
+{
+  "ref": "1.0.3",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "7bf05fcbf1504fbf6922f70387f4c80cc9b1be86"
+      ],
+      "api": "dfa60973af08d0e0cba162aae39e8aecd32fb17c2a72f1e1a503dcf338af58fb",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "2e3af39fb4433b548f14aae5825f8d568689cd93902cef79ae0ea07f134b637d",
+      "members": {
+        "illumination/illumination.lua": "66a1967a602ebe34",
+        "illumination/utils.lua#color_rgba": "2784f03e0d827e92",
+        "illumination/utils.lua#patch": "ff116bf489ab93a8",
+        "illumination/utils.lua#uint16_to_2_uint8": "8176ace398d64bfa",
+        "illumination/utils.lua#uint24_to_3_uint8": "58e8e6d17ca7d03d",
+        "illumination/utils.lua#vector3_to_9_uint8": "eaf5446086a9f9db"
+      }
+    }
+  ]
+}

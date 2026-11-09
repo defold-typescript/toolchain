@@ -14,8 +14,9 @@ export const PROJECT_LOCK_FILE = "defold-typescript.lock";
 
 const LOCK_VERSION = 1;
 const FILES_HASH = /^[0-9a-f]{64}$/;
-// A library key becomes a folder name under the cache, so it is one path segment.
-const LIBRARY_KEY = /^(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
+// A library key names a folder under the cache: `owner/repo`, or the bare repo an
+// earlier CLI wrote, whose pin a run drops. Neither segment may be `.` or `..`.
+const LIBRARY_KEY = /^(?:(?!\.{1,2}\/)[A-Za-z0-9._-]+\/)?(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
 
 // `shared` is the commit `index-slot-classifications.json` is read from, the one
 // data file no library owns; `libraries` is the commit each used library is read from.
@@ -106,7 +107,7 @@ export function readProjectLock(cwd: string): ProjectLockRead {
   }
   for (const [name, commit] of Object.entries(libraries)) {
     if (!LIBRARY_KEY.test(name)) {
-      return invalid(`has a "libraryData.libraries" key ${name} that is not one path segment`);
+      return invalid(`has a "libraryData.libraries" key ${name} that is not a library name`);
     }
     if (typeof commit !== "string" || !COMMIT_COMMENT.test(commit)) {
       return invalid(`has "libraryData.libraries" entry ${name} that is not a 40-hex commit`);

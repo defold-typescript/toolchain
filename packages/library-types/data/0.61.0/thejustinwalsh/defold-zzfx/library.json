@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/thejustinwalsh/defold-zzfx",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/zzfx.api.d.ts",
+      "moduleId": "zzfx.api",
+      "namespace": "zzfx",
+      "apiDoc": "api-doc/zzfx.json",
+      "upstreamLua": ["source/upstream/zzfx/api.lua"]
+    }
+  ],
+  "floors": {
+    "zzfx.api": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

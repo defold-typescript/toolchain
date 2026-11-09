@@ -132,7 +132,12 @@ function tempRoot(
     copyFileSync(join(COMMITTED_DATA, file), join(data, file));
   }
   const committedData = COMMITTED_DATA;
-  for (const folder of readdirSync(committedData)) {
+  const folders = readdirSync(committedData, { withFileTypes: true })
+    .filter((owner) => owner.isDirectory())
+    .flatMap((owner) =>
+      readdirSync(join(committedData, owner.name)).map((repo) => `${owner.name}/${repo}`),
+    );
+  for (const folder of folders) {
     for (const file of LIBRARY_DATA_FILES) {
       if (!existsSync(join(committedData, folder, file))) continue;
       mkdirSync(join(data, folder), { recursive: true });
@@ -158,10 +163,10 @@ function tempRoot(
   const tokenModules = Object.keys(fidelity).map((report) =>
     report.replace(/^fidelity\/(.+)\.json$/, "$1"),
   );
-  mkdirSync(join(data, "a"), { recursive: true });
-  writeFileSync(join(data, "a", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  mkdirSync(join(data, "owner/a"), { recursive: true });
+  writeFileSync(join(data, "owner/a", "reviewed.json"), JSON.stringify({ ref: "v1" }));
   writeFileSync(
-    join(data, "a", "recipe.json"),
+    join(data, "owner/a", "recipe.json"),
     JSON.stringify({
       luals: tokenModules.map((namespace) => ({
         sourceGlobs: [`${namespace}/**/*.lua`],
@@ -171,7 +176,7 @@ function tempRoot(
     }),
   );
   writeFileSync(
-    join(data, "a", "library.json"),
+    join(data, "owner/a", "library.json"),
     JSON.stringify({
       repo: "https://github.com/owner/a",
       floors: Object.fromEntries(
@@ -179,10 +184,10 @@ function tempRoot(
       ),
     }),
   );
-  mkdirSync(join(data, "b"), { recursive: true });
-  writeFileSync(join(data, "b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  mkdirSync(join(data, "owner/b"), { recursive: true });
+  writeFileSync(join(data, "owner/b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
   writeFileSync(
-    join(data, "b", "library.json"),
+    join(data, "owner/b", "library.json"),
     JSON.stringify({
       repo: "https://github.com/owner/b",
       forks: [

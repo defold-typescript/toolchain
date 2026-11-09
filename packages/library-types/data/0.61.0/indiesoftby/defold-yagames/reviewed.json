@@ -1,0 +1,31 @@
+{
+  "ref": "0.19.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "778da7b63d99e1dc46a02dbf9269b1a3e9ad1ba1"
+      ],
+      "api": "a47d0e5b697d47eda0f8024b690e84fc79e854c44109ddb1fcb4385a4857aede",
+      "doc": "17cd357aeb72847198ea962531ef276c686b6c1431a7fa65f73e90a9d352a15c",
+      "source": "6bb8835a08fee0d40dac505c25669094fa6e7f9a1e7fbbb81ed4873ac3f7764e",
+      "members": {
+        "yagames/helpers/helper.lua#YACONTEXT_INIT_ID": "24c7bcaf858ea773",
+        "yagames/helpers/helper.lua#YSDK_INIT_ID": "24c7bcaf858ea773",
+        "yagames/helpers/helper.lua#async_call": "11a0ab11630814ae",
+        "yagames/helpers/helper.lua#next_cb_id": "53afa49906788416",
+        "yagames/helpers/helper.lua#wrap_for_callbacks": "ceb2e0364ea794d5",
+        "yagames/helpers/helper.lua#wrap_for_promise": "7346ea86ec8dfa38",
+        "yagames/helpers/json.lua": "57b7634a2d49f809",
+        "yagames/helpers/mock.lua": "3500c6767ede62df",
+        "yagames/sitelock.lua#add_domain": "064cb877a370c9b5",
+        "yagames/sitelock.lua#domains": "24c7bcaf858ea773",
+        "yagames/sitelock.lua#get_current_domain": "53afa49906788416",
+        "yagames/sitelock.lua#is_release_build": "53afa49906788416",
+        "yagames/sitelock.lua#verify_domain": "53afa49906788416",
+        "yagames/src/main.cpp": "f23767ca5b21993a",
+        "yagames/yagames.lua": "be7ae6b38cdd761e"
+      }
+    }
+  ]
+}

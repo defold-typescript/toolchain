@@ -1,0 +1,186 @@
+{
+  "info": {
+    "namespace": "xoshiro256",
+    "brief": "Functions for interacting with the Xoshiro256 native extension",
+    "description": "Functions for interacting with the Xoshiro256 native extension"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.seed",
+      "description": "Create state for the pseudo-random generator: equal seeds produce equal sequences of numbers. Accepts a number or a string (decimal representation of uint64, max 20 digits in the string) if full 64-bit precision required. State is seeded using splitmix64 algorithm.",
+      "parameters": [
+        {
+          "name": "seed",
+          "doc": "",
+          "types": [
+            "number",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.random",
+      "description": "When called without arguments, returns a uniform pseudo-random real number in the range [0,1). When called with an integer number m, returns a uniform pseudo-random integer in the range [1, m]. When called with two integer numbers m and n, returns a uniform pseudo-random integer in the range [m, n].",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "m",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.float_range",
+      "description": "Generates a random number in floating range [m, n)",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "m",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.clone",
+      "description": "Creates and returns an independent copy of the state",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "out",
+          "doc": "",
+          "types": [
+            "userdata"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "cloned_state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.to_string",
+      "description": "Convert state to string. Used for saving the state. String is formed as 4 uint64 values separated by ':', e.g. \"s0:s1:s2:s3\".",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "serialized_state",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xoshiro256.from_string",
+      "description": "Convert previously saved string back to state.",
+      "parameters": [
+        {
+          "name": "serialized_state",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    }
+  ]
+}

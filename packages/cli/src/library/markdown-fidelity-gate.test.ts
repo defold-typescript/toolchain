@@ -39,7 +39,7 @@ function orthographicTarget(): MarkdownTarget {
 // ts-defold-lane golden, so the comparison it feeds is the same one the no-go was
 // recorded from — the `follow` correction that landed on top of it renames a
 // parameter and widens a union, neither of which the gate scores.
-const AUTHORED_SNAPSHOT = "defold-orthographic/fork/orthographic.camera.d.ts";
+const AUTHORED_SNAPSHOT = "britzl/defold-orthographic/fork/orthographic.camera.d.ts";
 
 async function comparison() {
   const target = orthographicTarget();
@@ -441,7 +441,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/accelerometer.md",
       severedSource: {
         path: "packages/defold-input/in.accelerometer.d.ts",
-        fixture: "defold-input/fork/in.accelerometer.d.ts",
+        fixture: "britzl/defold-input/fork/in.accelerometer.d.ts",
       },
     },
     {
@@ -451,7 +451,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/button.md",
       severedSource: {
         path: "packages/defold-input/in.button.d.ts",
-        fixture: "defold-input/fork/in.button.d.ts",
+        fixture: "britzl/defold-input/fork/in.button.d.ts",
       },
     },
     {
@@ -461,7 +461,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/cursor.md",
       severedSource: {
         path: "packages/defold-input/in.cursor.d.ts",
-        fixture: "defold-input/fork/in.cursor.d.ts",
+        fixture: "britzl/defold-input/fork/in.cursor.d.ts",
       },
     },
     {
@@ -471,7 +471,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/gesture.md",
       severedSource: {
         path: "packages/defold-input/in.gesture.d.ts",
-        fixture: "defold-input/fork/in.gesture.d.ts",
+        fixture: "britzl/defold-input/fork/in.gesture.d.ts",
       },
     },
     {
@@ -480,7 +480,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-input/in.keyboard.d.ts",
-        fixture: "defold-input/fork/in.keyboard.d.ts",
+        fixture: "britzl/defold-input/fork/in.keyboard.d.ts",
       },
     },
     {
@@ -490,7 +490,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/mapper.md",
       severedSource: {
         path: "packages/defold-input/in.mapper.d.ts",
-        fixture: "defold-input/fork/in.mapper.d.ts",
+        fixture: "britzl/defold-input/fork/in.mapper.d.ts",
       },
     },
     {
@@ -500,7 +500,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/onscreen.md",
       severedSource: {
         path: "packages/defold-input/in.onscreen.d.ts",
-        fixture: "defold-input/fork/in.onscreen.d.ts",
+        fixture: "britzl/defold-input/fork/in.onscreen.d.ts",
       },
     },
     {
@@ -510,7 +510,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/state.md",
       severedSource: {
         path: "packages/defold-input/in.state.d.ts",
-        fixture: "defold-input/fork/in.state.d.ts",
+        fixture: "britzl/defold-input/fork/in.state.d.ts",
       },
     },
     {
@@ -520,7 +520,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/textbox.md",
       severedSource: {
         path: "packages/defold-input/in.textbox.d.ts",
-        fixture: "defold-input/fork/in.textbox.d.ts",
+        fixture: "britzl/defold-input/fork/in.textbox.d.ts",
       },
     },
     {
@@ -529,7 +529,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-input/in.triggers.d.ts",
-        fixture: "defold-input/fork/in.triggers.d.ts",
+        fixture: "britzl/defold-input/fork/in.triggers.d.ts",
       },
     },
   ],
@@ -571,7 +571,7 @@ const MONARCH: LibraryRecord = {
       markdown: "README_API.md",
       severedSource: {
         path: "packages/monarch/monarch.monarch.d.ts",
-        fixture: "monarch/fork/monarch.monarch.d.ts",
+        fixture: "britzl/monarch/fork/monarch.monarch.d.ts",
       },
     },
     {
@@ -580,7 +580,7 @@ const MONARCH: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/monarch/monarch.transitions.easings.d.ts",
-        fixture: "monarch/fork/monarch.transitions.easings.d.ts",
+        fixture: "britzl/monarch/fork/monarch.transitions.easings.d.ts",
       },
     },
     {
@@ -590,7 +590,7 @@ const MONARCH: LibraryRecord = {
       markdown: "README_TRANSITIONS.md",
       severedSource: {
         path: "packages/monarch/monarch.transitions.gui.d.ts",
-        fixture: "monarch/fork/monarch.transitions.gui.d.ts",
+        fixture: "britzl/monarch/fork/monarch.transitions.gui.d.ts",
       },
     },
   ],
@@ -636,7 +636,7 @@ const RICHTEXT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-richtext/richtext.color.d.ts",
-        fixture: "defold-richtext/fork/richtext.color.d.ts",
+        fixture: "britzl/defold-richtext/fork/richtext.color.d.ts",
       },
     },
     {
@@ -646,7 +646,7 @@ const RICHTEXT: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-richtext/richtext.richtext.d.ts",
-        fixture: "defold-richtext/fork/richtext.richtext.d.ts",
+        fixture: "britzl/defold-richtext/fork/richtext.richtext.d.ts",
       },
     },
     {
@@ -655,7 +655,7 @@ const RICHTEXT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-richtext/richtext.tags.d.ts",
-        fixture: "defold-richtext/fork/richtext.tags.d.ts",
+        fixture: "britzl/defold-richtext/fork/richtext.tags.d.ts",
       },
     },
   ],
@@ -700,7 +700,7 @@ const PERSIST: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/library-defold-persist/persist.persist.d.ts",
-        fixture: "library-defold-persist/fork/persist.persist.d.ts",
+        fixture: "whiteboxdev/library-defold-persist/fork/persist.persist.d.ts",
       },
     },
   ],
@@ -759,7 +759,7 @@ const YAGAMES: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-yagames/yagames.yagames.d.ts",
-        fixture: "defold-yagames/fork/yagames.yagames.d.ts",
+        fixture: "indiesoftby/defold-yagames/fork/yagames.yagames.d.ts",
       },
     },
   ],
@@ -846,7 +846,7 @@ const GOOEY: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/gooey/gooey.gooey.d.ts",
-        fixture: "gooey/fork/gooey.gooey.d.ts",
+        fixture: "britzl/gooey/fork/gooey.gooey.d.ts",
       },
     },
   ],
@@ -935,7 +935,7 @@ const METRICS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-metrics/metrics.fps.d.ts",
-        fixture: "defold-metrics/fork/metrics.fps.d.ts",
+        fixture: "britzl/defold-metrics/fork/metrics.fps.d.ts",
       },
     },
     {
@@ -945,7 +945,7 @@ const METRICS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-metrics/metrics.mem.d.ts",
-        fixture: "defold-metrics/fork/metrics.mem.d.ts",
+        fixture: "britzl/defold-metrics/fork/metrics.mem.d.ts",
       },
     },
   ],
@@ -1006,7 +1006,7 @@ const RENDY: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/library-defold-rendy/rendy.rendy.d.ts",
-        fixture: "library-defold-rendy/fork/rendy.rendy.d.ts",
+        fixture: "whiteboxdev/library-defold-rendy/fork/rendy.rendy.d.ts",
       },
     },
   ],
@@ -1080,7 +1080,7 @@ const PLATYPUS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/platypus/platypus.platypus.d.ts",
-        fixture: "platypus/fork/platypus.platypus.d.ts",
+        fixture: "britzl/platypus/fork/platypus.platypus.d.ts",
       },
     },
   ],
@@ -1163,7 +1163,7 @@ const DICEBAG: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/dicebag/dicebag.dicebag.d.ts",
-        fixture: "dicebag/fork/dicebag.dicebag.d.ts",
+        fixture: "8bitskull/dicebag/fork/dicebag.dicebag.d.ts",
       },
     },
   ],
@@ -1231,7 +1231,7 @@ const BZANIM: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/bzAnim/bzAnim.bzAnim.d.ts",
-        fixture: "bzanim/fork/bzAnim.bzLibrary.d.ts",
+        fixture: "jbp4444/bzanim/fork/bzAnim.bzLibrary.d.ts",
       },
     },
   ],

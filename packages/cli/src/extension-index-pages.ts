@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { archiveWrapperOf } from "@defold-typescript/transpiler";
 import { DEFOLD_EXTENSIONS_FILE } from "./library/library-data";
-import { normalizeSourceId } from "./library-match";
+import { libraryName, matchedLibraryName } from "./library-match";
 
 export interface CuratedExtensionManifest {
   readonly libraries: readonly {
@@ -48,11 +48,14 @@ export function curatedIndexPages(
   entries: readonly string[],
   manifest: CuratedExtensionManifest,
 ): string[] {
-  const sourceId = normalizeSourceId(url);
-  if (sourceId === "") return [];
+  const name = matchedLibraryName(
+    url,
+    manifest.libraries.map(({ repo }) => libraryName(repo)),
+  );
+  if (name === null) return [];
   const wrapper = archiveWrapperOf(entries);
   const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
   return manifest.libraries
-    .filter((library) => normalizeSourceId(library.repo) === sourceId)
+    .filter((library) => libraryName(library.repo) === name)
     .flatMap((library) => library.docs.filter((doc) => doc.path === path).map((doc) => doc.page));
 }

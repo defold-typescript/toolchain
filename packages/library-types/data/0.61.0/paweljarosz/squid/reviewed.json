@@ -1,0 +1,50 @@
+{
+  "ref": "1.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "38c07de1a799ac3d264e83b5ca08ef8e24e67ccc"
+      ],
+      "api": "5a04dadef4b9e6524055f4935fc22d39a164249054d0276985241e581fffe32f",
+      "doc": "c7f3354948aa5d5d9e23f31c3ad319bf712cb7e4bc26fbf10f6e2319e0b8ccf2",
+      "source": "8333cb0848379c03fc4fd91f765f28b3a2fab6018af8473079dc7fcf8b7d5e66",
+      "members": {
+        "squid/squid.lua": "cc48b4c9c5dccf8f",
+        "squid/squid_config.lua#@annotations": "9e70b5e58c9e1008",
+        "squid/squid_config.lua#app_catalog": "24c7bcaf858ea773",
+        "squid/squid_config.lua#crash_file_extension": "24c7bcaf858ea773",
+        "squid/squid_config.lua#crash_file_name": "24c7bcaf858ea773",
+        "squid/squid_config.lua#days_to_delete_logs": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_adding_timestamp": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_enabled": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_enabled_in_release": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_printing": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_printing_crashes": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_saving": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_saving_crashes": "24c7bcaf858ea773",
+        "squid/squid_config.lua#is_using_allowlist": "24c7bcaf858ea773",
+        "squid/squid_config.lua#log_file_extension": "24c7bcaf858ea773",
+        "squid/squid_config.lua#log_file_name": "24c7bcaf858ea773",
+        "squid/squid_config.lua#max_data_depth": "24c7bcaf858ea773",
+        "squid/squid_config.lua#max_data_length": "24c7bcaf858ea773",
+        "squid/squid_config.lua#min_log_level": "24c7bcaf858ea773",
+        "squid/squid_config.lua#unsaved_logs_buffer": "24c7bcaf858ea773",
+        "squid/squid_impl.lua": "80f500ca283df98f",
+        "squid/system_helper.lua#@annotations": "361c32180b59b1c1",
+        "squid/system_helper.lua#directory": "9e7617bf749cc1c4",
+        "squid/system_helper.lua#filepath": "bc65f9e69ba5c344",
+        "squid/system_helper.lua#get_all_files_in_catalog": "9e7617bf749cc1c4",
+        "squid/system_helper.lua#get_timestamp": "4c067673614f2e94",
+        "squid/system_helper.lua#is_debug": "24c7bcaf858ea773",
+        "squid/system_helper.lua#is_linux": "24c7bcaf858ea773",
+        "squid/system_helper.lua#is_linux_or_mac": "24c7bcaf858ea773",
+        "squid/system_helper.lua#is_mobile": "24c7bcaf858ea773",
+        "squid/system_helper.lua#is_windows": "24c7bcaf858ea773",
+        "squid/system_helper.lua#remove_old_files_by_filename": "3ca6acd864555212",
+        "squid/table_to_string.lua#@annotations": "26f05df9403853a6",
+        "squid/table_to_string.lua#convert": "0f09bad9ba6f3cf1"
+      }
+    }
+  ]
+}

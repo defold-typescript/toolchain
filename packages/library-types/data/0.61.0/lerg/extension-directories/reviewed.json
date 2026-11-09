@@ -1,0 +1,23 @@
+{
+  "ref": "2023870e8afda0028eec5432852c8f37d7177ecd",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "2023870e8afda0028eec5432852c8f37d7177ecd"
+      ],
+      "api": "e211c7cff13135ddcc41dea7c078e1ea1362c4bc24c26a7aeb302702620f7f74",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "9d8e022e1b61dccb560478d5ac5772c13bbfac19affff7c3b60465d73d3a6d9f",
+      "members": {
+        "directories/src/extension.h": "06bd1b568def1294",
+        "directories/src/extension_android.cpp": "9ccf6ee014a219de",
+        "directories/src/extension_html5.cpp": "78703d02185d6bc7",
+        "directories/src/extension_ios_macos.mm": "e0d0da35d3cebf44",
+        "directories/src/extension_linux.cpp": "a4572bca96942c1d",
+        "directories/src/extension_stub.cpp": "53189825f689e763",
+        "directories/src/extension_windows.cpp": "054335b4281c94b1"
+      }
+    }
+  ]
+}

@@ -19,8 +19,12 @@ import {
   LIBRARY_DATA_MAIN_URL,
   libraryDataCacheDir,
 } from "./library-data-archive";
-import { normalizeSourceId } from "./library-match";
-import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
+import { matchLibraryName } from "./library-match";
+import {
+  loadVendoredLibraryRegistry,
+  loadVendoredNativeRegistry,
+  readLibraryDataOrNone,
+} from "./library-registry";
 import {
   checkShippedDeclarations,
   isShippedDeclarationPath,
@@ -133,8 +137,17 @@ function selectLibraryData(
 }
 
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
-  const sourceId = normalizeSourceId(opts.library);
   const data = await selectLibraryData(opts);
+  const match = matchLibraryName(
+    opts.library,
+    readLibraryDataOrNone(data.dir).map(({ dir }) => dir),
+  );
+  if (match?.kind === "shared") {
+    throw new Error(
+      `"${opts.library}" shares its repo name with ${match.names.join(", ")}: name one as owner/repo`,
+    );
+  }
+  const sourceId = match?.name ?? "";
   const sources = sourceId === "" ? [] : await curatedFiles(sourceId, data.dir);
   if (sources.length === 0) {
     const why = data.reason === undefined ? "" : `: ${data.reason}`;

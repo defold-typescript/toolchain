@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["lang/**/*.lua"],
+      "moduleId": "lang.lang",
+      "namespace": "lang",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

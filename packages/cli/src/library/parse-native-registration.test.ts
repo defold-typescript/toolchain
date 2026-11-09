@@ -10,7 +10,7 @@ function vendored(path: string) {
 
 describe("parseNativeRegistration over a vendored registering file", () => {
   test("stamp: its two registered functions, with no methods or constants", () => {
-    const surface = vendored("fixture-native/source/upstream/stamp/src/extension.cpp");
+    const surface = vendored("example/fixture-native/source/upstream/stamp/src/extension.cpp");
     expect(surface).toEqual({
       moduleName: "stamp",
       functions: ["at", "issue"],

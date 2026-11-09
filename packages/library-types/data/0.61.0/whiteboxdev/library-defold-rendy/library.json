@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/whiteboxdev/library-defold-rendy",
+  "license": "Zlib",
+  "follows": "none",
+  "forks": [
+    {
+      "authored": "fork/rendy.rendy.d.ts",
+      "moduleId": "rendy.rendy",
+      "namespace": "rendy",
+      "apiDoc": "api-doc/rendy.json",
+      "upstreamLua": ["source/upstream/rendy/rendy.lua"]
+    }
+  ],
+  "floors": {
+    "rendy.rendy": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["druid/**/*.lua"],
+      "moduleId": "druid.druid",
+      "namespace": "druid",
+      "typeRenames": {
+        "vector": "Vector",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"],
+      "externalTypes": {
+        "event": {
+          "module": "event.event",
+          "name": "event"
+        }
+      },
+      "annotationOverrides": {
+        "interfaces": {
+          "event.on_size_changed": {
+            "fields": {
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "druid.layout.rows_data": {
+            "fields": {
+              "rows": {
+                "type": "druid.layout.row_data[]"
+              }
+            }
+          },
+          "druid.button.style": {
+            "fields": {
+              "on_init": {
+                "type": "fun(self: druid.button)|nil"
+              },
+              "on_click": {
+                "type": "fun(self: druid.button, node: node)|nil"
+              },
+              "on_click_disabled": {
+                "type": "fun(self: druid.button, node: node)|nil"
+              },
+              "on_hover": {
+                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
+              },
+              "on_mouse_hover": {
+                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
+              },
+              "on_set_enabled": {
+                "type": "fun(self: druid.button, node: node, enabled_state: boolean|nil)|nil"
+              }
+            }
+          },
+          "druid.drag": {
+            "methods": {
+              "init": {
+                "params": {
+                  "on_drag_callback": {
+                    "type": "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)"
+                  }
+                }
+              },
+              "_start_touch": {
+                "params": {
+                  "touch": { "type": "touch" }
+                }
+              }
+            }
+          },
+          "druid.scroll": {
+            "methods": {
+              "_on_scroll_drag": {
+                "params": {
+                  "dx": { "type": "number" },
+                  "dy": { "type": "number" }
+                }
+              },
+              "_set_scroll_position": {
+                "params": {
+                  "position_x": { "type": "number" },
+                  "position_y": { "type": "number" }
+                }
+              },
+              "_update_free_scroll": {
+                "params": {
+                  "dt": { "type": "number" }
+                }
+              },
+              "_process_scroll_wheel": {
+                "params": {
+                  "action_id": { "type": "hash" },
+                  "action": { "type": "action" }
+                }
+              },
+              "_inverse_lerp": {
+                "params": {
+                  "min": { "type": "number" },
+                  "max": { "type": "number" },
+                  "current": { "type": "number" }
+                }
+              }
+            }
+          },
+          "druid.container": {
+            "methods": {
+              "remove_container_by_node": {
+                "params": {
+                  "node": { "type": "node" }
+                }
+              },
+              "_on_corner_drag": {
+                "params": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" },
+                  "corner_offset": { "type": "vector3" }
+                }
+              }
+            }
+          },
+          "druid.layout": {
+            "methods": {
+              "set_node_position": {
+                "params": {
+                  "is_instant": { "type": "boolean|nil" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

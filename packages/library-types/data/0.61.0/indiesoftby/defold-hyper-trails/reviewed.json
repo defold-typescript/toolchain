@@ -1,0 +1,39 @@
+{
+  "ref": "1.4.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "a2db70917085c797fcba6679d9b00cb0f9f6772a"
+      ],
+      "api": "e835e193e2e54b6d214c15eaf60fe1fa372694889a9c960f2877c49c8cf12e29",
+      "doc": "14c51d4aa671105575a0ac5785e703db936e3592daa2086235fe3edb2e8b76b5",
+      "source": "4c0720df3d4f9d8dfdf5ded29e19a5ac7c49d12dfd379c728bbfad91e92532be",
+      "members": {
+        "hyper_trails/geometry.lua#catmull_rom": "5be6357506747d55",
+        "hyper_trails/geometry.lua#catmull_rom_vectors": "c9acd1e2698dfd77",
+        "hyper_trails/geometry.lua#lines_intersects": "c4914998a88d22c1",
+        "hyper_trails/trail_maker.lua#@annotations": "8dc5671ef4da59bb",
+        "hyper_trails/trail_maker.lua#draw_trail": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#encode_data_to_buffers": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#fade_tail": "98e5a4a5720a6d7d",
+        "hyper_trails/trail_maker.lua#final": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#follow_position": "986d3f376d14ce5f",
+        "hyper_trails/trail_maker.lua#get_head_data_points": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#get_position": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#init_buffers": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#init_data_points": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#init_props": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#init_vars": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#make_angle": "e3ab5807ca03ed42",
+        "hyper_trails/trail_maker.lua#make_vectors_from_angle": "59a9a09e9daf959a",
+        "hyper_trails/trail_maker.lua#pull_not_used_points": "eb18dcf38cc714bb",
+        "hyper_trails/trail_maker.lua#queue_late_update": "53afa49906788416",
+        "hyper_trails/trail_maker.lua#shrink_length": "98e5a4a5720a6d7d",
+        "hyper_trails/trail_maker.lua#shrink_width": "e134272b1fb7a03a",
+        "hyper_trails/trail_maker.lua#split_segments_by_length": "1fb21f5833bf5388",
+        "hyper_trails/trail_maker.lua#update_uv_opts": "1fb21f5833bf5388"
+      }
+    }
+  ]
+}

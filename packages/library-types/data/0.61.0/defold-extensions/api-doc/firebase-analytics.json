@@ -1,0 +1,1240 @@
+{
+  "info": {
+    "namespace": "firebase",
+    "brief": "Functions and constants for interacting with Firebase",
+    "description": "Functions and constants for interacting with Firebase"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.initialize",
+      "description": "Initialise analytics",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_callback",
+      "description": "Sets a callback function for receiving events from the SDK. Call `firebase.analytics.set_callback(nil)` to remove callback",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed on any event in the SDK.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "One of message types: `firebase.analytics.MSG_ERROR` `firebase.analytics.MSG_INSTANCE_ID`",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table holding the data",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "error",
+                  "doc": "The error message (if an error occurred or `nil` otherwise)",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "instance_id",
+                  "doc": "For message_id MSG_INSTANCE_ID or `nil` otherwise.",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log",
+      "description": "Log an event without parameters.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_string",
+      "description": "Log an event with one string parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_int",
+      "description": "Log an event with one integer parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_number",
+      "description": "Log an event with one float parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_table",
+      "description": "Log an event with table parameters.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "parameters",
+          "doc": "Table with parameters (key-value pairs)",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_default_event_parameters",
+      "description": "Set default parameters that will be included with future events.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "Table with default parameters (key-value pairs)",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_user_id",
+      "description": "Sets the user ID property.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "User ID property",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_user_property",
+      "description": "Set a user property to the given value.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "User property name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "property",
+          "doc": "User property value",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.reset",
+      "description": "Clears all data for this app from the device and resets the app instance id.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.get_id",
+      "description": "Get the instance ID from the service. Returned in callback with MSG_INSTANCE_ID message_id.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_enabled",
+      "description": "Sets whether analytics collection is enabled for this app on this device.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "The value",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.MSG_ERROR",
+      "brief": "Event generated when an error occurred.",
+      "description": "Event generated when an error occurred.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.MSG_INSTANCE_ID",
+      "brief": "Event generated when instance_id ready after `firebase.analytics.get_id()` call",
+      "description": "Event generated when instance_id ready after `firebase.analytics.get_id()` call",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_ADIMPRESSION",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_ADDPAYMENTINFO",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_ADDSHIPPINGINFO",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_ADDTOCART",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_ADDTOWISHLIST",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_APPOPEN",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_BEGINCHECKOUT",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_CAMPAIGNDETAILS",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_EARNVIRTUALCURRENCY",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_GENERATELEAD",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_JOINGROUP",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_LEVELEND",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_LEVELSTART",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_LEVELUP",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_LOGIN",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_POSTSCORE",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_PURCHASE",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_REFUND",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_REMOVEFROMCART",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SCREENVIEW",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SEARCH",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SELECTCONTENT",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SELECTITEM",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SELECTPROMOTION",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SHARE",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SIGNUP",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_SPENDVIRTUALCURRENCY",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_TUTORIALBEGIN",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_TUTORIALCOMPLETE",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_UNLOCKACHIEVEMENT",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_VIEWCART",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_VIEWITEM",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_VIEWITEMLIST",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_VIEWPROMOTION",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.EVENT_VIEWSEARCHRESULTS",
+      "brief": "Predefined event",
+      "description": "Predefined event",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ADFORMAT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ADNETWORKCLICKID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ADPLATFORM",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ADSOURCE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ADUNITNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_AFFILIATION",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CP1",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CAMPAIGN",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CAMPAIGNID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CHARACTER",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CONTENT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CONTENTTYPE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_COUPON",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CREATIVEFORMAT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CREATIVENAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CREATIVESLOT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_CURRENCY",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_DESTINATION",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_DISCOUNT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ENDDATE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_EXTENDSESSION",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_FLIGHTNUMBER",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_GROUPID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_INDEX",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMBRAND",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMCATEGORY",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMCATEGORY2",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMCATEGORY3",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMCATEGORY4",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMCATEGORY5",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMLISTID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMLISTNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMVARIANT",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ITEMS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_LEVEL",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_LEVELNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_LOCATION",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_LOCATIONID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_MARKETINGTACTIC",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_MEDIUM",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_METHOD",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_NUMBEROFNIGHTS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_NUMBEROFPASSENGERS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_NUMBEROFROOMS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_ORIGIN",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_PAYMENTTYPE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_PRICE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_PROMOTIONID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_PROMOTIONNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_QUANTITY",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SCORE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SCREENCLASS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SCREENNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SEARCHTERM",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SHIPPING",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SHIPPINGTIER",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SOURCE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SOURCEPLATFORM",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_STARTDATE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_SUCCESS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_TAX",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_TERM",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_TRANSACTIONID",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_TRAVELCLASS",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_VALUE",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PARAM_VIRTUALCURRENCYNAME",
+      "brief": "Predefined parameter",
+      "description": "Predefined parameter",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PROP_ALLOWADPERSONALIZATIONSIGNALS",
+      "brief": "Predefined property",
+      "description": "Predefined property",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.analytics.PROP_SIGNUPMETHOD",
+      "brief": "Predefined property",
+      "description": "Predefined property",
+      "types": [
+        "string"
+      ]
+    }
+  ]
+}

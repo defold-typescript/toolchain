@@ -1,0 +1,33 @@
+{
+  "ref": "1.2.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "266e9079e1ba40dc5116c8c9375848b40555bba3"
+      ],
+      "api": "75cd51a89d605a88201b3553e81a1b0c258f2377cb59902892d6670c42920e68",
+      "doc": "1259fde3a51e8f99cf091bd0af992dd2ccd152d056362dea6b0ed4ec3da0d4d9",
+      "source": "af2ca76b8c6bdbc6f153aefbdadd53e9cbe0c954dfbf130ac44628bbcc8ead09",
+      "members": {
+        "printer/colors.lua#get_random_color": "53afa49906788416",
+        "printer/colors.lua#hex2rgba": "e4b88dfd6b81c66c",
+        "printer/printer.lua#@annotations": "c0c23910a22ef966",
+        "printer/printer.lua#add_source_style": "2d95d17febcd9358",
+        "printer/printer.lua#add_styles": "5e8f66c93b51edb4",
+        "printer/printer.lua#add_word_style": "a1b7fd263de37a3f",
+        "printer/printer.lua#clear": "1fb21f5833bf5388",
+        "printer/printer.lua#fadeout": "1fb21f5833bf5388",
+        "printer/printer.lua#final": "1fb21f5833bf5388",
+        "printer/printer.lua#instant_appear": "1fb21f5833bf5388",
+        "printer/printer.lua#new": "efaa8eb43a2809e7",
+        "printer/printer.lua#play_sound": "3396f211823218ef",
+        "printer/printer.lua#print": "849a5f1cf4085ef0",
+        "printer/printer.lua#printers": "24c7bcaf858ea773",
+        "printer/printer.lua#update": "986d3f376d14ce5f",
+        "printer/regex.lua#replace_all_with_style": "dd407cd5e9cade4b",
+        "printer/utf8string.lua": "c93081f23a47a699"
+      }
+    }
+  ]
+}

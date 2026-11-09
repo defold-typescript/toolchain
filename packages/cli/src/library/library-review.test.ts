@@ -39,8 +39,8 @@ describe("reviewLibraries", () => {
     cacheDir = join(base, "cache");
     requested = [];
     mkdirSync(dataDir);
-    writeLibrary("first", "https://github.com/owner/first", "1.0.0");
-    writeLibrary("second", "https://github.com/owner/second", COMMIT_B);
+    writeLibrary("owner/first", "https://github.com/owner/first", "1.0.0");
+    writeLibrary("owner/second", "https://github.com/owner/second", COMMIT_B);
   });
 
   afterEach(() => {
@@ -48,7 +48,7 @@ describe("reviewLibraries", () => {
   });
 
   function writeLibrary(folder: string, repo: string, ref: string): void {
-    mkdirSync(join(dataDir, folder));
+    mkdirSync(join(dataDir, folder), { recursive: true });
     writeFileSync(join(dataDir, folder, "library.json"), JSON.stringify({ repo }));
     writeFileSync(join(dataDir, folder, "reviewed.json"), JSON.stringify({ ref }));
   }
@@ -85,16 +85,16 @@ describe("reviewLibraries", () => {
     expect(requested.sort()).toEqual([FIRST_URL, SECOND_URL].sort());
     expect(result).toEqual({
       reviewed: [
-        { library: "first", commit: COMMIT_A, added: true },
-        { library: "second", commit: COMMIT_B, added: true },
+        { library: "owner/first", commit: COMMIT_A, added: true },
+        { library: "owner/second", commit: COMMIT_B, added: true },
       ],
       failed: [],
     });
-    expect(JSON.parse(reviewedText("first"))).toEqual({
+    expect(JSON.parse(reviewedText("owner/first"))).toEqual({
       ref: "1.0.0",
       reviews: [{ ...fingerprintOf(BOTH[FIRST_URL] as Uint8Array), commits: [COMMIT_A] }],
     });
-    expect(readLibraryReviews(dataDir, "second")).toEqual([
+    expect(readLibraryReviews(dataDir, "owner/second")).toEqual([
       { ...fingerprintOf(BOTH[SECOND_URL] as Uint8Array), commits: [COMMIT_B] },
     ]);
     expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["1.0.0", COMMIT_B]);
@@ -102,24 +102,24 @@ describe("reviewLibraries", () => {
 
   test("a second run changes no bytes and reports nothing added", async () => {
     await review(BOTH);
-    const first = reviewedText("first");
-    const second = reviewedText("second");
+    const first = reviewedText("owner/first");
+    const second = reviewedText("owner/second");
 
     const result = await review(BOTH);
 
-    expect(reviewedText("first")).toBe(first);
-    expect(reviewedText("second")).toBe(second);
+    expect(reviewedText("owner/first")).toBe(first);
+    expect(reviewedText("owner/second")).toBe(second);
     expect(result.reviewed.map(({ added }) => added)).toEqual([false, false]);
   });
 
   test("changed archive contents keep the ref and the earlier review", async () => {
     await review(BOTH);
-    const earlier = readLibraryReviews(dataDir, "first") ?? [];
+    const earlier = readLibraryReviews(dataDir, "owner/first") ?? [];
     const moved = archiveOf(moduleOf("three"), COMMIT_B);
 
-    await review({ ...BOTH, [FIRST_URL]: moved }, ["first"]);
+    await review({ ...BOTH, [FIRST_URL]: moved }, ["owner/first"]);
 
-    expect(JSON.parse(reviewedText("first"))).toEqual({
+    expect(JSON.parse(reviewedText("owner/first"))).toEqual({
       ref: "1.0.0",
       reviews: [...earlier, { ...fingerprintOf(moved), commits: [COMMIT_B] }],
     });
@@ -128,51 +128,51 @@ describe("reviewLibraries", () => {
   test("an archive with no commit records its hashes under no commit", async () => {
     const bytes = archiveOf(moduleOf("one"));
 
-    const result = await review({ [FIRST_URL]: bytes }, ["first"]);
+    const result = await review({ [FIRST_URL]: bytes }, ["owner/first"]);
 
-    expect(result.reviewed).toEqual([{ library: "first", commit: null, added: true }]);
-    expect(readLibraryReviews(dataDir, "first")).toEqual([
+    expect(result.reviewed).toEqual([{ library: "owner/first", commit: null, added: true }]);
+    expect(readLibraryReviews(dataDir, "owner/first")).toEqual([
       { ...fingerprintOf(bytes), commits: [] },
     ]);
   });
 
   test("a named library is the only one touched", async () => {
-    const untouched = reviewedText("second");
+    const untouched = reviewedText("owner/second");
 
-    const result = await review(BOTH, ["first"]);
+    const result = await review(BOTH, ["owner/first"]);
 
     expect(requested).toEqual([FIRST_URL]);
-    expect(result.reviewed.map(({ library }) => library)).toEqual(["first"]);
-    expect(reviewedText("second")).toBe(untouched);
+    expect(result.reviewed.map(({ library }) => library)).toEqual(["owner/first"]);
+    expect(reviewedText("owner/second")).toBe(untouched);
   });
 
   test("an unknown name fails before any download, naming it", async () => {
-    await expect(review(BOTH, ["first", "nope"])).rejects.toThrow("nope");
+    await expect(review(BOTH, ["owner/first", "nope"])).rejects.toThrow("nope");
 
     expect(requested).toEqual([]);
-    expect(readLibraryReviews(dataDir, "first")).toBeNull();
+    expect(readLibraryReviews(dataDir, "owner/first")).toBeNull();
   });
 
   test("a failed download is reported by name and the other libraries are written", async () => {
-    const untouched = reviewedText("first");
+    const untouched = reviewedText("owner/first");
 
     const result = await review({ [SECOND_URL]: BOTH[SECOND_URL] as Uint8Array });
 
-    expect(result.reviewed).toEqual([{ library: "second", commit: COMMIT_B, added: true }]);
+    expect(result.reviewed).toEqual([{ library: "owner/second", commit: COMMIT_B, added: true }]);
     expect(result.failed).toEqual([
-      { library: "first", message: expect.stringContaining("HTTP 404") },
+      { library: "owner/first", message: expect.stringContaining("HTTP 404") },
     ]);
-    expect(reviewedText("first")).toBe(untouched);
-    expect(readLibraryReviews(dataDir, "second")).toHaveLength(1);
+    expect(reviewedText("owner/first")).toBe(untouched);
+    expect(readLibraryReviews(dataDir, "owner/second")).toHaveLength(1);
   });
 
   describe("with the archive already cached and the record restored", () => {
     const FIRST_RECORD = JSON.stringify({ ref: "1.0.0" });
     const restoreFirst = (): void =>
-      writeFileSync(join(dataDir, "first", "reviewed.json"), FIRST_RECORD);
+      writeFileSync(join(dataDir, "owner/first", "reviewed.json"), FIRST_RECORD);
 
     test("a failed download fails that library, records nothing and runs the others", async () => {
-      await review(BOTH, ["first"]);
+      await review(BOTH, ["owner/first"]);
       restoreFirst();
       const download: DownloadExtensionArchive = async (url) => {
         if (url === FIRST_URL) throw new Error("HTTP 503");
@@ -181,32 +181,34 @@ describe("reviewLibraries", () => {
 
       const result = await reviewLibraries(dataDir, [], { cacheDir, download });
 
-      expect(result.failed).toEqual([{ library: "first", message: "HTTP 503" }]);
-      expect(reviewedText("first")).toBe(FIRST_RECORD);
-      expect(result.reviewed).toEqual([{ library: "second", commit: COMMIT_B, added: true }]);
-      expect(readLibraryReviews(dataDir, "second")).toHaveLength(1);
+      expect(result.failed).toEqual([{ library: "owner/first", message: "HTTP 503" }]);
+      expect(reviewedText("owner/first")).toBe(FIRST_RECORD);
+      expect(result.reviewed).toEqual([{ library: "owner/second", commit: COMMIT_B, added: true }]);
+      expect(readLibraryReviews(dataDir, "owner/second")).toHaveLength(1);
     });
 
     test("an answer of not modified reviews the cached bytes", async () => {
       const bytes = BOTH[FIRST_URL] as Uint8Array;
       const download: DownloadExtensionArchive = async (_url, etag) =>
         etag === "v1" ? { status: "not-modified" } : { status: "ok", bytes, etag: "v1" };
-      const run = () => reviewLibraries(dataDir, ["first"], { cacheDir, download });
+      const run = () => reviewLibraries(dataDir, ["owner/first"], { cacheDir, download });
       await run();
       restoreFirst();
 
       const restored = await run();
-      expect(restored.reviewed).toEqual([{ library: "first", commit: COMMIT_A, added: true }]);
+      expect(restored.reviewed).toEqual([
+        { library: "owner/first", commit: COMMIT_A, added: true },
+      ]);
       expect(restored.failed).toEqual([]);
-      const recorded = reviewedText("first");
+      const recorded = reviewedText("owner/first");
       expect(JSON.parse(recorded).reviews).toEqual([
         { ...fingerprintOf(bytes), commits: [COMMIT_A] },
       ]);
 
       const repeat = await run();
-      expect(repeat.reviewed).toEqual([{ library: "first", commit: COMMIT_A, added: false }]);
+      expect(repeat.reviewed).toEqual([{ library: "owner/first", commit: COMMIT_A, added: false }]);
       expect(repeat.failed).toEqual([]);
-      expect(reviewedText("first")).toBe(recorded);
+      expect(reviewedText("owner/first")).toBe(recorded);
     });
   });
 
@@ -215,7 +217,7 @@ describe("reviewLibraries", () => {
 
     const result = await review(BOTH);
 
-    expect(result.reviewed.map(({ library }) => library)).toEqual(["first", "second"]);
+    expect(result.reviewed.map(({ library }) => library)).toEqual(["owner/first", "owner/second"]);
     expect(result.failed).toEqual([]);
   });
 });

@@ -1,0 +1,54 @@
+{
+  "ref": "c67c227322334056cea7a631f3ddcdf2bcfd480c",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "c67c227322334056cea7a631f3ddcdf2bcfd480c"
+      ],
+      "api": "7d1eb9181fe87ca5179f5c5801541eeda9d8c191f3c183a73267f82abcadf8f1",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "a87d7add212d3b2b7f1a1a65c5229e404affcb5386d9ec370ab6bafacf4aea1b",
+      "members": {
+        "defmath/defmath.lua#angle_between_vectors": "d720fd485846c9db",
+        "defmath/defmath.lua#angle_of_vector_between_two_points": "d095b0297a667b32",
+        "defmath/defmath.lua#anglediff_deg": "eafd91bb3dab8422",
+        "defmath/defmath.lua#anglediff_rad": "25a49787e4f24c47",
+        "defmath/defmath.lua#average": "96922838d2b026c8",
+        "defmath/defmath.lua#average_midpoint_of_vectors": "96922838d2b026c8",
+        "defmath/defmath.lua#bound": "ed8db84fa82a0e41",
+        "defmath/defmath.lua#bound_add": "9dab23d82ac72ac1",
+        "defmath/defmath.lua#box_intersect": "c69fcac4229f2331",
+        "defmath/defmath.lua#check_point_in_rect": "28fff9b9c998befa",
+        "defmath/defmath.lua#clamp": "05e6eb37b797b72d",
+        "defmath/defmath.lua#degrees_to_radians": "2ce44b3fc83a2845",
+        "defmath/defmath.lua#difference": "26d7d484b96914df",
+        "defmath/defmath.lua#dist2d": "d095b0297a667b32",
+        "defmath/defmath.lua#dist3d": "055f0e2519791e22",
+        "defmath/defmath.lua#fraction_of": "26d7d484b96914df",
+        "defmath/defmath.lua#in_triangle": "c27b071b201bb475",
+        "defmath/defmath.lua#is_even": "1717df67266d5299",
+        "defmath/defmath.lua#is_odd": "1717df67266d5299",
+        "defmath/defmath.lua#is_within_range": "ed8db84fa82a0e41",
+        "defmath/defmath.lua#lerp": "c16a54b5e36dce50",
+        "defmath/defmath.lua#max_value": "f53baa66c955ed96",
+        "defmath/defmath.lua#min_max": "5f829b72ea67d650",
+        "defmath/defmath.lua#min_value": "fcbfd416914ce071",
+        "defmath/defmath.lua#percent_of": "26d7d484b96914df",
+        "defmath/defmath.lua#radians_to_degrees": "72e1fde75c8f00df",
+        "defmath/defmath.lua#rand11": "53afa49906788416",
+        "defmath/defmath.lua#rand_range": "3978bd82ccee1c30",
+        "defmath/defmath.lua#round": "5df6b0d7b0958e23",
+        "defmath/defmath.lua#round_decimal": "8ff90a9419faa1f9",
+        "defmath/defmath.lua#same_sign": "26d7d484b96914df",
+        "defmath/defmath.lua#setup_rng": "53afa49906788416",
+        "defmath/defmath.lua#sign": "5df6b0d7b0958e23",
+        "defmath/defmath.lua#sum": "96922838d2b026c8",
+        "defmath/defmath.lua#vect_to_quat": "c4e31fb2078b8a73",
+        "defmath/defmath.lua#vect_to_quat90": "c4e31fb2078b8a73",
+        "defmath/defmath.lua#wrap": "33f8d9fc224edde6",
+        "defmath/defmath.lua#wrap_angle": "970ecaf7a1e67c34"
+      }
+    }
+  ]
+}

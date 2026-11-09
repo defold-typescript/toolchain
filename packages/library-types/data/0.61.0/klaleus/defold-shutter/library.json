@@ -1,0 +1,20 @@
+{
+  "repo": "https://codeberg.org/Klaleus/defold-shutter",
+  "license": "Zlib",
+  "refKind": "commit",
+  "forks": [
+    {
+      "authored": "fork/shutter.shutter.d.ts",
+      "moduleId": "shutter.shutter",
+      "namespace": "shutter",
+      "apiDoc": "api-doc/shutter.json",
+      "upstreamLua": ["source/upstream/shutter/shutter.lua"]
+    }
+  ],
+  "floors": {
+    "shutter.shutter": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

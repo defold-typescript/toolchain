@@ -1,0 +1,18 @@
+{
+  "ref": "1.2.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "d20ec6042281b849a8bbd06ab42443b98ca47740"
+      ],
+      "api": "f0b160fdc5a75cdffff2806a2048f448646bec5897dd992b130ac7ef0f421be4",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "40744593e11302c852b90b22a6620e1c446bff2f3af9e6e37db06814ce638f19",
+      "members": {
+        "dissolve_fx/dissolve_fx.lua#find_uvrect": "a186ffc29467056d",
+        "dissolve_fx/dissolve_fx.lua#init": "e5f51a5b03408c6c"
+      }
+    }
+  ]
+}

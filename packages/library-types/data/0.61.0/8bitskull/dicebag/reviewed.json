@@ -1,0 +1,29 @@
+{
+  "ref": "0.3",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "2d966260ff3185393c4244714c7fb7d8b7c2fe63"
+      ],
+      "api": "4404c3335f75c6abb276669145a883b35d20e12cd386f594a5474763a3fb34c5",
+      "doc": "92507b62829c186e456379606e36831ac2fd9678710977a0922ad16d21ff999f",
+      "source": "d60fd7fb99c9d88bf4808e6cad78045d3d11eae04c4357f0fb3abbc8f2d19414",
+      "members": {
+        "dicebag/dicebag.lua#bag_create": "4ac8192d43f30924",
+        "dicebag/dicebag.lua#bag_draw": "f139be9c9192b1dd",
+        "dicebag/dicebag.lua#bag_reset": "f139be9c9192b1dd",
+        "dicebag/dicebag.lua#bags": "24c7bcaf858ea773",
+        "dicebag/dicebag.lua#flip_coin": "53afa49906788416",
+        "dicebag/dicebag.lua#roll_custom_dice": "821fa4ca134cb1c8",
+        "dicebag/dicebag.lua#roll_dice": "dd4fcf7a8a1918d3",
+        "dicebag/dicebag.lua#roll_special_dice": "fc4e24b1daa35414",
+        "dicebag/dicebag.lua#set_up_rng": "8f20f849e395b391",
+        "dicebag/dicebag.lua#table_create": "94a7ef5cc45e44f8",
+        "dicebag/dicebag.lua#table_reset": "f139be9c9192b1dd",
+        "dicebag/dicebag.lua#table_roll": "f139be9c9192b1dd",
+        "dicebag/dicebag.lua#tables": "24c7bcaf858ea773"
+      }
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "astar/astar.setup:param:use_zero[optional]": {
+    "class": "not-a-position",
+    "evidence": "a boolean that picks whether astar counts tables and tile positions from 0 or 1"
+  },
+  "crazygames/crazygames.list_friends:param:page": {
+    "class": "native-1",
+    "evidence": "Page number, starting at 1"
+  },
+  "dragonbones/dragonbones.load_data:param:aramture_index": {
+    "class": "native-0",
+    "evidence": "script_dragonbones.cpp:_tryBuildArmature reads armatureNames[armatureIndex] for 0 .. size() - 1"
+  },
+  "dragonbones/dragonbones.set_slot_display_index:param:index": {
+    "class": "native-0",
+    "evidence": "Slot.cpp:_updateDisplay shows _displayList[_displayIndex]; -1 shows nothing"
+  },
+  "imgui/imgui.set_mouse_button:param:index": {
+    "class": "native-0",
+    "evidence": "extension_imgui.cpp:imgui_SetMouseButton writes io.MouseDown[index]"
+  },
+  "imgui/imgui.table_set_column_index:param:column_index": {
+    "class": "native-0",
+    "evidence": "extension_imgui.cpp:imgui_TableSetColumnIndex passes it to ImGui::TableSetColumnIndex unchanged"
+  },
+  "imgui/imgui.set_style_color:param:color_index": {
+    "class": "not-a-position",
+    "evidence": "an `imgui.ImGuiCol_*` constant"
+  },
+  "imgui/imgui.push_style_color:param:color_index": {
+    "class": "not-a-position",
+    "evidence": "an `imgui.ImGuiCol_*` constant"
+  },
+  "imgui/imgui.font_add_ttf_file:return:font_index": {
+    "class": "native-0",
+    "evidence": "extension_imgui.cpp:imgui_StoreFont returns Size() - 1, and imgui_GetFont accepts 0 .. Size() - 1"
+  },
+  "imgui/imgui.font_add_ttf_data:return:font_index": {
+    "class": "native-0",
+    "evidence": "extension_imgui.cpp:imgui_StoreFont returns Size() - 1, and imgui_GetFont accepts 0 .. Size() - 1"
+  },
+  "imgui/imgui.font_push:param:font_index": {
+    "class": "native-0",
+    "evidence": "extension_imgui.cpp:imgui_StoreFont returns Size() - 1, and imgui_GetFont accepts 0 .. Size() - 1"
+  },
+  "mic/mic.start:param:options:device_index": {
+    "class": "native-0",
+    "evidence": "Zero-based index of the capture device to use"
+  },
+  "mic/mic.get_devices:return:devices": {
+    "class": "not-a-position",
+    "evidence": "a Lua array from 1; mic.cpp:get_devices sets each entry's index to its 0-based device_index"
+  },
+  "random/rnd.card:return:Card": {
+    "class": "native-1",
+    "evidence": "pcgrandom.cpp:card pushes pcg32_boundedrand_r(target, 52) + 1"
+  },
+  "rive.cmd/rive.cmd.referenceListViewModelInstance:param:index": {
+    "class": "native-0",
+    "evidence": "script_rive_cmd.cpp:Script_referenceListViewModelInstance passes the index to rive::CommandQueue unchanged, which counts list entries from 0 (-1 appends)"
+  },
+  "rive.cmd/rive.cmd.insertViewModelInstanceListViewModel:param:index": {
+    "class": "native-0",
+    "evidence": "script_rive_cmd.cpp:Script_insertViewModelInstanceListViewModel passes the index to rive::CommandQueue unchanged, which counts list entries from 0 (-1 appends)"
+  },
+  "rive.cmd/rive.cmd.swapViewModelInstanceListValues:param:indexa": {
+    "class": "native-0",
+    "evidence": "script_rive_cmd.cpp:Script_swapViewModelInstanceListValues passes the index to rive::CommandQueue unchanged, which counts list entries from 0 (-1 appends)"
+  },
+  "rive.cmd/rive.cmd.swapViewModelInstanceListValues:param:indexb": {
+    "class": "native-0",
+    "evidence": "script_rive_cmd.cpp:Script_swapViewModelInstanceListValues passes the index to rive::CommandQueue unchanged, which counts list entries from 0 (-1 appends)"
+  },
+  "rive.cmd/rive.cmd.removeViewModelInstanceListViewModelIndex:param:index": {
+    "class": "native-0",
+    "evidence": "script_rive_cmd.cpp:Script_removeViewModelInstanceListViewModelIndex passes the index to rive::CommandQueue unchanged, which counts list entries from 0 (-1 appends)"
+  },
+  "shop/shop.get_bundle_list:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_bundle_list_in_group:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_games_list:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_games_group:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_game_keys_group:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_user_games:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_virtual_items:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_virtual_currency:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_virtual_currency_package:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_virtual_items_group:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_sellable_items:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_sellable_items_group:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "shop/shop.get_reward_chains_list:param:offset": {
+    "class": "native-0",
+    "evidence": "the count starts from 0"
+  },
+  "spine/spine.play_anim:param:options:track": {
+    "class": "native-1",
+    "evidence": "script_spine.cpp defaults track to 1; comp_spine_model.cpp plays on m_Track - 1"
+  },
+  "spine/spine.cancel:param:options:track": {
+    "class": "native-1",
+    "evidence": "comp_spine_model.cpp cancels on m_Track - 1"
+  },
+  "spine/spine.play_anim:param:callback_function:message:track": {
+    "class": "native-1",
+    "evidence": "comp_spine_model.cpp sends entry->trackIndex + 1"
+  },
+  "spine.gui/gui.play_spine_anim:param:play_properties:track": {
+    "class": "native-1",
+    "evidence": "The track number for the animation (1-based)"
+  },
+  "spine.gui/gui.play_spine_anim:param:callback_function:message:track": {
+    "class": "native-1",
+    "evidence": "gui_node_spine.cpp sends entry->trackIndex + 1"
+  },
+  "spine.gui/gui.cancel_spine:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to cancel (1-based)"
+  },
+  "spine.gui/gui.get_spine_animation:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to get animation from (1-based)"
+  },
+  "spine.gui/gui.set_spine_cursor:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to set cursor for (1-based)"
+  },
+  "spine.gui/gui.get_spine_cursor:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to get cursor from (1-based)"
+  },
+  "spine.gui/gui.set_spine_playback_rate:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to set playback rate for (1-based)"
+  },
+  "spine.gui/gui.get_spine_playback_rate:param:options:track": {
+    "class": "native-1",
+    "evidence": "The track number to get playback rate from (1-based)"
+  },
+  "spriteloop/spriteloop.set_frame:param:frame_index": {
+    "class": "native-0",
+    "evidence": "spla_defold_lua.cpp:component_set_frame passes it to the player unchanged; comp_spriteloop.cpp reads current_frame_index() as frames[0 .. size() - 1]"
+  },
+  "steam/steam.friends_get_friend_by_index:param:iFriend": {
+    "class": "native-0",
+    "evidence": "Is a index of range [0, GetFriendCount())"
+  },
+  "steam/steam.matchmaking_get_lobby_by_index:param:index": {
+    "class": "native-0",
+    "evidence": "from 0 to LobbyMatchList_t.m_nLobbiesMatching"
+  },
+  "steam/steam.matchmaking_get_lobby_member_by_index:param:index": {
+    "class": "native-0",
+    "evidence": "steam_matchmaking.cpp passes it to Steamworks GetLobbyMemberByIndex, which counts from 0"
+  },
+  "steam/steam.matchmaking_get_lobby_data_by_index:param:index": {
+    "class": "native-0",
+    "evidence": "steam_matchmaking.cpp passes it to Steamworks GetLobbyDataByIndex, which counts from 0"
+  },
+  "steam/steam.user_stats_get_downloaded_leaderboard_entry:param:index": {
+    "class": "native-0",
+    "evidence": "steam_userstats.cpp passes it to Steamworks GetDownloadedLeaderboardEntry, which counts from 0"
+  },
+  "steam/steam.user_stats_get_achievement_name:param:index": {
+    "class": "native-0",
+    "evidence": "Get achievement name iAchievement in [0,GetNumAchievements)"
+  },
+  "steam/steam.matchmaking_get_lobby_chat_entry:param:index": {
+    "class": "not-a-position",
+    "evidence": "the `m_iChatID` a `LobbyChatMsg_t` callback carries"
+  },
+  "voronoi/voronoi.get_site:param:index": {
+    "class": "native-1",
+    "evidence": "1-based original input point index"
+  },
+  "voronoi/voronoi.get_sites:return:sites": {
+    "class": "native-1",
+    "evidence": "index is the 1-based original input index (voronoi.cpp pushes site->index + 1)"
+  },
+  "voronoi/voronoi.get_edges:return:edges": {
+    "class": "native-1",
+    "evidence": "sites contains two 1-based input indices, with 0 denoting the clipping boundary"
+  }
+}

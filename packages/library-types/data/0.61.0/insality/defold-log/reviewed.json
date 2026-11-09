@@ -1,0 +1,30 @@
+{
+  "ref": "7",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "f08ff061a5452c53111f58b71157b53c93bb9c05"
+      ],
+      "api": "b72dff81ec0ceda869455e36e268b5d96a605aa442c61e460b7ef467de0f9ac3",
+      "doc": "d080052dbc4b02b3c74d6f2441a44c65e982416321fa5aa3c3dc95b088b8b739",
+      "source": "6d2b0820a34581385c836d9678bad0f1313dd49a13f4fe6b7abc84130343ef53",
+      "members": {
+        "log/internal/config.lua": "ed60886d8e0d703c",
+        "log/internal/file_writer.lua#@annotations": "01a5ebc550281610",
+        "log/internal/file_writer.lua#clear_log_files": "53afa49906788416",
+        "log/internal/file_writer.lua#close_log_files": "53afa49906788416",
+        "log/internal/file_writer.lua#final": "53afa49906788416",
+        "log/internal/file_writer.lua#get_current_project_folder": "53afa49906788416",
+        "log/internal/file_writer.lua#get_file": "53afa49906788416",
+        "log/internal/file_writer.lua#on_log": "639c8e7416f4c1c8",
+        "log/internal/file_writer.lua#set_file": "68531ce9f731c636",
+        "log/internal/file_writer.lua#set_file_nearby": "5a07d46157bf967d",
+        "log/internal/formatter.lua#@annotations": "29bc51cd8b6c22a3",
+        "log/internal/formatter.lua#format": "4d61e37910e43f9c",
+        "log/internal/formatter.lua#get_default_logger_name": "e50abbc25c7d4574",
+        "log/log.lua": "eba17a6224b34496"
+      }
+    }
+  ]
+}

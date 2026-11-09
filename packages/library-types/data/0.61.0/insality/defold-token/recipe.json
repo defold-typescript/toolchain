@@ -1,0 +1,92 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["token/**/*.lua"],
+      "moduleId": "token.token",
+      "namespace": "token",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**"],
+      "externalTypes": {
+        "event": {
+          "module": "event.event",
+          "name": "event"
+        }
+      },
+      "annotationOverrides": {
+        "interfaces": {
+          "token.container.event.on_token_change": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "token.container.event.on_token_visual_change": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "token.event.on_token_change": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "token.event.on_token_visual_change": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "token.event.on_token_restore_change": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "token.container": {
+            "methods": {
+              "get": {
+                "return": "number"
+              }
+            }
+          }
+        },
+        "moduleObject": {
+          "interface": "token",
+          "fields": {
+            "on_token_change": {
+              "type": "token.event.on_token_change"
+            },
+            "on_token_visual_change": {
+              "type": "token.event.on_token_visual_change"
+            },
+            "on_token_restore_change": {
+              "type": "token.event.on_token_restore_change"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

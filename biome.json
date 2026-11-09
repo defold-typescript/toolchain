@@ -27,6 +27,7 @@
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
       "!packages/library-types/data/*/*/fork",
+      "!packages/library-types/data/*/*/*/fork",
       "!**/*.lua"
     ]
   },
@@ -64,7 +65,10 @@
       "linter": { "rules": { "suspicious": { "noDoubleEquals": "off" } } }
     },
     {
-      "includes": ["packages/library-types/data/*/*/reviewed.json"],
+      "includes": [
+        "packages/library-types/data/*/*/reviewed.json",
+        "packages/library-types/data/*/*/*/reviewed.json"
+      ],
       "json": { "formatter": { "expand": "always" } }
     }
   ]
