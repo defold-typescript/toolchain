@@ -1,8 +1,10 @@
 import { parseArgs } from "node:util";
 
-// Holds a release until ci.yml's full scope has passed on the tagged commit. A
-// change that touched only library data or the library docs site skips the full
-// suite, so its tag waits for the full run the tag push starts.
+// Holds a publish until the ci.yml check runs it names have passed on its commit.
+// release.yml requires the full scope: a change that touched only library data or
+// the library docs site skips the full suite, so its tag waits for the full run the
+// tag push starts. library-data-publish.yml requires ci-done, which runs on every
+// scope and passes exactly when every job its scopes chose passed.
 
 // The check runs ci.yml's full scope creates.
 export const GATED_CHECKS = [
@@ -54,6 +56,7 @@ export function gateVerdict(
 
 export interface GateLoop {
   fetchRuns: () => Promise<CheckRun[]>;
+  required: readonly string[];
   sleep: (ms: number) => Promise<void>;
   now: () => number;
   timeoutMs: number;
@@ -68,7 +71,7 @@ export async function awaitCiGate(loop: GateLoop): Promise<GateVerdict> {
   for (;;) {
     let verdict: GateVerdict;
     try {
-      verdict = gateVerdict(await loop.fetchRuns());
+      verdict = gateVerdict(await loop.fetchRuns(), loop.required);
     } catch (err) {
       verdict = { state: "wait", pending: [`check runs unreadable: ${(err as Error).message}`] };
     }
@@ -103,51 +106,67 @@ export async function fetchCheckRuns(repo: string, sha: string): Promise<CheckRu
 }
 
 const USAGE =
-  "usage: release-ci-gate.ts --repo <owner/name> --sha <commit> [--timeout-minutes <n>]";
+  "usage: release-ci-gate.ts --repo <owner/name> --sha <commit> [--check <name>]... [--timeout-minutes <n>]";
 
-async function main(argv: string[]): Promise<number> {
-  let values: { repo?: string; sha?: string; "timeout-minutes"?: string };
+export interface GateArgs {
+  repo: string;
+  sha: string;
+  timeoutMinutes: number;
+  checks: string[];
+}
+
+export function parseGateArgs(argv: string[]): GateArgs | null {
+  let values: { repo?: string; sha?: string; check?: string[]; "timeout-minutes"?: string };
   try {
     ({ values } = parseArgs({
       args: argv,
       options: {
         repo: { type: "string" },
         sha: { type: "string" },
+        check: { type: "string", multiple: true },
         "timeout-minutes": { type: "string", default: "120" },
       },
     }));
   } catch {
-    console.error(USAGE);
-    return 2;
+    return null;
   }
   const { repo, sha } = values;
   const timeoutMinutes = Number(values["timeout-minutes"]);
-  if (repo === undefined || sha === undefined || !(timeoutMinutes >= 0)) {
+  if (repo === undefined || sha === undefined || !(timeoutMinutes >= 0)) return null;
+  return { repo, sha, timeoutMinutes, checks: values.check ?? [...GATED_CHECKS] };
+}
+
+async function main(argv: string[]): Promise<number> {
+  const args = parseGateArgs(argv);
+  if (args === null) {
     console.error(USAGE);
     return 2;
   }
+  const { repo, sha, timeoutMinutes, checks } = args;
   const verdict = await awaitCiGate({
     fetchRuns: () => fetchCheckRuns(repo, sha),
+    required: checks,
     sleep: (ms) => Bun.sleep(ms),
     now: () => Date.now(),
     timeoutMs: timeoutMinutes * 60_000,
     intervalMs: 30_000,
     log: (line) => console.log(line),
   });
+  const named = checks.join(", ");
   if (verdict.state === "pass") {
-    console.log(`CI's full scope is green on ${sha}. Proceeding to publish.`);
+    console.log(`CI passed ${named} on ${sha}. Proceeding to publish.`);
     return 0;
   }
   if (verdict.state === "fail") {
-    console.log(`::error::CI is not green on ${sha}; refusing to publish:`);
+    console.log(`::error::CI did not pass ${named} on ${sha}; refusing to publish:`);
     for (const line of verdict.failed) console.log(`  - ${line}`);
     return 1;
   }
   console.log(
-    `::error::CI's full scope did not finish on ${sha} within ${timeoutMinutes} minutes; refusing to publish:`,
+    `::error::CI did not finish ${named} on ${sha} within ${timeoutMinutes} minutes; refusing to publish:`,
   );
   for (const line of verdict.pending) console.log(`  - ${line}`);
-  console.log("Re-run this release once a full-scope CI run on this commit is green.");
+  console.log(`Re-run this job once CI has passed ${named} on this commit.`);
   return 1;
 }
 
