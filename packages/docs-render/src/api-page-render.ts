@@ -32,6 +32,7 @@ import {
   proseDocText,
   qualify,
   splitCallForm,
+  symbolNamespace,
   typeShapeHeading,
   windowedBadgeCategory,
 } from "./api-surface";
@@ -44,7 +45,7 @@ import {
 import { forgeOf } from "./forge";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { functionTypeEmphasis } from "./signature-emphasis";
-import { buildSymbolIndex, memberAnchors } from "./symbol-index";
+import { buildSymbolIndex, memberAnchors, type SymbolIndexOptions } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { escapeUpstreamText } from "./upstream-text";
@@ -1012,16 +1013,43 @@ export function apiPageMarkdown(
   return lines.join("\n");
 }
 
+export interface SymbolLinkOptions extends SymbolIndexOptions {
+  /**
+   * The page being rendered. Its own keys are laid over the index after any
+   * shared key is dropped, so a page always links its own members.
+   */
+  current?: ApiPage;
+}
+
 // A prose linkifier over a single surface's pages. `buildSymbolIndex` keys every
 // member to its page route — which already carries the loader's version prefix
 // (`/api/<version>/<namespace>`) for a non-default surface — so cross-links are
 // version-correct without any per-call prefixing. `symbolLinkifier` itself
 // drops bare-namespace keys, leaving only qualified member mentions linked.
-export function apiLinkify(pages: ApiPage[]): (text: string) => string {
-  const registry = new Map(
-    Object.entries(buildSymbolIndex(pages)).map(([k, v]) => [k, v.route] as const),
-  );
+export function apiLinkify(
+  pages: ApiPage[],
+  options: SymbolLinkOptions = {},
+): (text: string) => string {
+  const { current, ...indexOptions } = options;
+  const index = buildSymbolIndex(pages, indexOptions);
+  if (current) Object.assign(index, buildSymbolIndex([current]));
+  const registry = new Map(Object.entries(index).map(([k, v]) => [k, v.route] as const));
   return symbolLinkifier(registry);
+}
+
+// A page's types under the qualified spelling a signature uses
+// (`<namespace>.<Type>`), each routed at its type row's own anchor. A type whose
+// name already carries the namespace has no separate qualified spelling.
+function qualifiedTypeLinks(page: ApiPage): Map<string, string> {
+  const namespace = symbolNamespace(page);
+  const links = new Map<string, string>();
+  for (const [key, anchor] of memberAnchors(page)) {
+    if (!key.startsWith("type:")) continue;
+    const name = key.slice("type:".length);
+    const qualified = `${namespace}.${name}`;
+    if (qualify(namespace, name) === qualified) links.set(qualified, `${page.route}#${anchor}`);
+  }
+  return links;
 }
 
 // The `name → route` map that `renderMarkdown`'s `signatureSymbolLinks` uses to
@@ -1040,10 +1068,16 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 // deferred to `renderMarkdown` as
 // `{ route, heading }` rather than fixed here: the heading id is only known once
 // the render has de-duplicated it against every earlier heading on the page.
+//
+// A library page keys its qualified types by the namespace it documents
+// (`symbolNamespace`). Under `ambiguous: "drop"` a qualified name that several
+// alias pages declare is left out, and `page`'s own qualified types are laid
+// back over the result, so the name links only from a page that declares it.
 export function apiSignatureSymbolLinks(
   pages: ApiPage[],
   page?: ApiPage,
   aliasPages: ApiPage[] = pages,
+  options: SymbolIndexOptions = {},
 ): Map<string, SignatureSymbolTarget> {
   const links = new Map<string, SignatureSymbolTarget>();
   if (page) {
@@ -1073,14 +1107,21 @@ export function apiSignatureSymbolLinks(
   // its version prefix, so scoping the source keeps an alias link inside the
   // release the reader opened without any per-call prefixing. On the canonical
   // route the two collections are the same object.
+  const qualifiedTypes = new Map<string, string>();
+  const shared = new Set<string>();
   for (const p of aliasPages) {
-    for (const [key, anchor] of memberAnchors(p)) {
-      if (!key.startsWith("type:")) continue;
-      const name = key.slice("type:".length);
-      const qualified = `${p.namespace}.${name}`;
-      if (qualify(p.namespace, name) === qualified) links.set(qualified, `${p.route}#${anchor}`);
+    for (const [qualified, route] of qualifiedTypeLinks(p)) {
+      if (qualifiedTypes.has(qualified)) shared.add(qualified);
+      qualifiedTypes.set(qualified, route);
     }
   }
+  if (options.ambiguous === "drop") {
+    for (const qualified of shared) qualifiedTypes.delete(qualified);
+  }
+  if (page) {
+    for (const [qualified, route] of qualifiedTypeLinks(page)) qualifiedTypes.set(qualified, route);
+  }
+  for (const [qualified, route] of qualifiedTypes) links.set(qualified, route);
   if (page?.category === "library") {
     // The core types live in the toolchain docs. A page's own type of the same
     // name keeps its link.
