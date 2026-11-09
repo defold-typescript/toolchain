@@ -23,7 +23,8 @@ release from v0.55.0 on reads it.
 ## What an edit reaches
 
 A merge to `main` that changes this directory publishes it to
-`defold-typescript/library-data` (`scripts/library-data-mirror.ts`). A project picks
+`defold-typescript/library-data` (`scripts/library-data-mirror.ts`) once CI passes on
+that commit; a commit whose CI fails publishes nothing. A project picks
 the change up on its first `resolve` or its next `resolve --update`, whatever CLI
 release it runs. No CLI release is involved.
 

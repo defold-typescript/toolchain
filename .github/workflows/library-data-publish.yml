@@ -7,6 +7,9 @@ name: Library data publish
 # `resolve` pins each library to a data repo commit, so a push that changes no
 # published file must write no commit there. Both pushes use the
 # LIBRARY_DATA_PUSH_TOKEN secret, a token with contents write on the data repo.
+# Both wait for ci.yml's ci-done check to pass on the commit they publish
+# (scripts/release-ci-gate.ts), and publish nothing when it fails or times out.
+# ci-done runs on every scope, so a data-only push needs no full-scope run.
 
 on:
   push:
@@ -30,7 +33,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  ci-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      # No install: the gate imports only Node and Bun built-ins.
+      - name: Require CI's ci-done check green on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: bun scripts/release-ci-gate.ts --repo "$REPO" --sha "$SHA" --check ci-done
+
   data:
+    needs: ci-gate
     runs-on: ubuntu-latest
     steps:
       - name: Require the push token
@@ -69,6 +94,7 @@ jobs:
           git push origin HEAD:main
 
   site:
+    needs: ci-gate
     runs-on: ubuntu-latest
     steps:
       - name: Require the push token
