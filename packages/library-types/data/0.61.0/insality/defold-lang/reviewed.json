@@ -1,0 +1,46 @@
+{
+  "ref": "5",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "f5c17a626264a45893994edc5fdb3b9374985d10"
+      ],
+      "api": "b56b0e017845802501f8f86689fe58fc1641b068080e8470a609989d5858cdbf",
+      "doc": "720e357501544ec8b026414f5084060fa3af12194ae37af9a79c908e27d16675",
+      "source": "9a2024dab7d6703c677c8a2231d2cc1120b168318362d188942cf56d4195b2e2",
+      "members": {
+        "lang/csv.lua#@annotations": "8188c0b831461025",
+        "lang/csv.lua#parse_content": "8831b65019c1e94b",
+        "lang/csv.lua#parse_row": "13115203f36226f1",
+        "lang/csv.lua#parse_rows": "8831b65019c1e94b",
+        "lang/editor_script/json.lua#_version": "24c7bcaf858ea773",
+        "lang/editor_script/json.lua#decode": "0cbcf3f6f9e3169e",
+        "lang/editor_script/json.lua#encode": "ee48205ef63fd3a8",
+        "lang/editor_script/utf8.lua": "03b68fdf15adc4e0",
+        "lang/internal/lang_internal.lua#@annotations": "db192204aa3c02d8",
+        "lang/internal/lang_internal.lua#SYSTEM_LANG": "24c7bcaf858ea773",
+        "lang/internal/lang_internal.lua#get_path_format": "68531ce9f731c636",
+        "lang/internal/lang_internal.lua#index_of": "b11021e0997de1a5",
+        "lang/internal/lang_internal.lua#load_csv": "e78becb9b2fe9b0a",
+        "lang/internal/lang_internal.lua#load_json": "7409456983084f03",
+        "lang/internal/lang_internal.lua#load_lang_sources": "12ef89f4d464cb37",
+        "lang/internal/lang_internal.lua#load_lang_table_from_source": "65da22b7d96dcb5b",
+        "lang/internal/lang_internal.lua#merge_table": "f30eb802d340ee9c",
+        "lang/internal/lang_internal.lua#parse_csv_content": "8831b65019c1e94b",
+        "lang/internal/lang_internal.lua#parse_lang_content": "45dccdfcc1c2c9c2",
+        "lang/internal/lang_internal.lua#split": "ce12ac399f003ff6",
+        "lang/internal/lang_logger.lua": "948fecb869ed64e1",
+        "lang/internal/lang_registry.lua#@annotations": "489f65cb4c1121e1",
+        "lang/internal/lang_registry.lua#add_pack": "ce4a713f3bc9fb6f",
+        "lang/internal/lang_registry.lua#get_dict": "53afa49906788416",
+        "lang/internal/lang_registry.lua#get_langs_order": "53afa49906788416",
+        "lang/internal/lang_registry.lua#is_lang_available": "3fa393c056ab53ca",
+        "lang/internal/lang_registry.lua#load_lang": "84c348d26d5de75d",
+        "lang/internal/lang_registry.lua#reset": "53afa49906788416",
+        "lang/internal/lang_registry.lua#setup_langs": "5c851a3a7d436716",
+        "lang/lang.lua": "5c0b4d55802df782"
+      }
+    }
+  ]
+}

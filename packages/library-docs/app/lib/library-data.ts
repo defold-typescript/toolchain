@@ -42,16 +42,24 @@ function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 
+// Each `<owner>/<repo>` folder holding a `library.json`.
 function libraryDirs(dataDir: string | undefined): string[] {
   if (dataDir === undefined || !existsSync(dataDir)) return [];
   return readdirSync(dataDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && existsSync(join(dataDir, entry.name, "library.json")))
-    .map((entry) => entry.name)
+    .filter((owner) => owner.isDirectory())
+    .flatMap((owner) =>
+      readdirSync(join(dataDir, owner.name), { withFileTypes: true })
+        .filter(
+          (repo) =>
+            repo.isDirectory() && existsSync(join(dataDir, owner.name, repo.name, "library.json")),
+        )
+        .map((repo) => `${owner.name}/${repo.name}`),
+    )
     .sort();
 }
 
-// Every library folder under the data folder, in folder-name order; an absent
-// data folder holds none.
+// Every library folder under the data folder, `<owner>/<repo>`, in folder-name
+// order; an absent data folder holds none.
 export function readSiteLibraries(dataDir: string | undefined): SiteLibrary[] {
   if (dataDir === undefined) return [];
   return libraryDirs(dataDir).map((dir) => {

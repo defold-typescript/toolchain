@@ -1,0 +1,21 @@
+{
+  "ref": "1.2.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "3711770678557a88023f4b3af447e23b98075139"
+      ],
+      "api": "a651079bf5419086174ac51969540692023dcb108ceb271f74723abf10a54146",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "563c9b1e4df0de1eb60c6610687a19a900233de4f6409e193f750ffa2ae2d32c",
+      "members": {
+        "uptime/include/UpTime.h": "38dce07acbbf3c84",
+        "uptime/src/UpTime.cpp": "362b99d47547da20",
+        "uptime/src/UpTime_android.cpp": "4c237a9d42c930ba",
+        "uptime/src/UpTime_ios.mm": "78d5969010d103a0",
+        "uptime/src/UpTime_windows.cpp": "943cc312f8712507"
+      }
+    }
+  ]
+}

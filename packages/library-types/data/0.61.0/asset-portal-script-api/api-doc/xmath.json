@@ -1,0 +1,1129 @@
+{
+  "info": {
+    "namespace": "xmath",
+    "brief": "Mathematical operations for vectors, quaternions, and matrices",
+    "description": "Mathematical operations for vectors, quaternions, and matrices"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "xmath.add",
+      "description": "Add one vector to another.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.sub",
+      "description": "Subtract one vector from another.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.mul",
+      "description": "Multiply a vector by a scalar.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.div",
+      "description": "Divide a vector by a scalar.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.cross",
+      "description": "Calculate the cross product of two vectors.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.mul_per_elem",
+      "description": "Perform element-wise multiplication between two vectors.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.normalize",
+      "description": "Normalize a vector.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.rotate",
+      "description": "Rotate a vector by a quaternion.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "q",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.vector",
+      "description": "Set the value of a vector to (0, 0, 0) or (0, 0, 0, 1).",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.conj",
+      "description": "Calculate the conjugate of a quaternion.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "q1",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_axis_angle",
+      "description": "Set the value of a quaternion from an axis and an angle.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_basis",
+      "description": "Set the value of a quaternion from x, y, and z base unit vectors.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_from_to",
+      "description": "Set the value of a quaternion to rotate from one vector to another.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_rotation_x",
+      "description": "Set the value of a quaternion for rotation around the x-axis.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_rotation_y",
+      "description": "Set the value of a quaternion for rotation around the y-axis.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_rotation_z",
+      "description": "Set the value of a quaternion for rotation around the z-axis.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat",
+      "description": "Set the value of a quaternion to (0, 0, 0, 1).",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.euler_to_quat",
+      "description": "Set the value of a quaternion from Euler angles (in degrees, YZX rotation order).",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Euler angle around the x-axis in degrees, or a vector3 containing all three angles.",
+          "types": [
+            "number",
+            "vector3"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Euler angle around the y-axis in degrees. Ignored if x is a vector3.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "Euler angle around the z-axis in degrees. Ignored if x is a vector3.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.lerp",
+      "description": "Linearly interpolate between two numbers, vectors, or quaternions. For numbers, pass (t, n1, n2) and returns the interpolated number. For vectors/quaternions, pass (v_in_place, t, v1, v2) to modify v_in_place.",
+      "parameters": [
+        {
+          "name": "t_or_out",
+          "doc": "For numbers, the interpolation factor. For vectors/quaternions, the output value to store the result.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        },
+        {
+          "name": "n1_or_t",
+          "doc": "For numbers, the start value. For vectors/quaternions, the interpolation factor.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        },
+        {
+          "name": "n2_or_v1",
+          "doc": "For numbers, the end value. For vectors/quaternions, the start value.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "For vectors/quaternions only, the end value.",
+          "types": [
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "For number inputs, returns the interpolated number. For vector/quaternion inputs, modifies v_in_place and returns nothing.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.slerp",
+      "description": "Spherically interpolate between two vectors or quaternions.",
+      "parameters": [
+        {
+          "name": "v_in_place",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        },
+        {
+          "name": "t",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4",
+            "quaternion"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix",
+      "description": "Set the value of a matrix to the identity matrix or copy another matrix.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "m1",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_axis_angle",
+      "description": "Set the value of a matrix for rotation around an axis by an angle.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_from_quat",
+      "description": "Set the value of a matrix from a quaternion.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "q",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_frustum",
+      "description": "Set the value of a frustum matrix from given values.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "left",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "right",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "bottom",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "top",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "near",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "far",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_inv",
+      "description": "Calculate the inverse of a matrix.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "m1",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_look_at",
+      "description": "Set the value of a matrix from supplied look-at parameters.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "eye",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "look_at",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "up",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix4_orthographic",
+      "description": "Set the value of an orthographic projection matrix.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "left",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "right",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "bottom",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "top",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "near",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "far",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_ortho_inv",
+      "description": "The resulting matrix is the inverse of the supplied matrix.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "m1",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix4_perspective",
+      "description": "Set the value of a perspective projection matrix.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "fov",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "aspect",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "near",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "far",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_rotation_x",
+      "description": "Set the value of a matrix for rotation around the x-axis.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_rotation_y",
+      "description": "Set the value of a matrix for rotation around the y-axis.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_rotation_z",
+      "description": "Set the value of a matrix for rotation around the z-axis.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix_translation",
+      "description": "Set the value of a matrix for translation.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.quat_matrix4",
+      "description": "Set the value of a quaternion from a matrix4.",
+      "parameters": [
+        {
+          "name": "q_in_place",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "m",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix4_compose",
+      "description": "Set the value of a matrix from translation, rotation and scale.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "translation",
+          "doc": "",
+          "types": [
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "rotation",
+          "doc": "",
+          "types": [
+            "quaternion"
+          ]
+        },
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.matrix4_scale",
+      "description": "Set the value of a matrix from scale. Can take a vector3, a single number for uniform scale, or 3 numbers for x, y, z scale.",
+      "parameters": [
+        {
+          "name": "m_in_place",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        },
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "vector3",
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "xmath.clamp",
+      "description": "Clamp input value in range [min, max]. For numbers, pass (value, min, max) and returns the clamped number. For vectors, pass (v_in_place, value, min, max) to modify v_in_place. min and max can be numbers or matching vector types.",
+      "parameters": [
+        {
+          "name": "value_or_out",
+          "doc": "For numbers, the value to clamp. For vectors, the output vector to store the result.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "value_or_min",
+          "doc": "For numbers, the minimum value. For vectors, the value to clamp.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "min_or_max",
+          "doc": "For numbers, the maximum value. For vectors, the minimum value.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "For vectors only, the maximum value.",
+          "types": [
+            "number",
+            "vector3",
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "For number inputs, returns the clamped number. For vector inputs, modifies v_in_place and returns nothing.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["squid/**/*.lua"],
+      "moduleId": "squid.squid",
+      "namespace": "squid",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

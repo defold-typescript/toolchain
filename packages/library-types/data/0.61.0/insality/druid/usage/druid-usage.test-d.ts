@@ -1,0 +1,101 @@
+/// <reference types="@typescript-to-lua/language-extensions" />
+/// <reference types="@defold-typescript/types" />
+
+import * as druid from "druid.druid";
+
+// Compile-only proof that the generated druid surface carries generics and
+// `extends` inheritance, and that a concrete component structurally satisfies
+// `druid_component`. No assertions execute; `tsc --noEmit` is the gate. A
+// regression (dropped `extends`, a generic param lowered to `unknown`, or a
+// concrete component that no longer satisfies the base constraint) is a compile
+// error here.
+
+declare const context: LuaTable;
+
+const instance = druid.new_(context, undefined);
+
+// A concrete component from a factory. `druid_button extends druid_component`, so
+// the inherited public `get_name` resolves through the base interface. (`get_uid`
+// is `@protected` on the base and now hidden, so a public inherited member proves
+// the same inheritance.)
+const button = instance.new_button("button_node", undefined, undefined, undefined);
+const buttonName: string = button.get_name();
+
+// A generic component factory: `new_widget<T extends druid_component>` returns `T`.
+// Passing the concrete `button` (a `druid_button`) directly proves a concrete
+// component satisfies the `druid_component` constraint — the base's protected
+// lifecycle hooks are non-public and now dropped, so the constraint is only the
+// public method surface a subcomponent already carries — and that `T` resolves to
+// `druid_button` rather than widening to the base. A concrete-only member
+// (`set_enabled`, absent from `druid_component`) and the inherited `get_name` both
+// chain off the return.
+const widget = instance.new_widget(button, undefined, undefined);
+const enabled = widget.set_enabled(false);
+const enabledState: boolean = enabled.is_enabled();
+const widgetName: string = widget.get_name();
+
+// The drag callback the runtime actually calls: `on_drag:trigger` passes the
+// context plus five values, and druid's own `rich_input` consumer declares
+// `(self, dx, dy, x, y, touch)`. A two-parameter generated type reds this line.
+const drag = instance.new_drag("drag_node", undefined);
+drag.init("drag_node", (self, dx, dy, x, y, touch) => {
+  const travelled: number = dx + dy + x + y;
+  const touchX: number = touch.x;
+  void self;
+  void travelled;
+  void touchX;
+});
+
+// The primary way a user wires druid UI: subscribing to a component's callback
+// field. The field is an `event` owned by the `event.event` module, so this line
+// only compiles once the cross-module import resolves — an `unknown` field reds it.
+const subscribed: boolean = button.on_click.subscribe((self: unknown) => {
+  void self;
+});
+
+// @ts-expect-error a non-callable subscriber is rejected, so the field is genuinely
+// typed rather than widened back to `any`.
+button.on_click.subscribe(42);
+
+// Reaching an inherited member through the external `extends` parent proves the
+// `---@class event.on_size_changed: event` inheritance resolved across modules.
+const layout = instance.new_layout("layout_node", undefined);
+layout.on_size_changed.subscribe((self: unknown) => {
+  void self;
+});
+
+// Component styles are typed interfaces carrying the hover cursor fields: a
+// button style reads `ON_HOVER_CURSOR`, and a slider's `style` is
+// `druid_slider_style` rather than a bare `LuaTable`, so its fields read directly.
+const hoverCursor: string | number | undefined = button.style.ON_HOVER_CURSOR;
+const slider = instance.new_slider("slider_pin", vmath.vector3(100, 0, 0));
+const sliderSteps: number[] | undefined = slider.style.DEFAULT_STEPS;
+const sliderHovered: boolean | undefined = slider.hover?.is_hovered();
+
+// A container finds its child by the GUI node, not by the node id string.
+const container = instance.new_container("container_node", undefined, undefined);
+const removed = container.remove_container_by_node(gui.get_node("child_node"));
+// @ts-expect-error a node id is not a node
+container.remove_container_by_node("child_node");
+
+// `is_instant` is an optional flag, so a caller may omit it or pass a boolean.
+const layoutNode = gui.get_node("layout_child");
+layout.set_node_position(layoutNode, 0, 0);
+layout.set_node_position(layoutNode, 0, 0, true);
+// @ts-expect-error `is_instant` is a boolean, not a number
+layout.set_node_position(layoutNode, 0, 0, 1);
+
+// `set_cursor` and `reset_hovers` return their own component, so each call chains
+// into a second one. A dropped method or a `void` return reds the chain.
+const cursorButtonName: string = button.set_cursor("pointer").set_cursor(undefined).get_name();
+instance.reset_hovers().reset_hovers();
+
+void buttonName;
+void cursorButtonName;
+void hoverCursor;
+void sliderSteps;
+void sliderHovered;
+void enabledState;
+void widgetName;
+void subscribed;
+void removed;

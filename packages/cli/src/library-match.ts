@@ -5,12 +5,12 @@
 // each `assetOnly` dependency. This module consumes library data targets as
 // parsed data passed in, staying free of IO.
 //
-// A declared dependency URL is a moving/forked ref (`.../archive/main.zip`, a
-// fork, a pinned tag), so the match keys on a normalized source identity, not
-// string equality. The identity is the normalized repo name (host, owner,
-// `/archive/<ref>.zip`, and query stripped) rather than a full `owner/repo`, so a
-// fork of a vendored library still matches it. Every lane keys on the upstream
-// `repo` its registry entry pins.
+// A declared dependency URL is a moving ref (`.../archive/main.zip`, a pinned
+// tag, a fork), so the match keys on a library name, not string equality. The
+// name is the lowercased `owner/repo` (`libraryName`): a dependency matches the
+// library holding its exact name, else the one library sharing its repo name, so
+// a fork keeps its upstream's types, and a repo name two libraries share matches
+// neither. Every lane keys on the upstream `repo` its registry entry pins.
 
 export interface VendoredLibrary {
   readonly sourceId: string;
@@ -36,7 +36,7 @@ export interface LualsTargets {
   readonly targets: readonly LualsTarget[];
 }
 
-// Group registry targets by normalized source id so a repository shipping more
+// Group registry targets by library name so a repository shipping more
 // than one module yields a single entry carrying every module and a merged
 // `namespaces`. Both the LuaLS and script_api lanes feed the same
 // `{ repo, moduleId, namespace }` shape here; `matchVendoredLibrary`'s `find`
@@ -47,7 +47,7 @@ function groupTargetsBySourceId(
 ): VendoredLibrary[] {
   const bySource = new Map<string, VendoredLibrary>();
   for (const target of targets) {
-    const sourceId = normalizeSourceId(target.repo);
+    const sourceId = libraryName(target.repo);
     const existing = bySource.get(sourceId);
     if (existing === undefined) {
       bySource.set(sourceId, {
@@ -124,8 +124,8 @@ export function buildAuthoredRegistryEntries(targets: AuthoredRegistryTargets): 
 // Fold registry entries that share a `sourceId` into one, preserving first-seen
 // order. A single upstream repo can ship modules across more than one lane (the
 // ts-defold lane emits `nakama.nakama`, the authored lane emits
-// `nakama.engine.defold` + `nakama.util.log`, both keyed `nakama-defold`), and
-// `matchVendoredLibrary` matches on `sourceId` with a first-match `find`, so the
+// `nakama.engine.defold` + `nakama.util.log`, both keyed `heroiclabs/nakama-defold`),
+// and `matchVendoredLibrary` matches on `sourceId` with a first-match `find`, so the
 // concatenated lanes must merge to one entry per source or the later lanes'
 // modules are silently dropped. Union `modules` (dedupe + sort), merge every
 // contributor's `namespaces`, and attach `namespaces` only when the
@@ -162,26 +162,86 @@ export function mergeVendoredLibrariesBySourceId(
   });
 }
 
+// The bare repo segment of a dependency URL, lowercased: only the
+// `.defold-types/` folder an extension's declarations land in is named by it.
 export function normalizeSourceId(url: string): string {
-  const withoutFragment = url.split(/[?#]/, 1)[0] ?? "";
-  const withoutProtocol = withoutFragment.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
-  const segments = withoutProtocol.split("/").filter((segment) => segment.length > 0);
+  const name = libraryName(url);
+  return name.slice(name.lastIndexOf("/") + 1);
+}
+
+/**
+ * A library's name: the lowercased `owner/repo` of a dependency URL, a `repo`
+ * URL or a name. A scheme drops the host with it; the repo is the segment before
+ * `archive`, else the last one, without `.zip`/`.git`. Input with no owner
+ * segment yields the bare repo.
+ */
+export function libraryName(urlOrName: string): string {
+  const withoutFragment = urlOrName.split(/[?#]/, 1)[0] ?? "";
+  const scheme = /^[a-z][a-z0-9+.-]*:\/\//i;
+  const segments = withoutFragment
+    .replace(scheme, "")
+    .split("/")
+    .filter((segment) => segment.length > 0)
+    .slice(scheme.test(withoutFragment) ? 1 : 0);
   if (segments.length === 0) {
     return "";
   }
   const archiveIndex = segments.findIndex((segment) => segment.toLowerCase() === "archive");
   const repoIndex = archiveIndex > 0 ? archiveIndex - 1 : segments.length - 1;
-  const repo = segments[repoIndex] ?? "";
-  return repo.replace(/\.(zip|git)$/i, "").toLowerCase();
+  const repo = (segments[repoIndex] ?? "").replace(/\.(zip|git)$/i, "");
+  const owner = segments[repoIndex - 1];
+  return (owner === undefined ? repo : `${owner}/${repo}`).toLowerCase();
 }
 
+function repoSegment(name: string): string {
+  return name.slice(name.lastIndexOf("/") + 1);
+}
+
+// `exact` names the library holding the dependency's own `owner/repo`; `fork`
+// the one library sharing its repo name; `shared` every library sharing it,
+// none of which types the dependency.
+export type LibraryNameMatch =
+  | { readonly kind: "exact"; readonly name: string }
+  | { readonly kind: "fork"; readonly name: string }
+  | { readonly kind: "shared"; readonly names: readonly string[] };
+
+export function matchLibraryName(url: string, names: readonly string[]): LibraryNameMatch | null {
+  const name = libraryName(url);
+  if (name === "") {
+    return null;
+  }
+  if (names.includes(name)) {
+    return { kind: "exact", name };
+  }
+  const repo = repoSegment(name);
+  const sharing = [
+    ...new Set(names.filter((other) => other.includes("/") && repoSegment(other) === repo)),
+  ].sort();
+  if (sharing.length === 0) {
+    return null;
+  }
+  return sharing.length === 1
+    ? { kind: "fork", name: sharing[0] as string }
+    : { kind: "shared", names: sharing };
+}
+
+// The name `matchLibraryName` finds for `url`, or null when none or several do.
+export function matchedLibraryName(url: string, names: readonly string[]): string | null {
+  const match = matchLibraryName(url, names);
+  return match === null || match.kind === "shared" ? null : match.name;
+}
+
+// `names` defaults to the registry's own; pass every library's when another
+// registry's names can share a repo name with these.
 export function matchVendoredLibrary(
   url: string,
   registry: readonly VendoredLibrary[],
-): VendoredLibrary | null {
-  const sourceId = normalizeSourceId(url);
-  if (sourceId === "") {
+  names: readonly string[] = registry.map((library) => library.sourceId),
+): { readonly library: VendoredLibrary; readonly kind: "exact" | "fork" } | null {
+  const match = matchLibraryName(url, names);
+  if (match === null || match.kind === "shared") {
     return null;
   }
-  return registry.find((library) => library.sourceId === sourceId) ?? null;
+  const library = registry.find((entry) => entry.sourceId === match.name);
+  return library === undefined ? null : { library, kind: match.kind };
 }

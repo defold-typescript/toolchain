@@ -32,7 +32,7 @@ writeFileSync(
   }),
 );
 writeFileSync(
-  join(root, "data", "0.55.0", "asset-portal.json"),
+  join(root, "data", "0.61.0", "asset-portal.json"),
   JSON.stringify({
     entries: [
       {
@@ -48,7 +48,7 @@ writeFileSync(
 );
 
 const dirs: LibraryDirs = {
-  dataDir: join(root, "data", "0.55.0"),
+  dataDir: join(root, "data", "0.61.0"),
   modelDir: join(root, "api-doc"),
 };
 const dirsWithLinkOnlyPages: LibraryDirs = { ...dirs, typesDir: TYPES_DIR };

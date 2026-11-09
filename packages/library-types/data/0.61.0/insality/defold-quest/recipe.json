@@ -1,0 +1,79 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["quest/**/*.lua"],
+      "moduleId": "quest.quest",
+      "namespace": "quest",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**"],
+      "externalTypes": {
+        "event": {
+          "module": "event.event",
+          "name": "event"
+        },
+        "queue": {
+          "module": "event.event",
+          "name": "queue"
+        }
+      },
+      "annotationOverrides": {
+        "interfaces": {
+          "quest.queue.quest_event": {
+            "fields": {
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "quest.event.is_can_start": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "quest.event.is_can_complete": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          },
+          "quest.event.is_can_event": {
+            "fields": {
+              "trigger": {
+                "drop": true
+              },
+              "subscribe": {
+                "drop": true
+              }
+            }
+          }
+        },
+        "moduleObject": {
+          "interface": "quest",
+          "fields": {
+            "on_quest_event": {
+              "type": "quest.queue.quest_event"
+            },
+            "is_can_start": {
+              "type": "quest.event.is_can_start"
+            },
+            "is_can_complete": {
+              "type": "quest.event.is_can_complete"
+            },
+            "is_can_event": {
+              "type": "quest.event.is_can_event"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

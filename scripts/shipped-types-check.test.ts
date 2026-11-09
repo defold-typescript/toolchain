@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { type ForgeFetch, forgeReadsFor } from "../packages/cli/src/library/upstream-forge.ts";
 import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture.ts";
-import { normalizeSourceId } from "../packages/cli/src/library-match.ts";
+import { libraryName } from "../packages/cli/src/library-match.ts";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
@@ -178,8 +178,8 @@ describe("runShippedTypesCheck verdicts", () => {
       ref: "2.0.0",
       files: ["a.d.ts"],
       retire: [
-        { lane: "luals", id: "widget.widget", source: "widget/source/widget/" },
-        { lane: "native", id: "widgetnative", source: "widget/fork/widgetnative.d.ts" },
+        { lane: "luals", id: "widget.widget", source: "acme/widget/source/widget/" },
+        { lane: "native", id: "widgetnative", source: "acme/widget/fork/widgetnative.d.ts" },
       ],
     });
     expect(run.actionable).toBe(true);
@@ -195,9 +195,9 @@ describe("runShippedTypesCheck verdicts", () => {
     expect(widget.issueTitle).toBe("retire curated types for acme/widget: 2.0.0 ships types");
     for (const fragment of [
       "widget.widget",
-      "widget/source/widget/",
+      "acme/widget/source/widget/",
       "widgetnative",
-      "widget/fork/widgetnative.d.ts",
+      "acme/widget/fork/widgetnative.d.ts",
       "a.d.ts",
       `${LIBRARY_DOCS_URL}/guides/refreshing-library-pins`,
     ]) {
@@ -438,7 +438,7 @@ describe("evaluateShippedTypes over every forge tag page", () => {
 
 describe("readCuratedRepos over the committed corpus", () => {
   test("sweeps exactly the sources `resolve` can install curated types for, each once", () => {
-    const swept = readCuratedRepos(LIBRARY_DATA_DIR).map(({ repo }) => normalizeSourceId(repo));
+    const swept = readCuratedRepos(LIBRARY_DATA_DIR).map(({ repo }) => libraryName(repo));
     const installable = new Set([
       ...loadVendoredLibraryRegistry(LIBRARY_DATA_DIR).map(({ sourceId }) => sourceId),
       ...loadVendoredNativeRegistry(LIBRARY_DATA_DIR).map(({ sourceId }) => sourceId),

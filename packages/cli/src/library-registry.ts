@@ -11,12 +11,13 @@ import {
   buildAuthoredRegistryEntries,
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
+  libraryName,
+  matchedLibraryName,
   mergeVendoredLibrariesBySourceId,
-  normalizeSourceId,
   type VendoredLibrary,
 } from "./library-match";
 
-// Every lane's modules, grouped by source id. Unreadable library data degrades
+// Every lane's modules, grouped by library name. Unreadable library data degrades
 // to no libraries rather than throwing, so `resolve` still types the rest of the
 // project.
 export function loadVendoredLibraryRegistry(dataDir: string | null): VendoredLibrary[] {
@@ -35,7 +36,7 @@ export function loadVendoredLibraryRegistry(dataDir: string | null): VendoredLib
   ]);
 }
 
-function readLibraryDataOrNone(dataDir: string | null): LibraryData[] {
+export function readLibraryDataOrNone(dataDir: string | null): LibraryData[] {
   if (dataDir === null) {
     return [];
   }
@@ -46,6 +47,17 @@ function readLibraryDataOrNone(dataDir: string | null): LibraryData[] {
   }
 }
 
+// The libraries the URLs read, each matched by `matchLibraryName` over every
+// library given: its own `owner/repo`, else the one library sharing its repo name.
+export function librariesMatching(
+  libraries: readonly LibraryData[],
+  urls: readonly string[],
+): LibraryData[] {
+  const names = libraries.map(({ dir }) => dir);
+  const used = new Set(urls.map((url) => matchedLibraryName(url, names)));
+  return libraries.filter(({ dir }) => used.has(dir));
+}
+
 // Reading each `library.json` covers every lane, native included. A folder that
 // stops the registry loading reads as no libraries, so a run on it cannot hold a
 // dependency it could not type.
@@ -53,11 +65,10 @@ export function librariesForDependencies(
   dataDir: string | null,
   urls: readonly string[],
 ): LibraryData[] {
-  const used = new Set(urls.map(normalizeSourceId));
-  return readLibraryDataOrNone(dataDir).filter(({ repo }) => used.has(normalizeSourceId(repo)));
+  return librariesMatching(readLibraryDataOrNone(dataDir), urls);
 }
 
-// A native extension ships C++ and no Lua module, so it is matched by source id
+// A native extension ships C++ and no Lua module, so it is matched by library name
 // and confirmed by the `<manifestDir>/ext.manifest` its archive ships rather than
 // by a require path. Its declaration is a curated ambient namespace the resolver
 // writes into the extension surface in place of anything the archive emits.
@@ -74,7 +85,7 @@ export function loadVendoredNativeRegistry(dataDir: string | null): VendoredNati
   }
   return readLibraryDataOrNone(dataDir).flatMap((library) =>
     library.native.map(({ repo, namespace, manifestDir, declaration }) => ({
-      sourceId: normalizeSourceId(repo),
+      sourceId: libraryName(repo),
       namespace,
       manifestDir,
       declarationPath: path.join(dataDir, declaration),

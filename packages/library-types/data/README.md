@@ -17,8 +17,17 @@ suffix. A CLI run from this repo reports version `0.0.0` and reads the newest fo
 (`selectDataFolder` in `packages/cli/src/library/data-folder.ts`).
 
 So a folder serves a range of releases: from the version it is named for up to the
-release before the next folder's name. While `0.55.0/` is the only folder, every
-release from v0.55.0 on reads it.
+release before the next folder's name. `0.55.0/` serves v0.55.0 through v0.60.x, and
+`0.61.0/` serves v0.61.0 on.
+
+## How a folder lays out its libraries
+
+From `0.61.0/` on, each library sits at `<owner>/<repo>/`, lowercased from the `repo`
+in its `library.json` (`britzl/boom/` for `https://github.com/britzl/boom`), so two
+repositories that share a name can both have library data. The host is not part of the
+folder, so `library add` refuses a second host's repository for an `owner/repo` that is
+already there. `0.61.0/` opened for this layout: the CLIs that read `0.55.0/` find each
+library at `<repo>/` instead.
 
 ## What an edit reaches
 

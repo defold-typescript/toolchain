@@ -22,7 +22,7 @@ const libraryDataDir = LIBRARY_DATA_DIR;
 
 const defconRegistry = [
   {
-    sourceId: "defcon",
+    sourceId: "britzl/defcon",
     modules: ["defcon.console"],
     namespaces: { "defcon.console": "defcon" },
   },
@@ -71,7 +71,13 @@ async function resolveDefcon(cwd: string): Promise<void> {
   });
   expect(result.ok).toBe(true);
   expect(result.libraries).toEqual([
-    { url, source: "defcon", modules: ["defcon.console"], provenance: "vendored", verified: true },
+    {
+      url,
+      source: "britzl/defcon",
+      modules: ["defcon.console"],
+      provenance: "vendored",
+      verified: true,
+    },
   ]);
 }
 

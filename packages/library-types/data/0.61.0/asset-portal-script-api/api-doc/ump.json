@@ -1,0 +1,362 @@
+{
+  "info": {
+    "namespace": "ump",
+    "brief": "Google User Messaging Platform consent API for Android. The table is absent on other platforms.",
+    "description": "Google User Messaging Platform consent API for Android. The table is absent on other platforms."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "ump.request_consent_info_update",
+      "description": "Request fresh consent information and show a consent form if required.\nCall on every launch. The callback runs on the Defold update thread after\nthe update and any required form finish unless defer_form is true. In\ndeferred mode the callback runs after the information update, before any\nform opens; call show_consent_form_if_required to finish the flow.\nA successful callback means no UMP error, not consent to personalized ads.",
+      "parameters": [
+        {
+          "name": "test_device",
+          "doc": "Enable UMP debug mode and force EEA geography for the registered test device.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "test_device_hashed_id",
+          "doc": "Hashed test device ID. Pass an empty string when test_device is false.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Called when the update and any required form finish.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "Calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "False if the consent information update or form failed.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "defer_form",
+          "doc": "Pause after the information update so an application notice can precede a required form. Defaults to false.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">ump.request_consent_info_update(false, \"\", function(self, success)\n    if success and ump.can_request_ads() then\n        print(\"Ads can be requested\")\n    end\nend)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.show_consent_form_if_required",
+      "description": "Continue a successful deferred consent-information update. Check\nwas_consent_form_required() to decide whether to show an application\nnotice first. Call only once, after that notice has closed. The callback\nruns after the required form closes or fails, or immediately if no form\nis required. Advertising must wait for this callback.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the form step finishes.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "Calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "False if the form could not be loaded or shown.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.show_privacy_options_form",
+      "description": "Open the UMP privacy-options form in response to user input. Check\nis_privacy_options_required() first. A successful callback means the form\nclosed without an error, not that the user granted consent.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called after the privacy-options form is dismissed or fails.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "Calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "False if the form could not be shown or completed.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if ump.is_privacy_options_required() then\n    ump.show_privacy_options_form(function(self, success)\n        if success then print(\"Privacy options closed\") end\n    end)\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.is_privacy_options_required",
+      "description": "Whether UMP requires a privacy-options entry point. Returns false before consent information is available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "required",
+          "doc": "True when a privacy-options entry point is required.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.can_request_ads",
+      "description": "UMP ad-request eligibility. Check after the current update callback.\nBefore then, this can reflect consent stored from an earlier session.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "allowed",
+          "doc": "True when UMP allows ad requests.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.get_consent_status",
+      "description": "Google consent status: 0 unknown, 1 not required, 2 required, 3 obtained.\nReturns -1 before the consent-information object exists. Status 3 does\nnot distinguish personalized from non-personalized advertising.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "status",
+          "doc": "UMP consent status or -1 if unavailable.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.get_request_state",
+      "description": "Diagnostic state of the latest consent information update and form.\nPrefer the request callback to polling this value.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "One of ump.REQUEST_STATE_UPDATING, ump.REQUEST_STATE_FORM_PENDING, ump.REQUEST_STATE_COMPLETE, or ump.REQUEST_STATE_FAILED.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.was_consent_form_required",
+      "description": "Whether the latest successful information update found a required normal\nconsent form. Resets when a new update starts. May remain true if that\nform later fails.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "required",
+          "doc": "True if the latest successful update required a form.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.get_privacy_options_state",
+      "description": "Diagnostic state of the latest privacy-options form.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "One of ump.PRIVACY_OPTIONS_STATE_NOT_SHOWN, ump.PRIVACY_OPTIONS_STATE_SHOWING, ump.PRIVACY_OPTIONS_STATE_DISMISSED, or ump.PRIVACY_OPTIONS_STATE_ERROR.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.get_gdpr_applies",
+      "description": "Read IABTCF_gdprApplies from Android default preferences after a\nsuccessful UMP update. This is a GDPR applicability signal, not a country\ncode or vendor consent.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "ump.GDPR_APPLIES_NO, ump.GDPR_APPLIES_YES, or ump.GDPR_APPLIES_UNKNOWN if missing or invalid.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.get_purpose_consents",
+      "description": "Read the raw IABTCF_PurposeConsents bit string from Android default\npreferences. Call after a successful UMP update or privacy-options\ncallback. The third character represents TCF Purpose 3 consent.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Raw purpose-consent bit string, or nil if unavailable.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.reset_consent_information",
+      "description": "Clear UMP consent information for testing if its object has been created.\nStart a new request afterward. Diagnostic request/form states are not\nreset by this call.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "ump.initialize_mobile_ads_sdk",
+      "description": "Legacy, nonfunctional export. Its required Java method is absent from\nthis extension. Do not call it. If using the Defold AdMob extension,\ncall admob.initialize() after the UMP flow instead.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.REQUEST_STATE_UPDATING",
+      "brief": "0; initial state or consent information update in progress.",
+      "description": "0; initial state or consent information update in progress.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.REQUEST_STATE_COMPLETE",
+      "brief": "1; update and form step finished without a UMP error.",
+      "description": "1; update and form step finished without a UMP error.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.REQUEST_STATE_FAILED",
+      "brief": "2; information update or form failed.",
+      "description": "2; information update or form failed.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.REQUEST_STATE_FORM_PENDING",
+      "brief": "3; update succeeded and the form step is waiting or in progress.",
+      "description": "3; update succeeded and the form step is waiting or in progress.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.PRIVACY_OPTIONS_STATE_NOT_SHOWN",
+      "brief": "0; initial privacy-options state.",
+      "description": "0; initial privacy-options state.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.PRIVACY_OPTIONS_STATE_SHOWING",
+      "brief": "1; privacy-options request in progress.",
+      "description": "1; privacy-options request in progress.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.PRIVACY_OPTIONS_STATE_DISMISSED",
+      "brief": "2; privacy-options form closed without a UMP error.",
+      "description": "2; privacy-options form closed without a UMP error.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.PRIVACY_OPTIONS_STATE_ERROR",
+      "brief": "3; privacy-options form failed.",
+      "description": "3; privacy-options form failed.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.GDPR_APPLIES_UNKNOWN",
+      "brief": "-1; IAB TCF GDPR applicability value missing or invalid.",
+      "description": "-1; IAB TCF GDPR applicability value missing or invalid.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.GDPR_APPLIES_NO",
+      "brief": "0; IAB TCF value says GDPR does not apply.",
+      "description": "0; IAB TCF value says GDPR does not apply.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "ump.GDPR_APPLIES_YES",
+      "brief": "1; IAB TCF value says GDPR applies.",
+      "description": "1; IAB TCF value says GDPR applies.",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

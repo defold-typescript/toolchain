@@ -1,0 +1,23 @@
+{
+  "ref": "4.7.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "b7ad7808d7177b5f2bae00d61d45defc11ee52d9"
+      ],
+      "api": "0584c19342d831ce3fb92a9fc63725f3a47dbbab3a96331651303b6b8b03e063",
+      "doc": "e7f4eb9c4784b5da1b421bdf6a0fdff7f8a961354f3a751b0348924b288d2119",
+      "source": "cabdf42e996bd73cad231eca4286d37abcddfc963108824224579372a6feb4a0",
+      "members": {
+        "share/api/share.lua": "77df5982959e12bc",
+        "share/include/share_private.h": "ca0faeee6ba94f2e",
+        "share/src/share.cpp": "1539132ffee8f61b",
+        "share/src/share_android.cpp": "d4e3add0fe930d5b",
+        "share/src/share_html5.cpp": "986f517e11e528c0",
+        "share/src/share_ios.mm": "746589412a3deef3",
+        "share/src/share_osx.mm": "f4ffad81ed51ae34"
+      }
+    }
+  ]
+}

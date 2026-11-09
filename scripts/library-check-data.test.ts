@@ -43,14 +43,14 @@ function dataBase(forkMembers: readonly string[]): string {
         upstreamLua: ["source/upstream/main.lua"],
       },
     ],
-    floors: { lib: { "lib.main": { callable: 1, field: 1 } } },
+    floors: { "owner/lib": { "lib.main": { callable: 1, field: 1 } } },
   });
   const members = forkMembers
     .map((name) => `  /** Does ${name}. */\n  export function ${name}(): void;`)
     .join("\n");
   const files = {
-    "lib/fork/lib.main.d.ts": `declare module 'lib.main' {\n${members}\n}\n`,
-    "lib/source/upstream/main.lua":
+    "owner/lib/fork/lib.main.d.ts": `declare module 'lib.main' {\n${members}\n}\n`,
+    "owner/lib/source/upstream/main.lua":
       "local M = {}\nfunction M.first() end\nfunction M.second() end\nreturn M\n",
   };
   for (const [path, contents] of Object.entries(files)) {

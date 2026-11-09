@@ -1,0 +1,21 @@
+{
+  "ref": "8",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "c21f837ccd1772da4b35645bc77165032d82c9d2"
+      ],
+      "api": "b0d4e7af2aca5031e60d3168b1c95d797ce5a2c0cff8aa5357c974efefccd281",
+      "doc": "76fdc51759181f719547cb68ef2003dfbd3c1600ff447987b7695544bca8219d",
+      "source": "63ebdea98ed9d1ee2d8e02789ffd3c1abcfbb95a590ead95a13d824ed827fd91",
+      "members": {
+        "saver/migrations.lua": "d95085813fe01408",
+        "saver/saver.lua": "8249f77484314d4d",
+        "saver/saver_internal.lua": "9ea9f4fe7fbaf623",
+        "saver/src/defold_saver.cpp": "8b9afaa66c5fe0a9",
+        "saver/storage.lua": "540ce39b4d0eb866"
+      }
+    }
+  ]
+}

@@ -1,0 +1,692 @@
+{
+  "info": {
+    "namespace": "defwin",
+    "brief": "A Defold extension for advanced window features on Windows. Custom window shapes, window transparency, lock aspect ratio for resize, hook for custom function of close button, and flashing of the taskbar button.",
+    "description": "A Defold extension for advanced window features on Windows. Custom window shapes, window transparency, lock aspect ratio for resize, hook for custom function of close button, and flashing of the taskbar button."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_alpha_color",
+      "description": "Set which color should be rendered transparent by the window, and removes the window border. The transparent areas will also be click-through.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red component in [0.0, 1.0]. If omitted, the render clear color is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_image_buffer",
+      "description": "Use an image instead of the default window contents, with pixels outside the image left transparent.",
+      "parameters": [
+        {
+          "name": "bytes_string",
+          "doc": "Raw RGBA pixel data, e.g. from buffer.get_bytes(buf, hash(\"rgba\"))",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Width of the image buffer in pixels",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Height of the image buffer in pixels",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flip",
+          "doc": "If true, the rows are flipped vertically (default false)",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "true if the image buffer was applied successfully",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_alpha",
+      "description": "Set the transparency of the whole window, including the border. Can't be used together with set_alpha_color.",
+      "parameters": [
+        {
+          "name": "alpha",
+          "doc": "Opacity in [0.0, 1.0]. 0.0 = fully transparent, 1.0 = fully opaque.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_borderless",
+      "description": "Remove or restore the window border.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "true to remove the window border, false to restore it",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.reset_alpha",
+      "description": "Remove the window transparency, restoring the original opaque window.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_close_listener",
+      "description": "Set a listener that is called instead of quitting the game when the close button is pressed.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "Called when a close is requested. Pass nil to clear the listener and restore default close behaviour.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "",
+              "types": [
+                "userdata"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_close_delay",
+      "description": "Set the time after a close request until the game exits automatically.",
+      "parameters": [
+        {
+          "name": "delay",
+          "doc": "Time in seconds before the game exits. 0 closes as soon as the close button is pressed. Pass nil for no automatic close, leaving the close listener fully in control.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_close_sound_fadeout",
+      "description": "If enabled and a close delay is set, the master sound group gain is faded out over the delay duration until shutdown.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "true to enable the sound fade-out on close",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.quit",
+      "description": "Quit the game, respecting the configured close delay and sound fade-out settings.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.request_quit",
+      "description": "Request to quit the game, behaving as if the user pressed the close button or Alt+F4. Triggers the close listener and delay handling.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.cancel_close",
+      "description": "Cancel an in-progress close attempt. Until this is called again on a future close, further attempts to close the window will not re-trigger the listener or restart the delay.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_dark_mode",
+      "description": "Set the window border style to dark mode or light mode.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "Set to dark mode on true, and to light mode on false",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.get_dark_mode_preference",
+      "description": "Get the preference of the current user for dark mode or light mode.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "preference",
+          "doc": "´true´ if dark mode is preferred, ´false´ if light mode is preferred, and ´nil´ if the preference is unknown",
+          "types": [
+            "bool",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_corners_rounded",
+      "description": "Set the corner style of the window frame to rounded, if available.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_corners_rounded_small",
+      "description": "Set the corner style of the window frame to slightly rounded, if available.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_corners_not_rounded",
+      "description": "Set the corner style of the window frame to not rounded.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_corners_default",
+      "description": "Set the corner style of the window frame to the default.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_border_color",
+      "description": "Set window border color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red component in [0.0, 1.0]. If omitted, the default color is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_border_color_none",
+      "description": "Set the window border color to be transparent.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_caption_color",
+      "description": "Set window caption color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red component in [0.0, 1.0]. If omitted, the default color is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_caption_text_color",
+      "description": "Set window caption text color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "Red component in [0.0, 1.0]. If omitted, the default color is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "g",
+          "doc": "Green component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "b",
+          "doc": "Blue component in [0.0, 1.0].",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.get_caption_color",
+      "description": "Get the opaque color of the window caption.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "color",
+          "doc": "(r, g, b, 1) with r, g, b in [0.0, 1.0]",
+          "types": [
+            "vmath.vector4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_rtl_layout",
+      "description": "Set window bar layout to right-to-left, affecting buttons, title, and icon.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "Set window to RTL layout on true, and to LTR layout on false",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_tool_window",
+      "description": "Turns the window into a tool window. Tool windows are not shown on taskbar and Alt-Tab, and have no minimize and maximize buttons or icon.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "Set to tool window on true, and back to normal window on false",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.lock_ratio",
+      "description": "Lock the aspect ratio of the window when the user drags its border.",
+      "parameters": [
+        {
+          "name": "ratio",
+          "doc": "The aspect ratio to lock (width / height). If omitted, the aspect ratio of the default resolution in game.project is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.unlock_ratio",
+      "description": "Remove the aspect ratio lock set by lock_ratio.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_minimum_window_size",
+      "description": "Set the minimum size a window is allowed to have when resized.",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "Minimum width in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Minimum height in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.fit_vertical",
+      "description": "Fit the window to the given aspect ratio by resizing only the height.",
+      "parameters": [
+        {
+          "name": "ratio",
+          "doc": "The aspect ratio to fit to (width / height). If omitted, the aspect ratio from the display size in game.project is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.fit_horizontal",
+      "description": "Fit the window to the given aspect ratio by resizing only the width.",
+      "parameters": [
+        {
+          "name": "ratio",
+          "doc": "The aspect ratio to fit to (width / height). If omitted, the aspect ratio from the display size in game.project is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.fit_grow",
+      "description": "Fit the window to the given aspect ratio by only growing the size in one direction.",
+      "parameters": [
+        {
+          "name": "ratio",
+          "doc": "The aspect ratio to fit to (width / height). If omitted, the aspect ratio from the display size in game.project is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.fit_shrink",
+      "description": "Fit the window to the given aspect ratio by only shrinking the size in one direction.",
+      "parameters": [
+        {
+          "name": "ratio",
+          "doc": "The aspect ratio to fit to (width / height). If omitted, the aspect ratio from the display size in game.project is used.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.fit_screen",
+      "description": "Reposition and resize the window so that no part of it is outside of the screen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.flash",
+      "description": "Flash the window a limited number of times.",
+      "parameters": [
+        {
+          "name": "taskbar",
+          "doc": "Should the taskbar button flash",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "caption",
+          "doc": "Should the window caption flash",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "count",
+          "doc": "How many times to flash (default 1)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timeout",
+          "doc": "Time between flashes, in seconds (default platform cursor blink rate)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.start_flash",
+      "description": "Start flashing the window until manually stopped or until the window regains focus.",
+      "parameters": [
+        {
+          "name": "taskbar",
+          "doc": "Should the taskbar button flash",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "caption",
+          "doc": "Should the window caption flash",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "until_focused",
+          "doc": "If true, focusing the window stops the flash. If false, it flashes until stop_flash() is called.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "timeout",
+          "doc": "Time between flashes, in seconds (default platform cursor blink rate)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.stop_flash",
+      "description": "Stop the window from flashing. As the current flash cycle still completes, it can take a few seconds to disappear.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_progress",
+      "description": "Set the progress bar on the taskbar button.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "Progress in [0.0, 1.0]",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_progress_error",
+      "description": "Set the progress bar on the taskbar button to an error state, turning it red.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.set_progress_load",
+      "description": "Set the progress bar on the taskbar button to an indeterminate loading state.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.pause_progress",
+      "description": "Pauses the progress bar on the taskbar button, turning it yellow until a new value or state is set.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.hide_progress",
+      "description": "Hide the progress bar on the taskbar button, until a new value or state is set.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.start_drag",
+      "description": "Start dragging the window along the cursor. Must be paired with repeated calls to update_drag() to have any effect.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.update_drag",
+      "description": "Update one frame of the window drag started with start_drag(). Should be called every frame (e.g. from an on_input or update callback) while dragging is active.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.stop_drag",
+      "description": "Stop dragging the window along the cursor.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defwin.prevent_sleep",
+      "description": "Keep the window active to prevent the system from going to sleep while enabled.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "Prevent sleep if true, let system handle activity on false",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "source": {
+    "repo": "https://github.com/ts-defold/library",
+    "commit": "2fe3aed3352a913d2859e6e85d34a8b23d821368",
+    "license": "MIT"
+  },
+  "targets": []
+}

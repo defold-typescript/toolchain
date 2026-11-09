@@ -1,0 +1,21 @@
+{
+  "ref": "1.1.1",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "48beba078fe45e4ef18129bf60cbe11c71365235"
+      ],
+      "api": "b3dc6566d6fc302198e498209ab86cbac9ec23aaa6c059a7febeff4d3cc50bbb",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "0ec1211301a6a7e87df3ffecc3b9b0057876918b47ea5acaf54de6d6bcc206bd",
+      "members": {
+        "gyro/src/gyro.cpp": "40fbeea34a035a05",
+        "gyro/src/gyro_android.cpp": "c7744266fe8300fe",
+        "gyro/src/gyro_ios.mm": "e75fd020c66a7695",
+        "gyro/src/gyro_private.cpp": "752dc4d5dcd703e0",
+        "gyro/src/gyro_private.h": "9d4a3f4ac2469636"
+      }
+    }
+  ]
+}

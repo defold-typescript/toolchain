@@ -1,0 +1,389 @@
+local const = require("druid.const")
+local helper = require("druid.helper")
+local component = require("druid.component")
+local event = require("event.event")
+
+---Druid component to manage a list of data with a scrollable view, used to manage huge list data and render only visible elements.
+---
+---### Setup
+---Create data list component with druid: `data_list = druid:new_data_list(scroll, grid, create_function)`
+---
+---### Notes
+---- Data List uses a scroll component for scrolling and a Static Grid component for layout
+---- Data List only renders visible elements for better performance
+---- Data List supports caching of elements for better performance
+---- Data List supports adding, removing and updating elements
+---- Data List supports scrolling to specific elements
+---- Data List supports custom element creation and cleanup
+---@class druid.data_list: druid.component
+---@field scroll druid.scroll The scroll instance for Data List component
+---@field grid druid.grid The Static Grid instance for Data List component
+---@field on_scroll_progress_change event fun(self: druid.data_list, progress: number) The event triggered when the scroll progress changes
+---@field on_element_add event fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when a new element is added
+---@field on_element_remove event fun(self: druid.data_list, index: number, node: node, instance: druid.component, data: table) The event triggered when an element is removed
+---@field top_index number The top index of the visible elements
+---@field last_index number The last index of the visible elements
+---@field scroll_progress number The scroll progress
+---@field private _create_function function The create function callback(self, data, index, data_list). Function should return (node, [component])
+---@field private _is_use_cache boolean Use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
+---@field private _cache table The cache table
+---@field private _data table The data table
+---@field private _data_visual table The data visual table
+---@field private _data_count number Last known data length used to gate scroll size updates
+local M = component.create("data_list")
+
+
+---The DataList constructor
+---@param scroll druid.scroll The Scroll instance for Data List component
+---@param grid druid.grid The StaticGrid instance for Data List component
+---@param create_function function The create function callback(self, data, index, data_list). Function should return (node, [component])
+function M:init(scroll, grid, create_function)
+	self.scroll = scroll
+	self.grid = grid
+	if self.grid.style then
+		self.grid.style.IS_DYNAMIC_NODE_POSES = false
+	end
+
+	-- Current visual elements indexes
+	self.top_index = 1
+	self.last_index = 1
+	self.scroll_progress = 0
+
+	self._create_function = create_function
+	self._is_use_cache = false
+	self._cache = {}
+	self._data = {}
+	self._data_visual = {}
+	self._data_count = 0
+
+	self.scroll.on_scroll:subscribe(self._on_scroll, self)
+
+	self.on_scroll_progress_change = event.create()
+	self.on_element_add = event.create()
+	self.on_element_remove = event.create()
+end
+
+
+---@private
+function M:on_remove()
+	self:clear()
+	self.scroll.on_scroll:unsubscribe(self._on_scroll, self)
+end
+
+
+---Set use cache version of DataList. Requires make setup of components in on_element_add callback and clean in on_element_remove
+---@param is_use_cache boolean Use cache version of DataList
+---@return druid.data_list self Current DataList instance
+function M:set_use_cache(is_use_cache)
+	self._is_use_cache = is_use_cache
+	return self
+end
+
+
+---Set new data set for DataList component
+---@param data table The new data array
+---@return druid.data_list self Current DataList instance
+function M:set_data(data)
+	self._data = data or {}
+	self:_refresh(true)
+
+	return self
+end
+
+
+---Return current data from DataList component
+---@return table data The current data array
+function M:get_data()
+	return self._data
+end
+
+
+---Add element to DataList
+---@param data table The data to add
+---@param index number|nil The index to add the data at
+---@param shift_policy number|nil The constant from const.SHIFT.*
+---@return druid.data_list self Current DataList instance
+function M:add(data, index, shift_policy)
+	index = index or #self._data + 1
+	shift_policy = shift_policy or const.SHIFT.RIGHT
+
+	helper.insert_with_shift(self._data, data, index, shift_policy)
+	self:_refresh(true)
+
+	return self
+end
+
+
+---Remove element from DataList
+---@param index number|nil The index to remove the data at
+---@param shift_policy number|nil The constant from const.SHIFT.*
+---@return druid.data_list self Current DataList instance
+function M:remove(index, shift_policy)
+	helper.remove_with_shift(self._data, index, shift_policy)
+	self:_refresh(true)
+
+	return self
+end
+
+
+---Remove element from DataList by data value
+---@param data table The data to remove
+---@param shift_policy number|nil The constant from const.SHIFT.*
+---@return druid.data_list self Current DataList instance
+function M:remove_by_data(data, shift_policy)
+	local index = helper.contains(self._data, data)
+	if index then
+		helper.remove_with_shift(self._data, index, shift_policy)
+		self:_refresh(true)
+	end
+
+	return self
+end
+
+
+---Clear the DataList and refresh visuals
+---@return druid.data_list self Current DataList instance
+function M:clear()
+	self._data = {}
+	self:_refresh(true)
+
+	return self
+end
+
+
+---Return index for data value
+---@param data table
+function M:get_index(data)
+	for index, value in pairs(self._data) do
+		if value == data then
+			return index
+		end
+	end
+
+	return nil
+end
+
+
+---Return all currently created nodes in DataList
+---@return node[] List of created nodes
+function M:get_created_nodes()
+	local nodes = {}
+
+	for index, data in pairs(self._data_visual) do
+		nodes[index] = data.node
+	end
+
+	return nodes
+end
+
+
+---Return all currently created components in DataList
+---@return druid.component[] components List of created components
+function M:get_created_components()
+	local components = {}
+
+	for index, data in pairs(self._data_visual) do
+		components[index] = data.component
+	end
+
+	return components
+end
+
+
+---Instant scroll to element with passed index
+---@param index number The index to scroll to
+function M:scroll_to_index(index)
+	local pos = self.grid:get_pos(index)
+	self.scroll:scroll_to(pos)
+end
+
+
+---Rebuild the scroll content size and refresh the visible elements.
+---The DataList refreshes itself on the data change, so this is only needed when
+---something outside of the data changed, like the grid item size at runtime
+---@return druid.data_list self Current DataList instance
+function M:refresh()
+	self:_refresh(true)
+
+	return self
+end
+
+
+---Add element at passed index using cache or create new
+---@param index number The index to add the element at
+---@private
+function M:_add_at(index)
+	if self._data_visual[index] then
+		self:_remove_at(index)
+	end
+
+	local data = self._data[index]
+	local node, instance
+
+	-- Use cache if available and is_use_cache is set
+	if #self._cache > 0 and self._is_use_cache then
+		local cached = table.remove(self._cache)
+		node = cached.node
+		instance = cached.component
+		gui.set_enabled(node, true)
+	else
+		-- Create a new element if no cache or refresh function is not set
+		node, instance = self._create_function(self:get_context(), data, index, self)
+	end
+
+	self._data_visual[index] = {
+		data = data,
+		node = node,
+		component = instance,
+	}
+	self.grid:add(node, index, const.SHIFT.NO_SHIFT)
+
+	self.on_element_add:trigger(self:get_context(), index, node, instance, data)
+end
+
+
+---Remove element from passed index and add it to cache if applicable
+---@param index number The index to remove the element at
+---@private
+function M:_remove_at(index)
+	self.grid:remove(index, const.SHIFT.NO_SHIFT)
+
+	local visual_data = self._data_visual[index]
+	local node = visual_data.node
+	local instance = visual_data.component
+	local data = visual_data.data
+
+	self.on_element_remove:trigger(self:get_context(), index, node, instance, data)
+
+	if self._is_use_cache then
+		-- Disable the node and add it to the cache instead of deleting it
+		gui.set_enabled(node, false)
+		table.insert(self._cache, visual_data)  -- Cache the removed element
+	else
+		-- If no refresh function, delete the node and component as usual
+		gui.delete_node(node)
+		if instance then
+			instance._meta.druid:remove(instance)
+		end
+	end
+
+	self._data_visual[index] = nil
+end
+
+
+---Get the visible area bounds in content-local coordinates (top-left and bottom-right),
+---clamped to the grid coordinate range so get_index_xy produces valid results.
+---@return number left
+---@return number top
+---@return number right
+---@return number bottom
+---@private
+function M:_get_visible_bounds()
+	local scroll_pos = self.scroll.position
+	local view_border = self.scroll.view_border
+	local grid = self.grid
+	local grid_zero = grid._base_offset
+	local grid_max_x = grid_zero.x + (grid.in_row - 1) * grid.node_size.x
+
+	local left = math.max(-scroll_pos.x + view_border.x, grid_zero.x)
+	local top = math.min(-scroll_pos.y + view_border.y, grid_zero.y)
+	local right = math.min(-scroll_pos.x + view_border.z, grid_max_x)
+	local bottom = -scroll_pos.y + view_border.w
+
+	if #self._data <= grid.in_row then
+		bottom = top
+	end
+
+	return left, top, right, bottom
+end
+
+
+---Sync scroll_progress from the current scroll percent and fire the event if changed
+---@private
+function M:_update_scroll_progress()
+	local progress = self.scroll:get_percent()
+	local scroll_progress = self.scroll.drag.can_y and progress.y or progress.x
+	if scroll_progress ~= self.scroll_progress then
+		self.scroll_progress = scroll_progress
+		self.on_scroll_progress_change:trigger(self:get_context(), scroll_progress)
+	end
+end
+
+
+---Scroll position changed: refresh only visible range (no scroll size rebuild)
+---@private
+function M:_on_scroll()
+	self:_refresh(false)
+	self:_update_scroll_progress()
+end
+
+
+---Check that every element in the range is rendered from the current data
+---@param start_index number The first index of the visible range
+---@param end_index number The last index of the visible range
+---@return boolean is_in_sync True if the rendered elements already match the data
+---@private
+function M:_is_visual_in_sync(start_index, end_index)
+	for index = start_index, end_index do
+		local visual = self._data_visual[index]
+		if (visual and visual.data) ~= self._data[index] then
+			return false
+		end
+	end
+
+	return true
+end
+
+
+---Refresh all elements in DataList
+---@param update_scroll_size boolean|nil If true, rebuild scroll content size from data length
+---@private
+function M:_refresh(update_scroll_size)
+	local data_count = #self._data
+	if update_scroll_size or data_count ~= self._data_count then
+		self._data_count = data_count
+		self.scroll:set_size(self.grid:get_size_for(data_count))
+		-- set_size can change percent without an on_scroll event
+		self:_update_scroll_progress()
+	end
+
+	local left, top, right, bottom = self:_get_visible_bounds()
+
+	local start_index = self.grid:get_index_xy(left, top)
+	start_index = math.max(1, start_index)
+
+	local end_index = self.grid:get_index_xy(right, bottom)
+	end_index = math.min(data_count, end_index)
+
+	-- Nothing to do when the same range is already rendered from the same data
+	if start_index == self.top_index and end_index == self.last_index
+		and self:_is_visual_in_sync(start_index, end_index) then
+		return
+	end
+
+	self.top_index = start_index
+	self.last_index = end_index
+
+	-- Clear from non range elements and from elements with outdated data.
+	-- Collected first: _remove_at triggers user callbacks that may touch the list
+	local to_remove = {}
+	for index, data in pairs(self._data_visual) do
+		if index < start_index or index > end_index or self._data[index] ~= data.data then
+			to_remove[#to_remove + 1] = index
+		end
+	end
+
+	for i = 1, #to_remove do
+		self:_remove_at(to_remove[i])
+	end
+
+	-- Add new elements
+	for index = start_index, end_index do
+		if not self._data_visual[index] and self._data[index] then
+			self:_add_at(index)
+		end
+	end
+end
+
+
+return M

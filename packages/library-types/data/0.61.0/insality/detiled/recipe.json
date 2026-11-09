@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["detiled/**/*.lua"],
+      "moduleId": "detiled.detiled",
+      "namespace": "detiled",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**"]
+    }
+  ]
+}

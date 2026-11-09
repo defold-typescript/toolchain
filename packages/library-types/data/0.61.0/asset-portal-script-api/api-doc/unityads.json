@@ -1,0 +1,529 @@
+{
+  "info": {
+    "namespace": "unityads",
+    "brief": "Functions and constants for interacting with UnityAds APIs",
+    "description": "Functions and constants for interacting with UnityAds APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "unityads.initialize",
+      "description": "",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "test_mode",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.request_idfa",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.set_callback",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.set_debug_mode",
+      "description": "",
+      "parameters": [
+        {
+          "name": "is_debug",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.get_debug_mode",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.is_initialized",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.is_supported",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.get_version",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.show",
+      "description": "",
+      "parameters": [
+        {
+          "name": "placement_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.load_banner",
+      "description": "",
+      "parameters": [
+        {
+          "name": "placement_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.unload_banner",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.show_banner",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.hide_banner",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unityads.set_banner_position",
+      "description": "",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.MSG_INIT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.MSG_SHOW",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.MSG_LOAD",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.MSG_BANNER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.MSG_IDFA",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_COMPLETED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_SDK_ERROR",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_JSON_ERROR",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_CLICKED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_START",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_LOADED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_LEFT_APPLICATION",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_SKIPPED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_NOT_SUPPORTED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_STATUS_AUTORIZED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_STATUS_DENIED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_STATUS_NOT_DETERMINED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_STATUS_RESTRICTED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.EVENT_DID_SHOW",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_INTERNAL",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_INVALID_ARGUMENT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_NOT_INITIALIZED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_NOT_READY",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_VIDEO_PLAYER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_NO_CONNECTION",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_ALREADY_SHOWING",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_NO_FILL",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_TIMEOUT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_UNKNOWN",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_NATIVE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_WEBVIEW",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.ERROR_AD_BLOCKER_DETECTED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_TOP_LEFT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_TOP_CENTER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_TOP_RIGHT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_BOTTOM_LEFT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_BOTTOM_CENTER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_BOTTOM_RIGHT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_CENTER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "unityads.BANNER_POSITION_NONE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

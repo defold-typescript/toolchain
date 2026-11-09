@@ -1,0 +1,212 @@
+{
+  "info": {
+    "namespace": "lfs",
+    "brief": "File system manipulation library",
+    "description": "File system manipulation library"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "lfs.attributes",
+      "description": "",
+      "parameters": [
+        {
+          "name": "filepath",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "attributename",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.chdir",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.currentdir",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.dir",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.link",
+      "description": "",
+      "parameters": [
+        {
+          "name": "old",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "new",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "symlink",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.lock",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fh",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "mode",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.lock_dir",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.mkdir",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.rmdir",
+      "description": "",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.setmode",
+      "description": "",
+      "parameters": [
+        {
+          "name": "filepath",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "mode",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.symlinkattributes",
+      "description": "",
+      "parameters": [
+        {
+          "name": "filepath",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "attributename",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.touch",
+      "description": "",
+      "parameters": [
+        {
+          "name": "filepath",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "atime",
+          "doc": "",
+          "types": []
+        },
+        {
+          "name": "mtime",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lfs.unlock",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fh",
+          "doc": "",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

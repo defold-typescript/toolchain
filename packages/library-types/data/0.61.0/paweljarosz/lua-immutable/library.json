@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/paweljarosz/lua-immutable",
+  "license": "MIT",
+  "floors": {
+    "immutable.immutable": 1
+  }
+}

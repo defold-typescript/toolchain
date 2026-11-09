@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "defold-box2d",
+    "sourceId": "d954mas/defold-box2d",
     "manifestDir": "box2d/native"
   },
   "resolve": {

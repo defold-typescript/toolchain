@@ -1,0 +1,1109 @@
+{
+  "info": {
+    "namespace": "drawpixels",
+    "brief": "Functions and constants for interacting with DrawPixels extension",
+    "description": "Functions and constants for interacting with DrawPixels extension"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.start_fill",
+      "description": "Indicates border should be maintained",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.end_fill",
+      "description": "Stop border recordin",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.fill_area",
+      "description": "Fills the area considering the boundaries",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.circle",
+      "description": "Method for drawing circle",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pox_x",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pox_y",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "diameter",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "antialiasing",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.filled_circle",
+      "description": "Method for drawing filled circle",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_x",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_y",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "diameter",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "antialiasing",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.rect",
+      "description": "Method for drawing rectangle",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_x",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_y",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "rect_width",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "rect_height",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.filled_rect",
+      "description": "Method for drawing filled rectangle",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_x",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "pos_y",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "rect_width",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "rect_height",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.fill",
+      "description": "Fill buffer with the color",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.line",
+      "description": "Draw a line between two points",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "antialiasing",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.gradient_line",
+      "description": "Draw a gradient line between two points",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "antialiasing",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.arc",
+      "description": "Draw a arc between two corners",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "radius",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.filled_arc",
+      "description": "Draw a filled arc between two corners",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "radius",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.gradient_arc",
+      "description": "Draw a gradient arc between two corners",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "radius",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.pixel",
+      "description": "Draw a pixel",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.color",
+      "description": "Read color from a position in the buffer",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.bezier",
+      "description": "Draw a bezier line between two points and one control point",
+      "parameters": [
+        {
+          "name": "buffer_info",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "x0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y0",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "xc",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "yc",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "red",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "green",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "blue",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "drawpixels.copy_pixels",
+      "description": "Copy a rectangular region of pixels from one buffer to another with optional alpha blending",
+      "parameters": [
+        {
+          "name": "dest_buffer",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "src_buffer",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "rect_x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rect_y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rect_width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rect_height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "dest_x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "dest_y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "merge_alpha",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

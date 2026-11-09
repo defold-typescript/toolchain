@@ -1,0 +1,190 @@
+---@class detiled.tileset
+---@field class string
+---@field columns number
+---@field image string|nil
+---@field fillmode string
+---@field grid detiled.tileset.grid
+---@field margin number
+---@field name string
+---@field objectalignment string
+---@field spacing number
+---@field tilecount number
+---@field tiledversion string
+---@field tileheight number
+---@field tiles detiled.tileset.tile[]
+---@field tilewidth number
+---@field transformations detiled.tileset.transformations
+---@field type string
+---@field version string Example: "1.9"
+
+---@class detiled.tileset.grid
+---@field height number
+---@field orientation string
+---@field width number
+
+---@class detiled.tileset.tile
+---@field class string
+---@field type string
+---@field id number
+---@field image string
+---@field imageheight number
+---@field imagewidth number
+---@field objectgroup detiled.tileset.objectgroup|nil
+---@field properties detiled.map.property[]
+
+---@class detiled.tileset.objectgroup
+---@field visible boolean
+---@field id number
+---@field name string
+---@field draworder string
+---@field opacity number
+---@field type string
+---@field x number
+---@field y number
+---@field objects detiled.tileset.objectgroup.object[]
+
+---@class detiled.tileset.objectgroup.object
+---@field visible boolean
+---@field id number
+---@field name string
+---@field point boolean|nil
+---@field width number
+---@field height number
+---@field x number
+---@field y number
+---@field class string
+---@field rotation number
+
+---@class detiled.tileset.transformations
+---@field hflip boolean
+---@field preferuntransformed boolean
+---@field rotate boolean
+---@field vflip boolean
+
+---@class detiled.map
+---@field class string
+---@field compressionlevel number
+---@field height number
+---@field infinite boolean
+---@field layers detiled.map.layer[]
+---@field nextlayerid number
+---@field nextobjectid number
+---@field orientation string
+---@field renderorder string
+---@field tiledversion string
+---@field tileheight number
+---@field tilesets detiled.map.tileset[]
+---@field tilewidth number
+---@field type string
+---@field version string
+---@field width number
+---@field staggeraxis string
+---@field staggerindex string
+---@field hexsidelength number
+
+---@class detiled.map.layer
+---@field data number[] Global tile id
+---@field encoding string Example: "base64"
+---@field compression string Example: "zlib"
+---@field height number
+---@field id number
+---@field name string
+---@field offsetx number
+---@field offsety number
+---@field opacity number
+---@field properties detiled.map.property[]
+---@field type string
+---@field visible boolean
+---@field width number
+---@field x number
+---@field y number
+---@field draworder string
+---@field objects detiled.map.object[]
+
+---@class detiled.map.property
+---@field name string
+---@field type string
+---@field value string|table
+---@field propertytype string|nil
+
+---@class detiled.map.object
+---@field class string
+---@field ellipse boolean|nil
+---@field gid number
+---@field height number
+---@field id number
+---@field name string
+---@field point boolean|nil
+---@field polygon table|nil
+---@field polyline table|nil
+---@field properties detiled.map.property[]
+---@field objectgroup any
+---@field rotation number
+---@field type string?
+---@field visible boolean
+---@field width number
+---@field x number
+---@field y number
+
+---@class detiled.map.tileset
+---@field firstgid number
+---@field source string
+
+---@class detiled.entity.transform
+---@field position_x number
+---@field position_y number
+---@field position_z number
+---@field scale_x number
+---@field scale_y number
+---@field size_x number?
+---@field size_y number?
+---@field rotation number?
+
+---@class detiled.entity
+---@field prefab_id string|nil
+---@field image string|nil
+---@field transform detiled.entity.transform
+---@field tiled_id number|nil
+---@field tiled_layer_id string|nil
+---@field name string|nil
+---@field object_type string|nil
+---@field polyline table|nil
+---@field polygon table|nil
+
+---@alias detiled.layers table<string, detiled.layer_data>
+
+---@class detiled.layer_data
+---@field entities detiled.entity[]
+---@field properties detiled.map.property[]
+---@field layer_id string
+---@field visible boolean
+---@field position_x number A layer Horizontal offset from layer settings
+---@field position_y number A layer Vertical offset from layer settings
+---@field position_z number A position_z custom property value from layer settings
+
+---@class detiled.map_params.tile
+---@field width number
+---@field height number
+---@field side number|nil
+
+---@class detiled.map_params.scene
+---@field invert_y boolean
+---@field tiles_x number
+---@field tiles_y number
+---@field size_x number
+---@field size_y number
+---@field hexmap_type string|nil
+---@field stagger_index string|nil "odd" or "even"
+---@field stagger_axis string|nil "x" or "y", used for staggered orientation
+
+---@class detiled.map_params
+---@field orientation string
+---@field tile detiled.map_params.tile
+---@field scene detiled.map_params.scene
+
+---@class detiled.grid
+---@field get_map_params_from_tiled fun(tiled_data: detiled.map): detiled.map_params
+---@field cell_to_pos fun(i: number, j: number, map_params: detiled.map_params): number, number
+---@field pos_to_cell fun(x: number, y: number, map_params: detiled.map_params): number, number
+---@field get_tile_pos fun(i: number, j: number, z_layer: number|nil, map_params: detiled.map_params): number, number, number
+---@field convert_object_position? fun(x: number, y: number, map_params: detiled.map_params): number, number

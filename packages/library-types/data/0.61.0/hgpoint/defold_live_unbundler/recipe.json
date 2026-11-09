@@ -1,0 +1,69 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["live_unbundler/**/*.lua"],
+      "moduleId": "live_unbundler.live_unbundler",
+      "namespace": "live_unbundler",
+      "annotationOverrides": {
+        "moduleConstants": {
+          "MSG_INITIALIZED": {
+            "type": "hash",
+            "doc": "Posted to every listener once `init` finishes."
+          },
+          "MSG_INITIALIZATION_FAILED": {
+            "type": "hash",
+            "doc": "Message id reserved for a failed initialization; this version never posts it."
+          },
+          "MSG_FILE_LOADED": {
+            "type": "hash",
+            "doc": "Posted with `file_name` and `module_name` each time an archive is mounted."
+          },
+          "MSG_MODULE_LOADED": {
+            "type": "hash",
+            "doc": "Posted with `file_name` and `module_name` once every archive of a module is mounted."
+          },
+          "MSG_ALL_LOADED": {
+            "type": "hash",
+            "doc": "Posted once every queued archive is mounted."
+          },
+          "MSG_NETWORK_ERROR": {
+            "type": "hash",
+            "doc": "Posted when an archive download fails; the download retries after five seconds."
+          },
+          "DEBUG": {
+            "type": "integer",
+            "doc": "Debug log level passed to the `set_log_function` callback."
+          },
+          "INFO": {
+            "type": "integer",
+            "doc": "Info log level passed to the `set_log_function` callback."
+          },
+          "WARN": {
+            "type": "integer",
+            "doc": "Warning log level passed to the `set_log_function` callback."
+          },
+          "ERROR": {
+            "type": "integer",
+            "doc": "Error log level passed to the `set_log_function` callback."
+          },
+          "FATAL": {
+            "type": "integer",
+            "doc": "Fatal log level passed to the `set_log_function` callback."
+          },
+          "RES_HIGH_ONLY": {
+            "type": "liveupdater.res_mode",
+            "doc": "`res_mode` that loads only the high-resolution archives; the default."
+          },
+          "RES_LOW_ONLY": {
+            "type": "liveupdater.res_mode",
+            "doc": "`res_mode` that loads only the low-resolution archives."
+          },
+          "RES_BOTH": {
+            "type": "liveupdater.res_mode",
+            "doc": "`res_mode` that loads both resolutions."
+          }
+        }
+      }
+    }
+  ]
+}

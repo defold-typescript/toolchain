@@ -47,7 +47,20 @@ describe("readProjectLock", () => {
     const cwd = project();
     const lock: ProjectLock = {
       extensions: { [URL_A]: COMMIT_PIN, [URL_B]: FILES_PIN },
-      libraryData: { shared: COMMIT, libraries: { monarch: OTHER_COMMIT, druid: COMMIT } },
+      libraryData: {
+        shared: COMMIT,
+        libraries: { "britzl/monarch": OTHER_COMMIT, "insality/druid": COMMIT },
+      },
+    };
+    writeProjectLock(cwd, lock);
+    expect(readProjectLock(cwd)).toEqual({ status: "ok", lock });
+  });
+
+  test("a bare repo key an earlier CLI wrote still reads", () => {
+    const cwd = project();
+    const lock: ProjectLock = {
+      extensions: {},
+      libraryData: { shared: COMMIT, libraries: { monarch: COMMIT } },
     };
     writeProjectLock(cwd, lock);
     expect(readProjectLock(cwd)).toEqual({ status: "ok", lock });
@@ -98,7 +111,7 @@ describe("readProjectLock", () => {
       }),
       "monarch",
     ],
-    ...["../../x", "a/b", "a\\b", "..", ".", ""].map(
+    ...["../../x", "../x", "a/..", "./a", "a/b/c", "a\\b", "..", ".", ""].map(
       (key) =>
         [
           `the library key ${JSON.stringify(key)}`,

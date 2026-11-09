@@ -1,0 +1,51 @@
+{
+  "ref": "1.5.3",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "d099ae5bffc2cc3fbf9e12ad818a08b608847bdc"
+      ],
+      "api": "722ae54c157c6b0a8e965feb71e8352d082b885fff303699042f53f05c304370",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "11c3c0381b5ceb705d9c354eafac6ba85e7a4dcd3fe2354e1819b10bb1e53c27",
+      "members": {
+        "operator/bezier.lua#new": "42ba48c03f9fff2a",
+        "operator/bezier.lua#position": "cb2141134b7baed8",
+        "operator/bezier.lua#uniform_position": "cb2141134b7baed8",
+        "operator/hashes.lua#acquire_camera_focus": "24c7bcaf858ea773",
+        "operator/hashes.lua#acquire_input_focus": "24c7bcaf858ea773",
+        "operator/hashes.lua#activate": "24c7bcaf858ea773",
+        "operator/hashes.lua#camera": "24c7bcaf858ea773",
+        "operator/hashes.lua#checkpoint": "24c7bcaf858ea773",
+        "operator/hashes.lua#deactivate": "24c7bcaf858ea773",
+        "operator/hashes.lua#debug": "24c7bcaf858ea773",
+        "operator/hashes.lua#default": "24c7bcaf858ea773",
+        "operator/hashes.lua#draw_line": "24c7bcaf858ea773",
+        "operator/hashes.lua#euler": "24c7bcaf858ea773",
+        "operator/hashes.lua#far_z": "24c7bcaf858ea773",
+        "operator/hashes.lua#follow_point": "24c7bcaf858ea773",
+        "operator/hashes.lua#follow_sequence": "24c7bcaf858ea773",
+        "operator/hashes.lua#fov": "24c7bcaf858ea773",
+        "operator/hashes.lua#ground_normal": "24c7bcaf858ea773",
+        "operator/hashes.lua#internal_control": "24c7bcaf858ea773",
+        "operator/hashes.lua#manual_control": "24c7bcaf858ea773",
+        "operator/hashes.lua#motion_finished": "24c7bcaf858ea773",
+        "operator/hashes.lua#motion_interrupted": "24c7bcaf858ea773",
+        "operator/hashes.lua#motion_point": "24c7bcaf858ea773",
+        "operator/hashes.lua#mouse_wheel_down": "24c7bcaf858ea773",
+        "operator/hashes.lua#mouse_wheel_up": "24c7bcaf858ea773",
+        "operator/hashes.lua#near_z": "24c7bcaf858ea773",
+        "operator/hashes.lua#object_post_movement": "24c7bcaf858ea773",
+        "operator/hashes.lua#operator_attached": "24c7bcaf858ea773",
+        "operator/hashes.lua#operator_detached": "24c7bcaf858ea773",
+        "operator/hashes.lua#post_update": "24c7bcaf858ea773",
+        "operator/hashes.lua#release_camera_focus": "24c7bcaf858ea773",
+        "operator/hashes.lua#release_input_focus": "24c7bcaf858ea773",
+        "operator/hashes.lua#unfollow": "24c7bcaf858ea773",
+        "operator/hashes.lua#use_camera_projection": "24c7bcaf858ea773",
+        "operator/operator.lua": "98ca79fe07b0fd70"
+      }
+    }
+  ]
+}

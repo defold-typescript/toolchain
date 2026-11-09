@@ -1,0 +1,21 @@
+{
+  "ref": "v0.9.1",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "caf35d2fc01728988c70f4c6d57c6e4c06c443fe",
+        "e5869a8ce45802baef2071927c4629ed30cf90e8"
+      ],
+      "api": "110140eb74402f39c5dca071b7323d259ca84338aec8e631991adb8c44821afb",
+      "doc": "e466fe70370308b0b86080a85682845e3805d656c5babcfe8238e772b4a0a45f",
+      "source": "6748bbdfae1070957f76f8a1cd75eb9631c1628ed9e46ab1fa2f52fe5a8507bb",
+      "members": {
+        "light_and_shadows/constants.lua": "0c77a14b705b04ae",
+        "light_and_shadows/light.lua": "8ae6cd3ff779dcab",
+        "light_and_shadows/light_and_shadows.lua": "4ace63bbabe9d3e3",
+        "light_and_shadows/materials/sprite/repeat/sprite_repeat.lua#create": "6ed510e9bef6e564"
+      }
+    }
+  ]
+}

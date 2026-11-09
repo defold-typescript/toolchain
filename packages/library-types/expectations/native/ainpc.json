@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "player2-ai-npc-defold",
+    "sourceId": "elefant-ai/player2-ai-npc-defold",
     "manifestDir": "player2-ai-npc"
   },
   "resolve": {

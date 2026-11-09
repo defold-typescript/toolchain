@@ -1,0 +1,25 @@
+{
+  "ref": "2.6.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "d621e42a9260106d92946e60c6ddcd6a2bb98c06"
+      ],
+      "api": "4f34b6a14931a14a117be1296e93fe572f5dcc0741c81de23b7acf4bd9e389de",
+      "doc": "b4f9b3c465a7ffe0eff73a125fb7ec0b259c88400745701fc897c4fdb6aaacd3",
+      "source": "23ed74e42af3717fbc1d78cf692a136c1c1215fd71dcb30ea38defbc4b5770a7",
+      "members": {
+        "defcon/console.lua": "72d4126aa29a434d",
+        "defcon/html/console_html.lua#html": "f4b81b770389e48c",
+        "defcon/util/prettify.lua#indentation": "24c7bcaf858ea773",
+        "defcon/util/prettify.lua#prettify_table": "384900b4fc683283",
+        "defcon/util/utils.lua#char_to_hex": "2f0bf8d825231b69",
+        "defcon/util/utils.lua#hex_to_char": "5df6b0d7b0958e23",
+        "defcon/util/utils.lua#split": "c5d5d5dc9527f304",
+        "defcon/util/utils.lua#urldecode": "b67ff3ea8b864e55",
+        "defcon/util/utils.lua#urlencode": "a262ebdc7421c49d"
+      }
+    }
+  ]
+}

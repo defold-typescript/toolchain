@@ -1,0 +1,703 @@
+{
+  "info": {
+    "namespace": "rnd",
+    "brief": "PCG Random Number Generator Native Extension for the Defold Game Engine",
+    "description": "PCG Random Number Generator Native Extension for the Defold Game Engine"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "rnd.new",
+      "description": "Creates an isolated RNG context and returns its context id. Call without arguments to seed from entropy, with init_state to use init_seq = 1, or with init_state and init_seq for exact unsigned 32-bit deterministic seeding.",
+      "parameters": [
+        {
+          "name": "init_state",
+          "doc": "Optional starting state for the RNG. Must be an unsigned 32-bit integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init_seq",
+          "doc": "Optional output sequence for the RNG. Must be an unsigned 32-bit integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.new64",
+      "description": "Creates an isolated RNG context using exact unsigned 64-bit decimal string seeds.",
+      "parameters": [
+        {
+          "name": "init_state",
+          "doc": "Starting state for the RNG as an unsigned 64-bit decimal string.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "init_seq",
+          "doc": "Output sequence for the RNG as an unsigned 64-bit decimal string.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.reset",
+      "description": "Reseeds an existing RNG context. Call with only id to seed from entropy, with id and init_state to use init_seq = 1, or with id, init_state, and init_seq for exact unsigned 32-bit deterministic seeding.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init_state",
+          "doc": "Optional starting state for the RNG. Must be an unsigned 32-bit integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init_seq",
+          "doc": "Optional output sequence for the RNG. Must be an unsigned 32-bit integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.reset64",
+      "description": "Reseeds an existing RNG context using exact unsigned 64-bit decimal string seeds.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "init_state",
+          "doc": "Starting state for the RNG as an unsigned 64-bit decimal string.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "init_seq",
+          "doc": "Output sequence for the RNG as an unsigned 64-bit decimal string.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.delete",
+      "description": "Deletes an RNG context. The context id becomes invalid.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.clear_contexts",
+      "description": "Deletes all RNG contexts. Existing context ids become invalid.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.state",
+      "description": "Returns raw PCG state and increment as unsigned 64-bit decimal strings.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "State",
+          "doc": "Raw PCG state.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "Increment",
+          "doc": "Raw PCG increment. Controls the PCG stream.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.set_state",
+      "description": "Restores raw PCG state and increment from unsigned 64-bit decimal strings.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "state",
+          "doc": "Raw PCG state.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "increment",
+          "doc": "Raw PCG increment. Controls the PCG stream.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.number",
+      "description": "Returns a 32-bit unsigned integer.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns a 32-bit unsigned integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.numbers",
+      "description": "Returns a table of 32-bit unsigned integers.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "count",
+          "doc": "Number of values to generate. Must be a non-negative integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Numbers",
+          "doc": "Table of 32-bit unsigned integers.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.bound",
+      "description": "Returns a 32-bit unsigned integer in [0, upper_bound).",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "upper_bound",
+          "doc": "Exclusive upper bound. Must be an unsigned 32-bit integer greater than 0.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns a 32-bit unsigned integer in [0, upper_bound).",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.range",
+      "description": "Returns a 32-bit unsigned integer between min and max values, inclusive. Only unsigned integers are supported.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "Minimum unsigned integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "Maximum unsigned integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns a 32-bit unsigned integer between min and max values.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.ranges",
+      "description": "Returns a table of 32-bit unsigned integers between min and max values, inclusive.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "count",
+          "doc": "Number of values to generate. Must be a non-negative integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "Minimum unsigned integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "Maximum unsigned integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Numbers",
+          "doc": "Table of 32-bit unsigned integers between min and max values.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.double",
+      "description": "Returns a floating point number in [0, 1).",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns a floating point number in [0, 1).",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.doubles",
+      "description": "Returns a table of floating point numbers in [0, 1).",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "count",
+          "doc": "Number of values to generate. Must be a non-negative integer.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Numbers",
+          "doc": "Table of floating point numbers in [0, 1).",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.double_range",
+      "description": "Returns a floating point number in [min, max). Not fast as rnd.double(id)",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "Minimum number.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "Maximum number.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns a floating point number in [min, max).",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.boolean",
+      "description": "Returns true or false with equal probability.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Boolean",
+          "doc": "Random boolean value.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.chance",
+      "description": "Returns true according to the given probability.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probability",
+          "doc": "Probability from 0.0 to 1.0. Values <= 0 are always false and values >= 1 are always true.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Success",
+          "doc": "True if the probability check succeeds.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.toss",
+      "description": "Toss a coin.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns 0 or 1 (0 = 'H', 1 = 'T')",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.roll",
+      "description": "Roll the dice.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Random Number",
+          "doc": "Returns between 1-6",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.card",
+      "description": "Picks a standard deck card index.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Card",
+          "doc": "Card index in [1, 52].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.card2",
+      "description": "Picks a standard deck suit and rank.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Suit",
+          "doc": "Suit in [1, 4].",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "Card",
+          "doc": "Card rank in [1, 13].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.dice",
+      "description": "Rolls dice using one of the exported dice constants.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "roll",
+          "doc": "Roll count. Must be greater than 0.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "type",
+          "doc": "Dice type. Use rnd.d4, rnd.d6, rnd.d8, rnd.d10, rnd.d12, rnd.d20, or rnd.d100.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Results",
+          "doc": "Table of dice results.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "Total",
+          "doc": "Total amount of dice results.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.shuffle",
+      "description": "Shuffles the array part of a table in place using Fisher-Yates.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "array",
+          "doc": "Table to shuffle.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Array",
+          "doc": "The same table, shuffled in place.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rnd.check",
+      "description": "Debug/sample method that prints PCG sample output and consumes RNG state.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "RNG context id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

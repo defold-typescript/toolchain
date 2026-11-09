@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/whiteboxdev/library-defold-persist",
+  "license": "Zlib",
+  "follows": "none",
+  "forks": [
+    {
+      "authored": "fork/persist.persist.d.ts",
+      "moduleId": "persist.persist",
+      "namespace": "persist",
+      "apiDoc": "api-doc/persist.json",
+      "upstreamLua": ["source/upstream/persist/persist.lua"]
+    }
+  ],
+  "floors": {
+    "persist.persist": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

@@ -21,7 +21,7 @@ const BAD_PORTAL_ID = `x) ${IMG}`;
 
 function dataDirs(): LibraryDirs {
   const root = mkdtempSync(join(tmpdir(), "upstream-text-"));
-  const dataDir = join(root, "data", "0.55.0");
+  const dataDir = join(root, "data", "0.61.0");
   const modelDir = join(root, "model");
   mkdirSync(dataDir, { recursive: true });
   mkdirSync(modelDir, { recursive: true });
@@ -36,7 +36,7 @@ function dataDirs(): LibraryDirs {
 }
 
 function writeLibrary(dirs: LibraryDirs, namespace: string): void {
-  const folder = join(dirs.dataDir, namespace);
+  const folder = join(dirs.dataDir, "someone", namespace);
   mkdirSync(folder, { recursive: true });
   writeFileSync(
     join(folder, "library.json"),
@@ -351,7 +351,7 @@ describe("upstream listing text", () => {
     const dirs = dataDirs();
     writeLibrary(dirs, "demo");
     writeFileSync(
-      join(dirs.dataDir, "demo", "library.json"),
+      join(dirs.dataDir, "someone", "demo", "library.json"),
       JSON.stringify({ repo: "javascript:alert(1)", license: "MIT" }),
     );
     expect(() => loadLibraryPageSources(dirs)).toThrow("javascript:alert(1)");

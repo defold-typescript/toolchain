@@ -1,0 +1,19 @@
+{
+  "ref": "v1.2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "c794793016334464cd940403056781f5bc49bb91"
+      ],
+      "api": "1e5969e1a3691ece3742a934a290f7bcc9ab792e196efd4473e07d7224526950",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "0abd2bc0adf239a9ee7923822eb1f7f42d11a1c755d42c48fd14c01747a86b21",
+      "members": {
+        "taptic_engine/src/tapticengine.cpp": "552be769202229e0",
+        "taptic_engine/src/tapticengine.h": "53ab29cf0bb3a5ab",
+        "taptic_engine/src/tapticengine.mm": "94938f8c2b732227"
+      }
+    }
+  ]
+}

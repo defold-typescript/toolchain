@@ -1,0 +1,9 @@
+{
+  "repo": "https://github.com/selimanac/defold-pixelart-shader",
+  "license": "MIT",
+  "refKind": "commit",
+  "floors": {
+    "pixelart.scripts.pixelart": 1,
+    "pixelart.scripts.pixelart_render": 1
+  }
+}

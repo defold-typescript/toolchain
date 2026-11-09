@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "defold-tile-raycast",
+    "sourceId": "selimanac/defold-tile-raycast",
     "manifestDir": "tile-raycast"
   },
   "resolve": {
