@@ -669,7 +669,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // most once, only when a default is needed.
   const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryDataDir);
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
-  const confirmedLibraryUrls = new Set<string>();
+  // Keyed by the URL of each bundle a library confirmed, holding the namespaces
+  // its confirmed modules are published under: the archive's own docs for those
+  // namespaces are the surface the curated types replace.
+  const publishedByConfirmedUrl = new Map<string, ReadonlySet<string>>();
   for (const bundle of resolvedBundles) {
     if (shippedUrls.has(bundle.url)) {
       continue;
@@ -681,7 +684,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     const shipped = new Set(bundle.luaModules);
     const confirmed = library.modules.filter((module) => shipped.has(module));
     if (confirmed.length > 0) {
-      confirmedLibraryUrls.add(bundle.url);
+      publishedByConfirmedUrl.set(
+        bundle.url,
+        new Set(confirmed.map((module) => library.namespaces?.[module] ?? module)),
+      );
     } else if (!bundle.assetOnly) {
       // unconfirmed-needs-no-surface: the bundle already contributed its own
       // `.script_api` namespace, so a bare repo-name collision with the corpus is
@@ -697,18 +703,28 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const { bundles, confirmedUrls: confirmedNativeUrls } = applyNativeTargets(
     shippedBundles,
     opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir),
-    new Set([...confirmedLibraryUrls, ...shippedUrls]),
+    new Set([...publishedByConfirmedUrl.keys(), ...shippedUrls]),
   );
   // `scriptApiCount` reports the archive's own docs, which a curated or shipped
   // replacement does not change.
   const scriptApiCounts = new Map(resolvedBundles.map((b) => [b.url, b.declarations.length]));
 
-  // Only the *type* surface is filtered: a superseded bundle stays a declared
-  // dependency below, so its scene sources still unpack and its version and pin
-  // status still report.
+  // Only the *type* surface is filtered, and only by namespace: a native
+  // extension documented beside a confirmed Lua module keeps its declaration, and
+  // a superseded bundle stays a declared dependency below, so its scene sources
+  // still unpack and its version and pin status still report.
+  const extensionBundles = bundles.map((bundle) => {
+    const published = publishedByConfirmedUrl.get(bundle.url);
+    return published === undefined
+      ? bundle
+      : {
+          ...bundle,
+          declarations: bundle.declarations.filter(({ namespace }) => !published.has(namespace)),
+        };
+  });
   const { materializedDir, sharedNamespaces } = materializeExtensionDeclarations({
     cwd,
-    bundles: bundles.filter((bundle) => !confirmedLibraryUrls.has(bundle.url)),
+    bundles: extensionBundles,
   });
   ensureExtensionTypesReference(cwd, materializedDir);
 
@@ -768,7 +784,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // Every confirmed library has an entry, empty when another dependency printed its
   // modules first.
   const printedFrom = new Map<string, ("archive" | "pinned")[]>(
-    [...confirmedLibraryUrls].map((url) => [url, []]),
+    [...publishedByConfirmedUrl.keys()].map((url) => [url, []]),
   );
   if (libraryDataDir !== null) {
     printedLibraries = [];
@@ -840,19 +856,17 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     (url) => wantsUpdate(opts.update, normalizeSourceId(url)),
   );
 
-  const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
-    const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
+  const extensions: ResolvedExtensionReport[] = extensionBundles.map((bundle) => {
+    const confirmedLibrary = publishedByConfirmedUrl.has(bundle.url);
     const pin = heldPins[bundle.url];
     const pinStatus: PinStatus =
       pin === undefined ? "unpinned" : sameArchive(pin, bundle.identity) ? "match" : "drift";
-    // A superseded bundle contributed no namespace, so reporting the ones its
-    // `.script_api` would have produced would double-count its modules against
+    // A confirmed library's bundle reports only the namespaces its curated types
+    // left on the extension surface, so its modules are not counted again against
     // `libraries[]`. `scriptApiCount` stays the real archive count.
-    const namespaces = supersededByLibrary
-      ? []
-      : shippedUrls.has(bundle.url)
-        ? bundle.shipped.map(({ entry }) => posix.basename(entry, ".d.ts")).sort()
-        : bundle.declarations.map((d) => d.namespace).sort();
+    const namespaces = shippedUrls.has(bundle.url)
+      ? bundle.shipped.map(({ entry }) => posix.basename(entry, ".d.ts")).sort()
+      : bundle.declarations.map((d) => d.namespace).sort();
     const report: {
       url: string;
       ref: DependencyUrlKind;
@@ -875,7 +889,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       namespaces,
       typeSurface: shippedUrls.has(bundle.url)
         ? "shipped"
-        : supersededByLibrary
+        : confirmedLibrary
           ? "vendored-library"
           : confirmedNativeUrls.has(bundle.url)
             ? "vendored-native"

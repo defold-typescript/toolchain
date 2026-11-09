@@ -1376,7 +1376,14 @@ describe("runResolve corpus match precedes .script_api", () => {
     return writeAuthoredLibraryData({ "mylib.core": MYLIB });
   }
 
-  const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
+  // `mylib.core` is published under `alpha`, the shape a fork published under
+  // another name takes, so the archive's `alpha` doc is the surface the curated
+  // types replace.
+  const registry = [
+    { sourceId: "mylib", modules: ["mylib.core"], namespaces: { "mylib.core": "alpha" } },
+  ];
+
+  const BETA = ALPHA.replaceAll("alpha", "beta");
 
   // A self-documenting pure-Lua library: it ships the corpus module `mylib.core`
   // *and* its own `.script_api`, so it is not asset-only yet the curated types
@@ -1415,6 +1422,76 @@ describe("runResolve corpus match precedes .script_api", () => {
     expect(existsSync(join(cwd, ".defold-types", "extensions"))).toBe(false);
     expect(result.materializedSurface).toBeNull();
     expect(result.extensions[0]?.namespaces).toEqual([]);
+  });
+
+  test("a confirmed library keeps the .script_api namespaces it does not publish", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/mylib/core.lua", "mylib-main/native/api/beta.script_api"],
+        contents: { "mylib-main/native/api/beta.script_api": BETA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryDataDir: seedLibraryData(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.libraries).toEqual([
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
+    ]);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "beta.d.ts"))).toBe(true);
+    expect(result.materializedSurface).not.toBeNull();
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-library");
+    expect(result.extensions[0]?.namespaces).toEqual(["beta"]);
+    expect(result.extensions[0]?.scriptApiCount).toBe(1);
+  });
+
+  test("a confirmed library drops the .script_api doc of the namespace it publishes and keeps the rest", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "mylib-main/mylib/core.lua",
+          "mylib-main/ext/api/alpha.script_api",
+          "mylib-main/native/api/beta.script_api",
+        ],
+        contents: {
+          "mylib-main/ext/api/alpha.script_api": ALPHA,
+          "mylib-main/native/api/beta.script_api": BETA,
+        },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryDataDir: seedLibraryData(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readdirSync(join(cwd, ".defold-types", "extensions")).sort()).toEqual([
+      "beta.d.ts",
+      "index.d.ts",
+      "package.json",
+    ]);
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-library");
+    expect(result.extensions[0]?.namespaces).toEqual(["beta"]);
+    expect(result.extensions[0]?.scriptApiCount).toBe(2);
   });
 
   test("a superseded bundle still unpacks its scene sources and still reports its version and pin status", async () => {
