@@ -7,6 +7,8 @@ name: Library data publish
 # `resolve` pins each library to a data repo commit, so a push that changes no
 # published file must write no commit there. Both pushes use the
 # LIBRARY_DATA_PUSH_TOKEN secret, a token with contents write on the data repo.
+# The data repo has has_issues, has_wiki and has_pull_requests off, so changes
+# reach it only through this workflow, whose pushes go straight to `main`.
 # Both wait for ci.yml's ci-done check to pass on the commit they publish
 # (scripts/release-ci-gate.ts), and publish nothing when it fails or times out.
 # ci-done runs on every scope, so a data-only push needs no full-scope run.
