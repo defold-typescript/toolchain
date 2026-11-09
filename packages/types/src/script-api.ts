@@ -71,6 +71,18 @@ function slotList(value: unknown): Record<string, unknown>[] {
 // every slot is already required unless flagged optional, so the suffix is noise.
 const REQUIRED_SUFFIX = /\s*\(required\)$/i;
 
+// Upstream writes an omissible slot in call-syntax brackets (`[options]`), the
+// same convention its own `desc` prose uses for an optional argument.
+const BRACKETED_NAME = /^\[([^[\]]+)\]$/;
+
+function slotName(item: Record<string, unknown>): string {
+  return stringOr(item.name, "").replace(REQUIRED_SUFFIX, "");
+}
+
+function isBracketed(item: Record<string, unknown>): boolean {
+  return BRACKETED_NAME.test(slotName(item));
+}
+
 // Generators emit placeholder or C-signature names (`None`, `int JoinRandomRoom`)
 // that cannot form a Lua member access, so no page or declaration can carry them.
 const FUNCTION_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -80,8 +92,10 @@ function isFunctionName(name: string): boolean {
 }
 
 function mapSlot(item: Record<string, unknown>): RefDocParameter {
+  const name = slotName(item);
+  const bracketed = BRACKETED_NAME.exec(name);
   const slot: RefDocParameter = {
-    name: stringOr(item.name, "").replace(REQUIRED_SUFFIX, ""),
+    name: bracketed ? (bracketed[1] ?? "").trim() : name,
     doc: stringOr(item.desc, ""),
     types: splitTypeTokens(item.type),
   };
@@ -94,19 +108,18 @@ function mapSlot(item: Record<string, unknown>): RefDocParameter {
     ...slotList(item.members),
   ];
   if (nested.length > 0) slot.fields = nested.map(mapSlot);
-  if (item.optional === true) slot.is_optional = "True";
+  if (item.optional === true || bracketed) slot.is_optional = "True";
   return slot;
 }
 
+// The script_api lists the implicit `self` the engine passes; the emitter
+// stamps @noSelfInFile, so generated signatures must not declare it.
+function callSlots(raw: unknown): Record<string, unknown>[] {
+  return slotList(raw).filter((item) => stringOr(item.name, "") !== "self");
+}
+
 function mapParameters(raw: unknown): RefDocParameter[] {
-  const out: RefDocParameter[] = [];
-  for (const item of slotList(raw)) {
-    // The script_api lists the implicit `self` the engine passes; the emitter
-    // stamps @noSelfInFile, so generated signatures must not declare it.
-    if (stringOr(item.name, "") === "self") continue;
-    out.push(mapSlot(item));
-  }
-  return out;
+  return callSlots(raw).map(mapSlot);
 }
 
 function escapeHtml(text: string): string {
@@ -166,7 +179,11 @@ function isScalar(member: Record<string, unknown>): boolean {
  * present of `parameters:`, `params:` or `members:` and its returns from
  * `returns:` or `return:`, any slot list may be a single mapping, a table slot's
  * `members:` nest like `fields:`, a `(REQUIRED)` name suffix is dropped, and a
- * function named `None` or not a Lua identifier is skipped.
+ * function named `None` or not a Lua identifier is skipped. A slot or field
+ * named in brackets (`[options]`) takes the bare name and `is_optional`, and a
+ * function with such a slot before a slot that is not optional is also
+ * converted, first and without its examples, as a form that leaves out every
+ * such bracketed slot.
  */
 export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   if (!Array.isArray(parsed)) {
@@ -188,17 +205,35 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   }
   const members = Array.isArray(table.members) ? table.members : [];
   const elements: RefDocElement[] = [];
-  const fnElement = (name: string, member: Record<string, unknown>): RefDocFunctionElement => {
+  const fnElement = (name: string, member: Record<string, unknown>): RefDocFunctionElement[] => {
+    const raw = callSlots(member.parameters ?? member.params ?? member.members);
+    const parameters = raw.map(mapSlot);
     const element: RefDocFunctionElement = {
       type: "FUNCTION",
       name,
       description: stringOr(member.desc, ""),
-      parameters: mapParameters(member.parameters ?? member.params ?? member.members),
+      parameters,
       returnvalues: mapParameters(member.returns ?? member.return),
     };
     const examples = examplesHtml(member.examples);
     if (examples !== "") element.examples = examples;
-    return element;
+    // A bracketed slot a required one follows can only be left out by a call
+    // that skips it, so that call gets its own form; an explicit
+    // `optional: true` slot reads as passable-nil instead and gets none.
+    const omissible = new Set(
+      raw.flatMap((item, index) =>
+        isBracketed(item) && parameters.slice(index + 1).some((p) => p.is_optional === undefined)
+          ? [index]
+          : [],
+      ),
+    );
+    if (omissible.size === 0) return [element];
+    const { examples: _examples, ...withoutExamples } = element;
+    const omitted: RefDocFunctionElement = {
+      ...withoutExamples,
+      parameters: parameters.filter((_, index) => !omissible.has(index)),
+    };
+    return [omitted, element];
   };
   const constantElement = (
     name: string,
@@ -214,7 +249,7 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
     if (!isRecord(member)) continue;
     if (member.type === "function") {
       if (!isFunctionName(stringOr(member.name, ""))) continue;
-      elements.push(fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
+      elements.push(...fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
       continue;
     }
     if (isScalar(member)) {
@@ -233,7 +268,7 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
         const name = `${namespace}.${sub}.${stringOr(subMember.name, "")}`;
         if (subMember.type === "function") {
           if (isFunctionName(stringOr(subMember.name, "")))
-            elements.push(fnElement(name, subMember));
+            elements.push(...fnElement(name, subMember));
         } else if (isScalar(subMember)) {
           elements.push(constantElement(name, subMember));
         }
