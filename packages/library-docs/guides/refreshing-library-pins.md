@@ -198,7 +198,10 @@ convert, a page key another page already holds, or a page key
 that is not one safe route and file name (ASCII letters, digits, `_`, `.` and
 `-`, starting and ending with a letter, digit or `_`, and not a Windows device
 name such as `CON` or `NUL` before its first `.`) stops the sync before it
-changes any file, instead of dropping the page.
+changes any file, instead of dropping the page. A page key names only the page's
+`api-doc` file: its address comes from the library's origin repo, as
+[Library page addresses](https://defold-typescript.github.io/toolchain/extensions#library-page-addresses)
+describes.
 
 A library that moved forge keeps a stale portal entry: the portal's
 `Klaleus/library-defold-checkpoint` is gone from GitHub, and the authored lane

@@ -141,7 +141,7 @@ takes a `typeRenames` entry, not an `externalTypes` one:
 ```
 
 The emitted signature reads `debuginfo: debug.FunctionInfo` with no import line,
-and `/api/log.log` renders that same dotted name — the way `Vector3` and
+and the [log page](/api/insality/defold-log/log) renders that same dotted name — the way `Vector3` and
 `Opaque<"node">` already render there.
 
 The rule: a token another **target** owns takes `externalTypes` and gets an
