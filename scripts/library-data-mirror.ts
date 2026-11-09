@@ -27,7 +27,7 @@ Library data for the [defold-typescript toolchain](${TOOLCHAIN}). See the [libra
 
 This repository is written whole from [\`packages/library-types/data\`](${TOOLCHAIN}/tree/main/packages/library-types/data) in \`defold-typescript/toolchain\` each time that folder changes, so make changes there: a change made here is overwritten by the next publish. The [library docs site](https://defold-typescript.github.io/library-data/) is built from \`packages/library-docs\` in the same repository and served from this repository's \`gh-pages\` branch.
 
-Each folder under \`data/\` holds the data for one data format version. Open a new folder only when the data format or the core-type names change.
+Each folder under \`data/\` holds the data of one data format, named for the first CLI release that reads it. [\`data/README.md\`](data/README.md) says which releases read each folder and when a change needs a new one.
 
 A data folder also holds the extension docs, portal listings and display metadata the library docs site reads.
 `;
