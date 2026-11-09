@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { awaitCiGate, type CheckRun, GATED_CHECKS, gateVerdict } from "./release-ci-gate.ts";
+import {
+  awaitCiGate,
+  type CheckRun,
+  GATED_CHECKS,
+  gateVerdict,
+  parseGateArgs,
+} from "./release-ci-gate.ts";
 
 const names = [...GATED_CHECKS];
 
@@ -92,10 +98,31 @@ describe("gateVerdict", () => {
   });
 });
 
+describe("parseGateArgs", () => {
+  const base = ["--repo", "o/r", "--sha", "abc"];
+
+  test("requires CI's full scope unless the caller names the checks", () => {
+    expect(parseGateArgs(base)).toEqual({
+      repo: "o/r",
+      sha: "abc",
+      timeoutMinutes: 120,
+      checks: [...GATED_CHECKS],
+    });
+    expect(parseGateArgs([...base, "--check", "ci-done"])?.checks).toEqual(["ci-done"]);
+    expect(
+      parseGateArgs([...base, "--check", "ci-done", "--check", "library-data"])?.checks,
+    ).toEqual(["ci-done", "library-data"]);
+  });
+
+  test("rejects a call without a commit", () => {
+    expect(parseGateArgs(["--repo", "o/r", "--check", "ci-done"])).toBeNull();
+  });
+});
+
 describe("awaitCiGate", () => {
   const MINUTE = 60_000;
 
-  function polling(pages: Array<CheckRun[] | Error>) {
+  function polling(pages: Array<CheckRun[] | Error>, required: readonly string[] = GATED_CHECKS) {
     let time = 0;
     let calls = 0;
     return {
@@ -110,11 +137,44 @@ describe("awaitCiGate", () => {
         if (page instanceof Error) throw page;
         return page ?? [];
       },
+      required,
       timeoutMs: 120 * MINUTE,
       intervalMs: MINUTE,
       log: () => {},
     };
   }
+
+  // A data-only push runs the scope, library-data and library-docs jobs; the
+  // full-scope jobs report as skipped, and ci-done always runs.
+  function dataOnlyRun(ciDone: Pick<CheckRun, "status" | "conclusion">): CheckRun[] {
+    const done = { status: "completed", conclusion: "success" };
+    const skipped = { status: "completed", conclusion: "skipped" };
+    return [
+      { id: 1, name: "scope", ...done },
+      { id: 2, name: "lint-typecheck", ...skipped },
+      { id: 3, name: "test", ...skipped },
+      { id: 4, name: "library-data", ...done },
+      { id: 5, name: "library-docs", ...done },
+      { id: 6, name: "ci-done", ...ciDone },
+    ];
+  }
+
+  test("requires only the checks the caller names", async () => {
+    const green = dataOnlyRun({ status: "completed", conclusion: "success" });
+    expect(await awaitCiGate(polling([green], ["ci-done"]))).toEqual({ state: "pass" });
+
+    const red = dataOnlyRun({ status: "completed", conclusion: "failure" });
+    expect(await awaitCiGate(polling([red], ["ci-done"]))).toEqual({
+      state: "fail",
+      failed: ["ci-done: failure"],
+    });
+
+    const unfinished = dataOnlyRun({ status: "in_progress", conclusion: null });
+    expect(await awaitCiGate(polling([unfinished], ["ci-done"]))).toEqual({
+      state: "wait",
+      pending: ["ci-done: in_progress"],
+    });
+  });
 
   test("waits through a running suite and passes once it is green", async () => {
     const loop = polling([running(1), running(1), completed(1, () => "success")]);
