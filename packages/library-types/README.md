@@ -35,7 +35,8 @@ declarations.
 
 - `data/<version>/` — library data, in folders named by the first CLI version
   that reads them. A CLI reads the highest folder at or below its own version.
-  Each folder holds one folder per library, named for its repository (the URL's
+  [`data/README.md`](data/README.md) says which releases an edit reaches and
+  when a change needs a new folder. Each folder holds one folder per library, named for its repository (the URL's
   last path segment, lowercased, without `.git`):
   - `library.json` — the upstream repository and license, the hand-written
     declaration forks, the native extension, and the base each of the

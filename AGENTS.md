@@ -27,6 +27,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - `packages/transpiler` — depends on `@defold-typescript/types`; produces Lua output.
 - `packages/cli` — the only package that exposes a binary (`defold-typescript`).
 - New packages go under `packages/`; do not create siblings at the repo root.
+- A library data folder is read by every published CLI release from its version up to the next folder's, so check [`packages/library-types/data/README.md`](packages/library-types/data/README.md) before a change to library data: a change an older reader would type worse opens a new folder.
 
 ## Branch Naming
 
