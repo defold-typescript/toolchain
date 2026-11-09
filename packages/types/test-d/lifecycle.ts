@@ -1,6 +1,7 @@
 /// <reference path="../index.d.ts" />
 
 import type { Hash, Url, Vector3 } from "../src/core-types";
+import * as mainEntry from "../src/index";
 import {
   defineGuiScript,
   defineRenderScript,
@@ -479,3 +480,15 @@ const baseRenderHooks: RenderScriptHooks<RenderSelf> = {
   init: () => ({ tile_pred: null }),
 };
 void baseRenderHooks;
+
+// The main entry exports no editor symbol: importing it loads the runtime
+// namespaces, so `@defold-typescript/types/editor-script` is the only editor
+// import. Each line errors only while its export stays absent.
+// @ts-expect-error the editor script factory lives on the editor-script subpath
+void mainEntry.defineEditorScript;
+// @ts-expect-error the editor command factory lives on the editor-script subpath
+void mainEntry.defineEditorCommand;
+// @ts-expect-error the editor command type lives on the editor-script subpath
+void (null as unknown as mainEntry.EditorCommand);
+// @ts-expect-error the editor hook table type lives on the editor-script subpath
+void (null as unknown as mainEntry.EditorScriptModule);

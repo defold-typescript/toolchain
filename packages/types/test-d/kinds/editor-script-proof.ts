@@ -1,4 +1,8 @@
-import type { EditorNode } from "@defold-typescript/types/editor-script";
+import type {
+  EditorCommand,
+  EditorNode,
+  EditorScriptModule,
+} from "@defold-typescript/types/editor-script";
 import { defineEditorCommand, defineEditorScript } from "@defold-typescript/types/editor-script";
 import type { Opaque } from "../../src/core-types";
 
@@ -219,3 +223,10 @@ void editor.prefs.schema.integer({ default: 0, scope: editor.prefs.SCOPE.PROJECT
 void editor.prefs.schema.enum({ values: ["a", "b"] });
 void _pref;
 void _isSet;
+
+// The hook table and command types come from the same subpath as the factories.
+const commands: EditorCommand[] = [
+  { label: "Typed Command", locations: ["Edit"], run: () => print("typed") },
+];
+const hooks: EditorScriptModule = { get_commands: () => commands };
+void defineEditorScript(hooks);
