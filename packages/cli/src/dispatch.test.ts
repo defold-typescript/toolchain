@@ -5150,13 +5150,18 @@ describe("dispatch resolve", () => {
   });
 
   // A self-documenting pure-Lua library: it ships the corpus module and its own
-  // `.script_api`, so the confirmed corpus match decides its type surface.
+  // `.script_api` for the `alpha` namespace the module is published under, so the
+  // confirmed corpus match decides its type surface.
   function selfDocumentingResolveInternals(url: string): {
     resolveInternals: {
       download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
-      libraryRegistry: { sourceId: string; modules: string[] }[];
+      libraryRegistry: {
+        sourceId: string;
+        modules: string[];
+        namespaces: Record<string, string>;
+      }[];
       libraryDataDir: string;
     };
   } {
@@ -5168,7 +5173,9 @@ describe("dispatch resolve", () => {
     return {
       resolveInternals: {
         cacheDir,
-        libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+        libraryRegistry: [
+          { sourceId: "mylib", modules: ["mylib.core"], namespaces: { "mylib.core": "alpha" } },
+        ],
         libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {

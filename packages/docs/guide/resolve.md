@@ -38,7 +38,10 @@ The kinds are tried **in that order**: a confirmed corpus match decides the type
 surface, so a library may ship its own `.script_api` without losing its curated
 types. A confirmed match proves more than a `.script_api` does — it is verified
 against the modules the archive actually ships (below), where a `.script_api`
-only proves the author wrote a doc. A repo-name match the archive does *not*
+only proves the author wrote a doc. It replaces only the docs whose namespace
+the library publishes; the archive's other `.script_api` docs, such as a native
+extension shipped beside the Lua module, are still written to
+`.defold-types/extensions/`. A repo-name match the archive does *not*
 confirm changes nothing: that dependency still resolves as a native extension or
 as asset-only, exactly as before.
 
@@ -207,11 +210,14 @@ wrong types. A confirmed module that no library data prints is likewise warned
 rather than failing the run.
 
 A library that documents itself — shipping both its Lua modules and its own
-`.script_api` — keeps the curated types: the confirmed match wins, and that
-dependency contributes no `extensions/` declaration. Upgrading to this
-behavior reconciles itself; an `extensions/` declaration an earlier run wrote for
-such a dependency is pruned and its tsconfig entry dropped, so the stale
-declarations cannot collide with the curated module.
+`.script_api` — keeps the curated types: the confirmed match wins, and the doc
+for the namespace the library publishes contributes no `extensions/`
+declaration. The same archive's docs for other namespaces are written as
+extension declarations: `defsave` ships its `defsave_ext` native helpers beside
+the `defsave.defsave` module, and both are typed. An `extensions/` declaration
+an earlier run wrote for a replaced doc is pruned, and the tsconfig entry is
+dropped once no declaration is left, so the stale declarations cannot collide
+with the curated module.
 
 When such a self-documenting dependency's match stays **unconfirmed** — the
 archive ships none of the vendored library's module paths — it
