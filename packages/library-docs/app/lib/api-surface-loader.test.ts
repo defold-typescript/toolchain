@@ -10,6 +10,11 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  dependencyStep,
+} from "@defold-typescript/docs-render/api-page-render";
 import { apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { siteDirs, untypedListings } from "./api-content";
 import {
@@ -211,6 +216,30 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       expect(meta.importString).toBe(`import * as ${target.namespace} from "${target.namespace}"`);
       expect(meta.usage).toBe("import");
       expect(meta.globalNamespace).toBeUndefined();
+    }
+  });
+
+  test("gives each native page the adopt step for the pin kind the portal register records", () => {
+    const { entries } = JSON.parse(
+      readFileSync(join(REAL_DIRS.dataDir, "asset-portal.json"), "utf8"),
+    ) as { entries: { repo?: string; ref?: string; refKind?: "release" | "tag" | "commit" }[] };
+    const matched = targets.flatMap((target) => {
+      const entry = entries.find(
+        (e) => e.repo?.toLowerCase() === target.repo.toLowerCase() && e.ref === target.ref,
+      );
+      return entry ? [{ target, refKind: entry.refKind }] : [];
+    });
+    expect(matched.length).toBeGreaterThan(0);
+    const pages = loadPages(REAL_DIRS);
+    for (const { target, refKind } of matched) {
+      const page = pages.find((p) => p.namespace === target.namespace);
+      if (!page) throw new Error(`no library page for native namespace ${target.namespace}`);
+      expect({
+        namespace: target.namespace,
+        markdown: apiPageMarkdown(page, apiLinkify([page])).includes(
+          dependencyStep(target.repo, refKind, target.ref),
+        ),
+      }).toEqual({ namespace: target.namespace, markdown: true });
     }
   });
 

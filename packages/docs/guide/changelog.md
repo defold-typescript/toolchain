@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Library pages](./extensions.md#library-page-addresses) move to `/api/<owner>/<repo>/<namespace>`**, and their members link and search by their own names, such as `gui.new_spine_node`.
-> - **[gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) is typed**, and [proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) drops its compiler's types.
+> - **[gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) is typed** and installs from its `4.2.6` tag, and [proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) drops its compiler's types.
 > - **[`resolve` reads `[options]` as optional](./resolve.md#the-generated-surface)**, and no library signature puts `?` before a required argument.
 
 ### Breaking
@@ -25,7 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Every [druid](https://defold-typescript.github.io/library-data/api/insality/druid/druid) and [decore](https://defold-typescript.github.io/library-data/api/insality/decore/decore) parameter has a real type** where it was an optional `unknown`: `druid.druid_container.remove_container_by_node` takes a `node`, `druid.druid_layout.set_node_position` takes a `boolean` `is_instant`, `decore.system_bus_event.onAddToWorld` takes a `world`, and druid's internal scroll, drag and container methods take numbers, hashes, actions and touches.
-- **A curated [gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) module types `GameAnalytics/GA-SDK-DEFOLD` tag `4.2.6`** ([Curated native extensions](./resolve.md#curated-native-extensions)): each event function takes a table with its required fields and only the enum spellings the extension accepts, and the remote-config getters return strings and a boolean.
+- **A curated [gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) module types `GameAnalytics/GA-SDK-DEFOLD` tag `4.2.6`** ([Curated native extensions](./resolve.md#curated-native-extensions)): each event function takes a table with its required fields and only the enum spellings the extension accepts, and the remote-config getters return strings and a boolean. Its library page has you install from the repo's tags, naming the `4.2.6` tag archive, since the repo publishes no releases.
 
 ### Fixed
 
