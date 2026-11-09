@@ -153,7 +153,7 @@ export function readCoverageRegistries(dataDir: string): CoverageRegistries {
 }
 
 /** Host, owner and repo, case-folded, without a trailing `/` or `.git`. */
-function repoKey(repo: string): string {
+export function repoKey(repo: string): string {
   return repo
     .toLowerCase()
     .replace(/\/+$/, "")

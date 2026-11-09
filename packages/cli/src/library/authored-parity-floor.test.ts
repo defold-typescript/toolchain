@@ -453,6 +453,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "ad8a7fe5e157108b2331c6bb6ea5c34020ef4da26132dc342f6c916105d84610",
   "defold-metrics/source/upstream/metrics/mem.lua":
     "bea985ec1b339b7dfd23215dfd948979b884c2e5baac5a177538ea7ef0a3656e",
+  "defold-mpeg/source/upstream/mpeg/gui_video.lua":
+    "278816a65d2d60dc79ac4bce0031e85f516b25e74cb686e507c8e963d306fe64",
   "defold-operator/source/upstream/operator/bezier.lua":
     "ed1c0611f214aae6ff90e28eabd89729bad1fa258ae67bc611ee8c7cab73381c",
   "defold-operator/source/upstream/operator/operator.lua":
