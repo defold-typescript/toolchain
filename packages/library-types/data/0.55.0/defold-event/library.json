@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-event",
   "license": "MIT",
+  "refKind": "tag",
   "indexSlots": {
     "event/is_subscribed:return:": {
       "class": "not-a-position",

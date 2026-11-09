@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/8bitskull/dicebag",
   "license": "CC0-1.0",
+  "refKind": "tag",
   "forks": [
     {
       "authored": "fork/dicebag.dicebag.d.ts",
