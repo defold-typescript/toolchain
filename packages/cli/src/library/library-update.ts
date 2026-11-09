@@ -17,6 +17,7 @@ import {
   type LibraryData,
   type LibraryReview,
   REVIEWED_FILE,
+  type ReadLibraryOptions,
   readLibraryData,
   readLibraryReviews,
   writeReviewedJson,
@@ -36,7 +37,7 @@ import { datedTags, type ForgeReads, forgeReadsFor, tagSeries } from "./upstream
 
 export type UpdateForge = Pick<ForgeReads, "listTags" | "readCommit" | "readRepo" | "headCommit">;
 
-export interface UpdateLibrariesOptions extends AddLibraryOptions {
+export interface UpdateLibrariesOptions extends AddLibraryOptions, ReadLibraryOptions {
   readonly forge?: (repo: string) => UpdateForge;
 }
 
@@ -311,7 +312,7 @@ export async function updateLibraries(
   names: readonly string[],
   opts: UpdateLibrariesOptions,
 ): Promise<LibraryUpdateResult> {
-  const libraries = readLibraryData(dataDir);
+  const libraries = readLibraryData(dataDir, { cliVersion: opts.cliVersion });
   for (const name of names) {
     if (!libraries.some(({ dir }) => dir === name)) {
       throw new Error(`no library ${name} in ${dataDir}`);

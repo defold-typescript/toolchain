@@ -9,7 +9,12 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
-import { type LibraryData, LibraryDataError, readLibraryData } from "./library-data";
+import {
+  type LibraryData,
+  LibraryDataError,
+  type ReadLibraryOptions,
+  readLibraryData,
+} from "./library-data";
 import { floorProblems, measureLibraryCoverage } from "./library-floors";
 import type { ForkDocNotice } from "./merge-fork-docs";
 import { printCorpus } from "./print-corpus";
@@ -87,12 +92,16 @@ function underFolder(library: LibraryData, file: string): string {
 
 // The corpus prints as a whole or not at all, so a failure is printed again one
 // module at a time to name each module, and its library, that does not print.
-async function printProblems(dataDir: string, libraries: LibraryData[]): Promise<LibraryProblem[]> {
+async function printProblems(
+  dataDir: string,
+  libraries: LibraryData[],
+  read: ReadLibraryOptions,
+): Promise<LibraryProblem[]> {
   const problems: LibraryProblem[] = [];
   for (const library of libraries) {
     for (const moduleId of libraryModules(library)) {
       try {
-        await printLibraryModules(dataDir, [moduleId], null);
+        await printLibraryModules(dataDir, [moduleId], null, read);
       } catch (error) {
         problems.push({
           library: library.dir,
@@ -265,21 +274,25 @@ function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): Libr
  * not print, else every compile error in the printed declarations, the native
  * declarations and the usage examples, and one compile problem per such file
  * TypeScript cannot load, else a floor problem per module below its coverage floor,
- * with no floor, or that cannot be measured. Empty when the folder is clean.
+ * with no floor, or that cannot be measured. Empty when the folder is clean. A
+ * library whose `minCli` is above `read.cliVersion` is not checked.
  */
-export async function checkLibraryData(dataDir: string): Promise<LibraryProblem[]> {
+export async function checkLibraryData(
+  dataDir: string,
+  read: ReadLibraryOptions = {},
+): Promise<LibraryProblem[]> {
   let libraries: LibraryData[];
   try {
-    libraries = readLibraryData(dataDir);
+    libraries = readLibraryData(dataDir, read);
   } catch (error) {
     if (!(error instanceof LibraryDataError)) throw error;
     return [{ library: error.library, check: "data", message: error.message }];
   }
   let corpus: ReadonlyMap<string, string>;
   try {
-    corpus = await printCorpus(dataDir);
+    corpus = await printCorpus(dataDir, read);
   } catch (error) {
-    const problems = await printProblems(dataDir, libraries);
+    const problems = await printProblems(dataDir, libraries, read);
     if (problems.length === 0) throw error;
     return problems;
   }
@@ -304,8 +317,8 @@ export interface LibraryDocNotice extends ForkDocNotice {
  * that does not print has no notices; `checkLibraryData` names it as a `print`
  * problem. Throws only for a folder the reader refuses.
  */
-export function forkDocNotices(dataDir: string): LibraryDocNotice[] {
-  return readLibraryData(dataDir).flatMap((library) =>
+export function forkDocNotices(dataDir: string, read: ReadLibraryOptions = {}): LibraryDocNotice[] {
+  return readLibraryData(dataDir, read).flatMap((library) =>
     library.authored.flatMap((target) => {
       let notices: ForkDocNotice[];
       try {

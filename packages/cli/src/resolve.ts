@@ -162,6 +162,9 @@ export interface RunResolveOptions {
   // is unset, with the commits it resolves to pinned in the lockfile. Defaults to
   // `LIBRARY_DATA_MAIN_URL`.
   readonly libraryDataUrl?: string;
+  // The CLI version that picks the data folder and leaves out each library whose
+  // `minCli` is above it. Defaults to this CLI's.
+  readonly cliVersion?: string;
   // The curated native-extension targets. Defaults to the native extensions the
   // library data folder holds.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
@@ -305,6 +308,7 @@ function pinUpdateNames(
 
 async function selectLibraryData(
   opts: RunResolveOptions,
+  cliVersion: string,
   urls: readonly string[],
   lock: ProjectLock | undefined,
 ): Promise<SelectedLibraryData> {
@@ -320,7 +324,7 @@ async function selectLibraryData(
     mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
-    cliVersion: readCliVersion(),
+    cliVersion,
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   };
@@ -352,6 +356,7 @@ async function classifyLibraries(
   confirmedNativeUrls: ReadonlySet<string>,
   printedFrom: ReadonlyMap<string, readonly ("archive" | "pinned")[]>,
   libraryData: SelectedLibraryData,
+  cliVersion: string,
   open: ReadExtensionZip,
 ): Promise<Map<string, LibraryStatus>> {
   const statuses = new Map<string, LibraryStatus>();
@@ -360,7 +365,7 @@ async function classifyLibraries(
     return statuses;
   }
   const typed = bundles.filter(({ url }) => confirmedNativeUrls.has(url) || printedFrom.has(url));
-  const libraries = readLibraryDataOrNone(dir);
+  const libraries = readLibraryDataOrNone(dir, cliVersion);
   const names = libraries.map(({ dir: folder }) => folder);
   for (const { url, archivePath, identity } of typed) {
     const name = matchedLibraryName(url, names);
@@ -644,8 +649,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   }
 
   const followed = await followRefs(opts, deps, pins);
+  const cliVersion = opts.cliVersion ?? readCliVersion();
   const libraryData = await selectLibraryData(
     opts,
+    cliVersion,
     followed.deps.map(({ url }) => url),
     lock,
   );
@@ -661,6 +668,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       requireDefoldCopy:
         opts.freeze === true && existsSync(join(cwd, DEFOLD_DEPENDENCIES_MANIFEST)),
       libraryDataDir,
+      cliVersion,
       ...(opts.download ? { download: opts.download } : {}),
       ...(opts.readZip ? { readZip: opts.readZip } : {}),
     });
@@ -710,8 +718,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // is then filtered to the modules the archive actually ships — so a library
   // that documents itself keeps its curated types. The registry is loaded at
   // most once, only when a default is needed.
-  const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryDataDir);
-  const nativeRegistry = opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir);
+  const libraryRegistry =
+    opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryDataDir, cliVersion);
+  const nativeRegistry =
+    opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir, cliVersion);
   // Every library's name, so a repo name a Lua library and a native one share
   // matches neither.
   const libraryNames = [
@@ -857,7 +867,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
         continue;
       }
       const archive = archiveSourceTree(await open(archivePath));
-      const { printed, unprintable } = await printLibraryModules(libraryDataDir, modules, archive);
+      const { printed, unprintable } = await printLibraryModules(libraryDataDir, modules, archive, {
+        cliVersion,
+      });
       for (const { module, contents, from, ref, reason } of printed) {
         seen.add(module);
         printedLibraries.push({ module, contents });
@@ -908,6 +920,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     confirmedNativeUrls,
     printedFrom,
     libraryData,
+    cliVersion,
     opts.readZip ?? defaultReadZip,
   );
   const statusMessages = libraryStatusMessages(

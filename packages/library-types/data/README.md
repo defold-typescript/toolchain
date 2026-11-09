@@ -58,6 +58,15 @@ repo whose `.script_api` documents a namespace the folder does not type therefor
 costs those releases that namespace. That is why they declare no native `mpeg` for
 `Morgerion/defold-mpeg`.
 
+From `0.61.0/` on, a change that affects one library can set that library's `minCli`
+in its `library.json` instead: the first release, as `X.Y.Z`, that types the library
+at least as well as its archive alone does. Older releases that read the folder then
+read no data for that library and type it from its archive, as if the folder did not
+hold it (`readLibraryData` in `packages/cli/src/library/library-data.ts`). The
+`Morgerion/defold-mpeg` case fits: a `minCli` of `0.60.0` would have left v0.55.0
+through v0.59.0 the `mpeg` namespace its archive documents. `0.55.0/` cannot use
+`minCli`, because the releases that read it do not know the field.
+
 Name the new folder for the release that will first ship a CLI reading it: the
 version of the open `## vX.Y.Z` heading in `packages/docs/guide/changelog.md`. That
 heading only ever moves up, so the release still reads the folder. A folder no

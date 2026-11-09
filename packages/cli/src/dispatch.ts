@@ -677,6 +677,7 @@ function dispatchCommand(
         const { sourceId, written } = await runExportTypes({
           library,
           cwd,
+          cliVersion: internals?.cliVersion ?? readCliVersion(),
           ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
           ...(seams?.download ? { download: seams.download } : {}),
           ...(seams?.readZip ? { readZip: seams.readZip } : {}),
@@ -732,6 +733,7 @@ function dispatchCommand(
           "defold-typescript library check: --api-doc-out needs a directory; use: defold-typescript library check --data <dir> --api-doc-out <dir>",
         );
       }
+      const cliVersion = internals?.cliVersion ?? readCliVersion();
       const selected =
         dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
           ? {
@@ -741,7 +743,7 @@ function dispatchCommand(
               `library ${subcommand}: --data`,
               dataFlag,
               process.cwd(),
-              internals?.cliVersion ?? readCliVersion(),
+              cliVersion,
             );
       if ("error" in selected) return fail(selected.error);
       const dataFolder = selected.dir;
@@ -791,6 +793,7 @@ function dispatchCommand(
         let result: Awaited<ReturnType<typeof reviewLibraries>>;
         try {
           result = await reviewLibraries(dataFolder, rest[1] === undefined ? [] : [rest[1]], {
+            cliVersion,
             ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
             ...(seams?.download ? { download: seams.download } : {}),
           });
@@ -839,6 +842,7 @@ function dispatchCommand(
         let result: Awaited<ReturnType<typeof updateLibraries>>;
         try {
           result = await updateLibraries(dataFolder, rest[1] === undefined ? [] : [rest[1]], {
+            cliVersion,
             ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
             ...(seams?.download ? { download: seams.download } : {}),
             ...(seams?.forge ? { forge: seams.forge } : {}),
@@ -891,7 +895,7 @@ function dispatchCommand(
       );
       let problems: Awaited<ReturnType<typeof checkLibraryData>>;
       try {
-        problems = await checkLibraryData(dataFolder);
+        problems = await checkLibraryData(dataFolder, { cliVersion });
       } catch (err) {
         return fail(
           `defold-typescript library check: ${err instanceof Error ? err.message : String(err)}`,
@@ -900,7 +904,7 @@ function dispatchCommand(
       }
       let notices: ReturnType<typeof forkDocNotices>;
       try {
-        notices = forkDocNotices(dataFolder);
+        notices = forkDocNotices(dataFolder, { cliVersion });
       } catch (err) {
         // Only a folder the reader refuses throws here; it is already a problem, and
         // has no notices to read.
@@ -953,7 +957,7 @@ function dispatchCommand(
         }
       }
       const { readLibraryData } = await import("./library/library-data");
-      const libraryCount = readLibraryData(dataFolder).length;
+      const libraryCount = readLibraryData(dataFolder, { cliVersion }).length;
       if (json) {
         io.stdout.write(
           renderResult({
@@ -1672,6 +1676,7 @@ function dispatchCommand(
           resolveSurface = async (): Promise<void> => {
             const result = await runResolve({
               cwd,
+              cliVersion: internals?.cliVersion ?? readCliVersion(),
               ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
               ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
               ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
@@ -1961,6 +1966,7 @@ function dispatchCommand(
         }
         const result = await runResolve({
           cwd,
+          cliVersion: internals?.cliVersion ?? readCliVersion(),
           ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
           ...(seams?.download ? { download: seams.download } : {}),
           ...(seams?.readZip ? { readZip: seams.readZip } : {}),

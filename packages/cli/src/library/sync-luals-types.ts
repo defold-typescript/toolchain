@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
 import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
-import { readLibraryData } from "./library-data";
+import { type ReadLibraryOptions, readLibraryData } from "./library-data";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
@@ -238,6 +238,7 @@ export function emitLualsTargetDeclarations(
   packageRoot: string,
   target: LualsTarget,
   tree: LibrarySourceTree = lualsFixtureTree(packageRoot, target),
+  read: ReadLibraryOptions = {},
 ): string {
   return emitLibraryDeclarations(buildTargetModel(packageRoot, target, tree), {
     moduleId: target.moduleId,
@@ -245,7 +246,7 @@ export function emitLualsTargetDeclarations(
     externalTypes: target.externalTypes,
     indexBase: {
       page: target.namespace,
-      classifications: readLibraryIndexSlotClassifications(packageRoot),
+      classifications: readLibraryIndexSlotClassifications(packageRoot, read),
     },
   });
 }

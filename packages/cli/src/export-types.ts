@@ -40,6 +40,9 @@ export interface RunExportTypesOptions {
   readonly cacheDir?: string;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
+  // The CLI version that picks the data folder and leaves out each library whose
+  // `minCli` is above it. Defaults to this CLI's.
+  readonly cliVersion?: string;
   // The `@defold-typescript/types` root the files are checked against. Defaults
   // to the installed package; `null` means it could not be found.
   readonly typesRoot?: string | null;
@@ -61,20 +64,25 @@ interface CuratedFile {
 // The declarations `resolve` would install for `sourceId`, from both registries,
 // each once under the name it is installed as. A library module is printed from
 // the sources library data pins, as `resolve` prints it with no archive at hand.
-async function curatedFiles(sourceId: string, root: string | null): Promise<CuratedFile[]> {
+async function curatedFiles(
+  sourceId: string,
+  root: string | null,
+  cliVersion: string,
+): Promise<CuratedFile[]> {
   const files: CuratedFile[] = [];
   if (root !== null) {
     const printed = new Map<string, string>();
-    for (const library of loadVendoredLibraryRegistry(root)) {
+    for (const library of loadVendoredLibraryRegistry(root, cliVersion)) {
       if (library.sourceId !== sourceId) continue;
-      for (const { module, contents } of (await printLibraryModules(root, library.modules, null))
-        .printed) {
+      for (const { module, contents } of (
+        await printLibraryModules(root, library.modules, null, { cliVersion })
+      ).printed) {
         printed.set(`${library.namespaces?.[module] ?? module}.d.ts`, contents);
       }
     }
     for (const [name, contents] of printed) files.push({ name, contents });
   }
-  for (const target of loadVendoredNativeRegistry(root)) {
+  for (const target of loadVendoredNativeRegistry(root, cliVersion)) {
     if (target.sourceId === sourceId && existsSync(target.declarationPath)) {
       files.push({
         name: path.basename(target.declarationPath),
@@ -120,6 +128,7 @@ function existingShippedFiles(
 // An export holds to no project's recorded commit, so it reads the newest data.
 function selectLibraryData(
   opts: RunExportTypesOptions,
+  cliVersion: string,
 ): Promise<{ readonly dir: string | null; readonly reason?: string }> {
   if (opts.libraryDataDir !== undefined) {
     return Promise.resolve({ dir: opts.libraryDataDir });
@@ -130,17 +139,18 @@ function selectLibraryData(
       opts.cacheDir === undefined
         ? libraryDataCacheDir()
         : path.join(opts.cacheDir, "library-data"),
-    cliVersion: readCliVersion(),
+    cliVersion,
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
 }
 
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
-  const data = await selectLibraryData(opts);
+  const cliVersion = opts.cliVersion ?? readCliVersion();
+  const data = await selectLibraryData(opts, cliVersion);
   const match = matchLibraryName(
     opts.library,
-    readLibraryDataOrNone(data.dir).map(({ dir }) => dir),
+    readLibraryDataOrNone(data.dir, cliVersion).map(({ dir }) => dir),
   );
   if (match?.kind === "shared") {
     throw new Error(
@@ -148,7 +158,7 @@ export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunEx
     );
   }
   const sourceId = match?.name ?? "";
-  const sources = sourceId === "" ? [] : await curatedFiles(sourceId, data.dir);
+  const sources = sourceId === "" ? [] : await curatedFiles(sourceId, data.dir, cliVersion);
   if (sources.length === 0) {
     const why = data.reason === undefined ? "" : `: ${data.reason}`;
     throw new Error(`no curated types for "${opts.library}"${why}`);
