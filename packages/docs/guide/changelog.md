@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Libraries are named by `owner/repo`](./resolve.md#vendored-library-types)**, so two repositories sharing a name can both be typed.
+> - **[`minCli`](./library.md#what-library-add-writes)** keeps a library from a CLI too old to read it.
 
 ### Breaking
 
@@ -23,6 +24,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **A dependency matches the library holding its exact `owner/repo`, else the one library sharing its repo name**, so a fork keeps its upstream's types with a notice that they may not fit, and a repo name two libraries share types the dependency with neither, with a notice ([Vendored library types](./resolve.md#vendored-library-types)). `export-types` takes an `owner/repo` or a dependency URL.
 - **A library's `library.json` can set `minCli`**, the first CLI release that reads it: an older CLI reads no data for that library, so `resolve` types it from the dependency's own archive and the `library` commands leave it out ([library](./library.md#what-library-add-writes)).
+
+### Fixed
+
+- **`library add` refuses a repository URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`**, before it downloads, so it writes only inside the data folder: on Windows a backslash in the repo could write outside it ([library](./library.md#what-library-add-writes)).
 
 ## v0.60.0
 

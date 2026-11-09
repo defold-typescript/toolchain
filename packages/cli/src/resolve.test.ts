@@ -43,7 +43,12 @@ import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
-import { type RunResolveOptions, runResolve, unknownUpdateNames } from "./resolve";
+import {
+  type ResolvedExtensionReport,
+  type RunResolveOptions,
+  runResolve,
+  unknownUpdateNames,
+} from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 // The materialized library surface carries the generating toolchain version;
@@ -3090,7 +3095,10 @@ describe("runResolve with a library data archive", () => {
     );
   }
 
-  function serving(data: Uint8Array | null): {
+  function serving(
+    data: Uint8Array | null,
+    dependencies: Readonly<Record<string, Uint8Array>> = { [DEP_URL]: DEPENDENCY },
+  ): {
     download: DownloadExtensionArchive;
     requests: string[];
   } {
@@ -3099,8 +3107,9 @@ describe("runResolve with a library data archive", () => {
       requests,
       download: async (url) => {
         requests.push(url);
-        if (url === DEP_URL) {
-          return { status: "ok", bytes: DEPENDENCY };
+        const dependency = dependencies[url];
+        if (dependency !== undefined) {
+          return { status: "ok", bytes: dependency };
         }
         if (data === null) {
           throw new Error("network down");
@@ -3728,6 +3737,119 @@ describe("runResolve with a library data archive", () => {
       expect(lock[OTHER_URL]).toEqual(OLD_PIN);
       expect(statusOf(DEP_URL)).toBe("match");
       expect(statusOf(OTHER_URL)).toBe("drift");
+    });
+  });
+
+  // `a/widget` and `b/widget` share a repo name, each with its own native declaration,
+  // and `c/widget` is neither.
+  describe("a repo name two libraries share types a dependency with neither", () => {
+    const A_URL = "https://github.com/a/widget/archive/main.zip";
+    const C_URL = "https://github.com/c/widget/archive/main.zip";
+    const widgetArchive = (commit: string) =>
+      writeZipArchive([{ name: "widget-main/widget/ext.manifest", text: "name: widget\n" }], {
+        comment: commit,
+      });
+    const DEPENDENCIES = {
+      [A_URL]: widgetArchive("5".repeat(40)),
+      [C_URL]: widgetArchive("6".repeat(40)),
+    };
+    const sharedNotice = `${C_URL} shares its repo name with a/widget and b/widget, so no library data types it`;
+
+    function widgetData(aVersion: string): string {
+      const folder = tmp();
+      const owners = [
+        ["a", "awidget", aVersion],
+        ["b", "bwidget", "one"],
+      ] as const;
+      for (const [owner, namespace, version] of owners) {
+        mkdirSync(join(folder, owner, "widget"), { recursive: true });
+        writeFileSync(
+          join(folder, owner, "widget", "widget.d.ts"),
+          `declare namespace ${namespace} {\n  const version: "${version}";\n}\n`,
+        );
+      }
+      writeLibraryTargets(folder, {
+        native: owners.map(([owner, namespace]) => ({
+          repo: `https://github.com/${owner}/widget`,
+          ref: "1.0.0",
+          namespace,
+          manifestDir: "widget",
+          declaration: "widget.d.ts",
+          upstreamSource: "source/upstream/src/extension.cpp",
+        })),
+      });
+      return folder;
+    }
+
+    const repoNameNotices = (notices: readonly string[] | undefined) =>
+      (notices ?? []).filter((notice) => notice.includes("shares its repo name"));
+    const extensionOf = (result: { extensions: readonly ResolvedExtensionReport[] }, url: string) =>
+      result.extensions.find((extension) => extension.url === url);
+    const declared = (cwd: string, namespace: string) =>
+      existsSync(join(cwd, ".defold-types", "extensions", `${namespace}.d.ts`));
+
+    function widgetProject(urls: readonly string[]) {
+      const cwd = tmp();
+      const cacheDir = tmp();
+      writeProject(
+        cwd,
+        `[project]\n${urls.map((url, index) => `dependencies#${index} = ${url}\n`).join("")}`,
+      );
+      const run = (data: Uint8Array | null, more: Partial<RunResolveOptions> = {}) =>
+        runResolve({
+          cwd,
+          cacheDir,
+          libraryDataUrl: DATA_URL,
+          download: serving(data, DEPENDENCIES).download,
+          ...more,
+        });
+      return { cwd, run };
+    }
+
+    test("a dependency on neither alone pins neither", async () => {
+      const { cwd, run } = widgetProject([C_URL]);
+
+      const result = await run(packDataFolder(ONE, widgetData("one")));
+
+      expect(result.ok).toBe(true);
+      expect(extensionOf(result, C_URL)?.typeSurface).toBe("none");
+      expect(declared(cwd, "awidget")).toBe(false);
+      expect(declared(cwd, "bwidget")).toBe(false);
+      expect(repoNameNotices(result.notices)).toEqual([sharedNotice]);
+      expect(Object.keys(namespaceOf(cwd).libraryData?.libraries ?? {})).toEqual([]);
+    });
+
+    test("beside a dependency on one of them, that one alone is typed and pinned", async () => {
+      const { cwd, run } = widgetProject([A_URL, C_URL]);
+
+      const result = await run(packDataFolder(ONE, widgetData("one")));
+
+      expect(result.ok).toBe(true);
+      expect(extensionOf(result, A_URL)?.typeSurface).toBe("vendored-native");
+      expect(extensionOf(result, A_URL)?.namespaces).toEqual(["awidget"]);
+      expect(extensionOf(result, C_URL)?.typeSurface).toBe("none");
+      expect(repoNameNotices(result.notices)).toEqual([sharedNotice]);
+      expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "a/widget": ONE });
+    });
+
+    test("a frozen run types the dependency on neither with neither", async () => {
+      const { run } = widgetProject([A_URL, C_URL]);
+      await run(packDataFolder(ONE, widgetData("one")));
+
+      const frozen = await run(null, { freeze: true });
+
+      expect(frozen.ok).toBe(true);
+      expect(extensionOf(frozen, C_URL)?.typeSurface).toBe("none");
+      expect(repoNameNotices(frozen.notices)).toEqual([sharedNotice]);
+    });
+
+    test("--update naming the dependency on neither moves no pin", async () => {
+      const { cwd, run } = widgetProject([A_URL, C_URL]);
+      await run(packDataFolder(ONE, widgetData("one")));
+
+      await run(packDataFolder(TWO, widgetData("two")), { update: ["c/widget"] });
+
+      expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ "a/widget": ONE });
     });
   });
 

@@ -282,28 +282,12 @@ interface SelectedLibraryData extends LibraryDataFolders {
   readonly dir: string | null;
   // Absent when nothing is recorded, so a lockfile with no pins stays that way.
   readonly pins?: LibraryDataPins;
+  // Every library name pin selection matched against; absent when the run reads a
+  // data folder whole, whose registry already holds them all.
+  readonly candidates?: readonly string[];
   readonly notices: readonly string[];
   readonly warning?: string;
   readonly error?: string;
-}
-
-// `--update` names what `game.project` declares, and a pin is keyed by the library a
-// dependency reads, so each named dependency moves the pin its URL matches: naming
-// a fork moves its upstream's pin.
-function pinUpdateNames(
-  update: LibraryDataUpdate,
-  urls: readonly string[],
-  pins: LibraryDataPins | null,
-): LibraryDataUpdate {
-  if (update === true) {
-    return true;
-  }
-  const pinned = Object.keys(pins?.libraries ?? {});
-  const names = urls
-    .filter((url) => update.includes(libraryName(url)))
-    .map((url) => matchedLibraryName(url, pinned))
-    .filter((name) => name !== null);
-  return [...new Set(names)];
 }
 
 async function selectLibraryData(
@@ -332,17 +316,18 @@ async function selectLibraryData(
     const frozen = await frozenLibraryData(source, recorded, urls);
     return { ...frozen, notices: [], ...held };
   }
-  const { dir, pins, notices, warning, dataRoot, folder } = await selectLibraryPins({
+  const { dir, pins, candidates, notices, warning, dataRoot, folder } = await selectLibraryPins({
     ...source,
     urls,
     knownUrls: Object.keys(lock?.extensions ?? {}),
     pins: recorded,
-    ...(opts.update === undefined ? {} : { update: pinUpdateNames(opts.update, urls, recorded) }),
+    ...(opts.update === undefined ? {} : { update: opts.update }),
   });
   return {
     dir,
     notices,
     ...(pins === null ? {} : { pins }),
+    ...(candidates === undefined ? {} : { candidates }),
     ...(warning === undefined ? {} : { warning }),
     ...(dataRoot === undefined ? {} : { dataRoot }),
     ...(folder === undefined ? {} : { folder }),
@@ -723,11 +708,13 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const nativeRegistry =
     opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir, cliVersion);
   // Every library's name, so a repo name a Lua library and a native one share
-  // matches neither.
+  // matches neither, nor one the used library shares with another the view leaves
+  // out.
   const libraryNames = [
     ...new Set([
       ...libraryRegistry.map(({ sourceId }) => sourceId),
       ...nativeRegistry.map(({ sourceId }) => sourceId),
+      ...(libraryData.candidates ?? []),
     ]),
   ];
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];

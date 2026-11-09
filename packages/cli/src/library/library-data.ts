@@ -178,11 +178,23 @@ export const EXTENSION_INDEX_SLOTS_FILE = "index-slot-classifications.json";
 // Which page of the API reference documents each extension `.script_api`.
 export const DEFOLD_EXTENSIONS_FILE = "defold-extensions.json";
 
-/** The folder a repo's library data sits in: its library name, `owner/repo`. */
+const PLAIN_SEGMENT = /^[a-z0-9._-]+$/;
+
+/**
+ * The folder a repo's library data sits in: its library name, `owner/repo`. Each
+ * segment is a plain name, never `.` or `..`, so the folder stays inside the data
+ * folder on every OS.
+ */
 export function libraryFolderName(repo: string): string {
   const name = libraryName(repo);
   if (!name.includes("/")) {
     throw new Error(`repo ${repo} names no owner, so it has no owner/repo folder`);
+  }
+  const plain = name
+    .split("/")
+    .every((segment) => PLAIN_SEGMENT.test(segment) && segment !== "." && segment !== "..");
+  if (!plain) {
+    throw new Error(`repo ${repo} is not an owner/repo of plain names`);
   }
   return name;
 }
