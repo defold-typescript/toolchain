@@ -752,3 +752,153 @@ describe("scriptApiToRefDoc upstream dialects", () => {
     expect(dialect("set_mode")?.parameters[0]?.types).toEqual(["constant"]);
   });
 });
+
+const BRACKETED = `
+- name: brk
+  type: table
+  desc: Bracketed optional slots.
+  members:
+  - name: open_file
+    type: function
+    desc: an omissible options table before a callback
+    parameters:
+    - name: "[options]"
+      type: table
+      desc: the options
+    - name: callback
+      type: function
+      desc: the callback
+    returns:
+    - name: request_id
+      type: number
+      desc: the request id
+    examples:
+    - desc: |-
+        \`\`\`lua
+        brk.open_file({}, function() end)
+        \`\`\`
+  - name: save_file
+    type: function
+    desc: an omissible slot after two required ones
+    parameters:
+    - name: filename
+      type: string
+      desc: the file name
+    - name: data
+      type: string
+      desc: the data
+    - name: "[options]"
+      type: table
+      desc: the options
+    - name: callback
+      type: function
+      desc: the callback
+  - name: trim
+    type: function
+    desc: a trailing bracketed slot
+    parameters:
+    - name: value
+      type: string
+      desc: the value
+    - name: "[chars]"
+      type: string
+      desc: the characters to trim
+  - name: configure
+    type: function
+    desc: a bracketed table field
+    parameters:
+    - name: settings
+      type: table
+      desc: the settings
+      fields:
+      - name: "[timeout]"
+        type: number
+        desc: the timeout
+  - name: pick
+    type: function
+    desc: an explicit optional slot before a required one
+    parameters:
+    - name: size
+      type: string
+      desc: the size
+      optional: true
+    - name: callback
+      type: function
+      desc: the callback
+`;
+
+function bracketed(name: string): RefDocFunctionElement[] {
+  return functionElements(scriptApiToRefDoc(parse(BRACKETED))).filter(
+    (e) => e.name === `brk.${name}`,
+  );
+}
+
+function slotNames(element: RefDocFunctionElement | undefined): string[] {
+  return element?.parameters.map((p) => p.name) ?? [];
+}
+
+describe("scriptApiToRefDoc bracketed slots", () => {
+  it("adds a form without a bracketed slot that a required slot follows, before the full form", () => {
+    const forms = bracketed("open_file");
+    expect(forms.map(slotNames)).toEqual([["callback"], ["options", "callback"]]);
+    const [omitted, full] = forms;
+    expect(full?.parameters[0]?.is_optional).toBe("True");
+    for (const form of forms) {
+      for (const slot of form.parameters) {
+        expect(slot.name).not.toMatch(/[[\]]/);
+      }
+      expect(form.parameters.find((p) => p.name === "callback")).not.toHaveProperty("is_optional");
+    }
+    expect(omitted).not.toHaveProperty("examples");
+    expect(full?.examples).toBeDefined();
+  });
+
+  it("keeps the required slots ahead of the bracketed one in both forms", () => {
+    const forms = bracketed("save_file");
+    expect(forms.map(slotNames)).toEqual([
+      ["filename", "data", "callback"],
+      ["filename", "data", "options", "callback"],
+    ]);
+    expect(forms[1]?.parameters[2]?.is_optional).toBe("True");
+  });
+
+  it("converts a trailing bracketed slot to one optional slot", () => {
+    const forms = bracketed("trim");
+    expect(forms).toHaveLength(1);
+    expect(forms[0]?.parameters[1]).toEqual({
+      name: "chars",
+      doc: "the characters to trim",
+      types: ["string"],
+      is_optional: "True",
+    });
+  });
+
+  it("converts a bracketed table field to an optional field", () => {
+    const field = bracketed("configure")[0]?.parameters[0]?.fields?.[0];
+    expect(field).toEqual({
+      name: "timeout",
+      doc: "the timeout",
+      types: ["number"],
+      is_optional: "True",
+    });
+  });
+
+  it("gives an explicit optional slot no form without it", () => {
+    const forms = bracketed("pick");
+    expect(forms).toHaveLength(1);
+    expect(forms[0]?.parameters[0]?.is_optional).toBe("True");
+    expect(forms[0]?.parameters[1]).not.toHaveProperty("is_optional");
+  });
+
+  it("emits both call forms as overloads", () => {
+    const emitted = emitDeclarations(parseDefoldApiDoc(parseScriptApi(BRACKETED)));
+    const lines = emitted
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("function open_file("));
+    expect(lines).toEqual([
+      "function open_file(callback: (...args: unknown[]) => unknown): number;",
+      "function open_file(options: Record<string | number, unknown> | undefined, callback: (...args: unknown[]) => unknown): number;",
+    ]);
+  });
+});

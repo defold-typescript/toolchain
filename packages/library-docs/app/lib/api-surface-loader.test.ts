@@ -258,6 +258,29 @@ describe("loadLibraryProvenance — attribution", () => {
   });
 });
 
+describe("loadApiSurface — browser_io library page", () => {
+  test("lists each bracketed options slot as a form without it, then a form passing it", () => {
+    const page = loadPages(REAL_DIRS).find((p) => p.namespace === "browser_io");
+    if (!page) throw new Error("browser_io page missing");
+    const forms = new Set([
+      "browser_io.open_file",
+      "browser_io.save_file",
+      "browser_io.set_drop_listener",
+    ]);
+    const signatures = apiModuleSymbols(page)
+      .filter((s) => s.kind === "function" && forms.has(s.name))
+      .map((s) => s.signature);
+    expect(signatures).toEqual([
+      "browser_io.open_file(callback: function): number",
+      "browser_io.open_file(options: table | undefined, callback: function): number",
+      "browser_io.save_file(filename: string, data: string, callback: function): number",
+      "browser_io.save_file(filename: string, data: string, options: table | undefined, callback: function): number",
+      "browser_io.set_drop_listener(callback: function): boolean",
+      "browser_io.set_drop_listener(options: table | undefined, callback: function): boolean",
+    ]);
+  });
+});
+
 describe("loadApiSurface — druid library page", () => {
   test("includes a druid page tagged category library", () => {
     const pages = loadPages(REAL_DIRS);

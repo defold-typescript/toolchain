@@ -65,8 +65,11 @@ For each native extension, `resolve`:
 3. emits one `@globalTable` module per doc into `.defold-types/extensions/<namespace>.d.ts`,
    carrying the doc's functions and its constants (including those one sub-table
    deep, such as `iap.PROVIDER_ID_GOOGLE`), each constant branded as the `string`
-   or `number` its doc declares, with a slot flagged `optional: true` emitted
-   optional, a callback parameter typed from its documented arguments
+   or `number` its doc declares, with a slot flagged `optional: true` or named
+   in brackets (`[options]`) emitted optional, a function whose bracketed slot
+   comes before a required one also declared without it
+   (`open_file(callback)` beside `open_file(options, callback)`), a callback
+   parameter typed from its documented arguments
    (`(self: unknown, code: number, data: { id: string }) => void`) and a table
    parameter typed from its documented fields,
 4. writes an index barrel and a `package.json` for that sibling surface, and
