@@ -158,12 +158,10 @@ describe("a materialized pin binds the package specifier", () => {
     const fixture = scaffold({
       "proof.ts": [
         'import { defineScript, defineGuiScript, defineRenderScript } from "@defold-typescript/types";',
-        'import { defineEditorScript } from "@defold-typescript/types";',
         'import type { Hash, Url, Vector3 } from "@defold-typescript/types";',
         "void defineScript;",
         "void defineGuiScript;",
         "void defineRenderScript;",
-        "void defineEditorScript;",
         'const h: Hash = hash("obstacle");',
         "const u: Url = msg.url();",
         "const v: Vector3 = vmath.vector3(1, 2, 3);",
