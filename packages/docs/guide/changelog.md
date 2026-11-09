@@ -13,10 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Library pages](./extensions.md#library-page-addresses) move to `/api/<owner>/<repo>/<namespace>`**, and their members link and search by their own names, such as `gui.new_spine_node`.
+> - **[Library pages](./extensions.md#library-page-addresses) move to `/api/<owner>/<repo>/<namespace>`**, and members link and search by name, such as `gui.new_spine_node`.
 > - **[gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) is typed**, and [proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) drops its compiler's types.
-> - **[`resolve` reads `[options]` as optional](./resolve.md#the-generated-surface)**, and no library signature puts `?` before a required argument.
-> - **Library pages for repos with no stable release** install from the pinned tag or commit, like [tweener](https://defold-typescript.github.io/library-data/api/insality/defold-tweener/tweener).
+> - **[`resolve` reads `[options]` as optional](./resolve.md#the-generated-surface)** and [types a native namespace beside a Lua library](./resolve.md#vendored-library-types), such as `defsave_ext`.
+> - **Library pages put no `?` before a required argument**, and unreleased repos install from a pinned tag or commit, like [tweener](https://defold-typescript.github.io/library-data/api/insality/defold-tweener/tweener).
 
 ### Breaking
 
@@ -30,10 +30,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **[Library docs](https://defold-typescript.github.io/library-data) members link, tooltip and search by the names you write** on the pages for Spine's [gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui) and `resource`, `extension-camera`, `extension-proto`, the Firebase extensions, `defold-rng` and `defold-random`: `gui.new_spine_node` is found as written, not as `spine.gui.gui.new_spine_node`. A name two libraries share links only on its own library's page.
 - **`resolve` declares a `.script_api` argument named in brackets (`[options]`) optional** ([The generated surface](./resolve.md#the-generated-surface)), not as a required `arg0`, and when a required argument follows it also declares the call without it, so `open_file(callback)` and `open_file(options, callback)` both compile.
-- **[Library docs](https://defold-typescript.github.io/library-data) signatures put no `?` before a required argument**: such an argument reads `T | undefined`, as in `defos.set_window_size`, `fusion.spawn` and the `wavedash`, `playables`, `poki_sdk` and `videoplayer` pages, and the [browser_io](https://defold-typescript.github.io/library-data/api/alfowler1976/defold_browser_io/browser_io) page lists each call with and without its `options`.
-- **[Library docs](https://defold-typescript.github.io/library-data) install steps for a repo with no stable release name its pinned tag or commit archive**, not its releases page: [log](https://defold-typescript.github.io/library-data/api/insality/defold-log/log), [tweener](https://defold-typescript.github.io/library-data/api/insality/defold-tweener/tweener), [event](https://defold-typescript.github.io/library-data/api/insality/defold-event/event), [dicebag](https://defold-typescript.github.io/library-data/api/8bitskull/dicebag/dicebag), [defmath](https://defold-typescript.github.io/library-data/api/subsoap/defmath/defmath), [ink](https://defold-typescript.github.io/library-data/api/abadonna/defold-ink/ink) and eleven other library pages.
+- **`resolve` writes the `.script_api` namespaces a typed Lua library's archive documents beside its module** ([Vendored library types](./resolve.md#vendored-library-types)): `subsoap/defsave` gets `defsave_ext` and `thejustinwalsh/defold-zzfx` gets `zzfx_ext` in `.defold-types/extensions/`, beside their module types, and `resolve --json` lists them in that dependency's `namespaces`.
+- **[Library docs](https://defold-typescript.github.io/library-data) pages match the code you write and the archive you install:**
+  - **Member names** link, tooltip and search as you write them on the pages for Spine's [gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui) and `resource`, `extension-camera`, `extension-proto`, the Firebase extensions, `defold-rng` and `defold-random`: `gui.new_spine_node` is found as written, not as `spine.gui.gui.new_spine_node`. A name two libraries share links only on its own library's page.
+  - **Signatures** put no `?` before a required argument: such an argument reads `T | undefined`, as in `defos.set_window_size`, `fusion.spawn` and the `wavedash`, `playables`, `poki_sdk` and `videoplayer` pages, and the [browser_io](https://defold-typescript.github.io/library-data/api/alfowler1976/defold_browser_io/browser_io) page lists each call with and without its `options`.
+  - **Install steps for a repo with no stable release** name its pinned tag or commit archive, not its releases page: [log](https://defold-typescript.github.io/library-data/api/insality/defold-log/log), [tweener](https://defold-typescript.github.io/library-data/api/insality/defold-tweener/tweener), [event](https://defold-typescript.github.io/library-data/api/insality/defold-event/event), [dicebag](https://defold-typescript.github.io/library-data/api/8bitskull/dicebag/dicebag), [defmath](https://defold-typescript.github.io/library-data/api/subsoap/defmath/defmath), [ink](https://defold-typescript.github.io/library-data/api/abadonna/defold-ink/ink) and eleven other library pages.
 
 ## v0.59.0
 
