@@ -1110,7 +1110,7 @@ describe("runWatch resolve surface", () => {
 });
 
 const EDITOR_SCRIPT_SOURCE = [
-  'import { defineEditorScript } from "@defold-typescript/types";',
+  'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
   "export default defineEditorScript({",
   '  get_commands: () => [{ label: "Say Hi", locations: ["Edit"], run: () => print("hi") }],',
   "});",

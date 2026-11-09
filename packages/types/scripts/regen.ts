@@ -1145,7 +1145,7 @@ export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
     extraModules: ["../../src/editor-overloads", "../../src/editor-vm-globals"],
     factory: "defineEditorScript",
     extraExports: ["defineEditorCommand"],
-    extraTypeExports: ["EditorCommandQuery", "EditorNode"],
+    extraTypeExports: ["EditorCommand", "EditorCommandQuery", "EditorNode", "EditorScriptModule"],
     factoryFrom: "../../src/editor",
     propertyTypes: false,
     jit: false,

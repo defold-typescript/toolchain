@@ -19,7 +19,7 @@ export default defineEditorScript({
 });
 ```
 
-The subpath, not the bare `@defold-typescript/types` main entry: the main entry re-exports the same factory but also pulls `go` / `msg` / `vmath` back into scope, which would defeat the wall the next section sets up. Both specifiers erase identically, so the only difference is what stays visible to the type checker.
+The subpath is the only editor import. The bare `@defold-typescript/types` main entry exports no editor symbol, because importing it pulls `go` / `msg` / `vmath` back into scope, which would defeat the wall the next section sets up. Importing an editor factory from the main entry is a compile error that names the missing export.
 
 ## Artifact and discovery
 
@@ -36,6 +36,18 @@ Each `EditorCommand` returned by `get_commands` has:
 - `query` (optional) — declares the command's context arguments.
 - `active` (optional) — decides whether the command is currently enabled; omit to always enable.
 - `run` — invoked when the command is chosen.
+
+`EditorCommand` and the hooks-table type `EditorScriptModule` come from the same subpath as the factories:
+
+```ts
+import { defineEditorScript, type EditorCommand } from "@defold-typescript/types/editor-script";
+
+const commands: EditorCommand[] = [
+  { label: "Say Hi", locations: ["Edit"], run: () => print("hi") },
+];
+
+export default defineEditorScript({ get_commands: () => commands });
+```
 
 ### Coupling `active` / `run` to the command's own `query`
 

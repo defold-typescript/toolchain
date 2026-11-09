@@ -736,7 +736,7 @@ describe("materializeApiSurface editor surface", () => {
       'export { defineEditorScript, defineEditorCommand } from "@defold-typescript/types/editor";',
     );
     expect(written).toContain(
-      'export type { EditorCommandQuery, EditorNode } from "@defold-typescript/types/editor";',
+      'export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "@defold-typescript/types/editor";',
     );
     expect(written).not.toContain("/src/");
   });
@@ -1051,7 +1051,7 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
       'export { defineEditorScript, defineEditorCommand } from "@defold-typescript/types/editor";',
     );
     expect(index).toContain(
-      'export type { EditorCommandQuery, EditorNode } from "@defold-typescript/types/editor";',
+      'export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "@defold-typescript/types/editor";',
     );
     // Editor scripts run plain Lua 5.1 and have no script properties.
     expect(index).not.toContain("ScriptProperty");

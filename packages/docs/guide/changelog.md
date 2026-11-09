@@ -16,12 +16,14 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Library pages](./extensions.md#library-page-addresses) move to `/api/<owner>/<repo>/<namespace>`**, and members link and search by name, such as `gui.new_spine_node`.
 > - **[gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) is typed**, and [proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) drops its compiler's types.
 > - **[`resolve` reads `[options]` as optional](./resolve.md#the-generated-surface)** and [types a native namespace beside a Lua library](./resolve.md#vendored-library-types), such as `defsave_ext`.
-> - **Library pages put no `?` before a required argument**, and unreleased repos install from a pinned tag or commit, like [tweener](https://defold-typescript.github.io/library-data/api/insality/defold-tweener/tweener).
+> - **Library pages put no `?` before a required argument** and install unreleased repos from a pinned tag or commit.
+> - **[Editor scripts](./editor-scripts.md#the-factory) import their factories and types only from `@defold-typescript/types/editor-script`.**
 
 ### Breaking
 
 - **Every page on the [library docs](https://defold-typescript.github.io/library-data) lives at an address named by its library's repo** ([Library page addresses](./extensions.md#library-page-addresses)): an API page at `/api/<owner>/<repo>/<namespace>` (`/api/defold/extension-spine/gui`, `/api/insality/druid/druid`) and an untyped library at `/libraries/<owner>/<repo>`, all lowercase. The flat `/api/<name>` addresses are gone, so links and bookmarks to them need the new form.
 - **[proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) declares only its own API**: `proto.Lexer`, `proto.Parser`, `proto.toplevel`, `proto.msg_body` and `proto.svr_body`, internal types of its bundled protobuf compiler, are gone from its declarations and API page. `proto.init`, `proto.encode`, `proto.decode` and its other functions are unchanged.
+- **Editor scripts import `defineEditorScript`, `defineEditorCommand`, `EditorCommand` and `EditorScriptModule` only from `@defold-typescript/types/editor-script`** ([Editor scripts](./editor-scripts.md#the-factory)), which now exports the two types beside the factories. The bare `@defold-typescript/types` entry exports none of them, so an editor import from it is a compile error; move it to the subpath.
 
 ### Improved
 
