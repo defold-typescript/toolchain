@@ -17,7 +17,7 @@ import {
   libraryFolderChange,
 } from "./library-data-archive";
 import { assembleLibraryDataView, SHARED_DATA_FILES } from "./library-data-view";
-import { matchedLibraryName } from "./library-match";
+import { libraryName, matchedLibraryName } from "./library-match";
 import { librariesMatching, readLibraryDataOrNone } from "./library-registry";
 import type { LibraryDataPins } from "./project-lock";
 
@@ -30,6 +30,8 @@ export interface SelectLibraryPinsOptions extends LibraryDataSource {
   // that newer data has only now come to cover.
   readonly knownUrls: readonly string[];
   readonly pins: LibraryDataPins | null;
+  // Names as `--update` gives them, each a dependency's `owner/repo`; each moves the
+  // pin of the library its URL matches, so naming a fork moves its upstream's pin.
   readonly update?: LibraryDataUpdate;
 }
 
@@ -41,15 +43,20 @@ export interface LibraryDataFolders {
   readonly folder?: string;
 }
 
+// `candidates` are the names each dependency was matched against, a library the
+// project does not use included, so a repo name it shares with the used one still
+// matches neither when the view holds only that one.
 export interface LibraryPinSelection extends LibraryDataFolders {
   readonly dir: string | null;
   readonly pins: LibraryDataPins | null;
+  readonly candidates?: readonly string[];
   readonly notices: readonly string[];
   readonly warning?: string;
 }
 
 export interface FrozenLibraryData extends LibraryDataFolders {
   readonly dir: string | null;
+  readonly candidates?: readonly string[];
   readonly error?: string;
 }
 
@@ -125,10 +132,26 @@ function loadView(
   }
 }
 
+// The library each dependency `update` names reads, matched by `nameOf`.
+function updatedLibraries(
+  update: LibraryDataUpdate | undefined,
+  urls: readonly string[],
+  nameOf: (url: string) => string | null,
+): LibraryDataUpdate | undefined {
+  if (update === undefined || update === true) {
+    return update;
+  }
+  const names = urls
+    .filter((url) => update.includes(libraryName(url)))
+    .map(nameOf)
+    .filter((name) => name !== null);
+  return [...new Set(names)];
+}
+
 export async function selectLibraryPins(
   opts: SelectLibraryPinsOptions,
 ): Promise<LibraryPinSelection> {
-  const { urls, knownUrls, pins, update } = opts;
+  const { urls, knownUrls, pins } = opts;
   const main = await fetchNewestLibraryData(opts);
   const newest = main.dir !== null && !main.stale ? main : null;
   const mainTrouble = main.dir === null ? main.reason : main.warning;
@@ -136,6 +159,7 @@ export async function selectLibraryPins(
   const pinnedNames = new Set(Object.keys(pins?.libraries ?? {}));
   const names = [...new Set([...pinnedNames, ...mainLibraries.map(({ dir }) => dir)])];
   const nameOf = (url: string) => matchedLibraryName(url, names);
+  const update = updatedLibraries(opts.update, urls, nameOf);
   const used = new Set(urls.map(nameOf));
   const pinned = Object.entries(pins?.libraries ?? {}).filter(([name]) => used.has(name));
   const covered = new Set(librariesMatching(mainLibraries, urls).map(({ dir }) => dir));
@@ -267,7 +291,14 @@ export async function selectLibraryPins(
   const folders = foldersOf(main.dir !== null ? main : pins === null ? null : readOf(pins.shared));
   const view = loadView(opts, reads, libraries, shared);
   if (view.dir !== null) {
-    return { dir: view.dir, pins: { shared, libraries }, notices, ...warning, ...folders };
+    return {
+      dir: view.dir,
+      pins: { shared, libraries },
+      candidates: names,
+      notices,
+      ...warning,
+      ...folders,
+    };
   }
   const conflict = `library data pins do not load together: ${view.failure}`;
   if (newest === null) {
@@ -281,6 +312,7 @@ export async function selectLibraryPins(
   return {
     dir: fallback.dir,
     pins: { shared: newest.commit, libraries: atMain },
+    candidates: names,
     notices: [`${conflict}, so every used library moved to commit ${newest.commit}`],
     ...folders,
   };
@@ -300,12 +332,21 @@ export async function frozenLibraryData(
         "--frozen needs recorded library data: run a plain `defold-typescript resolve` and commit the file",
     };
   }
-  const pinnedNames = Object.keys(pins.libraries);
-  const used = new Set(urls.map((url) => matchedLibraryName(url, pinnedNames)));
+  // No main is read, so the shared pin's commit stands in for it: every library it
+  // holds is a name a dependency may share its repo name with.
+  const sharedReads = await readCommits(source, [pins.shared]);
+  const sharedLibraries = readLibraryDataOrNone(
+    sharedReads.get(pins.shared)?.dir ?? null,
+    source.cliVersion,
+  );
+  const candidates = [
+    ...new Set([...Object.keys(pins.libraries), ...sharedLibraries.map(({ dir }) => dir)]),
+  ];
+  const used = new Set(urls.map((url) => matchedLibraryName(url, candidates)));
   const libraries = Object.fromEntries(
     Object.entries(pins.libraries).filter(([name]) => used.has(name)),
   );
-  const reads = await readCommits(source, [...Object.values(libraries), pins.shared]);
+  const reads = await readCommits(source, Object.values(libraries), [...sharedReads]);
   for (const [name, commit] of Object.entries(libraries)) {
     const trouble = pinTrouble(reads.get(commit) as LibraryDataAtCommit, commit, name);
     if (trouble !== null) {
@@ -319,5 +360,5 @@ export async function frozenLibraryData(
   const view = loadView(source, reads, libraries, pins.shared);
   return view.dir === null
     ? { dir: null, error: `the library data pins do not load: ${view.failure}` }
-    : { dir: view.dir, ...foldersOf(shared) };
+    : { dir: view.dir, candidates, ...foldersOf(shared) };
 }

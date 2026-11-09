@@ -536,6 +536,16 @@ describe("libraryFolderName", () => {
       "klaleus/defold-shutter",
     );
   });
+
+  test.each([
+    "https://host/../mylib",
+    "https://host/./mylib",
+    "https://host/owner/a\\..\\..\\mylib",
+  ])("throws, naming the repo, for %s, whose owner or repo is not a plain name", (repo) => {
+    expect(() => libraryFolderName(repo)).toThrow(
+      `repo ${repo} is not an owner/repo of plain names`,
+    );
+  });
 });
 
 describe("readLibraryData reads each library at its owner/repo folder", () => {
