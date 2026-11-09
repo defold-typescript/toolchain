@@ -28,6 +28,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **`library add` refuses a repository URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`**, before it downloads, so it writes only inside the data folder: on Windows a backslash in the repo could write outside it ([library](./library.md#what-library-add-writes)).
+- **On a phone, opening a link to a heading in the guide, the API reference or the library reference shows the heading below the top bar** instead of behind it.
 
 ## v0.60.0
 
