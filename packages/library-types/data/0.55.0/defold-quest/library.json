@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-quest",
   "license": "MIT",
+  "refKind": "tag",
   "indexSlots": {
     "quest/add_task_progress:param:task_index": {
       "class": "native-1",

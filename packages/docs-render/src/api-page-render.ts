@@ -417,7 +417,7 @@ export function dependencyStep(
   const step1 = !forge
     ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
     : pinKind === "tag"
-      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
+      ? `This repo publishes no stable release. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
       : pinKind === "commit"
         ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${base}/archive/${ref}.zip\` — ${dependencies}`
         : `Pick a release from [${repo} releases](${base}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
