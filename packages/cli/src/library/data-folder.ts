@@ -4,26 +4,37 @@
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-type Triple = readonly [number, number, number];
+export type Triple = readonly [number, number, number];
 
 const DATA_FOLDER = /^(\d+)\.(\d+)\.(\d+)$/;
 
-function parseTriple(version: string): Triple | null {
+/** An exact `X.Y.Z`, or null. */
+export function parseTriple(version: string): Triple | null {
   const match = DATA_FOLDER.exec(version);
   if (match === null) return null;
   return [Number(match[1]), Number(match[2]), Number(match[3])];
 }
 
-function compareTriples(a: Triple, b: Triple): number {
+export function compareTriples(a: Triple, b: Triple): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+}
+
+/** A CLI version's `X.Y.Z`, ignoring its prerelease or build suffix. */
+export function parseCliVersion(cliVersion: string): Triple | null {
+  return parseTriple(cliVersion.replace(/[-+].*$/, ""));
+}
+
+/** An unversioned `0.0.0` CLI, run from source, which reads the newest data. */
+export function isUnversioned(cli: Triple): boolean {
+  return compareTriples(cli, [0, 0, 0]) === 0;
 }
 
 // The highest data folder at or below `cliVersion`, ignoring its prerelease or
 // build suffix; an unversioned `0.0.0` CLI reads the newest folder.
 export function selectDataFolder(base: string, cliVersion: string): string | null {
-  const cli = parseTriple(cliVersion.replace(/[-+].*$/, ""));
+  const cli = parseCliVersion(cliVersion);
   if (cli === null) return null;
-  const newest = compareTriples(cli, [0, 0, 0]) === 0;
+  const newest = isUnversioned(cli);
   let entries: { name: string; isDirectory(): boolean }[];
   try {
     entries = readdirSync(base, { withFileTypes: true });

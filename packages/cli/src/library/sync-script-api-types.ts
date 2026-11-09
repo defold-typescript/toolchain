@@ -3,7 +3,7 @@ import { basename, dirname, join } from "node:path";
 import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
 import { isKnownDefoldTypeToken } from "@defold-typescript/types/library-runtime";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
-import { readLibraryData } from "./library-data";
+import { type ReadLibraryOptions, readLibraryData } from "./library-data";
 import type { FidelityReport } from "./luals-fidelity";
 import type { LibrarySourceTree } from "./source-tree";
 
@@ -275,6 +275,7 @@ export async function emitScriptApiDeclaration(
   packageRoot: string,
   target: ScriptApiTarget,
   tree: LibrarySourceTree = scriptApiFixtureTree(packageRoot, target),
+  read: ReadLibraryOptions = {},
 ): Promise<string> {
   const { scriptApiToFixtureJson, generateModuleDeclaration } = await loadTypesModules();
   const doc = applyOmittableSlots(
@@ -289,7 +290,7 @@ export async function emitScriptApiDeclaration(
     moduleId: target.moduleId,
     indexBaseSource: {
       pages: [scriptApiPage(target)],
-      classifications: readLibraryIndexSlotClassifications(packageRoot),
+      classifications: readLibraryIndexSlotClassifications(packageRoot, read),
     },
   });
   return contents;
