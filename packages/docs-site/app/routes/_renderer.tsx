@@ -94,9 +94,10 @@ const SIDEBAR_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data
  * `lg` the topbar wraps onto a second row and grows taller; the fixed offsets
  * would let headings land behind it.
  *
- * It runs at the end of `<body>` — the header is already parsed and the
- * critical + render-blocking Tailwind CSS have settled, so the first
- * measurement is the painted height. A `ResizeObserver` keeps the value current
+ * It runs directly after the header closes, once the head's render-blocking
+ * stylesheets have loaded, so the first measurement is the painted height. It
+ * also runs before any heading is parsed, so a cold `/page#heading` load never
+ * scrolls with the `3.5rem` fallback. A `ResizeObserver` keeps the value current
  * across font swap, viewport resize, and `lg` breakpoint crossings. The
  * observer lives for the page's lifetime; there is nothing to disconnect.
  */
@@ -356,6 +357,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
             </div>
           </div>
         </header>
+        <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
 
         <div class="mx-auto flex w-full gap-10 px-6">
           <aside id="sidebar" data-testid="sidebar" class="sidebar-drawer w-60 shrink-0">
@@ -392,7 +394,6 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <CodeTabs />
         <HsmDemos />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
-        <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPIC_SCROLL_INIT }} />
       </body>
     </html>
