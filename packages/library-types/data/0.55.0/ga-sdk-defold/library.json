@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/GameAnalytics/GA-SDK-DEFOLD",
   "license": "MIT",
+  "refKind": "tag",
   "native": {
     "namespace": "gameanalytics",
     "manifestDir": "gameanalytics",
