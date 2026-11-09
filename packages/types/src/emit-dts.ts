@@ -6503,7 +6503,7 @@ function parameterType(
   return added.length === 0 ? kept : `${kept} | ${added.join(" | ")}`;
 }
 
-function isFunctionTypeText(ts: string): boolean {
+export function isFunctionTypeText(ts: string): boolean {
   let depth = 0;
   for (let i = 0; i < ts.length - 1; i++) {
     const c = ts[i];

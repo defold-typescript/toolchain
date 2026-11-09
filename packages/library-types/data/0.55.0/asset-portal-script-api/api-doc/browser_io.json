@@ -154,11 +154,35 @@
       "description": "Opens the browser file picker and asynchronously reads one file. Supported forms are open_file(callback), open_file(nil, callback), and open_file(options, callback).",
       "parameters": [
         {
-          "name": "[options]",
+          "name": "callback",
+          "doc": "Called as callback(self, result). On success result.name, result.data, and result.size are set. Empty files return data as an empty string and size as 0.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "request_id",
+          "doc": "Request identifier.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "browser_io.open_file",
+      "description": "Opens the browser file picker and asynchronously reads one file. Supported forms are open_file(callback), open_file(nil, callback), and open_file(options, callback).",
+      "parameters": [
+        {
+          "name": "options",
           "doc": "Optional table. accept is an HTML accept string and max_size is the maximum file size in bytes. The default max_size is 16 MiB.",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",
@@ -198,11 +222,49 @@
           ]
         },
         {
-          "name": "[options]",
+          "name": "callback",
+          "doc": "Called as callback(self, result) when the download has been handed to the browser.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "request_id",
+          "doc": "Request identifier.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "browser_io.save_file",
+      "description": "Creates a browser download from a Lua string. Binary strings are supported. Supported forms are save_file(filename, data, callback), save_file(filename, data, nil, callback), and save_file(filename, data, options, callback).",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "Suggested downloaded filename.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "File bytes.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
           "doc": "Optional table. mime_type defaults to application/octet-stream.",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",
@@ -228,11 +290,35 @@
       "description": "Registers a persistent file drag-and-drop listener on the browser window. Supported forms are set_drop_listener(callback), set_drop_listener(nil, callback), and set_drop_listener(options, callback).",
       "parameters": [
         {
-          "name": "[options]",
+          "name": "callback",
+          "doc": "Called for each completed drop as callback(self, result). On success result.name, result.data, and result.size are set.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "True when the listener was enabled on HTML5, false on unsupported build targets.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "browser_io.set_drop_listener",
+      "description": "Registers a persistent file drag-and-drop listener on the browser window. Supported forms are set_drop_listener(callback), set_drop_listener(nil, callback), and set_drop_listener(options, callback).",
+      "parameters": [
+        {
+          "name": "options",
           "doc": "Optional table. accept filters dropped files and max_size limits the number of bytes read. The default max_size is 16 MiB.",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",

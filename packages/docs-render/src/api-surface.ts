@@ -11,6 +11,7 @@ import {
   examplesHtmlToMarkdown,
   firstSlotAlternativeOf,
   htmlToDocText,
+  isFunctionTypeText,
   type LibraryIndexSlotClassifications,
   lookupExampleSegments,
   lookupSignature,
@@ -1068,6 +1069,42 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
+interface RenderedSlot {
+  optional: boolean;
+  type: string;
+}
+
+function isInteriorOptional(list: readonly ApiParameter[], index: number): boolean {
+  const p = list[index];
+  return (
+    p?.isOptional === true &&
+    !p.isVararg &&
+    list.slice(index + 1).some((next) => !next.isOptional && !next.isVararg)
+  );
+}
+
+// A call can leave out only a trailing optional slot, so one a required slot
+// follows renders the way the emitter declares it: passed, and allowed `nil`.
+// Lua's own library skips a leading bracketed argument by shifting the rest
+// (`debug.sethook([thread,] hook, mask)`), where `nil` is no skip, so a page
+// whose declarations the emitter does not write passes `nilInterior: false` and
+// keeps the manual's `?`.
+function renderedSlot(
+  list: readonly ApiParameter[],
+  index: number,
+  mapType: MapType,
+  nilInterior = true,
+): RenderedSlot {
+  const p = list[index] as ApiParameter;
+  const type = typeList(p.types, mapType);
+  if (!nilInterior || !isInteriorOptional(list, index)) return { optional: p.isOptional, type };
+  return { optional: false, type: `${isFunctionTypeText(type) ? `(${type})` : type} | undefined` };
+}
+
+function nilsInteriorSlots(page: Pick<ApiPage, "category">): boolean {
+  return page.category !== "lua-stdlib";
+}
+
 // A library page's key and the index slots library data classifies under it.
 interface LibraryPageSlots {
   readonly key: string;
@@ -1132,9 +1169,10 @@ function withFieldBaseNotes(
  * emitter actually rendered into the signature above it — the curated mapping,
  * documented-constant brand, recovered inline object or slot correction a bare
  * token and the ref-doc `is_optional` flag cannot express. Absent, the row keeps
- * the `mapDocType` render and the ref-doc flag. Nested `fields` always take the
- * token path: they carry per-field prose and sit below a slot type that already
- * spells them out.
+ * the `mapDocType` render and the ref-doc flag, except that an optional
+ * parameter a required one follows shows the `T | undefined` its signature
+ * prints. Nested `fields` always take the token path: they carry per-field prose
+ * and sit below a slot type that already spells them out.
  */
 function projectParams(
   list: ApiParameter[],
@@ -1144,6 +1182,7 @@ function projectParams(
   elementName?: string,
   translations: TranslationStore = {},
   libraryPage?: LibraryPageSlots,
+  nilInterior = true,
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
@@ -1157,14 +1196,33 @@ function projectParams(
             translateProseFences(platformDocText(p.doc), elementName, translations, KEEP_SOURCE),
           )
         : platformDocText(p.doc);
+    const interior =
+      kind === "param" && emitted === undefined && nilInterior && isInteriorOptional(list, index)
+        ? renderedSlot(list, index, mapType)
+        : undefined;
     return {
       name: p.name,
       doc,
-      types: emitted !== undefined ? [emitted.type] : normalizeTypes(p.types).map(mapType),
-      isOptional: emitted !== undefined ? emitted.optional : p.isOptional,
-      ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
+      types:
+        emitted !== undefined
+          ? [emitted.type]
+          : interior !== undefined
+            ? [interior.type]
+            : normalizeTypes(p.types).map(mapType),
+      isOptional: emitted?.optional ?? interior?.optional ?? p.isOptional,
+      ...(p.fields ? { fields: projectFields(p.fields, mapType) } : {}),
     };
   });
+}
+
+function projectFields(list: ApiParameter[], mapType: MapType): ApiSymbolParam[] {
+  return list.map((p) => ({
+    name: p.name,
+    doc: platformDocText(p.doc),
+    types: normalizeTypes(p.types).map(mapType),
+    isOptional: p.isOptional,
+    ...(p.fields ? { fields: projectFields(p.fields, mapType) } : {}),
+  }));
 }
 
 /**
@@ -1312,13 +1370,16 @@ function functionSignature(
   fn: ApiFunction,
   mapType: MapType = mapDocType,
   isLibrary = false,
+  nilInterior = true,
 ): string {
   const params = fn.parameters
-    .map((p) =>
-      isLibrary && p.isVararg
-        ? `${p.name}: ${varargElementType(typeList(p.types, mapType))}`
-        : `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`,
-    )
+    .map((p, index) => {
+      if (isLibrary && p.isVararg) {
+        return `${p.name}: ${varargElementType(typeList(p.types, mapType))}`;
+      }
+      const slot = renderedSlot(fn.parameters, index, mapType, nilInterior);
+      return `${p.name}${slot.optional ? "?" : ""}: ${slot.type}`;
+    })
     .join(", ");
   const mapped = fn.returnValues.map((r) => typeList(r.types, mapType));
   const ret = isLibrary && mapped.length > 1 ? luaMultiReturn(mapped) : mapped.join(", ");
@@ -1442,8 +1503,9 @@ function typeMemberFunctionSignature(
   fn: ApiFunction,
   mapType: MapType = mapDocType,
   isLibrary = false,
+  nilInterior = true,
 ): string {
-  return `${typeName}.${functionSignature(fn, mapType, isLibrary)}`;
+  return `${typeName}.${functionSignature(fn, mapType, isLibrary, nilInterior)}`;
 }
 
 function typeMemberPropertySignature(
@@ -1596,6 +1658,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
+  const nilInterior = nilsInteriorSlots(page);
   const libraryPage = libraryPageKey(page);
   const head: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
   const groups: ModuleLines["groups"] = [];
@@ -1755,7 +1818,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
       if (definition) lines.push(`\`${definition}\``, "");
       for (const fn of td.functions ?? []) {
         lines = section("type", typeMemberName(td.name, fn.name));
-        lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
+        lines.push(`#### \`${functionSignature(fn, mapType, isLibrary, nilInterior)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
         if (doc) lines.push(doc, "");
         const example = exampleMarkdownFor(fn, translations);
@@ -1842,6 +1905,7 @@ export function apiModuleSymbols(
   // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
+  const nilInterior = nilsInteriorSlots(page);
   const libraryPage = libraryPageKey(page);
   const authoritative = page.authoritativeSignatures;
   const slotTypes = page.authoritativeSlotTypes;
@@ -1892,8 +1956,8 @@ export function apiModuleSymbols(
     const primarySignature =
       authSig ??
       (ov === null
-        ? functionSignature(fn, mapType, isLibrary)
-        : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary)));
+        ? functionSignature(fn, mapType, isLibrary, nilInterior)
+        : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary, nilInterior)));
     // The rows this FQN renders, in authored order, against the ref-doc entries
     // the override collapses over. When the call shapes pick an entry out per row
     // (`msg.url`'s 0/1/3 arities) each row reads its own; otherwise every row
@@ -1948,6 +2012,7 @@ export function apiModuleSymbols(
             fn.name,
             translations,
             libraryPage,
+            nilInterior,
           )
         : [],
       returnValues: primaryEntry
@@ -2048,7 +2113,16 @@ export function apiModuleSymbols(
         const armAv = armAvailability(signature) ?? av;
         if (element !== undefined) {
           const project = (list: ApiParameter[], kind: "param" | "return") =>
-            projectParams(list, mapType, primarySlots, kind, fn.name, translations, libraryPage);
+            projectParams(
+              list,
+              mapType,
+              primarySlots,
+              kind,
+              fn.name,
+              translations,
+              libraryPage,
+              nilInterior,
+            );
           const example = exampleMarkdownFor(element, translations);
           const arm: ApiSymbol = {
             kind: "function",
@@ -2124,6 +2198,7 @@ export function apiModuleSymbols(
                 fn.name,
                 translations,
                 libraryPage,
+                nilInterior,
               )
             : [],
           returnValues: entry
@@ -2232,12 +2307,21 @@ export function apiModuleSymbols(
       const symbol: ApiSymbol = {
         kind: "type",
         name: typeMemberName(td.name, fn.name),
-        signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
+        signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary, nilInterior),
         docMarkdown: platformDocText(fn.description || fn.brief),
         // Only a library page keys its class methods; they carry no translations.
         parameters:
           libraryPage === undefined
-            ? projectParams(fn.parameters, mapType)
+            ? projectParams(
+                fn.parameters,
+                mapType,
+                undefined,
+                "param",
+                undefined,
+                {},
+                undefined,
+                nilInterior,
+              )
             : projectParams(fn.parameters, mapType, undefined, "param", fn.name, {}, libraryPage),
         returnValues:
           libraryPage === undefined
