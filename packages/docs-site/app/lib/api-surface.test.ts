@@ -1782,6 +1782,170 @@ describe("apiModuleSymbols", () => {
       "demo.ShowOptions.sequential: boolean",
     ]);
   });
+
+  function slot(
+    name: string,
+    type: string,
+    extra: Partial<ApiFunction["parameters"][number]> = {},
+  ) {
+    return { name, doc: "", types: [type], isOptional: false, ...extra };
+  }
+
+  function libraryPageWith(functions: ApiFunction[]): ApiPage {
+    return { ...pageWith({ functions }), category: "library" };
+  }
+
+  const returnsNumber = [slot("request_id", "number")];
+
+  test("an optional slot a required one follows renders as `T | undefined` in the signature and its row", () => {
+    const symbols = apiModuleSymbols(
+      libraryPageWith([
+        {
+          name: "demo.open_file",
+          brief: "",
+          description: "",
+          parameters: [slot("callback", "function")],
+          returnValues: returnsNumber,
+        },
+        {
+          name: "demo.open_file",
+          brief: "",
+          description: "",
+          parameters: [
+            slot("options", "table", { isOptional: true }),
+            slot("callback", "function"),
+          ],
+          returnValues: returnsNumber,
+        },
+      ]),
+    ).filter((s) => s.name === "demo.open_file");
+    expect(symbols.map((s) => s.signature)).toEqual([
+      "demo.open_file(callback: function): number",
+      "demo.open_file(options: table | undefined, callback: function): number",
+    ]);
+    const [options, callback] = symbols[1]?.parameters ?? [];
+    expect(options?.isOptional).toBe(false);
+    expect(options?.types).toEqual(["table | undefined"]);
+    expect(callback?.isOptional).toBe(false);
+  });
+
+  test("a trailing optional slot, or one only a vararg follows, keeps its `?`", () => {
+    const symbols = apiModuleSymbols(
+      libraryPageWith([
+        {
+          name: "demo.trim",
+          brief: "",
+          description: "",
+          parameters: [slot("value", "string"), slot("chars", "string", { isOptional: true })],
+          returnValues: [],
+        },
+        {
+          name: "demo.fmt",
+          brief: "",
+          description: "",
+          parameters: [
+            slot("prefix", "string", { isOptional: true }),
+            slot("...args", "string", { isVararg: true }),
+          ],
+          returnValues: [],
+        },
+      ]),
+    );
+    const trim = symbols.find((s) => s.name === "demo.trim");
+    expect(trim?.signature).toBe("demo.trim(value: string, chars?: string)");
+    expect(trim?.parameters[1]?.isOptional).toBe(true);
+    const fmt = symbols.find((s) => s.name === "demo.fmt");
+    expect(outerCallSlots(fmt?.signature ?? "")?.[0]).toEqual({
+      name: "prefix",
+      isOptional: true,
+      type: "string",
+    });
+    expect(fmt?.parameters[0]?.isOptional).toBe(true);
+  });
+
+  test("a class method's row matches its interior optional slot, and table fields keep their flag", () => {
+    const symbols = apiModuleSymbols({
+      ...pageWith({
+        typedefs: [
+          {
+            name: "Handle",
+            functions: [
+              {
+                name: "open",
+                brief: "",
+                description: "",
+                parameters: [
+                  slot("options", "table", {
+                    isOptional: true,
+                    fields: [
+                      slot("timeout", "number", { isOptional: true }),
+                      slot("path", "string"),
+                    ],
+                  }),
+                  slot("callback", "function"),
+                ],
+                returnValues: [],
+              },
+            ],
+          },
+        ],
+      }),
+      category: "library",
+    });
+    const open = symbols.find((s) => s.name === "Handle.open");
+    expect(open?.signature).toContain("options: table | undefined, callback: function");
+    const [options] = open?.parameters ?? [];
+    expect(options?.isOptional).toBe(false);
+    expect(options?.types).toEqual(["table | undefined"]);
+    expect(options?.fields?.[0]).toMatchObject({ isOptional: true, types: ["number"] });
+  });
+
+  test("a lua-stdlib page keeps the `?` of a leading slot Lua skips by shifting", () => {
+    const symbol = apiModuleSymbols({
+      ...pageWith({
+        functions: [
+          {
+            name: "demo.sethook",
+            brief: "",
+            description: "",
+            parameters: [slot("thread", "string", { isOptional: true }), slot("hook", "function")],
+            returnValues: [],
+          },
+        ],
+      }),
+      category: "lua-stdlib",
+    })[0];
+    expect(outerCallSlots(symbol?.signature ?? "")?.[0]).toEqual({
+      name: "thread",
+      isOptional: true,
+      type: "string",
+    });
+    expect(symbol?.parameters[0]).toMatchObject({ isOptional: true, types: ["string"] });
+  });
+
+  test("an engine page with no authoritative maps renders an interior optional slot the same way", () => {
+    const symbol = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.pick",
+            brief: "",
+            description: "",
+            parameters: [
+              slot("size", "string", { isOptional: true }),
+              slot("callback", "function"),
+            ],
+            returnValues: [],
+          },
+        ],
+      }),
+    )[0];
+    expect(outerCallSlots(symbol?.signature ?? "")?.[0]).toEqual({
+      name: "size",
+      isOptional: false,
+      type: "string | undefined",
+    });
+  });
 });
 
 describe("index-base notes", () => {

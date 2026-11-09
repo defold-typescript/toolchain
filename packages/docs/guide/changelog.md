@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[Library pages](./extensions.md#library-page-addresses) move to `/api/<owner>/<repo>/<namespace>`**, and their members link and search by their own names, such as `gui.new_spine_node`.
 > - **[gameanalytics](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) is typed**, and [proto](https://defold-typescript.github.io/library-data/api/insality/defold-proto/proto) drops its compiler's types.
+> - **[`resolve` reads `[options]` as optional](./resolve.md#the-generated-surface)**, and no library signature puts `?` before a required argument.
 
 ### Breaking
 
@@ -29,6 +30,8 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **[Library docs](https://defold-typescript.github.io/library-data) members link, tooltip and search by the names you write** on the pages for Spine's [gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui) and `resource`, `extension-camera`, `extension-proto`, the Firebase extensions, `defold-rng` and `defold-random`: `gui.new_spine_node` is found as written, not as `spine.gui.gui.new_spine_node`. A name two libraries share links only on its own library's page.
+- **`resolve` declares a `.script_api` argument named in brackets (`[options]`) optional** ([The generated surface](./resolve.md#the-generated-surface)), not as a required `arg0`, and when a required argument follows it also declares the call without it, so `open_file(callback)` and `open_file(options, callback)` both compile.
+- **[Library docs](https://defold-typescript.github.io/library-data) signatures put no `?` before a required argument**: such an argument reads `T | undefined`, as in `defos.set_window_size`, `fusion.spawn` and the `wavedash`, `playables`, `poki_sdk` and `videoplayer` pages, and the [browser_io](https://defold-typescript.github.io/library-data/api/alfowler1976/defold_browser_io/browser_io) page lists each call with and without its `options`.
 
 ## v0.59.0
 
