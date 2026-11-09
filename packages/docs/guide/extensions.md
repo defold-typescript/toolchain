@@ -135,7 +135,7 @@ it installs are `@globalTable` modules, so a project writes
 
 The extensions Defold publishes on GitHub have reference pages under
 [Libraries](https://defold-typescript.github.io/library-data) › defold, one per `.script_api` doc, such as
-[iap](https://defold-typescript.github.io/library-data/api/iap) and [spine.gui](https://defold-typescript.github.io/library-data/api/spine.gui). The defold section is listed
+[iap](https://defold-typescript.github.io/library-data/api/defold/extension-iap/iap) and [spine.gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui). The defold section is listed
 first, in the sidebar and on the Libraries page, and marked `(official)` so it
 reads apart from community libraries. Each page shows the pin it was
 read from — the latest release, else the newest tag, else a commit. A release
@@ -160,7 +160,7 @@ forking it and depending on your fork. `resolve` still reports each one as
 
 Libraries on the [Defold Asset Portal](https://defold.com/assets/) that ship a
 `.script_api` have reference pages under their GitHub owner, one per doc, such
-as [defos](https://defold-typescript.github.io/library-data/api/defos) and [astar](https://defold-typescript.github.io/library-data/api/astar). Each page is read from the doc
+as [defos](https://defold-typescript.github.io/library-data/api/subsoap/defos/defos) and [astar](https://defold-typescript.github.io/library-data/api/selimanac/defold-astar/astar). Each page is read from the doc
 at the pin the portal survey recorded, gives the dependency step for that pin,
 and links the library's Asset Portal entry. A doc with no description of its own
 leads with the portal's. `resolve` types these libraries from your dependency
@@ -176,3 +176,16 @@ cut, the same hint Defold's own libraries carry.
 
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
+
+## Library page addresses
+
+A library page's address names the repo the library comes from. A typed
+library's API page is `/api/<owner>/<repo>/<namespace>` and an untyped library's
+listing is `/libraries/<owner>/<repo>`, all lowercase. `<owner>/<repo>` is the
+library's repo on GitHub or Codeberg, with the forge left out. `<namespace>` is
+the module the page documents, so a repo that ships several modules has several
+pages: [defold/extension-spine/gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui) is one of
+extension-spine's. The repo in the path also keeps apart two libraries that ship
+the same module, such as the two `mpeg` pages,
+[defold/extension-videoplayer-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/defold/extension-videoplayer-mpeg/mpeg)
+and [morgerion/defold-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/morgerion/defold-mpeg/mpeg).

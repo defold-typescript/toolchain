@@ -20,7 +20,7 @@ const TAGGED = {
   namespace: "x",
   manifestDir: "x",
 };
-const TAGGED_ROW = `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/ext.manifest\` |`;
+const TAGGED_ROW = `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/a/defold-x/x) | \`x/ext.manifest\` |`;
 
 const COMMIT = {
   repo: "https://github.com/b/defold-y",
@@ -29,7 +29,7 @@ const COMMIT = {
   namespace: "y",
   manifestDir: "y/native",
 };
-const COMMIT_ROW = `| [b/defold-y](https://github.com/b/defold-y) | [\`y\`](${LIBRARY_DOCS_URL}/api/y) | \`y/native/ext.manifest\` |`;
+const COMMIT_ROW = `| [b/defold-y](https://github.com/b/defold-y) | [\`y\`](${LIBRARY_DOCS_URL}/api/b/defold-y/y) | \`y/native/ext.manifest\` |`;
 
 describe("curatedNativeTable", () => {
   test("renders the guide's header and separator, then one row per target in input order", () => {
@@ -56,7 +56,7 @@ describe("curatedNativeTable", () => {
   test("the manifest path comes from manifestDir, not the namespace", () => {
     const row = curatedNativeTable([{ ...TAGGED, manifestDir: "x/native" }]).split("\n")[2];
     expect(row).toBe(
-      `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/native/ext.manifest\` |`,
+      `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/a/defold-x/x) | \`x/native/ext.manifest\` |`,
     );
   });
 });
