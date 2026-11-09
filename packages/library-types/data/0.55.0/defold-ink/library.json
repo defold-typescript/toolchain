@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/abadonna/defold-ink",
   "license": "Unlicense",
+  "refKind": "commit",
   "forks": [
     {
       "authored": "fork/ink.story.d.ts",

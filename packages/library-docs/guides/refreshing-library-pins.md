@@ -295,6 +295,10 @@ skip it.
   druid, `meta.commit` is the `ref` in `druid/reviewed.json` and
   `meta.sourceUrl` is `https://github.com/Insality/druid/tree/<ref>`. A bump
   moves both, and they are in a different package from the pin you edited.
+- **The pin kind.** `refKind` in the library's `library.json` says whether the pin
+  is a release, a tag or a commit, and the docs page's adopt step follows it. It
+  moves with the pin: `api-surface-loader.test.ts` reds when the asset-portal
+  register records another kind at the same ref.
 - **The pin-refresh record.** `packages/library-types/pin-refresh.json` states which
   members a bump added and removed, one entry per refresh, each tagged with the
   `lane` it belongs to (`luals`, `script-api`, or `openapi`).

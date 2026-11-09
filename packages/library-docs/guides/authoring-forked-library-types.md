@@ -108,7 +108,7 @@ vendored commit:
 | ---- | ----- | -------- | ---------- |
 | `library.json` | `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
 | `library.json` | `license` | no | SPDX-style license id, surfaced by the library page's provenance block. Defaults to `""`. |
-| `library.json` | `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
+| `library.json` | `refKind` | no | `"tag"` or `"commit"` when upstream publishes no stable release (GitHub's latest release skips prereleases), so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
 | `reviewed.json` | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
 
 Each forked module is one entry in `library.json`'s `forks` list:

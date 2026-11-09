@@ -515,15 +515,21 @@ interface LualsProvenance {
   // entries leave it undefined, so the import module path falls back to the
   // namespace, keeping their `from "…"` output unchanged.
   moduleId?: string;
-  // Authored libraries only: set when upstream publishes no releases, so the adopt
-  // step names the pinned tag or commit archive instead of a releases page.
+  // Every lane: set when upstream publishes no stable release, so the adopt step
+  // names the pinned tag or commit archive instead of a releases page.
   refKind?: "release" | "tag" | "commit";
 }
 
 function loadLualsProvenance(dirs: LibraryDirs): Map<string, LualsProvenance> {
   return new Map(
-    siteLibraries(dirs).flatMap(({ repo, ref, license, luals }) =>
-      luals.map(({ namespace }) => [namespace, { repo, ref, license }] as const),
+    siteLibraries(dirs).flatMap(({ repo, ref, license, refKind, luals }) =>
+      luals.map(
+        ({ namespace }) =>
+          [
+            namespace,
+            { repo, ref, license, ...(refKind === undefined ? {} : { refKind }) },
+          ] as const,
+      ),
     ),
   );
 }
@@ -536,8 +542,14 @@ function loadLualsProvenance(dirs: LibraryDirs): Map<string, LualsProvenance> {
 // the `api-doc/<namespace>.json` stem and thus the page key.
 function loadScriptApiProvenance(dirs: LibraryDirs): Map<string, LualsProvenance> {
   return new Map(
-    siteLibraries(dirs).flatMap(({ repo, ref, license, scriptApi }) =>
-      scriptApi.map(({ namespace }) => [namespace, { repo, ref, license }] as const),
+    siteLibraries(dirs).flatMap(({ repo, ref, license, refKind, scriptApi }) =>
+      scriptApi.map(
+        ({ namespace }) =>
+          [
+            namespace,
+            { repo, ref, license, ...(refKind === undefined ? {} : { refKind }) },
+          ] as const,
+      ),
     ),
   );
 }
@@ -591,8 +603,8 @@ export function loadLibraryProvenance(dirs: LibraryDirs): (namespace: string) =>
   const moduleDir = libraryModuleDirs(dirs);
   // A namespace this repo maintains from primary source — LuaLS, script_api, *or*
   // a first-party authored/forked `.d.ts` — is authored-here and carries its own
-  // upstream pin. Every loader yields the same `{repo, ref, license}` shape keyed
-  // by namespace.
+  // upstream pin. Every loader yields the same `{repo, ref, license, refKind}`
+  // shape keyed by namespace.
   const maintainedHere = new Map([
     ...loadLualsProvenance(dirs),
     ...loadScriptApiProvenance(dirs),

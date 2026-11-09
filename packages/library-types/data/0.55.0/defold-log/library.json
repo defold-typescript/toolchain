@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-log",
   "license": "MIT",
+  "refKind": "tag",
   "floors": {
     "log.log": 1
   }

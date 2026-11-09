@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-saver",
   "license": "MIT",
+  "refKind": "tag",
   "floors": {
     "saver.saver": 1,
     "saver.storage": 1

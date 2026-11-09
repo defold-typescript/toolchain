@@ -39,23 +39,45 @@ const FIXTURE_DIRS = dirsAt(FIXTURE_ROOT);
 const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
 const loadPages = (dirs: LibraryDirs) => loadLibraryPageSources(dirs).map((source) => source.page);
 
-// A native extension's library folder, named for its repo as library data names it.
-function writeNativeLibrary(
+// A library folder, named for its repo as library data names it, typed by one
+// lane: a `native` block in `library.json` (the default), or a `recipe.json`
+// LuaLS or `.script_api` entry.
+function writeLibrary(
   dataDir: string,
-  native: { repo: string; ref: string; refKind?: string; namespace: string },
+  library: {
+    repo: string;
+    ref: string;
+    refKind?: string;
+    namespace: string;
+    lane?: "native" | "luals" | "scriptApi";
+  },
 ): void {
-  const folder = join(dataDir, native.repo.split("/").pop() as string);
+  const { repo, ref, refKind, namespace, lane = "native" } = library;
+  const folder = join(dataDir, repo.split("/").pop() as string);
   mkdirSync(folder, { recursive: true });
   writeFileSync(
     join(folder, "library.json"),
     JSON.stringify({
-      repo: native.repo,
+      repo,
       license: "MIT",
-      ...(native.refKind === undefined ? {} : { refKind: native.refKind }),
-      native: { namespace: native.namespace },
+      ...(refKind === undefined ? {} : { refKind }),
+      ...(lane === "native" ? { native: { namespace } } : {}),
     }),
   );
-  writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref: native.ref }));
+  const moduleId = `${namespace}.${namespace}`;
+  if (lane === "luals") {
+    writeFileSync(
+      join(folder, "recipe.json"),
+      JSON.stringify({ luals: [{ moduleId, namespace }] }),
+    );
+  }
+  if (lane === "scriptApi") {
+    writeFileSync(
+      join(folder, "recipe.json"),
+      JSON.stringify({ scriptApi: [{ moduleId, namespace, apiDoc: `api-doc/${namespace}.json` }] }),
+    );
+  }
+  writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref }));
 }
 
 describe("githubOwner", () => {
@@ -219,51 +241,6 @@ describe("loadLibraryProvenance — curated native extensions", () => {
     }
   });
 
-  test("gives each native page the adopt step for the pin kind the portal register records", () => {
-    const { entries } = JSON.parse(
-      readFileSync(join(REAL_DIRS.dataDir, "asset-portal.json"), "utf8"),
-    ) as { entries: { repo?: string; ref?: string; refKind?: "release" | "tag" | "commit" }[] };
-    const matched = targets.flatMap((target) => {
-      const entry = entries.find(
-        (e) => e.repo?.toLowerCase() === target.repo.toLowerCase() && e.ref === target.ref,
-      );
-      return entry ? [{ target, refKind: entry.refKind }] : [];
-    });
-    expect(matched.length).toBeGreaterThan(0);
-    const pages = loadPages(REAL_DIRS);
-    for (const { target, refKind } of matched) {
-      const page = pages.find((p) => p.namespace === target.namespace);
-      if (!page) throw new Error(`no library page for native namespace ${target.namespace}`);
-      expect({
-        namespace: target.namespace,
-        markdown: apiPageMarkdown(page, apiLinkify([page])).includes(
-          dependencyStep(target.repo, refKind, target.ref),
-        ),
-      }).toEqual({ namespace: target.namespace, markdown: true });
-    }
-  });
-
-  test("carries a commit pin as the page's pin kind, and no pin kind for a release", () => {
-    const dir = mkdtempSync(join(tmpdir(), "native-pin-kind-"));
-    cpSync(FIXTURE_ROOT, dir, { recursive: true });
-    const dirs = dirsAt(dir);
-    const { dataDir } = dirs;
-    writeNativeLibrary(dataDir, {
-      repo: "https://github.com/someone/native-pinned",
-      ref: "0123456789abcdef0123456789abcdef01234567",
-      refKind: "commit",
-      namespace: "pinned",
-    });
-    writeNativeLibrary(dataDir, {
-      repo: "https://github.com/someone/native-released",
-      ref: "v1.0.0",
-      namespace: "released",
-    });
-    const fixtureMeta = loadLibraryProvenance(dirs);
-    expect(fixtureMeta("pinned").pinKind).toBe("commit");
-    expect(fixtureMeta("released").pinKind).toBeUndefined();
-  });
-
   test("groups each native namespace under its upstream owner and repo", () => {
     const origins = libraryOriginByNamespace(REAL_DIRS);
     expect(origins.get("daabbcc")).toEqual({
@@ -276,6 +253,71 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       repo: "defold-sharing",
       url: "https://github.com/britzl/defold-sharing",
     });
+  });
+});
+
+describe("loadLibraryProvenance — pin kind", () => {
+  test("carries each lane's tag or commit pin as the page's pin kind, and no pin kind for a release", () => {
+    const dir = mkdtempSync(join(tmpdir(), "library-pin-kind-"));
+    cpSync(FIXTURE_ROOT, dir, { recursive: true });
+    const dirs = dirsAt(dir);
+    const { dataDir } = dirs;
+    writeLibrary(dataDir, {
+      repo: "https://github.com/someone/native-pinned",
+      ref: "0123456789abcdef0123456789abcdef01234567",
+      refKind: "commit",
+      namespace: "pinned",
+    });
+    writeLibrary(dataDir, {
+      repo: "https://github.com/someone/native-released",
+      ref: "v1.0.0",
+      namespace: "released",
+    });
+    writeLibrary(dataDir, {
+      repo: "https://github.com/someone/luals-tagged",
+      ref: "6",
+      refKind: "tag",
+      namespace: "lualstagged",
+      lane: "luals",
+    });
+    writeLibrary(dataDir, {
+      repo: "https://github.com/someone/script-api-tagged",
+      ref: "2",
+      refKind: "tag",
+      namespace: "scriptapitagged",
+      lane: "scriptApi",
+    });
+    const fixtureMeta = loadLibraryProvenance(dirs);
+    expect(fixtureMeta("pinned").pinKind).toBe("commit");
+    expect(fixtureMeta("released").pinKind).toBeUndefined();
+    expect(fixtureMeta("lualstagged").pinKind).toBe("tag");
+    expect(fixtureMeta("scriptapitagged").pinKind).toBe("tag");
+  });
+});
+
+describe("library pages — adopt step against the asset-portal register", () => {
+  test("gives every library page the adopt step for the pin kind the register records at its ref", () => {
+    const { entries } = JSON.parse(
+      readFileSync(join(REAL_DIRS.dataDir, "asset-portal.json"), "utf8"),
+    ) as { entries: { repo?: string; ref?: string; refKind?: "release" | "tag" | "commit" }[] };
+    const matched = loadPages(REAL_DIRS).flatMap((page) => {
+      const meta = page.libraryMeta;
+      if (!meta?.authorUrl) return [];
+      const entry = entries.find(
+        (e) => e.repo?.toLowerCase() === meta.authorUrl.toLowerCase() && e.ref === meta.commit,
+      );
+      return entry ? [{ page, meta, refKind: entry.refKind }] : [];
+    });
+    expect(matched.length).toBeGreaterThan(0);
+    const mismatched = matched
+      .filter(
+        ({ page, meta, refKind }) =>
+          !apiPageMarkdown(page, apiLinkify([page])).includes(
+            dependencyStep(meta.authorUrl, refKind, meta.commit),
+          ),
+      )
+      .map(({ page, refKind }) => `${page.namespace} (${refKind ?? "release"})`);
+    expect(mismatched).toEqual([]);
   });
 });
 
@@ -1022,7 +1064,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
         writeFileSync(join(dirs.modelDir, "native", `${namespace}.json`), emptyDoc(namespace));
       }
       for (const namespace of options.nativeNamespaces) {
-        writeNativeLibrary(dir, {
+        writeLibrary(dir, {
           repo: `https://github.com/someone/native-${namespace}`,
           ref: "1.0.0",
           namespace,
