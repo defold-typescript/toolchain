@@ -969,7 +969,7 @@ describe("runBuild", () => {
   });
 
   const EDITOR_SCRIPT = [
-    'import { defineEditorScript } from "@defold-typescript/types";',
+    'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
     "export default defineEditorScript({",
     '  get_commands: () => [{ label: "Say Hi", locations: ["Edit"], run: () => print("hi") }],',
     "});",

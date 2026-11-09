@@ -226,7 +226,7 @@ describe("detectSourceOutputKind", () => {
     expect(detectSourceOutputKind("export default defineEditorScript({});")).toBe("editor-script");
     expect(
       detectSourceOutputKind(
-        'import { defineEditorScript } from "@defold-typescript/types";\nexport const helper = 1;',
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";\nexport const helper = 1;',
       ),
     ).toBe("module");
   });

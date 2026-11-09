@@ -10,4 +10,4 @@ import "../../../../src/editor-overloads";
 import "../../../../src/editor-vm-globals";
 
 export { defineEditorScript, defineEditorCommand } from "../../../../src/editor";
-export type { EditorCommandQuery, EditorNode } from "../../../../src/editor";
+export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "../../../../src/editor";

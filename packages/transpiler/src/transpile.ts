@@ -187,8 +187,6 @@ function buildAmbientFiles(): Record<string, string> {
     "node_modules/@defold-typescript/types/index.ts": [
       'export { defineGuiScript, defineRenderScript, defineScript } from "./src/lifecycle";',
       'export type { GuiScriptHooks, InputAction, InputTouch, RenderScriptHooks, ScriptHooks, ScriptProperties, ScriptProperty } from "./src/lifecycle";',
-      'export { defineEditorScript } from "./src/editor";',
-      'export type { EditorCommand, EditorScriptModule } from "./src/editor";',
       'export type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "./src/core-types";',
       "",
     ].join("\n"),
@@ -210,7 +208,7 @@ function buildAmbientFiles(): Record<string, string> {
       'export { defineRenderScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
     "node_modules/@defold-typescript/types/editor-script.d.ts": [
       'export { defineEditorCommand, defineEditorScript } from "./src/editor.js";',
-      'export type { EditorCommandQuery, EditorNode } from "./src/editor.js";',
+      'export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "./src/editor.js";',
       "",
     ].join("\n"),
   };

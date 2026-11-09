@@ -1478,7 +1478,7 @@ describe("editor-script kind index", () => {
       'export { defineEditorScript, defineEditorCommand } from "../../src/editor";',
     );
     expect(fresh).toContain(
-      'export type { EditorCommandQuery, EditorNode } from "../../src/editor";',
+      'export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "../../src/editor";',
     );
     for (const name of [
       "ScriptProperty",
