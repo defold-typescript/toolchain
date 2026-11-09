@@ -9496,7 +9496,9 @@ archive that names no commit is an error, so use a tag URL for it.
 A folder that already exists, including one created during the download, is an
 error and stays as it was. The folder name leaves out the host, so a folder whose
 `library.json` names the same `owner/repo` on another host is an error that names
-that repo.
+that repo. A URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and
+`-`, or is `.` or `..`, is refused before the download, so the folder always sits
+inside the data folder.
 
 What the archive shares under its `[library] include_dirs` picks the recipe,
 leaving out example, test, demo and sample directories:

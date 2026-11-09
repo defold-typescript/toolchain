@@ -336,6 +336,28 @@ describe("addLibrary", () => {
     expect(existsSync(join(dataDir, "owner/mylib/library.json"))).toBe(true);
   });
 
+  test.each([
+    "https://host/../mylib/archive/v1.zip",
+    "https://host/owner/a\\..\\..\\mylib/archive/v1.zip",
+  ])("%s throws before any download and writes nothing", async (url) => {
+    let downloads = 0;
+    const bytes = archive({ files: { "mylib/mylib.lua": ANNOTATED } });
+
+    await expect(
+      addLibrary(url, dataDir, {
+        cacheDir,
+        download: async () => {
+          downloads += 1;
+          return { status: "ok", bytes };
+        },
+      }),
+    ).rejects.toThrow("is not an owner/repo of plain names");
+
+    expect(downloads).toBe(0);
+    expect(readdirSync(dataDir)).toEqual([]);
+    expect(readdirSync(base).sort()).toEqual(["data"]);
+  });
+
   test("a folder another host's repo holds throws naming that repo and writes nothing", async () => {
     mkdirSync(join(dataDir, "owner/mylib"), { recursive: true });
     writeFileSync(
