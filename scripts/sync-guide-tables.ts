@@ -6,6 +6,7 @@ import {
   readNativeTargets,
 } from "../packages/cli/src/library/sync-native-types.ts";
 import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
+import { libraryApiRoute } from "../packages/docs-render/src/library-routes.ts";
 
 // Guide tables that list one row per shipped target. Each lives in a marked
 // region of its guide page and is rewritten from the registry the toolchain
@@ -29,7 +30,7 @@ function repoSlug(repo: string): string {
 export function curatedNativeTable(targets: readonly CuratedNativeRow[]): string {
   const rows = targets.map(
     (target) =>
-      `| [${repoSlug(target.repo)}](${target.repo}) | [\`${target.namespace}\`](${LIBRARY_DOCS_URL}/api/${target.namespace}) | \`${target.manifestDir}/ext.manifest\` |`,
+      `| [${repoSlug(target.repo)}](${target.repo}) | [\`${target.namespace}\`](${LIBRARY_DOCS_URL}${libraryApiRoute(target.repo, target.namespace)}) | \`${target.manifestDir}/ext.manifest\` |`,
   );
   return [
     "| Extension | Namespace | Confirmed by        |",
