@@ -51,12 +51,16 @@ export function createApiNamespaceRoute(dirs?: LibraryDirs) {
 
       const links = linkPages(dirs);
       const { owner, repo } = libraryLineage(page.namespace, libraryOrigins(dirs));
-      // The heading is the styled path, so the markdown body omits its H1.
+      // A name several libraries (or a library and the engine) declare links only
+      // on a page that declares it, to that page's own heading.
       const body = await renderMarkdown(
-        apiPageMarkdown(page, apiLinkify(links), { omitHeading: true }),
+        apiPageMarkdown(page, apiLinkify(links, { current: page, ambiguous: "drop" }), {
+          // The heading is the styled path, so the markdown body omits its H1.
+          omitHeading: true,
+        }),
         {
           highlightSignatureHeadings: true,
-          signatureSymbolLinks: apiSignatureSymbolLinks(links, page),
+          signatureSymbolLinks: apiSignatureSymbolLinks(links, page, links, { ambiguous: "drop" }),
         },
       );
       return c.render(

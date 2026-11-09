@@ -2,6 +2,7 @@ import {
   type ApiPage,
   apiModuleSections,
   qualify,
+  symbolNamespace,
 } from "@defold-typescript/docs-render/api-surface";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
@@ -32,7 +33,11 @@ function pageSearchRecords(
     const route = `${page.route}#${anchor}`;
     const record = byRoute.get(route);
     if (record) record.text.push(member.text);
-    else byRoute.set(route, { title: qualify(page.namespace, member.name), text: [member.text] });
+    else
+      byRoute.set(route, {
+        title: qualify(symbolNamespace(page), member.name),
+        text: [member.text],
+      });
   }
   return [
     {

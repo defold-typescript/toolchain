@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { siteDirs } from "../app/lib/api-content";
 import type { LibraryDirs } from "../app/lib/api-surface-loader";
 import { searchIndexOutputs } from "./build-search-index";
 import { symbolIndexOutputs } from "./build-symbol-index";
@@ -68,6 +69,13 @@ describe("searchIndexOutputs", () => {
     const member = records(dirs).find((record) => record.title === "demo.one.greet");
     expect(member?.route).toStartWith("/api/someone/demolib/demo.one#");
     expect(member?.text).toContain("Say hello to the player");
+  });
+
+  test("a library member is titled by the namespace its page documents", () => {
+    const member = records(siteDirs(join(import.meta.dir, ".."))).find(
+      (record) => record.title === "gui.new_spine_node",
+    );
+    expect(member?.route).toStartWith("/api/defold/extension-spine/gui#");
   });
 
   test("a listing is found at its /libraries/<owner>/<repo> route", () => {
