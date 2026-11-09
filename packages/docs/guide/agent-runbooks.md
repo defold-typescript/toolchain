@@ -173,13 +173,14 @@ surface that dependency actually contributed:
 | `"shipped"`          | the [declarations it ships](./resolve.md#types-a-library-ships) in `types/` replaced every other surface | its installed file stems |
 | `"extension"`        | it emitted a [`@globalTable` module](./extensions.md#module-form-native-extensions) per `.script_api` doc, or an ambient namespace for a doc that extends an engine namespace | its namespaces |
 | `"vendored-native"`  | a [curated native declaration](./resolve.md#curated-native-extensions) replaced anything the archive ships | its curated namespace |
-| `"vendored-library"` | a confirmed corpus match supersedes it; its types are in `libraries[]`     | `[]`         |
+| `"vendored-library"` | a confirmed corpus match supersedes the docs for the namespaces its library publishes; its types are in `libraries[]` | the archive's other `.script_api` namespaces, usually `[]` |
 | `"none"`             | asset-only with no confirmed match — it contributes no types at all        | `[]`         |
 
 An entry with `namespaces: []` is **normal** for the latter two, not a failure —
 read `typeSurface` rather than inferring from an empty `namespaces` or from
-`assetOnly` (a superseded dependency is `assetOnly: false` and still contributes
-no namespace). Every declared dependency keeps an entry, so a pin-drift check
+`assetOnly` (a superseded dependency is `assetOnly: false` and lists only the
+namespaces its library does not type, such as `defsave_ext` beside the
+`defsave.defsave` module). Every declared dependency keeps an entry, so a pin-drift check
 still sees it. Summing `extensions[].namespaces` and `libraries[].modules`
 therefore yields each module exactly once, except a namespace several
 dependencies share, which each of them lists (see `sharedNamespaces` below):
@@ -698,7 +699,8 @@ On failure:
 (`.defold-types/extensions`), and `extensions` records where each dependency
 came from (`provenance`), which type surface it contributed (`typeSurface`), how
 many `.script_api` files the archive carries (`scriptApiCount` — a
-`"vendored-library"` entry can carry docs and still contribute no namespace), how many
+`"vendored-library"` entry counts the docs its library replaced, so it can exceed
+its `namespaces`), how many
 scene sources it shared (`sceneSources`), what kind of URL it is (`ref`), and its pin state
 (`resolvedVersion`/`resolvedFiles`/`pinStatus`). Pins live in the committed
 [`defold-typescript.lock`](./resolve.md#the-lockfile), which `resolve` writes, so
