@@ -1,0 +1,773 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "material.CONSTANT_TYPE",
+      "brief": "Material constant types",
+      "description": "Material constant types",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "material.CONSTANT_TYPE_USER",
+          "doc": "User vector constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_USER_COLOR",
+          "doc": "User color constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_USER_MATRIX4",
+          "doc": "User matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_VIEWPROJ",
+          "doc": "View-projection matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLD",
+          "doc": "World matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_TEXTURE",
+          "doc": "Texture matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_VIEW",
+          "doc": "View matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_PROJECTION",
+          "doc": "Projection matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_NORMAL",
+          "doc": "Normal matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLDVIEW",
+          "doc": "World-view matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLDVIEWPROJ",
+          "doc": "World-view-projection matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_TIME",
+          "doc": "Time constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLD_INVERSE",
+          "doc": "Inverse world matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_VIEW_INVERSE",
+          "doc": "Inverse view matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_PROJECTION_INVERSE",
+          "doc": "Inverse projection matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_VIEWPROJ_INVERSE",
+          "doc": "Inverse view-projection matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLDVIEW_INVERSE",
+          "doc": "Inverse world-view matrix constant.",
+          "type": ""
+        },
+        {
+          "name": "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE",
+          "doc": "Inverse world-view-projection matrix constant.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "material.constant_value",
+      "brief": "Material constant value",
+      "description": "A value accepted by <a href=\"/ref/material#material.set_constants\">material.set_constants</a> when updating a shader\nconstant. Use a number or vector for user vector constants, a <span class=\"type\">matrix4</span>\nfor matrix constants, and an array to update a shader constant array.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number",
+            "vector3",
+            "vector4",
+            "matrix4",
+            "(number|vector3|vector4|matrix4)[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_constants</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"n\">tint</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"p\">},</span>\n    <span class=\"n\">weights</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mf\">0.25</span><span class=\"p\">,</span> <span class=\"mf\">0.5</span><span class=\"p\">,</span> <span class=\"mf\">0.75</span><span class=\"p\">,</span> <span class=\"mi\">1</span> <span class=\"p\">}</span> <span class=\"p\">}</span>\n<span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "material.constant_info_value",
+      "brief": "Material constant result value",
+      "description": "The value of a user constant returned in a <span class=\"type\">material.constant_info</span>\nentry by <a href=\"/ref/material#material.get_constants\">material.get_constants</a>. A scalar constant is returned as a\n<span class=\"type\">vector4</span> or <span class=\"type\">matrix4</span>; a shader constant array is returned as an\narray of those values. Non-user constants do not include a <code>value</code> field.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["vector4", "matrix4", "vector4[]", "matrix4[]"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kr\">for</span> <span class=\"n\">_</span><span class=\"p\">,</span> <span class=\"n\">constant</span> <span class=\"kr\">in</span> <span class=\"nb\">ipairs</span><span class=\"p\">(</span><span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">get_constants</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">))</span> <span class=\"kr\">do</span>\n    <span class=\"kr\">if</span> <span class=\"n\">constant</span><span class=\"p\">.</span><span class=\"n\">value</span> <span class=\"kr\">then</span>\n        <span class=\"n\">pprint</span><span class=\"p\">(</span><span class=\"n\">constant</span><span class=\"p\">.</span><span class=\"n\">name</span><span class=\"p\">,</span> <span class=\"n\">constant</span><span class=\"p\">.</span><span class=\"n\">value</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "material.vertex_attribute_value",
+      "brief": "Material vertex attribute value",
+      "description": "A vertex attribute value accepted by <a href=\"/ref/material#material.set_vertex_attributes\">material.set_vertex_attributes</a>\nand returned by <a href=\"/ref/material#material.get_vertex_attributes\">material.get_vertex_attributes</a>. Use a number or vector\nfor scalar and vector attributes, <span class=\"type\">matrix4</span> for a 4x4 matrix, and a flat\narray of numbers for matrix shapes that do not map to <span class=\"type\">matrix4</span>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["number", "vector3", "vector4", "matrix4", "number[]"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_vertex_attributes</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"n\">tint</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"p\">},</span>\n    <span class=\"n\">transform_2d</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span> <span class=\"p\">}</span> <span class=\"p\">}</span>\n<span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.sampler_info",
+      "brief": "Texture sampler information",
+      "description": "Texture sampler information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "name",
+          "doc": "Sampler name.",
+          "type": "hash"
+        },
+        {
+          "name": "type",
+          "doc": "Sampler texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        },
+        {
+          "name": "u_wrap",
+          "doc": "Horizontal wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "v_wrap",
+          "doc": "Vertical wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "w_wrap",
+          "doc": "Depth wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "min_filter",
+          "doc": "Minification filter.",
+          "type": "graphics.TEXTURE_FILTER"
+        },
+        {
+          "name": "mag_filter",
+          "doc": "Magnification filter.",
+          "type": "graphics.TEXTURE_FILTER"
+        },
+        {
+          "name": "max_anisotropy",
+          "doc": "Maximum anisotropy.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.sampler_options",
+      "brief": "Texture sampler update",
+      "description": "Texture sampler update",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "u_wrap?",
+          "doc": "Horizontal wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "v_wrap?",
+          "doc": "Vertical wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "w_wrap?",
+          "doc": "Depth wrap mode.",
+          "type": "graphics.TEXTURE_WRAP"
+        },
+        {
+          "name": "min_filter?",
+          "doc": "Minification filter.",
+          "type": "graphics.TEXTURE_FILTER"
+        },
+        {
+          "name": "mag_filter?",
+          "doc": "Magnification filter.",
+          "type": "graphics.TEXTURE_FILTER"
+        },
+        {
+          "name": "max_anisotropy?",
+          "doc": "Maximum anisotropy.",
+          "type": "number"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.constant_info",
+      "brief": "Shader constant information",
+      "description": "Shader constant information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "name",
+          "doc": "Constant name.",
+          "type": "hash"
+        },
+        {
+          "name": "type",
+          "doc": "Constant type.",
+          "type": "material.CONSTANT_TYPE"
+        },
+        {
+          "name": "value?",
+          "doc": "Constant value or values. Present for user constants.",
+          "type": "material.constant_info_value"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.constant_options",
+      "brief": "Shader constant update",
+      "description": "Shader constant update",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "type?",
+          "doc": "Constant type.",
+          "type": "material.CONSTANT_TYPE"
+        },
+        {
+          "name": "value?",
+          "doc": "Constant value or values.",
+          "type": "material.constant_value"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.texture_info",
+      "brief": "Texture information",
+      "description": "Texture information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "path?",
+          "doc": "Texture resource path, if backed by a resource.",
+          "type": "hash"
+        },
+        {
+          "name": "handle",
+          "doc": "Runtime texture handle.",
+          "type": "texture"
+        },
+        {
+          "name": "width",
+          "doc": "Texture width.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Texture height.",
+          "type": "integer"
+        },
+        {
+          "name": "depth",
+          "doc": "Texture depth or layer count.",
+          "type": "integer"
+        },
+        {
+          "name": "page_count",
+          "doc": "Texture page count.",
+          "type": "integer"
+        },
+        {
+          "name": "mipmaps",
+          "doc": "Mipmap count.",
+          "type": "integer"
+        },
+        {
+          "name": "type",
+          "doc": "Texture type.",
+          "type": "graphics.TEXTURE_TYPE"
+        },
+        {
+          "name": "flags",
+          "doc": "Texture usage flags.",
+          "type": "graphics.TEXTURE_USAGE_FLAG"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.vertex_attribute_info",
+      "brief": "Material vertex attribute information",
+      "description": "Material vertex attribute information",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "name",
+          "doc": "Attribute name.",
+          "type": "hash"
+        },
+        {
+          "name": "value",
+          "doc": "Attribute value.",
+          "type": "material.vertex_attribute_value"
+        },
+        {
+          "name": "normalize",
+          "doc": "Whether integer data is normalized.",
+          "type": "boolean"
+        },
+        {
+          "name": "data_type",
+          "doc": "Attribute data type.",
+          "type": "graphics.DATA_TYPE"
+        },
+        {
+          "name": "coordinate_space",
+          "doc": "Attribute coordinate space.",
+          "type": "graphics.COORDINATE_SPACE"
+        },
+        {
+          "name": "semantic_type",
+          "doc": "Attribute semantic.",
+          "type": "graphics.SEMANTIC_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.vertex_attribute_options",
+      "brief": "Material vertex attribute update",
+      "description": "Material vertex attribute update",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "value?",
+          "doc": "Attribute value.",
+          "type": "material.vertex_attribute_value"
+        },
+        {
+          "name": "normalize?",
+          "doc": "Whether integer data is normalized.",
+          "type": "boolean"
+        },
+        {
+          "name": "data_type?",
+          "doc": "Attribute data type.",
+          "type": "graphics.DATA_TYPE"
+        },
+        {
+          "name": "coordinate_space?",
+          "doc": "Attribute coordinate space.",
+          "type": "graphics.COORDINATE_SPACE"
+        },
+        {
+          "name": "semantic_type?",
+          "doc": "Attribute semantic.",
+          "type": "graphics.SEMANTIC_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "material.named_vertex_attribute_options",
+      "brief": "Named material vertex attribute update",
+      "description": "Named material vertex attribute update",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "name",
+          "doc": "Attribute name.",
+          "type": "string|hash"
+        },
+        {
+          "name": "value?",
+          "doc": "Attribute value.",
+          "type": "material.vertex_attribute_value"
+        },
+        {
+          "name": "normalize?",
+          "doc": "Whether integer data is normalized.",
+          "type": "boolean"
+        },
+        {
+          "name": "data_type?",
+          "doc": "Attribute data type.",
+          "type": "graphics.DATA_TYPE"
+        },
+        {
+          "name": "coordinate_space?",
+          "doc": "Attribute coordinate space.",
+          "type": "graphics.COORDINATE_SPACE"
+        },
+        {
+          "name": "semantic_type?",
+          "doc": "Attribute semantic.",
+          "type": "graphics.SEMANTIC_TYPE"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.get_vertex_attributes",
+      "brief": "gets vertex attributes from a material",
+      "description": "Returns a table of all the vertex attributes in the material. This function will return all the vertex attributes\nthat are used in the vertex shader of the material.",
+      "returnvalues": [
+        {
+          "name": "attributes",
+          "doc": "vertex attribute information",
+          "types": ["material.vertex_attribute_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the vertex attributes from a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">vertex_attributes</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">get_vertex_attributes</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.get_samplers",
+      "brief": "gets texture samplers from a material",
+      "description": "Returns a table of all the texture samplers in the material. This function will return all the texture samplers\nthat are used in both the vertex and the fragment shaders.",
+      "returnvalues": [
+        {
+          "name": "samplers",
+          "doc": "texture sampler information",
+          "types": ["material.sampler_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the texture samplers from a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">samplers</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">get_samplers</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.get_constants",
+      "brief": "gets shader constants from a material",
+      "description": "Returns a table of all the shader constants in the material. This function will return all the shader constants\nthat are used in both the vertex and the fragment shaders.",
+      "returnvalues": [
+        {
+          "name": "constants",
+          "doc": "Shader constant information.",
+          "types": ["material.constant_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the shader constants from a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">constants</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">get_constants</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.get_textures",
+      "brief": "gets textures associated with a material",
+      "description": "Returns a table of all the textures from the material.",
+      "returnvalues": [
+        {
+          "name": "textures",
+          "doc": "material texture information",
+          "types": ["material.texture_info[]"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Get the textures from a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"kd\">local</span> <span class=\"n\">textures</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">get_textures</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">)</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.set_vertex_attributes",
+      "brief": "sets vertex attributes in a material",
+      "description": "Sets vertex attributes in a material, if the vertex attributes exist.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "attributes",
+          "doc": "Vertex attributes keyed by name, or an array with explicit <code>name</code> fields. Partial updates are supported.",
+          "types": [
+            "table<string|hash, material.vertex_attribute_options>",
+            "material.named_vertex_attribute_options[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Configures a vertex attribute in a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_vertex_attributes</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">tint_attribute</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vec4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">),</span> <span class=\"n\">semantic_type</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">SEMANTIC_TYPE_COLOR</span> <span class=\"p\">},</span>\n        <span class=\"n\">weights</span>        <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vec4</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span> <span class=\"n\">semantic_type</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">SEMANTIC_TYPE_NONE</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.set_samplers",
+      "brief": "sets texture samplers in a material",
+      "description": "Sets texture samplers in a material, if the samplers exist. Use this function to change the settings of texture samplers.\nTo set actual textures that should be bound to the samplers, use the <code>material.set_textures</code> function instead.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "samplers",
+          "doc": "Sampler updates keyed by sampler name. Partial updates are supported.",
+          "types": ["table<string|hash, material.sampler_options>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Configures a sampler in a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_samplers</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">texture_sampler</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">u_wrap</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_WRAP_REPEAT</span><span class=\"p\">,</span> <span class=\"n\">v_wrap</span> <span class=\"o\">=</span> <span class=\"n\">graphics</span><span class=\"p\">.</span><span class=\"n\">TEXTURE_WRAP_MIRRORED_REPEAT</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.set_constants",
+      "brief": "sets shader constants in a material",
+      "description": "Sets shader constants in a material, if the constants exist.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "constants",
+          "doc": "Shader constant updates keyed by constant name. Partial updates are supported.",
+          "types": ["table<string|hash, material.constant_options>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Set a shader constant in a material specified as a resource property\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">update</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"c1\">-- update the &#39;tint&#39; constant</span>\n    <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_constants</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">tint</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector4</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n    <span class=\"c1\">-- change the type of the &#39;view_proj&#39; constant to CONSTANT_TYPE_USER_MATRIX4 so the renderer can set our custom data</span>\n    <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_constants</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">view_proj</span> <span class=\"o\">=</span> <span class=\"p\">{</span> <span class=\"n\">value</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_view_proj</span><span class=\"p\">,</span> <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">CONSTANT_TYPE_USER_MATRIX4</span> <span class=\"p\">}</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "material.set_textures",
+      "brief": "sets textures in a material",
+      "description": "Sets textures in a material, if the samplers exist.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The path to the resource",
+          "types": ["hash", "string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "textures",
+          "doc": "A table keyed by sampler name with texture resources as values.",
+          "types": ["table<string|hash, string|hash>"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Set a texture in a material from a resource\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_material&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">material</span><span class=\"p\">())</span>\n<span class=\"n\">go</span><span class=\"p\">.</span><span class=\"n\">property</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_texture&quot;</span><span class=\"p\">,</span> <span class=\"n\">resource</span><span class=\"p\">.</span><span class=\"n\">texture</span><span class=\"p\">())</span>\n\n<span class=\"kr\">function</span> <span class=\"nf\">init</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">)</span>\n    <span class=\"n\">material</span><span class=\"p\">.</span><span class=\"n\">set_textures</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_material</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n        <span class=\"n\">my_texture</span> <span class=\"o\">=</span> <span class=\"n\">self</span><span class=\"p\">.</span><span class=\"n\">my_texture</span>\n    <span class=\"p\">})</span>\n<span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "material",
+    "name": "Material",
+    "brief": "Material API documentation",
+    "description": "Functions for interacting with materials.",
+    "path": "engine/gamesys/src/gamesys/scripts/script_material.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

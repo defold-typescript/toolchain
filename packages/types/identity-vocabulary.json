@@ -86,6 +86,8 @@
     "physics.joint_properties_info",
     "physics.raycast_options",
     "physics.shape_data",
+    "recorder.options",
+    "recorder.result",
     "render.camera_options",
     "render.debug_draw_options",
     "render.dispatch_options",
@@ -111,6 +113,7 @@
     "resource.texture_update_params",
     "socket.dns.address_info",
     "socket.dns.host_info",
+    "sound.parameter_properties",
     "sound.play_completion",
     "sound.play_properties",
     "sound.stop_properties",
@@ -124,6 +127,7 @@
     "sys.sys_info_options",
     "timer.info",
     "window.event_data",
+    "window.reserved_area",
     "window.safe_area"
   ],
   "enums": {
@@ -185,6 +189,7 @@
     "physics.SHAPE_TYPE": "number",
     "profiler.MODE": "number",
     "profiler.VIEW_MODE": "number",
+    "recorder.EVENT": "number",
     "render.ClearBufferKey": "number",
     "render.CONTEXT_EVENT": "number",
     "render.FRUSTUM_PLANES": "number",

@@ -1,0 +1,89 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.tilemap
+---@field tiles defold_api.tilemap.tiles
+tilemap = {}
+
+---@class defold_api.tilemap.tiles
+tilemap.tiles = {}
+
+---Remove all tiles
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@return editor.tiles tiles unbounded 2d grid of tiles
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.clear:tiles)
+function tilemap.tiles.clear(tiles) end
+
+---Get full information from a tile at a particular coordinate
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@param x integer x coordinate of a tile
+---@param y integer y coordinate of a tile
+---@return tilemap.tiles.get_info.result|nil info full tile information, or nil if no tile is set at the coordinate
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.get_info:tiles-x-y)
+function tilemap.tiles.get_info(tiles, x, y) end
+
+---Get a tile index at a particular coordinate
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@param x integer x coordinate of a tile
+---@param y integer y coordinate of a tile
+---@return integer tile_index 1-indexed tile index of a tilemap's tilesource
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.get_tile:tiles-x-y)
+function tilemap.tiles.get_tile(tiles, x, y) end
+
+---Create an iterator over all tiles in a tiles data structure
+---
+---When iterating using for loop, each iteration returns x, y and tile index of a tile in a tile map
+---
+---**Examples:**
+---
+---Iterate over all tiles in a tile map:
+---```
+---local layers = editor.get("/level.tilemap", "layers")
+---for i = 1, #layers do
+---  local tiles = editor.get(layers[i], "tiles")
+---  for x, y, i in tilemap.tiles.iterator(tiles) do
+---    print(x, y, i)
+---  end
+---end
+---```
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@return function iter iterator
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.iterator:tiles)
+function tilemap.tiles.iterator(tiles) end
+
+---Create a new unbounded 2d grid data structure for storing tilemap layer tiles
+---@return editor.tiles tiles unbounded 2d grid of tiles
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.new:)
+function tilemap.tiles.new() end
+
+---Remove a tile at a particular coordinate
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@param x integer x coordinate of a tile
+---@param y integer y coordinate of a tile
+---@return editor.tiles tiles unbounded 2d grid of tiles
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.remove:tiles-x-y)
+function tilemap.tiles.remove(tiles, x, y) end
+
+---Set a tile at a particular coordinate
+---@param tiles editor.tiles unbounded 2d grid of tiles
+---@param x integer x coordinate of a tile
+---@param y integer y coordinate of a tile
+---@param tile_or_info integer|tilemap.tiles.set.info Either 1-indexed tile index of a tilemap's tilesource or full tile information
+---@return editor.tiles tiles unbounded 2d grid of tiles
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.set:tiles-x-y-tile_or_info)
+function tilemap.tiles.set(tiles, x, y, tile_or_info) end

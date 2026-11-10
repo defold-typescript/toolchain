@@ -665,6 +665,8 @@ declare global {
      * @param arg4 - argument 4
      * @param arg5 - argument 5
      * @param arg6 - argument 6
+     * @param arg7 - argument 7
+     * @param arg8 - argument 8
      * @example
      * ```ts
      * // How to reboot engine with a specific bootstrap collection.
@@ -673,7 +675,7 @@ declare global {
      * sys.reboot(arg1, arg2);
      * ```
      */
-    function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
+    function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string, arg7?: string, arg8?: string): void;
     /**
      * The table can later be loaded by `sys.load`.
      * Use `sys.get_save_file` to obtain a valid location for the file.

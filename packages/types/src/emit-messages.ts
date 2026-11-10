@@ -140,7 +140,7 @@ export function applyMessageFieldCorrections(
 // What only the engine states about a message the catalog mirrors from the
 // reference: proto optionality, a field the handler reads or the sender fills,
 // a message a component handles or posts, or the shape of a field the reference
-// types only as `table`. `evidence` names `<path>:<symbol>` in the 1.14.0 engine
+// types only as `table`. `evidence` names `<path>:<symbol>` in the 1.14.1 engine
 // source. Each kind throws once the catalog already states its fact, since that
 // means upstream fixed the reference and the entry is deleted; a `retype` throws
 // once the catalog stops declaring its pinned `upstream` types, since upstream
@@ -205,15 +205,8 @@ export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
     kind: "optional",
     origin: "sys",
     name: "reboot",
-    fields: ["arg1", "arg2", "arg3", "arg4", "arg5", "arg6"],
+    fields: ["arg1", "arg2", "arg3", "arg4", "arg5", "arg6", "arg7", "arg8"],
     evidence: `script/src/script/sys_ddf.proto:Reboot declares every argument optional, engine/src/engine.cpp:Dispatch handles it, and ${SCRIPT_DDF_DEFAULTS}`,
-  },
-  {
-    kind: "optional",
-    origin: "sys",
-    name: "start_record",
-    fields: ["frame_period", "fps"],
-    evidence: `script/src/script/sys_ddf.proto:StartRecord declares both optional with defaults 2 and 30, engine/src/engine.cpp:Dispatch handles it, and ${SCRIPT_DDF_DEFAULTS}`,
   },
   {
     kind: "optional",
@@ -276,15 +269,6 @@ export const MESSAGE_ENGINE_CORRECTIONS: readonly MessageEngineCorrection[] = [
     fields: [optionalField("pause", ["boolean"], "true (default) to pause, false to resume.")],
     evidence:
       "gamesys/proto/gamesys/gamesys_ddf.proto:PauseSound declares pause, and comp_sound.cpp:CompSoundOnMessage pauses every voice of the component",
-  },
-  {
-    kind: "add-message",
-    origin: "sound",
-    name: "set_pan",
-    description: "Set the pan on the receiving sound component.",
-    fields: [optionalField("pan", ["number"], "Pan between -1 and 1, default 0.")],
-    evidence:
-      "gamesys/proto/gamesys/gamesys_ddf.proto:SetPan declares pan, and comp_sound.cpp:CompSoundOnMessage sets the component's pan",
   },
   {
     kind: "add-message",

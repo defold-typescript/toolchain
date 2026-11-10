@@ -1,0 +1,237 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "zip.pack.entry",
+      "brief": "zIP entry containing a source path, optional archive target path, and optional compression settings",
+      "description": "ZIP entry containing a source path, optional archive target path, and optional compression settings",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "zIP entry containing a source path, optional archive target path, and optional compression settings",
+          "types": ["{[1]:string, [2]?:string, method?:zip.METHOD, level?:integer}"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "zip.pack.entries",
+      "brief": "entries included in a ZIP archive",
+      "description": "Entries included in a ZIP archive",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "entries included in a ZIP archive",
+          "types": ["(string|zip.pack.entry)[]"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "zip.pack.options",
+      "brief": "options for zip.pack",
+      "description": "Options for zip.pack",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "method?",
+          "doc": "compression method, defaults to <code>zip.METHOD.DEFLATED</code>",
+          "type": "zip.METHOD"
+        },
+        {
+          "name": "level?",
+          "doc": "compression level from 0 to 9 for deflated entries; defaults to 6",
+          "type": "integer"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "zip.unpack.options",
+      "brief": "options for zip.unpack",
+      "description": "Options for zip.unpack",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        { "name": "on_conflict", "doc": "conflict resolution strategy", "type": "zip.ON_CONFLICT" }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zip.pack",
+      "brief": "create a ZIP archive",
+      "description": "Create a ZIP archive",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "output_path",
+          "doc": "output zip file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "compression options",
+          "types": ["zip.pack.options"],
+          "is_optional": "True"
+        },
+        {
+          "name": "entries",
+          "doc": "files and folders to include in the archive",
+          "types": ["zip.pack.entries"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Archive a file and a folder:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {&quot;build&quot;, &quot;game.project&quot;})\n</code></pre></div>\n\nChange the location of the files within the archive:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  {&quot;build/wasm-web&quot;, &quot;.&quot;},\n  {&quot;configs/prod.json&quot;, &quot;config.json&quot;}\n})\n</code></pre></div>\n\nCreate archive without compression (much faster to create the archive, bigger archive file size, allows mmap access):\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {method = zip.METHOD.STORED}, {\n  &quot;build&quot;,\n  &quot;resources&quot;\n})\n</code></pre></div>\n\nDon't compress one of the folders:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  {&quot;assets&quot;, method = zip.METHOD.STORED},\n  &quot;build/wasm-web&quot;\n})\n</code></pre></div>\n\nInclude files from outside the project:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  &quot;build&quot;,\n  {&quot;../secrets/auth-key.txt&quot;, &quot;auth-key.txt&quot;}\n})\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zip.unpack",
+      "brief": "extract a ZIP archive",
+      "description": "Extract a ZIP archive",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "archive_path",
+          "doc": "zip file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "target_path",
+          "doc": "target path for extraction, defaults to parent of <code>archive_path</code> if omitted",
+          "types": ["string"],
+          "is_optional": "True"
+        },
+        {
+          "name": "opts",
+          "doc": "extraction options; conflict handling defaults to <code>zip.ON_CONFLICT.ERROR</code>",
+          "types": ["zip.unpack.options"],
+          "is_optional": "True"
+        },
+        {
+          "name": "paths",
+          "doc": "entries to extract, relative string paths",
+          "types": ["string[]"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Extract everything to a build dir:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span><span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nExtract to a different directory:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"s2\">&quot;build/dev/tmp&quot;</span><span class=\"p\">,</span>\n<span class=\"p\">)</span>\n</code></pre></div>\n\nExtract while overwriting existing files on conflict:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"p\">{</span><span class=\"n\">on_conflict</span> <span class=\"o\">=</span> <span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">ON_CONFLICT</span><span class=\"p\">.</span><span class=\"n\">OVERWRITE</span><span class=\"p\">}</span>\n<span class=\"p\">)</span>\n</code></pre></div>\n\nExtract a single file:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"p\">{</span><span class=\"s2\">&quot;config.json&quot;</span><span class=\"p\">}</span>\n<span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "zip.METHOD",
+      "brief": "constants for zip compression methods",
+      "description": "Constants for zip compression methods",
+      "returnvalues": [],
+      "parameters": [
+        { "name": "value", "doc": "enum value", "types": ["string"], "is_optional": "False" }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "zip.METHOD.DEFLATED",
+          "doc": "<code>\"deflated\"</code> compression method",
+          "type": ""
+        },
+        {
+          "name": "zip.METHOD.STORED",
+          "doc": "<code>\"stored\"</code> compression method, i.e. no compression",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "ENUM",
+      "name": "zip.ON_CONFLICT",
+      "brief": "constants defining conflict resolution strategies for zip archive extraction",
+      "description": "Constants defining conflict resolution strategies for zip archive extraction",
+      "returnvalues": [],
+      "parameters": [
+        { "name": "value", "doc": "enum value", "types": ["string"], "is_optional": "False" }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "zip.ON_CONFLICT.ERROR",
+          "doc": "<code>\"error\"</code>, any conflict aborts extraction",
+          "type": ""
+        },
+        {
+          "name": "zip.ON_CONFLICT.SKIP",
+          "doc": "<code>\"skip\"</code>, existing file is preserved",
+          "type": ""
+        },
+        {
+          "name": "zip.ON_CONFLICT.OVERWRITE",
+          "doc": "<code>\"overwrite\"</code>, existing file is overwritten",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "zip",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

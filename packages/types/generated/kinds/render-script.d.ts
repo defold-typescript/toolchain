@@ -35,6 +35,7 @@ import "../msg";
 import "../render-script-modules/particlefx";
 import "../render-script-modules/physics";
 import "../profiler";
+import "../recorder";
 import "../render-script-modules/resource";
 import "../socket";
 import "../render-script-modules/sound";

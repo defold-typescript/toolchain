@@ -108,21 +108,27 @@ msg.post(_url, "play_sound", { pan: 0.5, speed: 2 });
 
 msg.post(_url, "set_gain", { gain: 0.5 });
 msg.post(_url, "set_gain", {});
+msg.post(_url, "set_gain", { gain: 0.5, play_id: 1 });
 
 msg.post(_url, "stop_sound");
 msg.post(_url, "stop_sound", { play_id: 1 });
 
 msg.post(_url, "pause_sound", { pause: true });
 msg.post(_url, "set_pan", { pan: 0 });
+msg.post(_url, "set_pan", { pan: -0.5, play_id: 1 });
 
 const _pauseSoundPayload: Identical<BuiltinMessages["pause_sound"], { pause?: boolean }> = true;
 void _pauseSoundPayload;
-const _setPanPayload: Identical<BuiltinMessages["set_pan"], { pan?: number }> = true;
+const _setPanPayload: Identical<BuiltinMessages["set_pan"], { pan?: number; play_id?: number }> =
+  true;
 void _setPanPayload;
 
 msg.post(_url, "set_camera", { aspect_ratio: 16 / 9, fov: 1, near_z: 0.1, far_z: 500 });
 msg.post(_url, "reboot", { arg1: "x" });
-msg.post(_url, "start_record", { file_name: "a" });
+msg.post(_url, "reboot", { arg8: "x" });
+// @ts-expect-error the catalog follows the default target, which has no start_record
+const _startRecord: keyof BuiltinMessages = "start_record";
+void _startRecord;
 
 const _soundDone: BuiltinMessages["sound_done"] = { play_id: 0 };
 const _soundDoneShape: { play_id: number } = _soundDone;
