@@ -126,8 +126,9 @@ them into your repository:
 bunx @defold-typescript/cli export-types <library> [path]
 ```
 
-`<library>` is the library's `owner/repo`, such as `selimanac/defold-daabbcc`, or
-the URL a project puts in `game.project`. `path` is your repository root and defaults to
+`<library>` is the library's `host/owner/repo`, such as
+`github.com/selimanac/defold-daabbcc`, or any trailing part of it that names one
+library (`selimanac/defold-daabbcc`), or the URL a project puts in `game.project`. `path` is your repository root and defaults to
 the current folder.
 
 The command writes the files `resolve` installs for the library today,

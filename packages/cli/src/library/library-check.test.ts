@@ -109,18 +109,18 @@ function writeFixture(
         upstreamSource: "source/upstream/box2d.cpp",
       },
     ],
-    floors: { "owner/box2d": { box2d: { callable: 1, field: 1 } } },
+    floors: { "github.com/owner/box2d": { box2d: { callable: 1, field: 1 } } },
   });
-  write(dataDir, "pause-games/flow/fork/flow.ui.d.ts", options.fork ?? FORK);
+  write(dataDir, "github.com/pause-games/flow/fork/flow.ui.d.ts", options.fork ?? FORK);
   write(
     dataDir,
-    "pause-games/flow/usage/flow-usage.test-d.ts",
+    "github.com/pause-games/flow/usage/flow-usage.test-d.ts",
     `${(options.usage ?? USAGE_LINES).join("\n")}\n`,
   );
-  write(dataDir, `owner/box2d/${nativeDeclaration}`, options.native ?? NATIVE);
+  write(dataDir, `github.com/owner/box2d/${nativeDeclaration}`, options.native ?? NATIVE);
   write(
     dataDir,
-    "owner/box2d/source/upstream/box2d.cpp",
+    "github.com/owner/box2d/source/upstream/box2d.cpp",
     nativeSource(options.nativeUpstream ?? ["step"]),
   );
   return dataDir;
@@ -137,7 +137,7 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
 
     expect(await checkLibraryData(writeFixture({ usage }))).toEqual([
       {
-        library: "pause-games/flow",
+        library: "github.com/pause-games/flow",
         check: "compile",
         message: expect.stringMatching(/^usage\/flow-usage\.test-d\.ts:6 .*'erase'/),
       },
@@ -148,12 +148,14 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
     const problems = await checkLibraryData(writeFixture({ fork: `${FORK}print("loaded");\n` }));
 
     expect(problems).toContainEqual({
-      library: "pause-games/flow",
+      library: "github.com/pause-games/flow",
       check: "compile",
       message: expect.stringMatching(/^fork\/flow\.ui\.d\.ts:4 /),
     });
     expect(
-      problems.every(({ library, check }) => library === "pause-games/flow" && check === "compile"),
+      problems.every(
+        ({ library, check }) => library === "github.com/pause-games/flow" && check === "compile",
+      ),
     ).toBe(true);
   });
 
@@ -162,7 +164,7 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
 
     expect(await checkLibraryData(writeFixture({ native }))).toEqual([
       {
-        library: "owner/box2d",
+        library: "github.com/owner/box2d",
         check: "compile",
         message: expect.stringMatching(/^fork\/box2d\.d\.ts:2 .*'Seconds'/),
       },
@@ -171,11 +173,11 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
 
   test("a missing native declaration no usage imports is a problem of its library", async () => {
     const dataDir = writeFixture();
-    rmSync(join(dataDir, "owner/box2d/fork/box2d.d.ts"));
+    rmSync(join(dataDir, "github.com/owner/box2d/fork/box2d.d.ts"));
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/box2d",
+        library: "github.com/owner/box2d",
         check: "compile",
         message: expect.stringMatching(/^fork\/box2d\.d\.ts /),
       },
@@ -185,7 +187,7 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
   test("a native declaration present on disk that TypeScript does not compile is a problem of its library", async () => {
     expect(await checkLibraryData(writeFixture({ nativeDeclaration: "fork/box2d.txt" }))).toEqual([
       {
-        library: "owner/box2d",
+        library: "github.com/owner/box2d",
         check: "compile",
         message: expect.stringMatching(/^fork\/box2d\.txt /),
       },
@@ -196,16 +198,16 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
     const usage = [...USAGE_LINES];
     usage[5] = "ui.erase();";
     const dataDir = writeFixture({ usage });
-    rmSync(join(dataDir, "owner/box2d/fork/box2d.d.ts"));
+    rmSync(join(dataDir, "github.com/owner/box2d/fork/box2d.d.ts"));
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/box2d",
+        library: "github.com/owner/box2d",
         check: "compile",
         message: expect.stringMatching(/^fork\/box2d\.d\.ts /),
       },
       {
-        library: "pause-games/flow",
+        library: "github.com/pause-games/flow",
         check: "compile",
         message: expect.stringMatching(/^usage\/flow-usage\.test-d\.ts:6 .*'erase'/),
       },
@@ -214,7 +216,11 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
 
   test("a library that fails reader validation is the one data problem, naming its folder", async () => {
     expect(await checkLibraryData(writeFixture({ forkModuleId: "../x" }))).toEqual([
-      { library: "pause-games/flow", check: "data", message: expect.stringContaining('"../x"') },
+      {
+        library: "github.com/pause-games/flow",
+        check: "data",
+        message: expect.stringContaining('"../x"'),
+      },
     ]);
   });
 
@@ -222,7 +228,7 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
     const dataDir = writeFixture();
     write(
       dataDir,
-      "pause-games/flow/recipe.json",
+      "github.com/pause-games/flow/recipe.json",
       JSON.stringify({
         luals: [
           { sourceGlobs: ["flow/**/*.lua"], moduleId: "flow.layout", namespace: "flow.layout" },
@@ -232,7 +238,7 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "pause-games/flow",
+        library: "github.com/pause-games/flow",
         check: "print",
         message: expect.stringContaining("flow.layout"),
       },
@@ -263,23 +269,23 @@ describe("checkLibraryData measures each module against the floor in its library
     const dataDir = join(root, "data");
     write(
       dataDir,
-      "owner/lib/library.json",
+      "github.com/owner/lib/library.json",
       JSON.stringify({
         repo: "https://github.com/owner/lib",
         ...(floors === undefined ? {} : { floors }),
       }),
     );
-    write(dataDir, "owner/lib/reviewed.json", JSON.stringify({ ref: "v1.0.0" }));
+    write(dataDir, "github.com/owner/lib/reviewed.json", JSON.stringify({ ref: "v1.0.0" }));
     write(
       dataDir,
-      "owner/lib/recipe.json",
+      "github.com/owner/lib/recipe.json",
       JSON.stringify({
         luals: [{ sourceGlobs: ["**/*.lua"], moduleId, namespace: "lib" }],
       }),
     );
     write(
       dataDir,
-      `owner/lib/source/lib/${moduleId.replaceAll(".", "/")}.lua`,
+      `github.com/owner/lib/source/lib/${moduleId.replaceAll(".", "/")}.lua`,
       `${lua.join("\n")}\nreturn M\n`,
     );
     return dataDir;
@@ -297,7 +303,7 @@ describe("checkLibraryData measures each module against the floor in its library
     const dataDir = join(root, "data");
     write(
       dataDir,
-      "owner/lib/library.json",
+      "github.com/owner/lib/library.json",
       JSON.stringify({
         repo: "https://github.com/owner/lib",
         forks: [
@@ -312,15 +318,15 @@ describe("checkLibraryData measures each module against the floor in its library
         ...extra,
       }),
     );
-    write(dataDir, "owner/lib/reviewed.json", JSON.stringify({ ref: "v1.0.0" }));
+    write(dataDir, "github.com/owner/lib/reviewed.json", JSON.stringify({ ref: "v1.0.0" }));
     write(
       dataDir,
-      "owner/lib/fork/lib.main.d.ts",
+      "github.com/owner/lib/fork/lib.main.d.ts",
       `declare module '${moduleId}' {\n${forkMembers.map((name) => `  /** Does ${name}. */\n  export function ${name}(): void;`).join("\n")}\n}\n`,
     );
     write(
       dataDir,
-      "owner/lib/source/upstream/main.lua",
+      "github.com/owner/lib/source/upstream/main.lua",
       "local M = {}\nfunction M.first() end\nfunction M.second() end\nreturn M\n",
     );
     return dataDir;
@@ -334,7 +340,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^lib\.main: coverage 0\.\d+ is below its floor 1 /),
       },
@@ -348,7 +354,7 @@ describe("checkLibraryData measures each module against the floor in its library
   test("a module with no floor is a floor problem saying so", async () => {
     expect(await checkLibraryData(writeLuals(ANNOTATED))).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^lib\.main: no coverage floor/),
       },
@@ -360,7 +366,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^lib\.main: callable coverage 0\.5 is below its floor 1 /),
       },
@@ -396,7 +402,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^lib\.main: .*"lib\.main\.second" is unnecessary/),
       },
@@ -408,7 +414,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "owner/box2d",
+        library: "github.com/owner/box2d",
         check: "floor",
         message: expect.stringMatching(/^box2d: callable coverage 0\.5 is below its floor 1 /),
       },
@@ -427,7 +433,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
       expect(await checkLibraryData(dataDir)).toEqual([
         {
-          library: "owner/lib",
+          library: "github.com/owner/lib",
           check: "floor",
           message: expect.stringMatching(new RegExp(`^${moduleId}: no coverage floor`)),
         },
@@ -443,7 +449,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
       expect(await checkLibraryData(dataDir)).toEqual([
         {
-          library: "owner/lib",
+          library: "github.com/owner/lib",
           check: "floor",
           message: expect.stringMatching(
             new RegExp(`^${moduleId}: coverage 0\\.\\d+ is below its floor 1 `),
@@ -463,7 +469,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
       expect(await checkLibraryData(dataDir)).toEqual([
         {
-          library: "owner/lib",
+          library: "github.com/owner/lib",
           check: "floor",
           message: expect.stringMatching(new RegExp(`^${moduleId}: no coverage floor`)),
         },
@@ -476,7 +482,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(await checkLibraryData(writeFork(["first"], { floors }, "__proto__"))).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^__proto__: callable coverage 0\.5 is below its floor 1 /),
       },
@@ -499,7 +505,7 @@ describe("checkLibraryData measures each module against the floor in its library
 
     expect(floorProblems(library, [{ moduleId: "constructor", ratio: 1 }])).toEqual([
       {
-        library: "owner/lib",
+        library: "github.com/owner/lib",
         check: "floor",
         message: expect.stringMatching(/^constructor: no coverage floor/),
       },
@@ -563,7 +569,7 @@ describe("forkDocNotices", () => {
 
     expect(forkDocNotices(dataDir)).toEqual([
       {
-        library: "example/fixture-fork",
+        library: "github.com/example/fixture-fork",
         module: "tally.tally",
         member: "flush",
         kind: "unpinned",
@@ -593,7 +599,7 @@ describe("forkDocNotices", () => {
 
     expect(forkDocNotices(dataDir)).toEqual([
       {
-        library: "example/fixture-fork",
+        library: "github.com/example/fixture-fork",
         module: "tally.tally",
         member: "flush",
         kind: "unpinned",
@@ -602,7 +608,7 @@ describe("forkDocNotices", () => {
     ]);
     expect(await checkLibraryData(dataDir)).toEqual([
       {
-        library: "example/fixture-fork",
+        library: "github.com/example/fixture-fork",
         check: "print",
         message: expect.stringMatching(
           /tally\.broken.*@upstreamDoc takes 12 lowercase hex characters/,
@@ -612,12 +618,16 @@ describe("forkDocNotices", () => {
   }, 120_000);
 
   test("a stale notice names the new pin, and an orphan names no pin", () => {
-    const at = { library: "example/fixture-fork", module: "tally.tally", member: "flush" };
+    const at = {
+      library: "github.com/example/fixture-fork",
+      module: "tally.tally",
+      member: "flush",
+    };
     expect(docNoticeLine({ ...at, kind: "stale", pin: "0123456789ab" })).toBe(
-      "example/fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc 0123456789ab",
+      "github.com/example/fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc 0123456789ab",
     );
     expect(docNoticeLine({ ...at, kind: "orphan" })).toBe(
-      "example/fixture-fork: doc: tally.tally.flush: @upstreamDoc pins nothing, since upstream does not document it",
+      "github.com/example/fixture-fork: doc: tally.tally.flush: @upstreamDoc pins nothing, since upstream does not document it",
     );
   });
 });

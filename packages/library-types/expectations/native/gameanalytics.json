@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "gameanalytics/ga-sdk-defold",
+    "sourceId": "github.com/gameanalytics/ga-sdk-defold",
     "manifestDir": "gameanalytics"
   },
   "resolve": {

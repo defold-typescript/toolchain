@@ -20,6 +20,7 @@ import {
   type ReadLibraryOptions,
   readLibraryData,
   readLibraryReviews,
+  selectLibraryFolders,
   writeReviewedJson,
 } from "./library-data";
 import {
@@ -303,9 +304,9 @@ async function updateLibrary(
 }
 
 /**
- * Walk the libraries `names` lists, or every library when it is empty. Throws, before
- * any request, on a name the data folder does not hold; a library that cannot be read
- * upstream is reported in `failed` and leaves the others to run.
+ * Walk the libraries `names` select, or every library when it is empty. Throws, before
+ * any request, on a name that selects no library or more than one; a library that
+ * cannot be read upstream is reported in `failed` and leaves the others to run.
  */
 export async function updateLibraries(
   dataDir: string,
@@ -313,15 +314,15 @@ export async function updateLibraries(
   opts: UpdateLibrariesOptions,
 ): Promise<LibraryUpdateResult> {
   const libraries = readLibraryData(dataDir, { cliVersion: opts.cliVersion });
-  for (const name of names) {
-    if (!libraries.some(({ dir }) => dir === name)) {
-      throw new Error(`no library ${name} in ${dataDir}`);
-    }
-  }
+  const selected = selectLibraryFolders(
+    dataDir,
+    libraries.map(({ dir }) => dir),
+    names,
+  );
   const updated: UpdatedLibrary[] = [];
   const failed: FailedReview[] = [];
   for (const library of libraries) {
-    if (names.length > 0 && !names.includes(library.dir)) continue;
+    if (names.length > 0 && !selected.includes(library.dir)) continue;
     try {
       updated.push(await updateLibrary(dataDir, library, opts));
     } catch (error) {

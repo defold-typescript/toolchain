@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "maratgilyazov/def_taptic_engine",
+    "sourceId": "github.com/maratgilyazov/def_taptic_engine",
     "manifestDir": "taptic_engine"
   },
   "resolve": {

@@ -3,7 +3,7 @@
 // files can generate one. Everything comes out of the one archive, at the paths
 // the re-pin fetchers use, and a folder the reader refuses is never left behind.
 
-import { existsSync, mkdirSync, readFileSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix } from "node:path";
 import {
   archiveGameProjectEntry,
@@ -21,7 +21,6 @@ import {
   resolveExtensionArchive,
 } from "../extension-archive";
 import {
-  LIBRARY_FILE,
   type LualsEntry,
   libraryFolderName,
   type RecipeJson,
@@ -186,26 +185,6 @@ function folderExistsError(folder: string, dataDir: string): Error {
   return new Error(`library folder ${folder} already exists in ${dataDir}`);
 }
 
-function hostOf(repo: string): string {
-  return (/^[a-z][a-z0-9+.-]*:\/\/([^/]+)/i.exec(repo)?.[1] ?? "").toLowerCase();
-}
-
-// The folder name leaves the host out, so a second host's repo of one `owner/repo`
-// is refused by the repo the folder holds.
-function existingFolderError(root: string, folder: string, dataDir: string, repo: string): Error {
-  let held: unknown;
-  try {
-    held = (JSON.parse(readFileSync(join(root, LIBRARY_FILE), "utf8")) as { repo?: unknown }).repo;
-  } catch {
-    held = undefined;
-  }
-  return typeof held === "string" && hostOf(held) !== hostOf(repo)
-    ? new Error(
-        `library folder ${folder} in ${dataDir} holds ${held}, so ${repo} from another host cannot be added`,
-      )
-    : folderExistsError(folder, dataDir);
-}
-
 // Exclusive, because the check before the download holds nothing across it: a folder
 // made in that wait belongs to someone else, so this run must neither write to it
 // nor remove it.
@@ -221,13 +200,15 @@ function claimLibraryFolder(root: string, folder: string, dataDir: string): void
   }
 }
 
-// The owner folder goes with the library folder when nothing else is left in it.
+// The owner and host folders go with the library folder when nothing else is left
+// in them.
 function releaseLibraryFolder(root: string): void {
   rmSync(root, { recursive: true, force: true });
   try {
     rmdirSync(dirname(root));
+    rmdirSync(dirname(dirname(root)));
   } catch {
-    // Another library, or a concurrent add, still holds the owner folder.
+    // Another library, or a concurrent add, still holds the owner or host folder.
   }
 }
 
@@ -248,7 +229,7 @@ export async function addLibrary(
   const folder = libraryFolderName(repo);
   const root = join(dataDir, folder);
   if (existsSync(root)) {
-    throw existingFolderError(root, folder, dataDir, repo);
+    throw folderExistsError(folder, dataDir);
   }
 
   const archive = await resolveExtensionArchive(

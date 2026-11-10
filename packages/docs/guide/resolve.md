@@ -29,7 +29,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
-| **Vendored pure-Lua library** | the dependency's `owner/repo`, or its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the dependency's `host/owner/repo`, or on a host library data names its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the dependency matches a curated native target [by name](#vendored-library-types), and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped; one that shares Lua can be [typed by hand](#a-library-nobody-types)                                |
@@ -197,20 +197,25 @@ When library data itself cannot be read, `resolve` keeps the library
 declarations it printed earlier, and their tsconfig entry, as long as the same
 toolchain version wrote them and none of their files has changed.
 
-The match keys on the library's **name, its `owner/repo`** in lower case
-(`britzl/monarch`), not exact URL equality, so any archive URL of that repository
-resolves. A dependency whose `owner/repo` no library holds matches the one library
-with its repo name, so a fork keeps its upstream's types, with a notice:
+The match keys on the library's **name, its `host/owner/repo`** in lower case
+(`github.com/britzl/monarch`), not exact URL equality, so any archive URL of that
+repository resolves. The host is the URL's, without a user name or the scheme's default
+port. A dependency whose name no library holds, on a host some library's repository is
+on (`github.com`, `codeberg.org`), matches the one library with its repo name, so a fork
+keeps its upstream's types, with a notice:
 
 ```text
-<url> uses the library data of <owner>/<repo>, which shares its repo name; its types may not fit
+<url> uses the library data of <host>/<owner>/<repo>, which shares its repo name; its types may not fit
 ```
 
 A repo name two libraries share matches neither for any other owner, with a notice:
 
 ```text
-<url> shares its repo name with <owner>/<repo> and <owner>/<repo>, so no library data types it
+<url> shares its repo name with <host>/<owner>/<repo> and <host>/<owner>/<repo>, so no library data types it
 ```
+
+A dependency on any other host, such as a company git server or an IP address, matches
+no library data.
 
 Because a match can still be wrong — a fork that renamed its module folder — it
 is then **verified against the downloaded archive**: `resolve` reads the archive's `.lua` require paths and
@@ -252,14 +257,14 @@ leaves the others' types byte-identical:
   "libraryData": {
     "shared": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
     "libraries": {
-      "britzl/monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
-      "insality/druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e"
+      "github.com/britzl/monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
+      "github.com/insality/druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e"
     }
   }
 }
 ```
 
-`libraries` is keyed by each library's `owner/repo`. `shared` is the commit
+`libraries` is keyed by each library's `host/owner/repo`. `shared` is the commit
 `index-slot-classifications.json` is read from, the one data file no library owns. It only adds doc notes to extension declarations, so nothing
 reports when it moves.
 
@@ -284,9 +289,11 @@ reports when it moves.
   [status](#library-status), and `shared` when its file differs. A library the same in
   both keeps its pin, and one the newest data dropped holds it, with a notice.
 - **`resolve --update=<name>`** does this for the named dependency alone and leaves
-  `shared`. `--update=a,b` names several. A name is the `owner/repo` in the
-  dependency's URL, in lower case (`britzl/monarch`). Naming a fork moves the pin of
-  the library it reads.
+  `shared`. `--update=a,b` names several. A name is the dependency's
+  `host/owner/repo` or any trailing part of it, in any case: `monarch`,
+  `britzl/monarch` and `github.com/britzl/monarch` all name
+  `https://github.com/britzl/monarch/archive/main.zip`. A name two dependencies end in
+  exits non-zero, naming both. Naming a fork moves the pin of the library it reads.
 - **`resolve --frozen`** reads pins alone and requests no `main`. It fails when
   nothing is recorded, or when a declared library's pinned folder is missing or does
   not load, naming it. A declared dependency with no library pin prints no library
@@ -330,7 +337,7 @@ loose to type correct code emits a namespace that accepts calls failing at
 runtime. For the ones listed below, this toolchain ships a hand-written
 [module-form](./extensions.md#module-form-native-extensions) declaration
 instead. `resolve` uses it when the dependency's
-`owner/repo`, or its repo name, matches [as a library's does](#vendored-library-types)
+`host/owner/repo`, or its repo name, matches [as a library's does](#vendored-library-types)
 **and** the archive ships the extension's `ext.manifest` in the named directory, so
 a name match alone writes nothing. Each
 namespace links its library page, which names the commit the declaration is
@@ -510,9 +517,9 @@ normally.
   also [Pinning extension versions](#pinning-extension-versions).
 - `--update[=<name>]` — move [library data pins](#library-data) to the newest data
   and [accept extension drift](#pinning-extension-versions), for every dependency or
-  only the named ones (`--update=britzl/monarch,insality/druid`). A dependency moved by `--pin-urls`
+  only the named ones (`--update=monarch,insality/druid`). A dependency moved by `--pin-urls`
   [moves to its ref's newest commit](#pin-urls-to-commits). The name takes `=`, never
-  a space, and one that names no dependency exits non-zero. It cannot be combined with
+  a space, and one that names no dependency, or two, exits non-zero. It cannot be combined with
   `--frozen` or `--library-data`.
 - `--pin-urls` — [rewrite each GitHub branch or tag URL](#pin-urls-to-commits) in
   `game.project` to the commit its archive names. It cannot be combined with
@@ -527,7 +534,7 @@ normally.
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
   `ref`, `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
-  each match's `source` (the library's `owner/repo`), `modules`, `provenance`, and
+  each match's `source` (the library's `host/owner/repo`), `modules`, `provenance`, and
   `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present

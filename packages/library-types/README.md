@@ -37,7 +37,7 @@ declarations.
   that reads them. A CLI reads the highest folder at or below its own version.
   [`data/README.md`](data/README.md) says which releases an edit reaches and
   when a change needs a new folder. Each folder from `0.61.0/` holds one folder per
-  library at `<owner>/<repo>`, lowercased from its repository URL, without `.git`;
+  library at `<host>/<owner>/<repo>`, lowercased from its repository URL, without `.git`;
   `0.55.0/` holds one per library named for the repository alone:
   - `library.json` — the upstream repository and license, the hand-written
     declaration forks, the native extension, and the base each of the

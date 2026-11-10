@@ -342,7 +342,9 @@ async function seedNativeExtensionProject(): Promise<{
 // The data repo holds the same folders; a smoke run must not reach it.
 const DATA_BASE = path.dirname(LIBRARY_DATA_DIR);
 
-const IMMUTABLE_URL = "https://example.invalid/paweljarosz/lua-immutable/archive/v1.1.zip";
+// On Codeberg, where `resolve` reads a ref from no forge, the cached archive is the
+// one read; library data types it as a fork of the GitHub library.
+const IMMUTABLE_URL = "https://codeberg.org/paweljarosz/lua-immutable/archive/v1.1.zip";
 const IMMUTABLE_MODULE_FILE = "immutable/immutable.lua";
 
 // A project depending on `lua-immutable`, a LuaLS target vendoring a single
@@ -359,7 +361,7 @@ async function seedLualsLibraryProject(): Promise<{
   const vendored = readFileSync(
     path.join(
       LIBRARY_DATA_DIR,
-      "paweljarosz/lua-immutable",
+      "github.com/paweljarosz/lua-immutable",
       "source",
       "immutable",
       IMMUTABLE_MODULE_FILE,

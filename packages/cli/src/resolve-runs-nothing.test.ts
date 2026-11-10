@@ -136,7 +136,7 @@ describe("resolve starts no process", () => {
       cwd,
       cacheDir: mkdtempSync(join(tmpdir(), "resolve-runs-nothing-cache-")),
       libraryDataDir,
-      libraryRegistry: [{ sourceId: "owner/mylib", modules: ["mylib.core"] }],
+      libraryRegistry: [{ sourceId: "github.com/owner/mylib", modules: ["mylib.core"] }],
       typesRoot: resolveTypesPackageRoot(),
       download: async (url) => ({ status: "ok", bytes: archives[url] as Uint8Array }),
     });

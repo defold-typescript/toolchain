@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "lerg/extension-openal",
+    "sourceId": "github.com/lerg/extension-openal",
     "manifestDir": "openal"
   },
   "resolve": {

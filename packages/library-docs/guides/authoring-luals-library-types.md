@@ -63,9 +63,9 @@ describe every field.
 
 Each library pins its own repository and tag — a LuaLS library ships no `.d.ts`,
 only annotations, and each lives in its own repo at its own release. Its folder
-is named for the repository: the URL's last path segment, lowercased, without
-`.git` (`https://github.com/Insality/druid` is `druid/`). The folder pins the
-library once:
+is named for the repository: its `<host>/<owner>/<repo>`, lowercased, without
+`.git` (`https://github.com/Insality/druid` is `github.com/insality/druid/`). The
+folder pins the library once:
 
 | File | Field | Required | What it is |
 | ---- | ----- | -------- | ---------- |

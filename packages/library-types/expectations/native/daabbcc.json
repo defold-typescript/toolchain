@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "selimanac/defold-daabbcc",
+    "sourceId": "github.com/selimanac/defold-daabbcc",
     "manifestDir": "daabbcc"
   },
   "resolve": {

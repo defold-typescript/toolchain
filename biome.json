@@ -27,7 +27,7 @@
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
       "!packages/library-types/data/*/*/fork",
-      "!packages/library-types/data/*/*/*/fork",
+      "!packages/library-types/data/*/*/*/*/fork",
       "!**/*.lua"
     ]
   },
@@ -67,7 +67,7 @@
     {
       "includes": [
         "packages/library-types/data/*/*/reviewed.json",
-        "packages/library-types/data/*/*/*/reviewed.json"
+        "packages/library-types/data/*/*/*/*/reviewed.json"
       ],
       "json": { "formatter": { "expand": "always" } }
     }

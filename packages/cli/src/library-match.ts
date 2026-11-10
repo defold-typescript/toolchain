@@ -7,10 +7,11 @@
 //
 // A declared dependency URL is a moving ref (`.../archive/main.zip`, a pinned
 // tag, a fork), so the match keys on a library name, not string equality. The
-// name is the lowercased `owner/repo` (`libraryName`): a dependency matches the
-// library holding its exact name, else the one library sharing its repo name, so
-// a fork keeps its upstream's types, and a repo name two libraries share matches
-// neither. Every lane keys on the upstream `repo` its registry entry pins.
+// name is the lowercased `host/owner/repo` (`libraryName`): a dependency matches
+// the library holding its exact name, else, on a host some library names, the one
+// library sharing its repo name, so a fork keeps its upstream's types, a repo name
+// two libraries share matches neither, and a dependency on any other host matches
+// nothing. Every lane keys on the upstream `repo` its registry entry pins.
 
 export interface VendoredLibrary {
   readonly sourceId: string;
@@ -169,20 +170,37 @@ export function normalizeSourceId(url: string): string {
   return name.slice(name.lastIndexOf("/") + 1);
 }
 
+const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+// The URL's `host`, which already drops userinfo and a scheme's default port, so
+// `github.com:443` is `github.com` while `git.acme.com:3000` keeps its port.
+function hostOf(url: string, authority: string): string {
+  try {
+    return new URL(url).host.toLowerCase();
+  } catch {
+    return authority.slice(authority.lastIndexOf("@") + 1).toLowerCase();
+  }
+}
+
 /**
- * A library's name: the lowercased `owner/repo` of a dependency URL, a `repo`
- * URL or a name. A scheme drops the host with it; the repo is the segment before
- * `archive`, else the last one, without `.zip`/`.git`. Input with no owner
- * segment yields the bare repo.
+ * A library's name: the lowercased `host/owner/repo` of a dependency URL or a `repo`
+ * URL. The repo is the segment before `archive`, else the last one, without
+ * `.zip`/`.git`; a URL with no owner segment yields `host/repo`. Input with no
+ * scheme is a typed name, lowercased and otherwise left alone.
  */
 export function libraryName(urlOrName: string): string {
   const withoutFragment = urlOrName.split(/[?#]/, 1)[0] ?? "";
-  const scheme = /^[a-z][a-z0-9+.-]*:\/\//i;
-  const segments = withoutFragment
-    .replace(scheme, "")
+  if (!SCHEME.test(withoutFragment)) {
+    return withoutFragment
+      .split("/")
+      .filter((segment) => segment.length > 0)
+      .join("/")
+      .toLowerCase();
+  }
+  const [authority = "", ...segments] = withoutFragment
+    .replace(SCHEME, "")
     .split("/")
-    .filter((segment) => segment.length > 0)
-    .slice(scheme.test(withoutFragment) ? 1 : 0);
+    .filter((segment, index) => index === 0 || segment.length > 0);
   if (segments.length === 0) {
     return "";
   }
@@ -190,14 +208,22 @@ export function libraryName(urlOrName: string): string {
   const repoIndex = archiveIndex > 0 ? archiveIndex - 1 : segments.length - 1;
   const repo = (segments[repoIndex] ?? "").replace(/\.(zip|git)$/i, "");
   const owner = segments[repoIndex - 1];
-  return (owner === undefined ? repo : `${owner}/${repo}`).toLowerCase();
+  const host = hostOf(withoutFragment, authority);
+  return [host, owner, repo]
+    .filter((segment) => segment !== undefined && segment !== "")
+    .join("/")
+    .toLowerCase();
 }
 
 function repoSegment(name: string): string {
   return name.slice(name.lastIndexOf("/") + 1);
 }
 
-// `exact` names the library holding the dependency's own `owner/repo`; `fork`
+function hostSegment(name: string): string {
+  return name.slice(0, name.indexOf("/"));
+}
+
+// `exact` names the library holding the dependency's own `host/owner/repo`; `fork`
 // the one library sharing its repo name; `shared` every library sharing it,
 // none of which types the dependency.
 export type LibraryNameMatch =
@@ -205,6 +231,8 @@ export type LibraryNameMatch =
   | { readonly kind: "fork"; readonly name: string }
   | { readonly kind: "shared"; readonly names: readonly string[] };
 
+// The repo-name fallback runs only on a host some library names, so a dependency on
+// a company server or an IP address never takes a public library's types.
 export function matchLibraryName(url: string, names: readonly string[]): LibraryNameMatch | null {
   const name = libraryName(url);
   if (name === "") {
@@ -213,16 +241,32 @@ export function matchLibraryName(url: string, names: readonly string[]): Library
   if (names.includes(name)) {
     return { kind: "exact", name };
   }
+  const owned = names.filter((other) => other.includes("/"));
+  const host = hostSegment(name);
+  if (!owned.some((other) => hostSegment(other) === host)) {
+    return null;
+  }
   const repo = repoSegment(name);
-  const sharing = [
-    ...new Set(names.filter((other) => other.includes("/") && repoSegment(other) === repo)),
-  ].sort();
+  const sharing = [...new Set(owned.filter((other) => repoSegment(other) === repo))].sort();
   if (sharing.length === 0) {
     return null;
   }
   return sharing.length === 1
     ? { kind: "fork", name: sharing[0] as string }
     : { kind: "shared", names: sharing };
+}
+
+/**
+ * Every name a typed name selects: each that is it, or ends in `/<typed>`,
+ * compared lowercased, so `monarch`, `britzl/monarch` and
+ * `github.com/britzl/monarch` all select `github.com/britzl/monarch`.
+ */
+export function namesSelectedBy(typed: string, names: readonly string[]): string[] {
+  const wanted = typed.toLowerCase();
+  return names.filter((name) => {
+    const lower = name.toLowerCase();
+    return lower === wanted || lower.endsWith(`/${wanted}`);
+  });
 }
 
 // The name `matchLibraryName` finds for `url`, or null when none or several do.

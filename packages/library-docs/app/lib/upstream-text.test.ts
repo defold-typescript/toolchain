@@ -36,7 +36,7 @@ function dataDirs(): LibraryDirs {
 }
 
 function writeLibrary(dirs: LibraryDirs, namespace: string): void {
-  const folder = join(dirs.dataDir, "someone", namespace);
+  const folder = join(dirs.dataDir, "github.com", "someone", namespace);
   mkdirSync(folder, { recursive: true });
   writeFileSync(
     join(folder, "library.json"),
@@ -351,7 +351,7 @@ describe("upstream listing text", () => {
     const dirs = dataDirs();
     writeLibrary(dirs, "demo");
     writeFileSync(
-      join(dirs.dataDir, "someone", "demo", "library.json"),
+      join(dirs.dataDir, "github.com", "someone", "demo", "library.json"),
       JSON.stringify({ repo: "javascript:alert(1)", license: "MIT" }),
     );
     expect(() => loadLibraryPageSources(dirs)).toThrow("javascript:alert(1)");
