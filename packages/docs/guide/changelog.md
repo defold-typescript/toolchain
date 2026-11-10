@@ -13,9 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Libraries are named by `host/owner/repo`](./resolve.md#vendored-library-types)**, so same-named repos can all be typed; an unknown host gets none, and [library pages](./extensions.md#library-page-addresses) move.
+> - **[Libraries are named by `host/owner/repo`](./resolve.md#vendored-library-types)**, and a library on an unknown host gets no types.
 > - **[`minCli`](./library.md#what-library-add-writes)** keeps a library from a CLI too old to read it.
 > - **[Untyped Lua](./resolve.md#a-library-nobody-types)** gets a `resolve` notice on typing it yourself.
+> - **[Four new `mise` tasks](./editor-setup.md#opinionated-misetoml)** type-check, regenerate scene types, launch through `bob` and pin the editor's Defold version.
 
 ### Breaking
 
@@ -26,6 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **A dependency matches the library holding its exact `host/owner/repo`, else the one library sharing its repo name**, so a fork on any host a library is on keeps its upstream's types and [library status](./resolve.md#library-status) with a notice that they may not fit, and a repo name two libraries share types the dependency with neither, with a notice ([Vendored library types](./resolve.md#vendored-library-types)). `resolve --update=<name>`, the `library` commands and `export-types` take any trailing part of a library's name (`monarch`, `britzl/monarch`, `github.com/britzl/monarch`), and `export-types` also a dependency URL.
 - **A library's `library.json` can set `minCli`**, the first CLI release that reads it: an older CLI reads no data for that library, so `resolve` types it from the dependency's own archive and the `library` commands leave it out ([library](./library.md#what-library-add-writes)).
 - **`resolve` adds one notice naming every dependency that shares Lua nothing types**, linking a new guide section that shows how to declare its modules in `src/types/<library>.d.ts` and how to share them upstream ([A library nobody types](./resolve.md#a-library-nobody-types)).
+- **`init` and `upgrade` scaffold four more `mise` tasks** ([Opinionated `mise.toml`](./editor-setup.md#opinionated-misetoml)): `defold-typescript:typecheck` runs the project's `tsc --noEmit`, `defold-typescript:scene-types` runs `scene-types`, `defold-typescript:bob-run` runs `build` then `bob run`, and `defold-typescript:sync-target` runs `set-target --detected`.
 
 ### Fixed
 

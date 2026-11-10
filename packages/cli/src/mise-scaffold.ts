@@ -4,12 +4,15 @@
 // the block without disturbing user-authored `[tools]`/`[tasks.*]` content.
 const MANAGED_MARKER = "# managed by @defold-typescript";
 
-// Build/watch/watch-hr/watch-ec/watch-hr-ec/resolve/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`: inside an
-// installed project bunx resolves the `@defold-typescript/cli` pinned in
-// `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
-// `@defold-typescript/types`. `:upgrade` is the deliberate `@latest` pull; it
-// calls the `upgrade` verb rather than spelling the re-scaffold-and-reinstall
-// recipe out longhand, so the recipe lives in exactly one place.
+// Build/watch/watch-hr/watch-ec/watch-hr-ec/resolve/scene-types/bob-run/
+// sync-target/setup-debug/init-agents run `bunx @defold-typescript/cli <cmd>`:
+// inside an installed project bunx resolves the `@defold-typescript/cli` pinned
+// in `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
+// `@defold-typescript/types`. `:typecheck` runs the scaffolded `typescript`
+// through `--package`, so bunx never fetches npm's unrelated `tsc` package.
+// `:upgrade` is the deliberate `@latest` pull; it calls the `upgrade` verb
+// rather than spelling the re-scaffold-and-reinstall recipe out longhand, so
+// the recipe lives in exactly one place.
 export const MISE_TASKS_TOML = `${MANAGED_MARKER}
 [tasks."defold-typescript:build"]
 description = "Build the TypeScript sources with the defold-typescript CLI"
@@ -40,6 +43,26 @@ ${MANAGED_MARKER}
 description = "Resolve native-extension and vendored-library types with the defold-typescript CLI"
 # watch runs this automatically on every game.project change; run it manually for a one-off resolve
 run = "bunx @defold-typescript/cli resolve"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:scene-types"]
+description = "Regenerate the scene-address declaration with the defold-typescript CLI (watch does this on every scene change)"
+run = "bunx @defold-typescript/cli scene-types"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:typecheck"]
+description = "Type-check the TypeScript sources with the project's TypeScript, writing no file"
+run = "bunx --package typescript tsc --noEmit"
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:bob-run"]
+description = "Build the TypeScript, then download the Defold target, make a debug build and launch the game (needs Java)"
+run = ["bunx @defold-typescript/cli build", "bunx @defold-typescript/cli bob run"]
+
+${MANAGED_MARKER}
+[tasks."defold-typescript:sync-target"]
+description = "Pin defold-target to the installed Defold editor's version with the defold-typescript CLI"
+run = "bunx @defold-typescript/cli set-target --detected"
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:setup-debug"]
