@@ -5,25 +5,25 @@ import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { LibraryPath } from "../../../components/api-index";
-import { untypedListings } from "../../../lib/api-content";
-import type { LibraryDirs } from "../../../lib/api-surface-loader";
-import { listingPageMarkdown } from "../../../lib/listing-page";
-import { NO_TYPED_API_ICON } from "../../../lib/no-typed-api-icon";
+import { LibraryPath } from "../../../../components/api-index";
+import { untypedListings } from "../../../../lib/api-content";
+import type { LibraryDirs } from "../../../../lib/api-surface-loader";
+import { listingPageMarkdown } from "../../../../lib/listing-page";
+import { NO_TYPED_API_ICON } from "../../../../lib/no-typed-api-icon";
 
 // The page for a library that ships no `.script_api`: what it ships and how a
 // project uses it, in place of an API reference. It answers only at the lowercase
-// `/libraries/<owner>/<repo>` route the loader gave it.
+// `/libraries/<host>/<owner>/<repo>` route the loader gave it.
 export function createLibraryListingRoute(dirs?: LibraryDirs) {
   return createRoute(
     ssgParams(() =>
       untypedListings(dirs).map(({ route }) => {
-        const [owner = "", repo = ""] = route.split("/").slice(2);
-        return { owner, repo };
+        const [host = "", owner = "", repo = ""] = route.split("/").slice(2);
+        return { host, owner, repo };
       }),
     ),
     async (c) => {
-      const route = `/libraries/${c.req.param("owner")}/${c.req.param("repo")}`;
+      const route = `/libraries/${c.req.param("host")}/${c.req.param("owner")}/${c.req.param("repo")}`;
       const listing = untypedListings(dirs).find((candidate) => candidate.route === route);
       if (!listing) return c.notFound();
 

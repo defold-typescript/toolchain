@@ -31,7 +31,7 @@ export function withToolchainLinks(pages: ApiPage[], typesDir: string): ApiPage[
 
 // An authored summary links engine pages root-relative, as it reads on the toolchain
 // docs. Those pages live there, at a single-segment `/api/<namespace>`; a library
-// page here is `/api/<owner>/<repo>/<namespace>`, so it stays relative.
+// page here is `/api/<host>/<owner>/<repo>/<namespace>`, so it stays relative.
 export function pointAtToolchainDocs(markdown: string): string {
   return markdown.replace(
     /\]\(\/api\/([^)#\s/]+)(?=[)#\s])/g,

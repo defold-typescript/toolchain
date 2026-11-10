@@ -206,7 +206,7 @@ describe("loadApiSurface library displayName", () => {
   test("the alias never touches the route or namespace", () => {
     const one = libraryPages().find((p) => p.namespace === "demo.one");
     expect(one?.namespace).toBe("demo.one");
-    expect(one?.route).toBe("/api/someone/demolib/demo.one");
+    expect(one?.route).toBe("/api/github.com/someone/demolib/demo.one");
   });
 });
 
@@ -484,7 +484,10 @@ const ENGINE_RELEASES = [
 describe("Defold extensions under Libraries", () => {
   test("each Defold doc is a library page owned by defold", () => {
     const pages = loadPages(REAL_DIRS);
-    for (const route of ["/api/defold/extension-iap/iap", "/api/defold/extension-spine/gui"]) {
+    for (const route of [
+      "/api/github.com/defold/extension-iap/iap",
+      "/api/github.com/defold/extension-spine/gui",
+    ]) {
       const page = pages.find((p) => p.route === route);
       expect(page?.category).toBe("library");
     }
@@ -546,7 +549,7 @@ describe("Defold extensions under Libraries", () => {
     for (const listing of listings) {
       const repo = listing.url.split("/").pop() ?? "";
       const entry = untyped.find((candidate) => candidate.repo === listing.url);
-      expect(listing.route).toBe(`/libraries/defold/${repo}`);
+      expect(listing.route).toBe(`/libraries/github.com/defold/${repo}`);
       expect(["none", "untyped"]).toContain(listing.api);
       expect(listing.ships).not.toBe("");
       expect(listing.ships).not.toContain("api:");
@@ -882,7 +885,7 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
         ref: "1.0.0",
         pinKind: "tag",
         description: "Rotated Grid Super-Sampling (RGSS) for the Defold engine.",
-        route: "/libraries/indiesoftby/defold-sharp-sprite",
+        route: "/libraries/github.com/indiesoftby/defold-sharp-sprite",
         api: "none",
         adoption: "standard",
         ships: "Rotated Grid Super-Sampling (RGSS) for the Defold engine.",
@@ -917,7 +920,7 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
       { defoldRepos: ["https://github.com/defold/asset-pbr"] },
     );
     expect(portalListingsFromManifest(dir).map((listing) => listing.route)).toEqual([
-      "/libraries/someone-else/control",
+      "/libraries/github.com/someone-else/control",
     ]);
   });
 
@@ -927,7 +930,7 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
       { base: FIXTURE_ROOT },
     );
     expect(portalListingsFromManifest(dir).map((listing) => listing.route)).toEqual([
-      "/libraries/someone-else/control",
+      "/libraries/github.com/someone-else/control",
     ]);
   });
 
@@ -978,7 +981,7 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
     for (const listing of defoldListingsFromManifest(REAL_DIRS)) {
       expect(routes).toContain(listing.route);
     }
-    expect(routes).toContain("/libraries/indiesoftby/defold-sharp-sprite");
+    expect(routes).toContain("/libraries/github.com/indiesoftby/defold-sharp-sprite");
   });
 });
 
@@ -1085,7 +1088,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
 
   test("each portal doc is a library page under its GitHub owner, imported by its namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "astar" }]);
-    const page = pageAt(dir, "/api/someone/defold-lib-0/astar");
+    const page = pageAt(dir, "/api/github.com/someone/defold-lib-0/astar");
     expect(page?.category).toBe("library");
     expect(libraryOriginByNamespace(dir).get("astar")).toEqual({
       owner: "someone",
@@ -1111,10 +1114,12 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       [{ page: "dated", refDate: "2024-07-01T00:00:00Z" }, { page: "undated" }],
       { engineReleases: ENGINE_RELEASES },
     );
-    expect(pageAt(dir, "/api/someone/defold-lib-0/dated")?.libraryMeta?.releaseEra).toBe("1.9.0");
-    expect(pageAt(dir, "/api/someone/defold-lib-1/undated")?.libraryMeta).not.toHaveProperty(
-      "releaseEra",
+    expect(pageAt(dir, "/api/github.com/someone/defold-lib-0/dated")?.libraryMeta?.releaseEra).toBe(
+      "1.9.0",
     );
+    expect(
+      pageAt(dir, "/api/github.com/someone/defold-lib-1/undated")?.libraryMeta,
+    ).not.toHaveProperty("releaseEra");
   });
 
   test("the committed portal manifests date every release and tag pin and no commit pin", () => {
@@ -1142,7 +1147,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
 
   test("a portal doc declaring an engine namespace says it extends that namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "lib.gui", namespace: "gui" }]);
-    const meta = pageAt(dir, "/api/someone/defold-lib-0/gui")?.libraryMeta;
+    const meta = pageAt(dir, "/api/github.com/someone/defold-lib-0/gui")?.libraryMeta;
     expect(meta?.usage).toBe("ambient");
     expect(meta?.importString).toBe("");
     expect(meta?.globalNamespace).toBe("gui");
@@ -1154,10 +1159,10 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       { page: "blank" },
       { page: "described", description: "Its own description." },
     ]);
-    expect(pageAt(dir, "/api/someone/defold-lib-0/blank")?.module.description).toBe(
+    expect(pageAt(dir, "/api/github.com/someone/defold-lib-0/blank")?.module.description).toBe(
       "Portal description 0.",
     );
-    expect(pageAt(dir, "/api/someone/defold-lib-1/described")?.module.description).toBe(
+    expect(pageAt(dir, "/api/github.com/someone/defold-lib-1/described")?.module.description).toBe(
       "Its own description.",
     );
   });
@@ -1166,7 +1171,9 @@ describe("Asset Portal script_api libraries under Libraries", () => {
     const dir = libraryTypesWithPortalPages([
       { page: "defold-mpeg", namespace: "mpeg", repo: "https://github.com/Morgerion/defold-mpeg" },
     ]);
-    expect(pageAt(dir, "/api/morgerion/defold-mpeg/mpeg")?.namespace).toBe("defold-mpeg");
+    expect(pageAt(dir, "/api/github.com/morgerion/defold-mpeg/mpeg")?.namespace).toBe(
+      "defold-mpeg",
+    );
   });
 
   test("a portal page key on an engine, vendored, Defold, native or other portal page throws naming the manifest and the key", () => {
@@ -1235,9 +1242,9 @@ describe("the page set", () => {
   test("routes a page by its origin and the namespace it declares, not its page key", () => {
     const routeOf = (key: string) =>
       loadPages(REAL_DIRS).find((page) => page.namespace === key)?.route;
-    expect(routeOf("spine.gui")).toBe("/api/defold/extension-spine/gui");
-    expect(routeOf("extension-camera")).toBe("/api/defold/extension-camera/camera");
-    expect(routeOf("druid")).toBe("/api/insality/druid/druid");
+    expect(routeOf("spine.gui")).toBe("/api/github.com/defold/extension-spine/gui");
+    expect(routeOf("extension-camera")).toBe("/api/github.com/defold/extension-camera/camera");
+    expect(routeOf("druid")).toBe("/api/github.com/insality/druid/druid");
   });
 
   test("every page and listing route is lowercase and unique", () => {
@@ -1321,7 +1328,7 @@ describe("the page set", () => {
           },
         ]),
       ),
-    ).toThrow(/\/api\/defold\/extension-twin\/twin.*Extension-Twin.*extension-twin/);
+    ).toThrow(/\/api\/github\.com\/defold\/extension-twin\/twin.*Extension-Twin.*extension-twin/);
   });
 
   test("a page whose library records no origin repo throws naming the page", () => {

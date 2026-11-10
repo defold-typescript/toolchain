@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[owner]/[repo]/[namespace]";
+import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
 import { createLibrariesRoute } from "../routes/index";
 import { apiPages, siteDirs, untypedListings } from "./api-content";
 import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
@@ -115,22 +115,25 @@ describe("Libraries index route composition", () => {
 
 describe("library API page routes", () => {
   const app = new Hono();
-  const pattern = "/api/:owner/:repo/:namespace";
+  const pattern = "/api/:host/:owner/:repo/:namespace";
   app.get(pattern, ...createApiNamespaceRoute(REAL_DIRS));
 
   test("a page renders at the route of its origin and declared namespace", async () => {
-    const res = await app.request("/api/defold/extension-spine/gui");
+    const res = await app.request("/api/github.com/defold/extension-spine/gui");
     expect(res.status).toBe(200);
     const heading = (await res.text()).match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
     expect(textOf(heading)).toContain("extension-spine");
   });
 
-  test("the page key, a mixed-case segment or an unknown namespace answers 404", async () => {
+  test("the page key, a mixed-case segment, an unknown namespace, or a missing or wrong host answers 404", async () => {
     for (const path of [
-      "/api/defold/extension-spine/spine.gui",
-      "/api/Defold/extension-spine/gui",
-      "/api/insality/druid/Druid",
-      "/api/defold/extension-spine/not-a-page",
+      "/api/github.com/defold/extension-spine/spine.gui",
+      "/api/github.com/Defold/extension-spine/gui",
+      "/api/GitHub.com/defold/extension-spine/gui",
+      "/api/github.com/insality/druid/Druid",
+      "/api/github.com/defold/extension-spine/not-a-page",
+      "/api/defold/extension-spine/gui",
+      "/api/codeberg.org/defold/extension-spine/gui",
     ]) {
       expect({ path, status: (await app.request(path)).status }).toEqual({ path, status: 404 });
     }

@@ -1,49 +1,69 @@
 import { describe, expect, test } from "bun:test";
 import { libraryApiRoute, libraryListingRoute } from "./library-routes";
 
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 describe("libraryApiRoute", () => {
-  test("addresses a page by its origin owner, repo and namespace", () => {
+  test("addresses a page by its origin host, owner, repo and namespace", () => {
     expect(libraryApiRoute("https://github.com/Insality/defold-tweener", "tweener")).toBe(
-      "/api/insality/defold-tweener/tweener",
+      "/api/github.com/insality/defold-tweener/tweener",
     );
   });
 
   test("keeps the dots of a dotted module", () => {
     expect(libraryApiRoute("https://github.com/britzl/monarch", "monarch.monarch")).toBe(
-      "/api/britzl/monarch/monarch.monarch",
+      "/api/github.com/britzl/monarch/monarch.monarch",
     );
   });
 
   test("lowercases the namespace", () => {
     expect(libraryApiRoute("https://github.com/someone/defold-anim", "bzAnim")).toBe(
-      "/api/someone/defold-anim/bzanim",
+      "/api/github.com/someone/defold-anim/bzanim",
     );
   });
 
-  test("routes a Codeberg origin the same way, leaving the host out of the path", () => {
+  test("routes a Codeberg origin under its own host", () => {
     expect(libraryApiRoute("https://codeberg.org/Klaleus/defold-checkpoint", "checkpoint")).toBe(
-      "/api/klaleus/defold-checkpoint/checkpoint",
+      "/api/codeberg.org/klaleus/defold-checkpoint/checkpoint",
     );
+  });
+
+  test("lowercases the host", () => {
+    expect(libraryApiRoute("https://GitHub.com/britzl/monarch", "monarch")).toBe(
+      "/api/github.com/britzl/monarch/monarch",
+    );
+  });
+
+  test("drops a default port from the host", () => {
+    expect(libraryApiRoute("https://github.com:443/britzl/monarch", "monarch")).toBe(
+      "/api/github.com/britzl/monarch/monarch",
+    );
+  });
+
+  test("keeps a host whose name ends in a dash and digits apart from one with a port", () => {
+    expect(libraryApiRoute("http://git.acme.com-3000/games/monarch", "monarch")).toBe(
+      "/api/git.acme.com-3000/games/monarch/monarch",
+    );
+    const ported = "http://git.acme.com:3000/games/monarch";
+    expect(() => libraryApiRoute(ported, "monarch")).toThrow(new RegExp(escapeRegExp(ported)));
   });
 
   test("reads only the owner and repo from a longer origin URL", () => {
     expect(libraryApiRoute("https://github.com/defold/extension-spine/", "gui")).toBe(
-      "/api/defold/extension-spine/gui",
+      "/api/github.com/defold/extension-spine/gui",
     );
   });
 });
 
 describe("libraryListingRoute", () => {
-  test("addresses a listing by its origin owner and repo", () => {
+  test("addresses a listing by its origin host, owner and repo", () => {
     expect(libraryListingRoute("https://github.com/Jerakin/editor-script-align")).toBe(
-      "/libraries/jerakin/editor-script-align",
+      "/libraries/github.com/jerakin/editor-script-align",
     );
   });
 });
 
 describe("a URL or segment that cannot name a route", () => {
-  const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
   test("a URL with no owner or no repo throws naming the URL", () => {
     for (const url of ["https://github.com/", "https://github.com/someone", "github.com/a/b"]) {
       expect(() => libraryListingRoute(url)).toThrow(new RegExp(escapeRegExp(url)));

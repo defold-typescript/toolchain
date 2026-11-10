@@ -97,7 +97,7 @@ describe("links to the library docs site", () => {
 
   test("an address form holds only while some route fits it", () => {
     const form = (path: string) => siteLinks("form.md", `\`${LIBRARY_DOCS_URL}${path}\``);
-    expect(deadSiteLinks(form("/api/<owner>/<repo>/<namespace>"), routes)).toEqual([]);
+    expect(deadSiteLinks(form("/api/<host>/<owner>/<repo>/<namespace>"), routes)).toEqual([]);
     expect(deadSiteLinks(form("/api/<library>"), routes)).toEqual([
       `form.md:1: ${LIBRARY_DOCS_URL}/api/<library>`,
     ]);

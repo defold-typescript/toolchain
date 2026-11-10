@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test";
+import { cpSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { dependencyStep } from "@defold-typescript/docs-render/api-page-render";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { Hono } from "hono";
-import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
-import { apiPages, siteDirs, untypedListings } from "./api-content";
+import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
+import { createLibraryListingRoute } from "../routes/libraries/[host]/[owner]/[repo]";
+import { apiPages, libraryNavGroups, siteDirs, untypedListings } from "./api-content";
+import type { LibraryDirs } from "./api-surface-loader";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
 import { ssgRoutePaths } from "./ssg-routes";
 
@@ -12,7 +16,7 @@ import { ssgRoutePaths } from "./ssg-routes";
 const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
 
 const app = new Hono();
-app.get("/libraries/:owner/:repo", ...createLibraryListingRoute(REAL_DIRS));
+app.get("/libraries/:host/:owner/:repo", ...createLibraryListingRoute(REAL_DIRS));
 
 async function render(path: string): Promise<{ status: number; html: string }> {
   const res = await app.request(path);
@@ -25,7 +29,7 @@ const textOf = (html: string): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-describe("/libraries/:owner/:repo listing pages", () => {
+describe("/libraries/:host/:owner/:repo listing pages", () => {
   const listings = untypedListings(REAL_DIRS);
   const pageRoutes = new Set(apiPages(REAL_DIRS).map((page) => page.route));
 
@@ -113,17 +117,87 @@ describe("/libraries/:owner/:repo listing pages", () => {
     );
     expect(mixed.length).toBeGreaterThan(0);
     for (const listing of mixed) {
-      expect(listing.route).toBe(`/libraries/${listing.owner}/${listing.repo}`.toLowerCase());
-      const path = `/libraries/${listing.owner}/${listing.repo}`;
+      const host = new URL(listing.url).host;
+      expect(listing.route).toBe(
+        `/libraries/${host}/${listing.owner}/${listing.repo}`.toLowerCase(),
+      );
+      const path = `/libraries/${host}/${listing.owner}/${listing.repo}`;
+      expect({ path, status: (await render(path)).status }).toEqual({ path, status: 404 });
+    }
+  });
+
+  test("a Defold listing answers under its host, and not without one or under another", async () => {
+    expect((await render("/libraries/github.com/defold/asset-pbr")).status).toBe(200);
+    for (const path of [
+      "/libraries/defold/asset-pbr",
+      "/libraries/codeberg.org/defold/asset-pbr",
+    ]) {
       expect({ path, status: (await render(path)).status }).toEqual({ path, status: 404 });
     }
   });
 
   test("an unknown repo under defold is a 404", async () => {
-    expect((await render("/libraries/defold/not-a-repo")).status).toBe(404);
+    expect((await render("/libraries/github.com/defold/not-a-repo")).status).toBe(404);
   });
 
   test("a listed repo under the wrong owner is a 404", async () => {
-    expect((await render("/libraries/britzl/asset-pbr")).status).toBe(404);
+    expect((await render("/libraries/github.com/britzl/asset-pbr")).status).toBe(404);
+  });
+});
+
+// The fixture's typed library lives at github.com/someone/demolib; a portal
+// listing for codeberg.org/someone/demolib names the same owner and repo on
+// another forge, so it is a second library rather than a duplicate.
+describe("one owner and repo on two hosts", () => {
+  const FIXTURE_ROOT = join(import.meta.dir, "__fixtures__", "library-display");
+
+  function crossHostDirs(): LibraryDirs {
+    const root = mkdtempSync(join(tmpdir(), "library-cross-host-"));
+    cpSync(FIXTURE_ROOT, root, { recursive: true });
+    const dataDir = join(root, "data", "0.61.0");
+    writeFileSync(
+      join(dataDir, "asset-portal.json"),
+      JSON.stringify({
+        entries: [
+          {
+            id: "codeberg-demolib",
+            description: "Shaders for the demo.",
+            repo: "https://codeberg.org/someone/demolib",
+            ref: "1.0.0",
+            refKind: "release",
+            kind: "no-lua-api",
+          },
+        ],
+      }),
+    );
+    return { dataDir, modelDir: join(root, "api-doc") };
+  }
+
+  const dirs = crossHostDirs();
+  const LISTING = "/libraries/codeberg.org/someone/demolib";
+  const PAGE = "/api/github.com/someone/demolib/demo.one";
+
+  test("the second host's listing is served beside the first host's typed page", async () => {
+    expect(untypedListings(dirs).map((listing) => listing.route)).toEqual([LISTING]);
+    expect(apiPages(dirs).map((page) => page.route)).toContain(PAGE);
+
+    const site = new Hono();
+    site.get("/libraries/:host/:owner/:repo", ...createLibraryListingRoute(dirs));
+    site.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(dirs));
+    for (const path of [LISTING, PAGE]) {
+      expect({ path, status: (await site.request(path)).status }).toEqual({ path, status: 200 });
+    }
+  });
+
+  test("the Libraries tree holds both under the one owner", () => {
+    const someone = libraryNavGroups(apiPages(dirs), dirs).find(
+      (group) => group.owner === "someone",
+    );
+    const routes = (someone?.libraries ?? []).flatMap((library) => [
+      ...library.modules.map((module) => module.route),
+      ...(library.listing ? [library.listing.route] : []),
+    ]);
+    expect(routes).toContain(PAGE);
+    expect(routes).toContain(LISTING);
   });
 });
