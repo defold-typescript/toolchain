@@ -496,3 +496,51 @@ describe("explicit-window links", () => {
     );
   });
 });
+
+// The CLI prints absolute links to the published guide, which no markdown walk
+// above sees: each one is held to the same route set and rendered heading ids.
+const CLI_SRC_DIR = join(import.meta.dir, "../../../cli/src");
+const TOOLCHAIN_URL_RE =
+  /https:\/\/defold-typescript\.github\.io\/toolchain(\/[\w./-]*)?(?:#([\w-]+))?/g;
+
+interface ToolchainUrl {
+  file: string;
+  url: string;
+  route: string;
+  anchor?: string;
+}
+
+function cliToolchainUrls(dir: string): ToolchainUrl[] {
+  const found: ToolchainUrl[] = [];
+  for (const entry of readdirSync(dir, { recursive: true, encoding: "utf8" })) {
+    const file = entry.replaceAll("\\", "/");
+    if (!file.endsWith(".ts") || file.endsWith(".test.ts")) continue;
+    for (const m of readFileSync(join(dir, file), "utf8").matchAll(TOOLCHAIN_URL_RE)) {
+      const route = (m[1] ?? "").replace(/\/+$/, "") || "/";
+      found.push({ file, url: m[0], route, ...(m[2] === undefined ? {} : { anchor: m[2] }) });
+    }
+  }
+  return found;
+}
+
+describe("toolchain docs URLs in CLI source", () => {
+  test("every one names a route the site serves and a heading its page emits", async () => {
+    const urls = cliToolchainUrls(CLI_SRC_DIR);
+    expect(urls.length).toBeGreaterThan(0);
+    const render = siteRenderer(GUIDE_DIR);
+    const broken: string[] = [];
+    for (const { file, url, route, anchor } of urls) {
+      if (!STATIC_ROUTES.has(route)) {
+        broken.push(`${file}: ${url} (unknown route)`);
+        continue;
+      }
+      if (anchor === undefined) continue;
+      const page = route === "/" ? "README.md" : `${route.slice(1)}.md`;
+      const anchors = existsSync(join(GUIDE_DIR, page))
+        ? await pageAnchors(GUIDE_DIR, page, render)
+        : new Set<string>();
+      if (!anchors.has(anchor)) broken.push(`${file}: ${url} (unknown anchor)`);
+    }
+    expect(broken).toEqual([]);
+  });
+});

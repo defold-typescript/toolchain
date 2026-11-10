@@ -84,6 +84,7 @@ function extensionBundle(url: string): ExtensionDeclarations {
     archivePath: "archive.zip",
     declarations: [],
     luaModules: [],
+    sharesLua: false,
     manifestDirs: [],
     sceneSources: [],
     sceneReasons: [],
