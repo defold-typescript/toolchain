@@ -15,6 +15,7 @@ import {
   readBuildConfig,
 } from "./build-output";
 import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
+import { LLDEBUGGER_MODULE, LLDEBUGGER_URL } from "./lldebugger";
 import { normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
 import {
@@ -25,12 +26,6 @@ import {
   writeVscodeDebugLauncher,
   writeVscodeLaunch,
 } from "./vscode-debug-scaffold";
-
-// Our pinned release URL, mirrored from `packages/docs/guide/debugging.md`. The
-// `lldebugger-url` leak guard forbids the upstream ts-defold URL, so this must
-// stay equal to the guide's snapshot URL.
-export const LLDEBUGGER_URL =
-  "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip";
 
 // The prior step shipped a single skip-marker block with the `declare module`
 // inline. That form fails `tsc` under `moduleResolution: Bundler` (Bug 08), so
@@ -49,7 +44,7 @@ export const AMBIENT_DTS_REL = "src/lldebugger.debug.d.ts";
 // `require("lldebugger.debug")`; in a `.d.ts` the declaration type-checks clean
 // (the inline form in a `.ts` did not — Bug 08).
 export const AMBIENT_DECLARATION = `/** @noResolution */
-declare module "lldebugger.debug" {
+declare module "${LLDEBUGGER_MODULE}" {
   export function start(): void;
 }
 `;

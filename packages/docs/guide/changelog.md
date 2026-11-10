@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.61.1
+
+> Summary:
+>
+> - **[`resolve` lists the debugger](./resolve.md#a-library-nobody-types)** with no untyped-Lua notice.
+
+### Fixed
+
+- **`resolve` treated the `lldebugger` dependency [`setup-debug`](./debugging.md) adds as a library nobody types:** it listed it as `asset-only, skipped` and named it in the notice to declare its modules in `src/types/`, though `setup-debug` already declares the one module a project requires from it. `resolve` now lists it as `lldebugger.debug <- <url> (debugger, declared by setup-debug)` and leaves it out of the notice, which still names every other untyped dependency ([A library nobody types](./resolve.md#a-library-nobody-types)); `--json` leaves it out of `notices` too.
+
 ## v0.61.0
 
 > Summary:

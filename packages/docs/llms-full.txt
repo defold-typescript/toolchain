@@ -8852,6 +8852,10 @@ Lua in example, test, demo and sample folders does not count. A run that reads
 no library data gives no notice, since it cannot tell whether library data would
 type the library. `--json` carries the same text in `notices`.
 
+The `lldebugger` dependency [`setup-debug`](./debugging.md) adds is not such a
+library: `setup-debug` declares `lldebugger.debug`, so `resolve` lists it as
+the debugger and gives it no notice.
+
 Declare each module your scripts require, one file per library. For a library
 that shares `mylib/mylib.lua`, save this as `src/types/mylib.d.ts`:
 
@@ -10066,7 +10070,7 @@ Each part is covered below. If you would rather wire things by hand, the manual 
 
 Six files — three in your project, three under `.vscode/`:
 
-- **`game.project`** — the `lldebugger` library dependency, at the next free `dependencies#N` index. Skipped if it is already there.
+- **`game.project`** — the `lldebugger` library dependency, at the next free `dependencies#N` index. Skipped if it is already there. [`resolve`](./resolve.md) lists it as `lldebugger.debug <- <url> (debugger, declared by setup-debug)`.
 - **your entry script** — a gated `lldebugger.start()` bootstrap, inside a managed `BEGIN`/`END` block.
 - **`lldebugger.debug.d.ts`** — the ambient `@noResolution declare module`, written next to the entry script so the same `include`[^src-root] pattern covers both.
 - **`.vscode/launch.json`** — a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`.

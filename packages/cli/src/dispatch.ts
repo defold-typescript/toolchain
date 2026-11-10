@@ -54,6 +54,7 @@ import { type RenderResultInput, renderResult } from "./json-output";
 import { createLateEditorVersionCheck } from "./late-editor-version";
 import type { UpdateForge } from "./library/library-update";
 import type { VendoredLibrary } from "./library-match";
+import { LLDEBUGGER_MODULE, LLDEBUGGER_URL } from "./lldebugger";
 import type { RefDocResolveOptions } from "./materialize";
 import {
   createIncompleteReporter,
@@ -2036,6 +2037,10 @@ function dispatchCommand(
               } else if (ext.typeSurface === "vendored-native") {
                 io.stdout.write(
                   `  ${ext.namespaces.join(", ")} <- ${ext.url} (native extension)\n`,
+                );
+              } else if (ext.url === LLDEBUGGER_URL) {
+                io.stdout.write(
+                  `  ${LLDEBUGGER_MODULE} <- ${ext.url} (debugger, declared by setup-debug)\n`,
                 );
               } else if (ext.assetOnly) {
                 if (library !== undefined) {

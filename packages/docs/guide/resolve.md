@@ -422,6 +422,10 @@ Lua in example, test, demo and sample folders does not count. A run that reads
 no library data gives no notice, since it cannot tell whether library data would
 type the library. `--json` carries the same text in `notices`.
 
+The `lldebugger` dependency [`setup-debug`](./debugging.md) adds is not such a
+library: `setup-debug` declares `lldebugger.debug`, so `resolve` lists it as
+the debugger and gives it no notice.
+
 Declare each module your scripts require, one file per library. For a library
 that shares `mylib/mylib.lua`, save this as `src/types/mylib.d.ts`:
 

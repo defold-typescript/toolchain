@@ -42,6 +42,7 @@ import {
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
+import { LLDEBUGGER_URL } from "./lldebugger";
 import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
 import {
   type ResolvedExtensionReport,
@@ -5453,5 +5454,26 @@ describe("runResolve points an untyped Lua-sharing dependency at the guide", () 
     expect(result.ok).toBe(true);
     expect(result.extensions[0]?.typeSurface).toBe("none");
     expect(untypedHints(result.notices)).toEqual([]);
+  });
+
+  test("the debugger dependency setup-debug adds draws no notice", async () => {
+    const alpha = "https://github.com/owner/alpha/archive/main.zip";
+
+    const result = await resolveArchives(
+      [
+        [LLDEBUGGER_URL, luaArchive("lldebugger", "lldebugger", ["lldebugger/debug.lua"])],
+        [alpha, luaArchive("alpha", "alpha", ["alpha/alpha.lua"])],
+      ],
+      writeAuthoredLibraryData({}),
+    );
+
+    expect(result.ok).toBe(true);
+    const hints = untypedHints(result.notices);
+    expect(hints).toHaveLength(1);
+    expect(hints[0]).toContain(alpha);
+    expect(hints[0]).not.toContain(LLDEBUGGER_URL);
+    expect(result.extensions[0]?.url).toBe(LLDEBUGGER_URL);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("none");
   });
 });

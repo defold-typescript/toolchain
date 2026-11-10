@@ -82,6 +82,7 @@ import {
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
+import { LLDEBUGGER_URL } from "./lldebugger";
 import {
   type LibraryDataPins,
   PROJECT_LOCK_FILE,
@@ -992,7 +993,8 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   });
 
   // A run that read no library data cannot tell whether it would type the library,
-  // so it gives no advice to type it by hand.
+  // so it gives no advice to type it by hand. `setup-debug` declares the one module
+  // a project requires from the debugger.
   const sharesLua = new Set(extensionBundles.filter((b) => b.sharesLua).map((b) => b.url));
   const untypedLuaUrls =
     libraryDataDir === null
@@ -1002,7 +1004,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
             extensions
               .filter(
                 ({ url, assetOnly, typeSurface }) =>
-                  assetOnly && typeSurface === "none" && sharesLua.has(url),
+                  assetOnly &&
+                  typeSurface === "none" &&
+                  sharesLua.has(url) &&
+                  url !== LLDEBUGGER_URL,
               )
               .map(({ url }) => url),
           ),
