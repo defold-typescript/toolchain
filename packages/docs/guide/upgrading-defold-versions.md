@@ -618,8 +618,7 @@ the old name.
 
 ## Defold 1.14.0
 
-Defold 1.14.0 is the current stable release and the toolchain's default API
-target. Its Lua API changes only add: nothing was removed, nothing was
+Defold 1.14.0's Lua API changes only add: nothing was removed, nothing was
 deprecated and no signature got narrower, so **a project on 1.13.2 needs no
 source change for the Lua API**. Move the pin and rebuild. The release also
 changes engine behavior and project settings that the compiler cannot check, so
@@ -712,3 +711,134 @@ Same change as `gui.get_layout_objects`, relative to the label's pivot. See the
 - **Native extensions need 1.14.0 builds.** The engine's native interface
   changed, so an extension that ships prebuilt libraries, and an extension with
   an editor plugin, must be updated to a release built for 1.14.0.
+
+<!-- release: 1.14.1 -->
+
+## Defold 1.14.1
+
+Defold 1.14.1 is a **patch** over [1.14.0](#defold-1140) and the toolchain's
+default API target. Its Lua API changes add and widen: every call written
+against 1.14.0 keeps compiling, so **a project on 1.14.0 needs no source change
+for the Lua API**. The one removal is the `start_record` and `stop_record`
+messages, which only an untyped `msg.post` reaches. The release also changes
+shader, render target and GUI behavior and the custom iOS `Info.plist`, which the
+compiler cannot check, so walk the last topic below by hand. A project on 1.13.2
+migrates through the 1.14.0 notes above as well; the [1.13.2
+reference](/api/defold-1.13.2/go) keeps that release's surface.
+
+The runbook above, with this release's concrete targets:
+
+```sh
+# what you ship today
+bunx @defold-typescript/cli build --defold-target 1.14.0
+
+# the same project against the new surface
+bunx @defold-typescript/cli build --defold-target 1.14.1
+```
+
+### Added Lua APIs
+
+These are additive, so no existing call changes. A project that uses them must
+pin `--defold-target 1.14.1` or newer.
+
+#### recorder.start
+
+`recorder.start` records the game window to an MP4 file, on the new 1.14.1
+[`recorder`](/api/defold-1.14.1/recorder) surface. It takes a
+`recorder.Options` table (`path`, and optional `fps` and `audio`) and a
+callback that receives `recorder.EVENT_STARTED`, then `recorder.EVENT_STOPPED`
+or `recorder.EVENT_ERROR` with a `recorder.Result`. It returns
+`LuaMultiReturn<[boolean | undefined, string | undefined]>`: `true` when the
+request is accepted, otherwise `undefined` and the reason. Only desktop debug
+engines carry the module; release, headless, mobile and web builds omit it, so
+the global is `nil` there at run time even though the declaration compiles.
+
+#### recorder.stop
+
+`recorder.stop` asks the active recording to finalize. Call it after the
+callback has received `recorder.EVENT_STARTED`; the file is ready when the
+callback receives `recorder.EVENT_STOPPED`. It returns the same accepted flag
+and reason as `recorder.start`.
+
+#### window.get_reserved_areas
+
+`window.get_reserved_areas` returns the screen areas a camera cutout or the
+Dynamic Island covers, as an array of `window.ReservedArea` (`x`, `y`, `width`,
+`height` in window pixels), on the 1.14.1 [`window`](/api/defold-1.14.1/window)
+surface. It reports areas on iOS and Android and returns an empty array
+elsewhere. Query it in `init` and again on `window.WINDOW_EVENT_RESIZED`.
+
+#### graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK
+
+`graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK` is a context feature flag for
+backbuffer readback support, on the 1.14.1
+[`graphics`](/api/defold-1.14.1/graphics) surface. It is a member of
+`graphics.ContextFeature`.
+
+### Widened Lua APIs
+
+Each of these gains an optional trailing argument, so existing calls keep
+compiling. The [1.14.0 `sound` page](/api/defold-1.14.0/sound) and the [1.14.0
+`sys` page](/api/defold-1.14.0/sys) keep the older signatures.
+
+#### sound.set_gain
+
+`sound.set_gain` takes an optional third `properties` argument, a
+`sound.ParameterProperties` table. Pass its `play_id`, the id `sound.play`
+returns, to change one voice; omit it to change every voice and the gain the
+component uses for later playback. See the 1.14.1
+[`sound`](/api/defold-1.14.1/sound) surface. The `set_gain` message takes the
+same `play_id`.
+
+#### sound.set_pan
+
+`sound.set_pan` takes the same optional `properties` argument, with the same
+`play_id` rule, and the `set_pan` message takes the same `play_id`.
+
+#### sys.reboot
+
+`sys.reboot` takes two more optional string arguments, `arg7` and `arg8`, and
+the `reboot` message takes the same two fields. See the 1.14.1
+[`sys`](/api/defold-1.14.1/sys) surface.
+
+### Input source
+
+The `on_input` action table carries `source`, a `Hash` of the input device
+category: `hash("keyboard")`, `hash("text")`, `hash("mouse")`, `hash("touch")`,
+`hash("gamepad")` or `hash("accelerometer")`. Compare it to tell a physical mouse
+click from one simulated by touch. `InputAction` types it as optional, because it
+types every pinned target and 1.14.0 and older never send it.
+
+### Removed messages
+
+The `start_record` and `stop_record` messages to `@system` are gone; the
+`recorder` module replaces them and writes MP4 instead of VP8. The built-in
+message types follow the default target, so they no longer declare either
+message. A project pinned to 1.14.0 or older that still posts them does so
+through the untyped `msg.post` arm.
+
+### Behavior and project migrations
+
+These compile unchanged against 1.14.1 and behave differently at run time or at
+build time.
+
+- **GLES 2.0 and WebGL 1 shaders are opt-in.** `Exclude GLES 2.0` in
+  `game.project` is on by default, so a game that must run on OpenGL ES 2.0 or
+  WebGL 1 has to turn it off.
+- **A render target needs an attachment.** A render target resource, or one a
+  render script creates, with no color, depth or stencil attachment is rejected.
+  Give a placeholder render target at least one attachment of at least 1x1.
+- **Sprites flip around the atlas pivot.** `sprite.set_hflip` and
+  `sprite.set_vflip` flip around the pivot set in the atlas, the same way a
+  negative scale does. A sprite with an off-center pivot no longer shifts when
+  flipped, so remove any offset that compensated for the shift.
+- **`layout_changed` arrives after `init`.** A GUI script no longer receives
+  `layout_changed` before `init`; layout notifications that arrive earlier are
+  combined and delivered once `init` succeeds.
+- **Legacy Spine GUIs need an updated Spine extension.** The Spine-specific GUI
+  migration moved into the extension, so building a legacy Spine GUI needs a
+  Spine extension release made for 1.14.1.
+- **A custom iOS `Info.plist` needs new keys.** Add
+  `UIApplicationSupportsIndirectInputEvents` set to true, and move the generated
+  orientation list into the new `DefoldSupportedInterfaceOrientations` key, to
+  match the built-in template.

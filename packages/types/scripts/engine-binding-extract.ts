@@ -817,6 +817,7 @@ const CHECK_KINDS: ReadonlyMap<string, readonly LuaKind[]> = new Map<string, Lua
   ["lua_toboolean", ["boolean"]],
   ["CheckBoolean", ["boolean"]],
   ["CheckHash", ["hash"]],
+  ["ToHash", ["hash"]],
   ["CheckHashOrString", ["hash", "string"]],
   ["CheckURL", ["url"]],
   ["ResolveURL", ["url", "string", "hash"]],
@@ -842,6 +843,7 @@ const CHECK_KINDS: ReadonlyMap<string, readonly LuaKind[]> = new Map<string, Lua
 // Readers that convert or return null for an argument of the wrong kind rather
 // than raise on it.
 const UNCHECKED_READS = new Set([
+  "ToHash",
   "lua_toboolean",
   "lua_tonumber",
   "lua_tointeger",

@@ -100,6 +100,7 @@ export const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly st
     "bullet3d.shape",
     "bullet3d.world",
   ],
+  "1.14.1": ["recorder"],
 };
 
 export function promotedNamespacesFor(version: string): string[] {

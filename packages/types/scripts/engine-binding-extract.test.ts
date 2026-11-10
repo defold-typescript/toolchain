@@ -266,6 +266,19 @@ describe("unchecked reads", () => {
     expect(slot(binding("sprite", "set_hflip"), 1)?.unchecked).toBeUndefined();
     expect(slot(binding("sys", "set_engine_throttle"), 1)?.unchecked).toBeUndefined();
   });
+
+  // 1.14.1's ResolveInstance probes the instance with dmScript::ToHash before
+  // falling back to ResolveURL, inside its `lua_gettop(L) == instance_arg` guard.
+  test("a ToHash probe reads a hash and keeps its caller's guard", () => {
+    const fn = readBindingsForTarget("defold-1.14.1").functions.find(
+      (f) => f.namespace === "go" && f.name === "get_position",
+    );
+    expect(fn?.minArgs).toBe(0);
+    expect(slot(fn as BindingFunction, 1)).toMatchObject({
+      kinds: ["hash", "string", "url"],
+      optional: true,
+    });
+  });
 });
 
 describe("nil-raising slots", () => {

@@ -53,7 +53,7 @@ declare global {
      */
     function get_info(fontc: string | Hash): font.Info;
     /**
-     * prepopulates the font glyph cache with rasterised glyphs
+     * prepopulates the font glyph cache with generated glyphs
      *
      * @param fontc - The path to the .fontc resource
      * @param text - The text to layout

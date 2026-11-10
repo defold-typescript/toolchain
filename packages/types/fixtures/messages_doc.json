@@ -1,7 +1,7 @@
 {
   "info": {
     "namespace": "builtin_messages",
-    "version": "1.14.0",
+    "version": "1.14.1",
     "description": "Defold's built-in message ids and the payload shape each one carries."
   },
   "messages": [
@@ -391,6 +391,31 @@
           "types": ["number"],
           "optional": true,
           "doc": "Target gain between 0 and 1."
+        },
+        {
+          "name": "play_id",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Playback id returned by sound.play; updates only that voice. Omit to update every voice and the component's default."
+        }
+      ]
+    },
+    {
+      "name": "set_pan",
+      "origin": "sound",
+      "description": "Set the pan on the receiving sound component.",
+      "payload": [
+        {
+          "name": "pan",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Pan between -1 and 1, default 0."
+        },
+        {
+          "name": "play_id",
+          "types": ["number"],
+          "optional": true,
+          "doc": "Playback id returned by sound.play; updates only that voice. Omit to update every voice and the component's default."
         }
       ]
     },
@@ -782,37 +807,6 @@
       "payload": []
     },
     {
-      "name": "start_record",
-      "origin": "sys",
-      "description": "Starts video recording of the game frame-buffer to file. Current video format is the\nopen vp8 codec in the ivf container. It's possible to upload this format directly\nto YouTube. The VLC video player has native support but with the known issue that\nnot the entire file is played back. It's probably an issue with VLC.\nThe Miro Video Converter has support for vp8/ivf.\n<span class=\"icon-macos\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> Video recording is only supported on desktop platforms.\n<span class=\"icon-attention\"></span> Audio is currently not supported\n<span class=\"icon-attention\"></span> Window width and height must be a multiple of 8 to be able to record video.\nThis message can only be sent to the designated <code>@system</code> socket.",
-      "payload": [
-        {
-          "name": "file_name",
-          "types": ["string"],
-          "optional": false,
-          "doc": "file name to write the video to"
-        },
-        {
-          "name": "frame_period",
-          "types": ["number"],
-          "optional": false,
-          "doc": "frame period to record, ie write every nth frame. Default value is <code>2</code>"
-        },
-        {
-          "name": "fps",
-          "types": ["number"],
-          "optional": false,
-          "doc": "frames per second. Playback speed for the video. Default value is <code>30</code>. The fps value doens't affect the recording. It's only meta-data in the written video file."
-        }
-      ]
-    },
-    {
-      "name": "stop_record",
-      "origin": "sys",
-      "description": "Stops the currently active video recording.\n<span class=\"icon-macos\"></span> <span class=\"icon-windows\"></span> <span class=\"icon-linux\"></span> Video recording is only supported on desktop platforms.\nThis message can only be sent to the designated <code>@system</code> socket.",
-      "payload": []
-    },
-    {
       "name": "reboot",
       "origin": "sys",
       "description": "Reboots the game engine with a specified set of arguments.\nArguments will be translated into command line arguments. Sending the reboot\ncommand is equivalent to starting the engine with the same arguments.\nOn startup the engine reads configuration from \"game.project\" in the\nproject root.\nThis message can only be sent to the designated <code>@system</code> socket.",
@@ -852,6 +846,18 @@
           "types": ["string"],
           "optional": false,
           "doc": "argument 6"
+        },
+        {
+          "name": "arg7",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 7"
+        },
+        {
+          "name": "arg8",
+          "types": ["string"],
+          "optional": false,
+          "doc": "argument 8"
         }
       ]
     },

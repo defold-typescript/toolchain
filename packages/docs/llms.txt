@@ -103,6 +103,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [particlefx](llms-full.txt#particlefx)
 - [physics](llms-full.txt#physics)
 - [profiler](llms-full.txt#profiler)
+- [recorder](llms-full.txt#recorder)
 - [render](llms-full.txt#render)
 - [resource](llms-full.txt#resource)
 - [socket](llms-full.txt#socket)

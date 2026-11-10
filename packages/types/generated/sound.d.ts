@@ -8,6 +8,15 @@ declare global {
    */
   namespace sound {
     /**
+     * Sound parameter properties
+     */
+    interface ParameterProperties {
+      /**
+       * Playback identifier returned by sound.play. If omitted, all voices and the component defaults are updated.
+       */
+      play_id?: number;
+    }
+    /**
      * Data passed to the completion callback of sound.play. The callback's
      * `message_id` indicates whether playback finished or was stopped manually.
      */
@@ -243,18 +252,25 @@ declare global {
      */
     function play(url: string | Hash | Url, play_properties?: sound.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: sound.PlayCompletion, sender: Url) => void): number;
     /**
-     * Set gain on all active playing voices of a sound.
+     * Set gain on all voices of a sound, or just the voice identified by `play_id`.
+     * Without `play_id`, this also updates the component gain used for future playback.
+     * With `play_id`, other voices and the component gain are unchanged. Delayed and paused
+     * voices can be updated. If the voice no longer exists, this call has no effect.
+     * The gain is multiplied by the gain in the sound resource.
      *
      * @param url - the sound to set the gain of
      * @param gain - sound gain between 0 and 1 [-60dB .. 0dB]. The final gain of the sound will be a combination of this gain, the group gain and the master gain.
+     * @param properties - optional playback to update
      * @example
      * ```ts
      * // Assuming the script belongs to an instance with a sound-component with id
      * // "sound", this will set the gain to 0.9
      * sound.set_gain("#sound", 0.9);
+     * const id = sound.play("#sound");
+     * sound.set_gain("#sound", 0.4, { play_id: id });
      * ```
      */
-    function set_gain(url: string | Hash | Url, gain: number): void;
+    function set_gain(url: string | Hash | Url, gain: number, properties?: sound.ParameterProperties): void;
     /**
      * Set mixer group gain
      *
@@ -268,19 +284,26 @@ declare global {
      */
     function set_group_gain(group: string | Hash, gain: number): void;
     /**
-     * Set panning on all active playing voices of a sound.
+     * Set panning on all voices of a sound, or just the voice identified by `play_id`.
+     * Without `play_id`, this also updates the component pan used for future playback.
+     * With `play_id`, other voices and the component pan are unchanged. Delayed and paused
+     * voices can be updated. If the voice no longer exists, this call has no effect.
+     * The pan is added to the pan in the sound resource.
      * The valid range is from -1.0 to 1.0, representing -45 degrees left, to +45 degrees right.
      *
      * @param url - the sound to set the panning value to
      * @param pan - sound panning between -1.0 and 1.0
+     * @param properties - optional playback to update
      * @example
      * ```ts
      * // Assuming the script belongs to an instance with a sound-component with id
-     * // "sound", this will set the gain to 0.5
+     * // "sound", this will set the pan to 0.5
      * sound.set_pan("#sound", 0.5); // pan to the right
+     * const id = sound.play("#sound");
+     * sound.set_pan("#sound", -0.5, { play_id: id }); // pan this voice to the left
      * ```
      */
-    function set_pan(url: string | Hash | Url, pan: number): void;
+    function set_pan(url: string | Hash | Url, pan: number, properties?: sound.ParameterProperties): void;
     /**
      * Stop playing all active voices or just one voice if `play_id` provided
      *

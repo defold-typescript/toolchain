@@ -1,0 +1,188 @@
+{
+  "elements": [
+    {
+      "type": "ENUM",
+      "name": "recorder.EVENT",
+      "brief": "recording events",
+      "description": "recording events",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "recorder.EVENT_STARTED",
+          "doc": "Recording has started.",
+          "type": ""
+        },
+        {
+          "name": "recorder.EVENT_STOPPED",
+          "doc": "Recording has stopped and the MP4 is ready to read.",
+          "type": ""
+        },
+        {
+          "name": "recorder.EVENT_ERROR",
+          "doc": "Recording failed; result.error contains the reason.",
+          "type": ""
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "recorder.options",
+      "brief": "recording options",
+      "description": "recording options",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "path",
+          "doc": "Writable MP4 output path, for example from <a href=\"/ref/sys#sys.get_save_file\">sys.get_save_file</a>. Uses the host path encoding (Windows ANSI code page; UTF-8 elsewhere). The parent directory must exist.",
+          "type": "string"
+        },
+        {
+          "name": "fps?",
+          "doc": "Capture rate from 1 to 60; defaults to 30.",
+          "type": "integer"
+        },
+        {
+          "name": "audio?",
+          "doc": "Record application audio; defaults to false.",
+          "type": "boolean"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "STRUCT",
+      "name": "recorder.result",
+      "brief": "recording event result",
+      "description": "recording event result",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [
+        {
+          "name": "path",
+          "doc": "Output file path, preserving the path supplied to <a href=\"/ref/recorder#recorder.start\">recorder.start</a>.",
+          "type": "string"
+        },
+        {
+          "name": "width",
+          "doc": "Recorded video width in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "height",
+          "doc": "Recorded video height in pixels.",
+          "type": "integer"
+        },
+        {
+          "name": "fps",
+          "doc": "Capture rate.",
+          "type": "integer"
+        },
+        {
+          "name": "audio",
+          "doc": "Whether application audio is included.",
+          "type": "boolean"
+        },
+        {
+          "name": "error?",
+          "doc": "Failure reason, present for <a href=\"/ref/recorder#recorder.EVENT_ERROR\">recorder.EVENT_ERROR</a>.",
+          "type": "string"
+        }
+      ],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "recorder.start",
+      "brief": "start recording",
+      "description": "Starts an asynchronous recording of the game window at its native pixel size.\nThe caller owns the output file, which remains on disk after engine shutdown.\nAn existing file at the specified path may be overwritten.\nA successful return only means the request was accepted. The callback receives\n<a href=\"/ref/recorder#recorder.EVENT_STARTED\">recorder.EVENT_STARTED</a> when capture starts, followed by\n<a href=\"/ref/recorder#recorder.EVENT_STOPPED\">recorder.EVENT_STOPPED</a> or <a href=\"/ref/recorder#recorder.EVENT_ERROR\">recorder.EVENT_ERROR</a>. Startup failure produces\nonly EVENT_ERROR. Callbacks run during engine update, never inside start/stop.\nWindow resizing stops and finalizes the recording. Deleting the calling script\ndiscards its callback but does not stop recording. Engine shutdown finalizes\nrecording without invoking callbacks.",
+      "returnvalues": [
+        {
+          "name": "accepted",
+          "doc": "true if accepted, otherwise nil",
+          "types": ["boolean", "nil"]
+        },
+        {
+          "name": "error",
+          "doc": "reason the request was rejected",
+          "types": ["string", "nil"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "recording options",
+          "types": ["recorder.options"],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "recording event callback",
+          "types": ["fun(self:script_instance, event:recorder.EVENT, result:recorder.result)"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">ok</span><span class=\"p\">,</span> <span class=\"n\">err</span> <span class=\"o\">=</span> <span class=\"n\">recorder</span><span class=\"p\">.</span><span class=\"n\">start</span><span class=\"p\">({</span>\n    <span class=\"n\">path</span> <span class=\"o\">=</span> <span class=\"n\">sys</span><span class=\"p\">.</span><span class=\"n\">get_save_file</span><span class=\"p\">(</span><span class=\"s2\">&quot;my_game&quot;</span><span class=\"p\">,</span> <span class=\"s2\">&quot;capture.mp4&quot;</span><span class=\"p\">),</span>\n    <span class=\"n\">fps</span> <span class=\"o\">=</span> <span class=\"mi\">30</span><span class=\"p\">,</span>\n    <span class=\"n\">audio</span> <span class=\"o\">=</span> <span class=\"kc\">false</span><span class=\"p\">,</span>\n<span class=\"p\">},</span> <span class=\"kr\">function</span><span class=\"p\">(</span><span class=\"n\">self</span><span class=\"p\">,</span> <span class=\"n\">event</span><span class=\"p\">,</span> <span class=\"n\">result</span><span class=\"p\">)</span>\n    <span class=\"kr\">if</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">recorder</span><span class=\"p\">.</span><span class=\"n\">EVENT_STOPPED</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"s2\">&quot;Saved:&quot;</span><span class=\"p\">,</span> <span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">path</span><span class=\"p\">)</span>\n    <span class=\"kr\">elseif</span> <span class=\"n\">event</span> <span class=\"o\">==</span> <span class=\"n\">recorder</span><span class=\"p\">.</span><span class=\"n\">EVENT_ERROR</span> <span class=\"kr\">then</span>\n        <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">result</span><span class=\"p\">.</span><span class=\"n\">error</span><span class=\"p\">)</span>\n    <span class=\"kr\">end</span>\n<span class=\"kr\">end</span><span class=\"p\">)</span>\n<span class=\"kr\">if</span> <span class=\"ow\">not</span> <span class=\"n\">ok</span> <span class=\"kr\">then</span> <span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">err</span><span class=\"p\">)</span> <span class=\"kr\">end</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "recorder.stop",
+      "brief": "stop recording",
+      "description": "Requests finalization of the current recording, including one started through\nHTTP. Wait for <a href=\"/ref/recorder#recorder.EVENT_STARTED\">recorder.EVENT_STARTED</a> before calling stop for a Lua recording.\nThe original start callback receives <a href=\"/ref/recorder#recorder.EVENT_STOPPED\">recorder.EVENT_STOPPED</a> only after the\nMP4 is finalized and ready to read, or <a href=\"/ref/recorder#recorder.EVENT_ERROR\">recorder.EVENT_ERROR</a> on failure.\nReturns an error if no recording is active or an operation is pending.",
+      "returnvalues": [
+        {
+          "name": "accepted",
+          "doc": "true if accepted, otherwise nil",
+          "types": ["boolean", "nil"]
+        },
+        {
+          "name": "error",
+          "doc": "reason the request was rejected",
+          "types": ["string", "nil"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "recorder",
+    "name": "Video recording",
+    "brief": "Video recording",
+    "description": "Record the game window to an MP4 file. One recording may run at a time,\nshared with the engine's HTTP recording service.\n\nRecording is supported by desktop debug engines. The module is omitted from\nrelease, headless, mobile and web builds, and when recording is excluded through\nan app manifest. Unsupported desktop operating systems or capture environments\nreturn an error from [ref:recorder.start].\nApplication audio support depends on the platform; audio is disabled by default.",
+    "path": "engine/record/src/record/record_script_extension.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  },
+  "format_version": 2
+}

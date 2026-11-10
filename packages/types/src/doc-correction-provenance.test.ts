@@ -105,7 +105,7 @@ function sightings(key: string): Sighting[] {
 // the fix. The hash gate leaves the correction inert there.
 const DOC_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
   // From 1.13.2 the return is a `graphics.adapter_info` STRUCT whose members carry the fields.
-  "graphics.get_adapter_info#return:info": ["defold-1.13.2", "defold-1.14.0"],
+  "graphics.get_adapter_info#return:info": ["defold-1.13.2", "defold-1.14.0", "defold-1.14.1"],
 };
 
 const resolvedIn = (key: string, sighting: Sighting): boolean =>

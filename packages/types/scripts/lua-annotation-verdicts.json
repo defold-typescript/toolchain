@@ -1045,9 +1045,9 @@
   },
   "runtime:sound.set_gain:arity": {
     "verdict": "accepted",
-    "reason": "engine binding takes 2..2: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber",
-    "annotated": "1..2",
-    "declared": "2..2"
+    "reason": "engine binding takes 2..3: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber, and CheckPlayId reads slot 3 only when it is not none or nil",
+    "annotated": "1..3",
+    "declared": "2..3"
   },
   "runtime:sound.set_gain:optional-as-required:2": {
     "verdict": "corrected",
@@ -1057,9 +1057,9 @@
   },
   "runtime:sound.set_pan:arity": {
     "verdict": "accepted",
-    "reason": "engine binding takes 2..2: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber",
-    "annotated": "1..2",
-    "declared": "2..2"
+    "reason": "engine binding takes 2..3: Sound_SetGain / Sound_SetPan (script_sound.cpp) read slot 2 with luaL_checknumber, and CheckPlayId reads slot 3 only when it is not none or nil",
+    "annotated": "1..3",
+    "declared": "2..3"
   },
   "runtime:sound.set_pan:optional-as-required:2": {
     "verdict": "corrected",

@@ -8,6 +8,15 @@ declare global {
    */
   namespace sound {
     /**
+     * Sound parameter properties
+     */
+    interface ParameterProperties {
+      /**
+       * Playback identifier returned by sound.play. If omitted, all voices and the component defaults are updated.
+       */
+      play_id?: number;
+    }
+    /**
      * Data passed to the completion callback of sound.play. The callback's
      * `message_id` indicates whether playback finished or was stopped manually.
      */

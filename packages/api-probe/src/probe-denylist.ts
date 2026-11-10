@@ -13,6 +13,7 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
   "http.request": "reaches the network",
   "liveupdate.*": "mounts and downloads archives",
   "crash.write_dump": "writes a crash dump beside the engine",
+  "recorder.start": "writes a video file beside the engine",
   "html5.*": "exists only in HTML5 builds",
   "bullet3d.*": NO_BULLET3D,
   "bullet3d.collision_object.*": NO_BULLET3D,
@@ -64,6 +65,4 @@ export const PROPERTY_DENYLIST: Readonly<Record<string, string>> = {
 export const MESSAGE_DENYLIST: Readonly<Record<string, string>> = {
   exit: "ends the run",
   reboot: "restarts the engine",
-  start_record: "writes a video file beside the engine",
-  stop_record: "logs an error unless start_record began a recording, which the probe never posts",
 };
