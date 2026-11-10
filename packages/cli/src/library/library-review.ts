@@ -7,6 +7,7 @@ import {
   type ReadLibraryOptions,
   readLibraryData,
   readLibraryReviews,
+  selectLibraryFolders,
   writeReviewedJson,
 } from "./library-data";
 import { archiveFingerprint, recordReview } from "./library-fingerprint";
@@ -28,8 +29,9 @@ export interface LibraryReviewResult {
 }
 
 /**
- * Record a review for the libraries `names` lists, or for every library when it is
- * empty. Throws, before any download, on a name the data folder does not hold; a
+ * Record a review for the libraries `names` select, or for every library when it is
+ * empty. Throws, before any download, on a name that selects no library or more
+ * than one; a
  * library whose archive cannot be read is reported in `failed` and leaves the others
  * to be written. A failed download fails its library even when a cached copy exists,
  * because a record says what the archive holds now.
@@ -40,15 +42,15 @@ export async function reviewLibraries(
   opts: AddLibraryOptions & ReadLibraryOptions,
 ): Promise<LibraryReviewResult> {
   const libraries = readLibraryData(dataDir, { cliVersion: opts.cliVersion });
-  for (const name of names) {
-    if (!libraries.some(({ dir }) => dir === name)) {
-      throw new Error(`no library ${name} in ${dataDir}`);
-    }
-  }
+  const selected = selectLibraryFolders(
+    dataDir,
+    libraries.map(({ dir }) => dir),
+    names,
+  );
   const reviewed: ReviewedLibrary[] = [];
   const failed: FailedReview[] = [];
   for (const { dir, repo, ref } of libraries) {
-    if (names.length > 0 && !names.includes(dir)) continue;
+    if (names.length > 0 && !selected.includes(dir)) continue;
     try {
       const archive = await resolveExtensionArchive(
         { index: 0, url: `${repo}/archive/${ref}.zip` },

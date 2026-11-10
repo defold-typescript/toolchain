@@ -67,6 +67,7 @@ import {
   matchedLibraryName,
   matchLibraryName,
   matchVendoredLibrary,
+  namesSelectedBy,
   type VendoredLibrary,
 } from "./library-match";
 import {
@@ -412,15 +413,25 @@ export function unknownUpdateNames(
   if (update === undefined || update === true || !existsSync(gameProjectPath)) {
     return null;
   }
-  const declared = readExtensionDependencies(readFileSync(gameProjectPath, "utf8")).map(({ url }) =>
-    libraryName(url),
-  );
-  const unknown = update.filter((name) => !declared.includes(name));
-  if (unknown.length === 0) {
-    return null;
+  const declared = [
+    ...new Set(
+      readExtensionDependencies(readFileSync(gameProjectPath, "utf8")).map(({ url }) =>
+        libraryName(url),
+      ),
+    ),
+  ];
+  const unknown = update.filter((name) => namesSelectedBy(name, declared).length === 0);
+  if (unknown.length > 0) {
+    const names = declared.length === 0 ? "none" : declared.join(", ");
+    return `defold-typescript resolve: --update names no dependency called ${unknown.join(", ")}; declared: ${names}`;
   }
-  const names = declared.length === 0 ? "none" : declared.join(", ");
-  return `defold-typescript resolve: --update names no dependency called ${unknown.join(", ")}; declared: ${names}`;
+  for (const name of update) {
+    const selected = namesSelectedBy(name, declared);
+    if (selected.length > 1) {
+      return `defold-typescript resolve: --update=${name} names more than one dependency: ${selected.join(", ")}`;
+    }
+  }
+  return null;
 }
 
 // What a drifted pin differs by. The two version strings are equal only when both

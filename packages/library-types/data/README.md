@@ -22,12 +22,12 @@ release before the next folder's name. `0.55.0/` serves v0.55.0 through v0.60.x,
 
 ## How a folder lays out its libraries
 
-From `0.61.0/` on, each library sits at `<owner>/<repo>/`, lowercased from the `repo`
-in its `library.json` (`britzl/boom/` for `https://github.com/britzl/boom`), so two
-repositories that share a name can both have library data. The host is not part of the
-folder, so `library add` refuses a second host's repository for an `owner/repo` that is
-already there. `0.61.0/` opened for this layout: the CLIs that read `0.55.0/` find each
-library at `<repo>/` instead.
+From `0.61.0/` on, each library sits at `<host>/<owner>/<repo>/`, lowercased from the
+`repo` in its `library.json` (`github.com/britzl/boom/` for
+`https://github.com/britzl/boom`), so two repositories that share a name can both have
+library data, and so can one `owner/repo` on two hosts (`github.com/x/y/` and
+`codeberg.org/x/y/`). A repository on a host with a port has no folder. `0.61.0/` opened
+for this layout: the CLIs that read `0.55.0/` find each library at `<repo>/` instead.
 
 ## What an edit reaches
 

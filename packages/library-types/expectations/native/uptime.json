@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "agulev/defold-extension-uptime",
+    "sourceId": "github.com/agulev/defold-extension-uptime",
     "manifestDir": "uptime"
   },
   "resolve": {

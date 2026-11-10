@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "britzl/defold-png",
+    "sourceId": "github.com/britzl/defold-png",
     "manifestDir": "png"
   },
   "resolve": {

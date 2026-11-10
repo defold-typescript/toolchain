@@ -9,6 +9,7 @@ import {
   matchLibraryName,
   matchVendoredLibrary,
   mergeVendoredLibrariesBySourceId,
+  namesSelectedBy,
   normalizeSourceId,
   type ScriptApiRegistryTargets,
   type VendoredLibrary,
@@ -19,40 +20,57 @@ import {
 // committed corpus lives in `library-registry.test.ts`, where the composed
 // multi-lane registry it depends on is already loaded.
 const registry: VendoredLibrary[] = [
-  { sourceId: "whiteboxdev/boom", modules: ["boom.boom"] },
-  { sourceId: "britzl/gooey", modules: ["gooey.gooey"] },
+  { sourceId: "github.com/whiteboxdev/boom", modules: ["boom.boom"] },
+  { sourceId: "github.com/britzl/gooey", modules: ["gooey.gooey"] },
 ];
 
 describe("libraryName", () => {
-  test("names a library by its lowercased owner/repo, whatever the URL shape", () => {
+  test("names a library by its lowercased host/owner/repo, whatever the URL shape", () => {
     expect(libraryName("https://github.com/Britzl/Boom/archive/refs/tags/v1.0.zip")).toBe(
-      "britzl/boom",
+      "github.com/britzl/boom",
     );
-    expect(libraryName("https://github.com/britzl/boom.git")).toBe("britzl/boom");
-    expect(libraryName("britzl/boom")).toBe("britzl/boom");
+    expect(libraryName("https://github.com/britzl/boom.git")).toBe("github.com/britzl/boom");
+    expect(libraryName("https://github.com/britzl/monarch/archive/main.zip")).toBe(
+      "github.com/britzl/monarch",
+    );
     expect(libraryName("https://codeberg.org/Klaleus/defold-checkpoint")).toBe(
-      "klaleus/defold-checkpoint",
+      "codeberg.org/klaleus/defold-checkpoint",
     );
   });
 
-  test("keeps the bare repo for a URL with no owner segment", () => {
-    expect(libraryName("https://example.com/lib.zip")).toBe("lib");
+  test("takes the URL's host, so userinfo and a default port drop and another port stays", () => {
+    expect(libraryName("https://github.com:443/britzl/monarch")).toBe("github.com/britzl/monarch");
+    expect(libraryName("http://user:token@Git.Acme.com:3000/games/monarch/archive/main.zip")).toBe(
+      "git.acme.com:3000/games/monarch",
+    );
+    expect(libraryName("http://git.acme.com-3000/games/monarch/archive/main.zip")).toBe(
+      "git.acme.com-3000/games/monarch",
+    );
+  });
+
+  test("lowercases a typed name and otherwise leaves it alone", () => {
+    expect(libraryName("britzl/boom")).toBe("britzl/boom");
+    expect(libraryName("GitHub.com/Britzl/Boom")).toBe("github.com/britzl/boom");
+  });
+
+  test("keeps the host and bare repo for a URL with no owner segment", () => {
+    expect(libraryName("https://example.com/lib.zip")).toBe("example.com/lib");
   });
 });
 
 describe("matchLibraryName", () => {
-  const names = ["britzl/boom", "insality/druid"];
+  const names = ["github.com/britzl/boom", "github.com/insality/druid"];
 
-  test("an owner/repo a library holds is exact", () => {
+  test("a host/owner/repo a library holds is exact", () => {
     expect(
       matchLibraryName("https://github.com/britzl/boom/archive/refs/tags/v1.0.zip", names),
-    ).toEqual({ kind: "exact", name: "britzl/boom" });
+    ).toEqual({ kind: "exact", name: "github.com/britzl/boom" });
   });
 
   test("another owner's repo of the same name falls back to that library as a fork", () => {
     expect(matchLibraryName("https://github.com/someone/boom/archive/main.zip", names)).toEqual({
       kind: "fork",
-      name: "britzl/boom",
+      name: "github.com/britzl/boom",
     });
   });
 
@@ -61,19 +79,92 @@ describe("matchLibraryName", () => {
   });
 
   test("a repo name two libraries share matches neither, unless the owner is exact", () => {
-    const admob = ["defold/extension-admob", "lerg/extension-admob"];
+    const admob = ["github.com/defold/extension-admob", "github.com/lerg/extension-admob"];
     expect(
       matchLibraryName("https://github.com/defold/extension-admob/archive/main.zip", admob),
-    ).toEqual({ kind: "exact", name: "defold/extension-admob" });
+    ).toEqual({ kind: "exact", name: "github.com/defold/extension-admob" });
     expect(
       matchLibraryName("https://github.com/someone/extension-admob/archive/main.zip", admob),
-    ).toEqual({ kind: "shared", names: ["defold/extension-admob", "lerg/extension-admob"] });
+    ).toEqual({
+      kind: "shared",
+      names: ["github.com/defold/extension-admob", "github.com/lerg/extension-admob"],
+    });
   });
 
   test("a name with no owner takes no part in the repo-name fallback", () => {
     expect(
-      matchLibraryName("https://github.com/someone/boom/archive/main.zip", ["boom", "britzl/boom"]),
-    ).toEqual({ kind: "fork", name: "britzl/boom" });
+      matchLibraryName("https://github.com/someone/boom/archive/main.zip", [
+        "boom",
+        "github.com/britzl/boom",
+      ]),
+    ).toEqual({ kind: "fork", name: "github.com/britzl/boom" });
+  });
+
+  describe("forks only on a host some library names", () => {
+    const hosted = ["github.com/britzl/monarch", "codeberg.org/klaleus/defold-checkpoint"];
+
+    test("the exact name matches, and a fork on another named host falls back", () => {
+      expect(
+        matchLibraryName("https://github.com/britzl/monarch/archive/main.zip", hosted),
+      ).toEqual({ kind: "exact", name: "github.com/britzl/monarch" });
+      expect(
+        matchLibraryName("https://codeberg.org/someone/monarch/archive/main.zip", hosted),
+      ).toEqual({ kind: "fork", name: "github.com/britzl/monarch" });
+    });
+
+    test("a host no library names matches nothing, an IP address included", () => {
+      expect(matchLibraryName("http://10.0.0.5/games/monarch/archive/main.zip", hosted)).toBe(null);
+      expect(matchLibraryName("https://git.acme.com/britzl/monarch/archive/main.zip", hosted)).toBe(
+        null,
+      );
+    });
+
+    test("one owner/repo on two hosts matches each host's own library", () => {
+      const twoHosts = ["github.com/x/y", "codeberg.org/x/y"];
+      expect(matchLibraryName("https://github.com/x/y/archive/main.zip", twoHosts)).toEqual({
+        kind: "exact",
+        name: "github.com/x/y",
+      });
+      expect(matchLibraryName("https://codeberg.org/x/y/archive/main.zip", twoHosts)).toEqual({
+        kind: "exact",
+        name: "codeberg.org/x/y",
+      });
+    });
+
+    test("a host with a port is not the host a dash-spelled name holds", () => {
+      expect(
+        matchLibraryName("http://git.acme.com:3000/games/monarch/archive/main.zip", [
+          "github.com/britzl/monarch",
+          "git.acme.com-3000/games/monarch",
+        ]),
+      ).toBe(null);
+    });
+  });
+});
+
+describe("namesSelectedBy", () => {
+  const names = [
+    "github.com/britzl/monarch",
+    "github.com/other/monarch",
+    "codeberg.org/klaleus/defold-checkpoint",
+  ];
+
+  test("a typed name selects every name it is, or ends, by whole segments", () => {
+    expect(namesSelectedBy("monarch", names)).toEqual([
+      "github.com/britzl/monarch",
+      "github.com/other/monarch",
+    ]);
+    expect(namesSelectedBy("britzl/monarch", names)).toEqual(["github.com/britzl/monarch"]);
+    expect(namesSelectedBy("GitHub.com/Britzl/Monarch", names)).toEqual([
+      "github.com/britzl/monarch",
+    ]);
+    expect(namesSelectedBy("defold-checkpoint", names)).toEqual([
+      "codeberg.org/klaleus/defold-checkpoint",
+    ]);
+  });
+
+  test("part of a segment selects nothing", () => {
+    expect(namesSelectedBy("narch", names)).toEqual([]);
   });
 });
 
@@ -88,8 +179,8 @@ describe("matchVendoredLibrary", () => {
 
   test("returns null for a repo name two libraries share", () => {
     const shared: VendoredLibrary[] = [
-      { sourceId: "defold/extension-admob", modules: ["admob.a"] },
-      { sourceId: "lerg/extension-admob", modules: ["admob.b"] },
+      { sourceId: "github.com/defold/extension-admob", modules: ["admob.a"] },
+      { sourceId: "github.com/lerg/extension-admob", modules: ["admob.b"] },
     ];
     expect(
       matchVendoredLibrary("https://github.com/someone/extension-admob/archive/main.zip", shared),
@@ -147,7 +238,7 @@ describe("buildLualsRegistryEntries", () => {
   test("maps a LuaLS target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildLualsRegistryEntries(druidTargets)).toEqual([
       {
-        sourceId: "insality/druid",
+        sourceId: "github.com/insality/druid",
         modules: ["druid.druid"],
         namespaces: { "druid.druid": "druid" },
       },
@@ -164,7 +255,7 @@ describe("buildLualsRegistryEntries", () => {
         },
       ],
     });
-    expect(entry?.sourceId).toBe("insality/druid");
+    expect(entry?.sourceId).toBe("github.com/insality/druid");
   });
 
   test("returns no entries for an empty target list", () => {
@@ -188,7 +279,7 @@ describe("buildLualsRegistryEntries", () => {
     };
     expect(buildLualsRegistryEntries(saverTargets)).toEqual([
       {
-        sourceId: "insality/defold-saver",
+        sourceId: "github.com/insality/defold-saver",
         modules: ["saver.saver", "saver.storage"],
         namespaces: { "saver.saver": "saver.saver", "saver.storage": "saver.storage" },
       },
@@ -208,12 +299,12 @@ describe("buildLualsRegistryEntries", () => {
     };
     expect(buildLualsRegistryEntries(twoRepos)).toEqual([
       {
-        sourceId: "insality/druid",
+        sourceId: "github.com/insality/druid",
         modules: ["druid.druid"],
         namespaces: { "druid.druid": "druid" },
       },
       {
-        sourceId: "insality/defold-saver",
+        sourceId: "github.com/insality/defold-saver",
         modules: ["saver.saver"],
         namespaces: { "saver.saver": "saver.saver" },
       },
@@ -235,7 +326,7 @@ describe("buildScriptApiRegistryEntries", () => {
   test("maps a script_api target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildScriptApiRegistryEntries(bridgeTargets)).toEqual([
       {
-        sourceId: "playgama/bridge-defold",
+        sourceId: "github.com/playgama/bridge-defold",
         modules: ["bridge.bridge"],
         namespaces: { "bridge.bridge": "bridge" },
       },
@@ -255,7 +346,7 @@ describe("buildScriptApiRegistryEntries", () => {
     };
     expect(buildScriptApiRegistryEntries(sameRepo)).toEqual([
       {
-        sourceId: "acme/thing",
+        sourceId: "github.com/acme/thing",
         modules: ["thing.a", "thing.b"],
         namespaces: { "thing.a": "thing.a", "thing.b": "thing.b" },
       },
@@ -277,7 +368,7 @@ describe("buildAuthoredRegistryEntries", () => {
   test("maps an authored target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildAuthoredRegistryEntries(defconTargets)).toEqual([
       {
-        sourceId: "britzl/defcon",
+        sourceId: "github.com/britzl/defcon",
         modules: ["defcon.console"],
         namespaces: { "defcon.console": "defcon" },
       },
@@ -291,7 +382,7 @@ describe("buildAuthoredRegistryEntries", () => {
 
 describe("matchVendoredLibrary against a LuaLS entry", () => {
   const druidEntry: VendoredLibrary = {
-    sourceId: "insality/druid",
+    sourceId: "github.com/insality/druid",
     modules: ["druid.druid"],
     namespaces: { "druid.druid": "druid" },
   };
@@ -323,7 +414,7 @@ describe("matchVendoredLibrary against a LuaLS entry", () => {
 describe("VendoredLibrary namespaces is optional", () => {
   test("a pure-Lua entry round-trips unchanged without namespaces", () => {
     const pureLua: VendoredLibrary = {
-      sourceId: "paulomrpp/dicebag",
+      sourceId: "github.com/paulomrpp/dicebag",
       modules: ["dicebag.dicebag"],
     };
     expect(pureLua.namespaces).toBeUndefined();

@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "abadonna/defold-detour",
+    "sourceId": "github.com/abadonna/defold-detour",
     "manifestDir": "detour"
   },
   "resolve": {

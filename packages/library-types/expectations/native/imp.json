@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "britzl/defold-imp",
+    "sourceId": "github.com/britzl/defold-imp",
     "manifestDir": "imp"
   },
   "resolve": {

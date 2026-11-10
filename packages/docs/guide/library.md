@@ -21,8 +21,8 @@ bunx @defold-typescript/cli library check --data path/to/library-data/data
 ## What `library add` writes
 
 `library add <url> --data <dir>` downloads the archive and writes one folder,
-`<owner>/<repo>` in lowercase (`owner/mylib` for the URL above), into the data
-folder `library check` reads:
+`<host>/<owner>/<repo>` in lowercase (`github.com/owner/mylib` for the URL above), into
+the data folder `library check` reads:
 
 | File | When | What it holds |
 | ---- | ---- | ------------- |
@@ -36,11 +36,10 @@ folder `library check` reads:
 archive that names no commit is an error, so use a tag URL for it.
 
 A folder that already exists, including one created during the download, is an
-error and stays as it was. The folder name leaves out the host, so a folder whose
-`library.json` names the same `owner/repo` on another host is an error that names
-that repo. A URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and
-`-`, or is `.` or `..`, is refused before the download, so the folder always sits
-inside the data folder.
+error and stays as it was. One `owner/repo` on two hosts gets two folders. A URL whose
+host, owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`, or is `.` or
+`..`, is refused before the download, so the folder always sits inside the data
+folder; a host with a port (`git.acme.com:3000`) is refused the same way.
 
 What the archive shares under its `[library] include_dirs` picks the recipe,
 leaving out example, test, demo and sample directories:
@@ -67,7 +66,7 @@ path and `warnings` holds the notes.
 `library review --data <dir>` downloads `<repo>/archive/<ref>.zip` for each library
 and adds what it finds to `reviews` in that library's `reviewed.json`.
 `library review <name> --data <dir>` does this for one library, named by its folder,
-`<owner>/<repo>`.
+`<host>/<owner>/<repo>`, or any trailing part of it (`mylib`, `owner/mylib`).
 Each entry holds the commit the archive names and three hashes over the files the
 archive shares under its `include_dirs`:
 
@@ -92,8 +91,8 @@ An archive whose hashes match an entry adds its commit to that entry, and any ot
 archive adds a new entry. A repeat run changes nothing. `library check` requires no
 review, so a repository that has since gone never fails a data PR.
 
-A name the data folder does not hold is an error before any download. A library
-whose archive fails is reported by name and the others are still written, and the
+A name that selects no library, or more than one, is an error before any download,
+listing the candidates. A library whose archive fails is reported by name and the others are still written, and the
 command exits 1. A failed download counts as a failure even when a cached copy exists,
 and leaves that library's `reviewed.json` untouched.
 
@@ -101,7 +100,7 @@ and leaves that library's `reviewed.json` untouched.
 
 `library update --data <dir>` asks each library's forge, GitHub or Codeberg, what is
 newer than its pin. `library update <name> --data <dir>` does this for one library,
-named by its folder, `<owner>/<repo>`. `follows` in `library.json` says what to watch:
+named as `library review` names it. `follows` in `library.json` says what to watch:
 
 | `follows` | New commits are |
 | --------- | --------------- |
@@ -153,9 +152,10 @@ with nothing until a review lists its new commit.
 files count as members, so a moved annotation reads `changed`. This says only what
 upstream did, not whether a fork still covers it.
 
-A name the data folder does not hold is an error before any request. A library that
-cannot be read, such as one whose pinned tag upstream no longer lists or whose download
-fails, is reported by name, keeps its folder untouched, and the others still run. So is
+A name that selects no library, or more than one, is an error before any request. A
+library that cannot be read, such as one whose pinned tag upstream no longer lists or
+whose download fails, is reported by name, keeps its folder untouched, and the others
+still run. So is
 a library whose new commit no longer holds a file it reads, reported as
 `<path> is gone from <ref>`, or whose archive holds a file that would land outside its
 folder. The command then exits 1.
@@ -167,7 +167,7 @@ Set `GH_TOKEN` or `GITHUB_TOKEN` to raise GitHub's rate limit.
 It runs four checks in order, and a check that fails stops the ones after it:
 
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
-   library folder sits at `<owner>/<repo>` of its repo, has a `reviewed.json`, and lists
+   library folder sits at `<host>/<owner>/<repo>` of its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library

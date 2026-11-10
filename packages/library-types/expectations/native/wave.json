@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "selimanac/defold-wave",
+    "sourceId": "github.com/selimanac/defold-wave",
     "manifestDir": "wave"
   },
   "resolve": {

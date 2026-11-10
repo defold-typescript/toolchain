@@ -128,10 +128,11 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
     forks: Object.entries(forks).map(([moduleId, contents]) => {
       const library = moduleId.split(".")[0] as string;
       const authored = `fork/${moduleId}.d.ts`;
-      mkdirSync(join(root, "owner", library, "fork"), { recursive: true });
-      writeFileSync(join(root, "owner", library, authored), contents);
+      const folder = join(root, "github.com", "owner", library);
+      mkdirSync(join(folder, "fork"), { recursive: true });
+      writeFileSync(join(folder, authored), contents);
       const upstreamLua = `source/upstream/${moduleId}.lua`;
-      writeUndocumentedUpstreamLua(join(root, "owner", library), upstreamLua);
+      writeUndocumentedUpstreamLua(folder, upstreamLua);
       return {
         repo: `https://github.com/owner/${library}`,
         ref: "1.0.0",
@@ -146,8 +147,8 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
   return root;
 }
 
-const FIXTURE_FORK = "example/fixture-fork/fork/tally.tally.d.ts";
-const FIXTURE_UPSTREAM_LUA = "example/fixture-fork/source/upstream/tally/tally.lua";
+const FIXTURE_FORK = "github.com/example/fixture-fork/fork/tally.tally.d.ts";
+const FIXTURE_UPSTREAM_LUA = "github.com/example/fixture-fork/source/upstream/tally/tally.lua";
 
 // The fixture data folder copied to `dataDir`, with `docLines` written as the doc
 // comment of the fork's `flush`, a member the fixture's upstream documents.
@@ -164,7 +165,7 @@ export function copyFixtureDataWithFlushDoc(dataDir: string, docLines: string[])
 // folder `copyFixtureDataWithFlushDoc` wrote. Its one function carries a malformed
 // `@upstreamDoc` pin, so it does not print while `tally.tally` still does.
 export function addUnprintableFixtureFork(dataDir: string): void {
-  const folder = "example/fixture-fork";
+  const folder = "github.com/example/fixture-fork";
   const libraryDir = join(dataDir, folder);
   const library = readLibraryJson(dataDir, folder);
   const floor = library.floors?.["tally.tally"];

@@ -14,7 +14,7 @@ generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
 fork to the library's `library.json` in its folder,
-`packages/library-types/data/<version>/<library>/` (the newest version-named folder), vendor
+`packages/library-types/data/<version>/<host>/<owner>/<repo>/` (the newest version-named folder), vendor
 the `.d.ts` into the folder's `fork/`, run the generation command, and commit the
 library's files. Every path a fork names is relative to the
 library folder, except `apiDoc` and `fidelity`, which are relative to

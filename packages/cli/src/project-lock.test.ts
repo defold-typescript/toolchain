@@ -49,7 +49,11 @@ describe("readProjectLock", () => {
       extensions: { [URL_A]: COMMIT_PIN, [URL_B]: FILES_PIN },
       libraryData: {
         shared: COMMIT,
-        libraries: { "britzl/monarch": OTHER_COMMIT, "insality/druid": COMMIT },
+        libraries: {
+          "git.acme.com-3000/games/monarch": COMMIT,
+          "github.com/britzl/monarch": OTHER_COMMIT,
+          "github.com/insality/druid": COMMIT,
+        },
       },
     };
     writeProjectLock(cwd, lock);
@@ -111,7 +115,20 @@ describe("readProjectLock", () => {
       }),
       "monarch",
     ],
-    ...["../../x", "../x", "a/..", "./a", "a/b/c", "a\\b", "..", ".", ""].map(
+    ...[
+      "../../x",
+      "../x",
+      "../x/y",
+      "a/..",
+      "./a",
+      "a/b/c/d",
+      "a/../b",
+      "git.acme.com:3000/games/monarch",
+      "a\\b",
+      "..",
+      ".",
+      "",
+    ].map(
       (key) =>
         [
           `the library key ${JSON.stringify(key)}`,

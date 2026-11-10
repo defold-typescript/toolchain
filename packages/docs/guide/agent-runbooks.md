@@ -149,7 +149,7 @@ the `pinStatus` (`unpinned` / `match` / `drift`), and the `ref`, the kind of URL
 `branch` draws a [warning](./resolve.md#pin-urls-to-commits). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the library's
-`owner/repo`), materialized `modules`, `provenance` (`vendored`), and `verified`.
+`host/owner/repo`), materialized `modules`, `provenance` (`vendored`), and `verified`.
 A match the downloaded archive **confirms** always gets an entry. A `verified:
 false` entry (with an empty `modules`) is a repo-name match the archive did not
 confirm, reported but never materialized; it appears only when the dependency is

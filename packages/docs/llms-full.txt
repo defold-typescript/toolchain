@@ -8453,7 +8453,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
-| **Vendored pure-Lua library** | the dependency's `owner/repo`, or its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the dependency's `host/owner/repo`, or on a host library data names its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the dependency matches a curated native target [by name](#vendored-library-types), and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped; one that shares Lua can be [typed by hand](#a-library-nobody-types)                                |
@@ -8621,20 +8621,25 @@ When library data itself cannot be read, `resolve` keeps the library
 declarations it printed earlier, and their tsconfig entry, as long as the same
 toolchain version wrote them and none of their files has changed.
 
-The match keys on the library's **name, its `owner/repo`** in lower case
-(`britzl/monarch`), not exact URL equality, so any archive URL of that repository
-resolves. A dependency whose `owner/repo` no library holds matches the one library
-with its repo name, so a fork keeps its upstream's types, with a notice:
+The match keys on the library's **name, its `host/owner/repo`** in lower case
+(`github.com/britzl/monarch`), not exact URL equality, so any archive URL of that
+repository resolves. The host is the URL's, without a user name or the scheme's default
+port. A dependency whose name no library holds, on a host some library's repository is
+on (`github.com`, `codeberg.org`), matches the one library with its repo name, so a fork
+keeps its upstream's types, with a notice:
 
 ```text
-<url> uses the library data of <owner>/<repo>, which shares its repo name; its types may not fit
+<url> uses the library data of <host>/<owner>/<repo>, which shares its repo name; its types may not fit
 ```
 
 A repo name two libraries share matches neither for any other owner, with a notice:
 
 ```text
-<url> shares its repo name with <owner>/<repo> and <owner>/<repo>, so no library data types it
+<url> shares its repo name with <host>/<owner>/<repo> and <host>/<owner>/<repo>, so no library data types it
 ```
+
+A dependency on any other host, such as a company git server or an IP address, matches
+no library data.
 
 Because a match can still be wrong — a fork that renamed its module folder — it
 is then **verified against the downloaded archive**: `resolve` reads the archive's `.lua` require paths and
@@ -8676,14 +8681,14 @@ leaves the others' types byte-identical:
   "libraryData": {
     "shared": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
     "libraries": {
-      "britzl/monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
-      "insality/druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e"
+      "github.com/britzl/monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
+      "github.com/insality/druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e"
     }
   }
 }
 ```
 
-`libraries` is keyed by each library's `owner/repo`. `shared` is the commit
+`libraries` is keyed by each library's `host/owner/repo`. `shared` is the commit
 `index-slot-classifications.json` is read from, the one data file no library owns. It only adds doc notes to extension declarations, so nothing
 reports when it moves.
 
@@ -8708,9 +8713,11 @@ reports when it moves.
   [status](#library-status), and `shared` when its file differs. A library the same in
   both keeps its pin, and one the newest data dropped holds it, with a notice.
 - **`resolve --update=<name>`** does this for the named dependency alone and leaves
-  `shared`. `--update=a,b` names several. A name is the `owner/repo` in the
-  dependency's URL, in lower case (`britzl/monarch`). Naming a fork moves the pin of
-  the library it reads.
+  `shared`. `--update=a,b` names several. A name is the dependency's
+  `host/owner/repo` or any trailing part of it, in any case: `monarch`,
+  `britzl/monarch` and `github.com/britzl/monarch` all name
+  `https://github.com/britzl/monarch/archive/main.zip`. A name two dependencies end in
+  exits non-zero, naming both. Naming a fork moves the pin of the library it reads.
 - **`resolve --frozen`** reads pins alone and requests no `main`. It fails when
   nothing is recorded, or when a declared library's pinned folder is missing or does
   not load, naming it. A declared dependency with no library pin prints no library
@@ -8754,7 +8761,7 @@ loose to type correct code emits a namespace that accepts calls failing at
 runtime. For the ones listed below, this toolchain ships a hand-written
 [module-form](./extensions.md#module-form-native-extensions) declaration
 instead. `resolve` uses it when the dependency's
-`owner/repo`, or its repo name, matches [as a library's does](#vendored-library-types)
+`host/owner/repo`, or its repo name, matches [as a library's does](#vendored-library-types)
 **and** the archive ships the extension's `ext.manifest` in the named directory, so
 a name match alone writes nothing. Each
 namespace links its library page, which names the commit the declaration is
@@ -8934,9 +8941,9 @@ normally.
   also [Pinning extension versions](#pinning-extension-versions).
 - `--update[=<name>]` — move [library data pins](#library-data) to the newest data
   and [accept extension drift](#pinning-extension-versions), for every dependency or
-  only the named ones (`--update=britzl/monarch,insality/druid`). A dependency moved by `--pin-urls`
+  only the named ones (`--update=monarch,insality/druid`). A dependency moved by `--pin-urls`
   [moves to its ref's newest commit](#pin-urls-to-commits). The name takes `=`, never
-  a space, and one that names no dependency exits non-zero. It cannot be combined with
+  a space, and one that names no dependency, or two, exits non-zero. It cannot be combined with
   `--frozen` or `--library-data`.
 - `--pin-urls` — [rewrite each GitHub branch or tag URL](#pin-urls-to-commits) in
   `game.project` to the commit its archive names. It cannot be combined with
@@ -8951,7 +8958,7 @@ normally.
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
   `ref`, `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
-  each match's `source` (the library's `owner/repo`), `modules`, `provenance`, and
+  each match's `source` (the library's `host/owner/repo`), `modules`, `provenance`, and
   `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present
@@ -9536,8 +9543,8 @@ bunx @defold-typescript/cli library check --data path/to/library-data/data
 #### What `library add` writes
 
 `library add <url> --data <dir>` downloads the archive and writes one folder,
-`<owner>/<repo>` in lowercase (`owner/mylib` for the URL above), into the data
-folder `library check` reads:
+`<host>/<owner>/<repo>` in lowercase (`github.com/owner/mylib` for the URL above), into
+the data folder `library check` reads:
 
 | File | When | What it holds |
 | ---- | ---- | ------------- |
@@ -9551,11 +9558,10 @@ folder `library check` reads:
 archive that names no commit is an error, so use a tag URL for it.
 
 A folder that already exists, including one created during the download, is an
-error and stays as it was. The folder name leaves out the host, so a folder whose
-`library.json` names the same `owner/repo` on another host is an error that names
-that repo. A URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and
-`-`, or is `.` or `..`, is refused before the download, so the folder always sits
-inside the data folder.
+error and stays as it was. One `owner/repo` on two hosts gets two folders. A URL whose
+host, owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`, or is `.` or
+`..`, is refused before the download, so the folder always sits inside the data
+folder; a host with a port (`git.acme.com:3000`) is refused the same way.
 
 What the archive shares under its `[library] include_dirs` picks the recipe,
 leaving out example, test, demo and sample directories:
@@ -9582,7 +9588,7 @@ path and `warnings` holds the notes.
 `library review --data <dir>` downloads `<repo>/archive/<ref>.zip` for each library
 and adds what it finds to `reviews` in that library's `reviewed.json`.
 `library review <name> --data <dir>` does this for one library, named by its folder,
-`<owner>/<repo>`.
+`<host>/<owner>/<repo>`, or any trailing part of it (`mylib`, `owner/mylib`).
 Each entry holds the commit the archive names and three hashes over the files the
 archive shares under its `include_dirs`:
 
@@ -9607,8 +9613,8 @@ An archive whose hashes match an entry adds its commit to that entry, and any ot
 archive adds a new entry. A repeat run changes nothing. `library check` requires no
 review, so a repository that has since gone never fails a data PR.
 
-A name the data folder does not hold is an error before any download. A library
-whose archive fails is reported by name and the others are still written, and the
+A name that selects no library, or more than one, is an error before any download,
+listing the candidates. A library whose archive fails is reported by name and the others are still written, and the
 command exits 1. A failed download counts as a failure even when a cached copy exists,
 and leaves that library's `reviewed.json` untouched.
 
@@ -9616,7 +9622,7 @@ and leaves that library's `reviewed.json` untouched.
 
 `library update --data <dir>` asks each library's forge, GitHub or Codeberg, what is
 newer than its pin. `library update <name> --data <dir>` does this for one library,
-named by its folder, `<owner>/<repo>`. `follows` in `library.json` says what to watch:
+named as `library review` names it. `follows` in `library.json` says what to watch:
 
 | `follows` | New commits are |
 | --------- | --------------- |
@@ -9668,9 +9674,10 @@ with nothing until a review lists its new commit.
 files count as members, so a moved annotation reads `changed`. This says only what
 upstream did, not whether a fork still covers it.
 
-A name the data folder does not hold is an error before any request. A library that
-cannot be read, such as one whose pinned tag upstream no longer lists or whose download
-fails, is reported by name, keeps its folder untouched, and the others still run. So is
+A name that selects no library, or more than one, is an error before any request. A
+library that cannot be read, such as one whose pinned tag upstream no longer lists or
+whose download fails, is reported by name, keeps its folder untouched, and the others
+still run. So is
 a library whose new commit no longer holds a file it reads, reported as
 `<path> is gone from <ref>`, or whose archive holds a file that would land outside its
 folder. The command then exits 1.
@@ -9682,7 +9689,7 @@ Set `GH_TOKEN` or `GITHUB_TOKEN` to raise GitHub's rate limit.
 It runs four checks in order, and a check that fails stops the ones after it:
 
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
-   library folder sits at `<owner>/<repo>` of its repo, has a `reviewed.json`, and lists
+   library folder sits at `<host>/<owner>/<repo>` of its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library
@@ -10339,7 +10346,7 @@ the `pinStatus` (`unpinned` / `match` / `drift`), and the `ref`, the kind of URL
 `branch` draws a [warning](./resolve.md#pin-urls-to-commits). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the library's
-`owner/repo`), materialized `modules`, `provenance` (`vendored`), and `verified`.
+`host/owner/repo`), materialized `modules`, `provenance` (`vendored`), and `verified`.
 A match the downloaded archive **confirms** always gets an entry. A `verified:
 false` entry (with an empty `modules`) is a repo-name match the archive did not
 confirm, reported but never materialized; it appears only when the dependency is
@@ -13543,8 +13550,9 @@ them into your repository:
 bunx @defold-typescript/cli export-types <library> [path]
 ```
 
-`<library>` is the library's `owner/repo`, such as `selimanac/defold-daabbcc`, or
-the URL a project puts in `game.project`. `path` is your repository root and defaults to
+`<library>` is the library's `host/owner/repo`, such as
+`github.com/selimanac/defold-daabbcc`, or any trailing part of it that names one
+library (`selimanac/defold-daabbcc`), or the URL a project puts in `game.project`. `path` is your repository root and defaults to
 the current folder.
 
 The command writes the files `resolve` installs for the library today,

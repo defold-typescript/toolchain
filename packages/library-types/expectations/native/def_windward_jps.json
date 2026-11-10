@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "s-kania/def-windward-jps",
+    "sourceId": "github.com/s-kania/def-windward-jps",
     "manifestDir": "def_windward_jps"
   },
   "resolve": {

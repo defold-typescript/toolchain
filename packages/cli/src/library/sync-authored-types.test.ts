@@ -27,12 +27,12 @@ const TALLY: AuthoredTarget = {
   repo: "https://github.com/example/fixture-fork",
   ref: "2.0.0",
   license: "MIT",
-  authored: "example/fixture-fork/fork/tally.tally.d.ts",
+  authored: "github.com/example/fixture-fork/fork/tally.tally.d.ts",
   moduleId: "tally.tally",
   namespace: "tally",
   apiDoc: "api-doc/tally.json",
   fidelity: "fidelity/tally.json",
-  upstreamLua: ["example/fixture-fork/source/upstream/tally/tally.lua"],
+  upstreamLua: ["github.com/example/fixture-fork/source/upstream/tally/tally.lua"],
 };
 
 interface LoweredApiDoc {
@@ -245,7 +245,7 @@ return M
     target: AuthoredTarget;
   } {
     const dataDir = tempDir("authored-lowering-");
-    const library = join(dataDir, "example/relay");
+    const library = join(dataDir, "github.com/example/relay");
     mkdirSync(join(library, "fork"), { recursive: true });
     mkdirSync(join(library, "source", "upstream", "relay"), { recursive: true });
     writeFileSync(join(library, "fork", "relay.relay.d.ts"), relayFork(pinned));
@@ -571,15 +571,15 @@ describe("GamePush platform type claims upstream states only in its body", () =>
   test("a fork retyped to a string return reaches the check", () => {
     const dataDir = tempDir("authored-gamepush-retyped-");
     cpSync(
-      join(DATA_DIR, "megalanthus/defold-gamepush"),
-      join(dataDir, "megalanthus/defold-gamepush"),
+      join(DATA_DIR, "github.com/megalanthus/defold-gamepush"),
+      join(dataDir, "github.com/megalanthus/defold-gamepush"),
       {
         recursive: true,
       },
     );
     const fork = join(
       dataDir,
-      "megalanthus/defold-gamepush",
+      "github.com/megalanthus/defold-gamepush",
       "fork",
       "gamepush.core.platform.d.ts",
     );
