@@ -107,7 +107,7 @@ describe("readSceneDocuments", () => {
     // The example declares a dependency and is never resolved in the tree, so
     // the one hole is that dependency — nothing about its own scenes.
     expect(unreadable).toEqual([
-      "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip: is declared by game.project but .defold-types/dependencies/dependencies.json is absent",
+      "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip: is declared by game.project but .defold-types/dependencies/dependencies.json is absent; run `defold-typescript resolve`",
     ]);
     expect([...buildSceneComponentIndex(documents).ids].sort()).toEqual(["board", "hud"]);
   });
@@ -410,7 +410,7 @@ describe("readSceneDocuments over resolved library dependencies", () => {
       "main/main.collection",
     ]);
     expect(unreadable).toEqual([
-      `${OTHER_URL}: is declared by game.project but was not materialized by the last resolve`,
+      `${OTHER_URL}: is declared by game.project but was not materialized by the last resolve; run \`defold-typescript resolve\``,
     ]);
   });
 
@@ -424,7 +424,7 @@ describe("readSceneDocuments over resolved library dependencies", () => {
 
     expect([...documents.keys()]).toEqual(["main/main.collection"]);
     expect(unreadable).toEqual([
-      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is absent`,
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is absent; run \`defold-typescript resolve\``,
     ]);
   });
 
@@ -440,7 +440,7 @@ describe("readSceneDocuments over resolved library dependencies", () => {
 
     expect([...documents.keys()]).toEqual(["main/main.collection"]);
     expect(unreadable).toEqual([
-      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest`,
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest; run \`defold-typescript resolve\``,
     ]);
   });
 
@@ -456,7 +456,7 @@ describe("readSceneDocuments over resolved library dependencies", () => {
 
     expect([...documents.keys()]).toEqual(["main/main.collection"]);
     expect(unreadable).toEqual([
-      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest`,
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest; run \`defold-typescript resolve\``,
     ]);
   });
 
@@ -476,7 +476,7 @@ describe("readSceneDocuments over resolved library dependencies", () => {
       "main/main.collection",
     ]);
     expect(unreadable).toEqual([
-      ".defold-types/dependencies/dropped-5: is materialized but no longer declared by game.project, so its scenes are left out",
+      ".defold-types/dependencies/dropped-5: is materialized but no longer declared by game.project, so its scenes are left out; run `defold-typescript resolve`",
     ]);
   });
 
