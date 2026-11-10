@@ -47,6 +47,7 @@ import {
   type ResolvedExtensionReport,
   type RunResolveOptions,
   runResolve,
+  UNTYPED_LIBRARY_GUIDE,
   unknownUpdateNames,
 } from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
@@ -5196,5 +5197,115 @@ describe("runResolve reports each library's status", () => {
       expect(named.notices?.[0]).not.toContain("resolve --update");
       expect(other.notices?.[0]).toContain("resolve --update");
     });
+  });
+});
+
+describe("runResolve points an untyped Lua-sharing dependency at the guide", () => {
+  // A GitHub-style archive whose own `game.project` shares `dir`, holding `luaPaths`.
+  function luaArchive(repo: string, dir: string, luaPaths: readonly string[]): FakeArchive {
+    const gameProject = `${repo}-main/game.project`;
+    return {
+      entries: [gameProject, ...luaPaths.map((path) => `${repo}-main/${path}`)],
+      contents: { [gameProject]: `[library]\ninclude_dirs = ${dir}\n` },
+    };
+  }
+
+  function untypedHints(notices: readonly string[] | undefined): string[] {
+    return (notices ?? []).filter((notice) => notice.includes(UNTYPED_LIBRARY_GUIDE));
+  }
+
+  async function resolveArchives(
+    archives: readonly (readonly [string, FakeArchive])[],
+    libraryDataDir: string | null,
+  ) {
+    const cwd = tmp();
+    const deps = archives.map(([url], i) => `dependencies#${i} = ${url}`).join("\n");
+    writeProject(cwd, `[project]\n${deps}\n`);
+    return runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(
+        Object.fromEntries(archives.map(([url, archive]) => [extensionArchiveKey(url), archive])),
+      ),
+      libraryDataDir,
+    });
+  }
+
+  test("one notice names every untyped Lua-sharing dependency in dependency order, and no asset pack", async () => {
+    const zeta = "https://github.com/owner/zeta/archive/main.zip";
+    const font = "https://github.com/owner/fontpack/archive/main.zip";
+    const alpha = "https://github.com/owner/alpha/archive/main.zip";
+
+    const result = await resolveArchives(
+      [
+        [zeta, luaArchive("zeta", "zeta", ["zeta/zeta.lua"])],
+        [font, { entries: ["asset/foo.png"], contents: {} }],
+        [alpha, luaArchive("alpha", "alpha", ["alpha/alpha.lua"])],
+      ],
+      writeAuthoredLibraryData({}),
+    );
+
+    expect(result.ok).toBe(true);
+    const hints = untypedHints(result.notices);
+    expect(hints).toHaveLength(1);
+    expect(hints[0]).toContain(`${zeta}, ${alpha}`);
+    expect(hints[0]).not.toContain(font);
+  });
+
+  test("Lua only in an examples directory under the include dir draws no notice", async () => {
+    const url = "https://github.com/owner/gamma/archive/main.zip";
+
+    const result = await resolveArchives(
+      [[url, luaArchive("gamma", "gamma", ["gamma/examples/demo.lua"])]],
+      writeAuthoredLibraryData({}),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("none");
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(untypedHints(result.notices)).toEqual([]);
+  });
+
+  test("Lua outside every include dir draws no notice", async () => {
+    const url = "https://github.com/owner/delta/archive/main.zip";
+
+    const result = await resolveArchives(
+      [[url, luaArchive("delta", "delta", ["scripts/delta.lua"])]],
+      writeAuthoredLibraryData({}),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("none");
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(untypedHints(result.notices)).toEqual([]);
+  });
+
+  test("a dependency library data types draws no notice", async () => {
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+
+    const result = await resolveArchives(
+      [[url, luaArchive("mylib", "mylib", ["mylib/core.lua"])]],
+      writeAuthoredLibraryData({
+        "mylib.core": "declare module 'mylib.core' { export const version: string; }\n",
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-library");
+    expect(untypedHints(result.notices)).toEqual([]);
+  });
+
+  test("a run that read no library data draws no notice", async () => {
+    const url = "https://github.com/owner/alpha/archive/main.zip";
+
+    const result = await resolveArchives(
+      [[url, luaArchive("alpha", "alpha", ["alpha/alpha.lua"])]],
+      null,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("none");
+    expect(untypedHints(result.notices)).toEqual([]);
   });
 });

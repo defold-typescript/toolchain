@@ -1,0 +1,13 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`resolve guide: A library nobody types the import compiles to a require of the declared module path 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local mylib = require("mylib.mylib")
+print(
+    mylib.greet("world"),
+    mylib.VERSION
+)
+return ____exports
+"
+`;

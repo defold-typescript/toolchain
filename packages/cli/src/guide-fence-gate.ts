@@ -200,7 +200,9 @@ export function writeFenceProject(
     const rel = `${moduleId}.d.ts`;
     const text = options.corpus?.get(moduleId);
     if (text === undefined) throw new Error(`library data prints no module ${moduleId}`);
-    writeFileSync(path.join(src, rel), text);
+    const file = path.join(src, rel);
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, text);
     declarations.set(rel, text);
   }
   const sources = new Map<string, string>();

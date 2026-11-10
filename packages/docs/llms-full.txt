@@ -8456,7 +8456,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | **Vendored pure-Lua library** | the dependency's `owner/repo`, or its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the dependency matches a curated native target [by name](#vendored-library-types), and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
-| **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
+| **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped; one that shares Lua can be [typed by hand](#a-library-nobody-types)                                |
 
 The kinds are tried **in that order**: a confirmed corpus match decides the type
 surface, so a library may ship its own `.script_api` without losing its curated
@@ -8822,6 +8822,63 @@ Each namespace types what the extension's C++ actually registers, which can
 differ from its README. `tile_raycast` registers its tile reader as `set_at` and
 its writer as `get_at`, so `tile_raycast.set_at(x, y)` returns the tile ID and
 `tile_raycast.get_at(x, y, tile_id)` sets it.
+
+#### A library nobody types
+
+Some dependencies share Lua that nothing types: library data does not cover
+them, they ship no `types/` folder, and they carry no `.script_api`. `resolve`
+lists each one as `asset-only, skipped`, as it does a font pack. When a run reads
+library data and finds such a dependency sharing a `.lua` file under its
+`[library] include_dirs`, it adds one notice naming all of them:
+
+```
+defold-typescript resolve: no types cover the Lua modules from <url>: declare the ones you require in src/types/, see https://defold-typescript.github.io/toolchain/resolve#a-library-nobody-types
+```
+
+Lua in example, test, demo and sample folders does not count. A run that reads
+no library data gives no notice, since it cannot tell whether library data would
+type the library. `--json` carries the same text in `notices`.
+
+Declare each module your scripts require, one file per library. For a library
+that shares `mylib/mylib.lua`, save this as `src/types/mylib.d.ts`:
+
+```ts
+/** @noResolution */
+declare module "mylib.mylib" {
+  export function greet(name: string): string;
+  export const VERSION: string;
+}
+```
+
+The module name is the path the Lua `require`s, with dots for slashes, and
+`@noResolution` tells the build to keep it as written. Import it like any other
+module:
+
+```ts
+import * as mylib from "mylib.mylib";
+
+print(mylib.greet("world"), mylib.VERSION);
+```
+
+The build emits `require("mylib.mylib")`, which Defold loads from the
+dependency's `mylib/mylib.lua`.
+
+- **Keep it in a `.d.ts` that an `include` glob matches.** The default
+  `src/**/*.ts` covers `src/types/`. In a `.ts` file that imports or exports
+  anything, `declare module` augments a module that must already exist instead
+  of declaring one, and fails with `TS2664`.
+- **Not in `.defold-types/` or a root `types/` folder.** `resolve` rewrites
+  `.defold-types/` on every run. A root `types/` sits outside the default
+  `include`, and it is where a library ships types to the projects that depend
+  on it.
+- **Delete it once library data or the author's types cover the library.** The
+  scaffold's `skipLibCheck` hides the clash between your declaration and the one
+  `resolve` writes: the two merge, and where both declare the same constant or
+  type, one of them silently wins.
+
+To type the library for everyone, its author can ship the declarations with it
+([Shipping types with a library](./shipping-library-types.md)), or you can add
+it to library data ([library](./library.md)).
 
 #### Dependency scene sources
 
