@@ -119,7 +119,7 @@ declare global {
     type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type CompareFunc = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL;
     type CompressionType = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY;
-    type ContextFeature = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC;
+    type ContextFeature = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC;
     type CoordinateSpace = typeof graphics.COORDINATE_SPACE_DEFAULT | typeof graphics.COORDINATE_SPACE_LOCAL | typeof graphics.COORDINATE_SPACE_WORLD;
     type CubemapFace = typeof graphics.CUBEMAP_FACE_NEGATIVE_X | typeof graphics.CUBEMAP_FACE_NEGATIVE_Y | typeof graphics.CUBEMAP_FACE_NEGATIVE_Z | typeof graphics.CUBEMAP_FACE_POSITIVE_X | typeof graphics.CUBEMAP_FACE_POSITIVE_Y | typeof graphics.CUBEMAP_FACE_POSITIVE_Z;
     type DataType = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT;
@@ -266,6 +266,10 @@ declare global {
      * Context feature flag indicating support for ASTC compressed 2D array textures. Some WebGL/GLES drivers fail array texture ASTC uploads while 2D ASTC works.
      */
     const CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" };
+    /**
+     * Context feature flag indicating backbuffer readback support for the current surface. On WebGPU, availability is established when the surface is configured.
+     */
+    const CONTEXT_FEATURE_BACKBUFFER_READBACK: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK" };
     /**
      * Context feature flag indicating support for BC (S3TC/RGTC/BPTC) compressed 2D array and 3D textures. WebGL2 forbids these compressed families on array/3D targets while allowing them on 2D.
      */

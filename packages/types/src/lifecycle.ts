@@ -56,54 +56,60 @@ export interface InputTouch {
 
 // Fields and docs follow the go ref-doc's `on_input.action` STRUCT (`go.on_input.Action`), whose keys are
 // the ones comp_script.cpp pushes; lifecycle-member-docs drift-guards the docs
-// against it, and a ref-doc re-pin is reconciled by hand.
+// against it, and a ref-doc re-pin is reconciled by hand. `source` stays optional
+// although 1.14.1 always pushes it: this interface types every pinned target, and
+// 1.14.0 and older never push it.
 export interface InputAction {
   /**
-   * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
+   * Input device category: `hash("keyboard")`, `hash("text")`, `hash("mouse")`, `hash("touch")`, `hash("gamepad")`, or `hash("accelerometer")`.
+   */
+  source?: Hash;
+  /**
+   * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement, accelerometer samples, and text input.
    */
   value?: number;
   /**
-   * Whether the input was pressed this frame; absent for pointer movement and text input.
+   * Whether the input was pressed this frame; absent for pointer movement, accelerometer samples, and text input.
    */
   pressed?: boolean;
   /**
-   * Whether the input was released this frame; absent for pointer movement and text input.
+   * Whether the input was released this frame; absent for pointer movement, accelerometer samples, and text input.
    */
   released?: boolean;
   /**
-   * Whether the input was repeated this frame; absent for pointer movement and text input.
+   * Whether the input was repeated this frame; absent for pointer movement, accelerometer samples, and text input.
    */
   repeated?: boolean;
   /**
-   * Pointer x-coordinate; absent for gamepad, key, and text input.
+   * Pointer x-coordinate; absent for gamepad, key, text, and accelerometer input.
    */
   x?: number;
   /**
-   * Pointer y-coordinate; absent for gamepad, key, and text input.
+   * Pointer y-coordinate; absent for gamepad, key, text, and accelerometer input.
    */
   y?: number;
   /**
-   * Pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+   * Pointer x-coordinate in screen space; absent for gamepad, key, text, and accelerometer input.
    */
   screen_x?: number;
   /**
-   * Pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+   * Pointer y-coordinate in screen space; absent for gamepad, key, text, and accelerometer input.
    */
   screen_y?: number;
   /**
-   * Change in the pointer x-coordinate; absent for gamepad, key, and text input.
+   * Change in the pointer x-coordinate; absent for gamepad, key, text, and accelerometer input.
    */
   dx?: number;
   /**
-   * Change in the pointer y-coordinate; absent for gamepad, key, and text input.
+   * Change in the pointer y-coordinate; absent for gamepad, key, text, and accelerometer input.
    */
   dy?: number;
   /**
-   * Change in the pointer x-coordinate in screen space; absent for gamepad, key, and text input.
+   * Change in the pointer x-coordinate in screen space; absent for gamepad, key, text, and accelerometer input.
    */
   screen_dx?: number;
   /**
-   * Change in the pointer y-coordinate in screen space; absent for gamepad, key, and text input.
+   * Change in the pointer y-coordinate in screen space; absent for gamepad, key, text, and accelerometer input.
    */
   screen_dy?: number;
   /**

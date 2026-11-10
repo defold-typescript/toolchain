@@ -49,6 +49,7 @@ export const PROMOTED_NAMESPACES_BY_VERSION: Readonly<Record<string, readonly st
     "bullet3d.shape",
     "bullet3d.world",
   ],
+  "1.14.1": ["recorder"],
 };
 
 function compareVersions(a: string, b: string): number {

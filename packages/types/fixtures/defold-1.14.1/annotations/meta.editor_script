@@ -1,0 +1,626 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---An editor command
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command)
+---@alias editor.command userdata
+---A location where an editor command can be displayed
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.location)
+---@alias editor.command.location "Assets"|"Bundle"|"Code"|"Debug"|"Edit"|"Help"|"Outline"|"Project"|"Scene"|"View"
+---Editor UI component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.component)
+---@alias editor.component userdata
+---A resource definition used by editor.create_resources
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.create_resources.resource)
+---@alias editor.create_resources.resource {[1]:string, [2]?:string}
+---Image loaded for reading by an editor script
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.image)
+---@alias editor.image userdata
+---Localizable editor message
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.message)
+---@alias editor.message userdata
+---Editor preference schema
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.schema)
+---@alias editor.schema userdata
+---Unbounded two-dimensional grid of tiles
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.tiles)
+---@alias editor.tiles userdata
+---Editor transaction step
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.transaction_step)
+---@alias editor.transaction_step userdata
+---HTTP request method, either a common method or a custom method string
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.request.method)
+---@alias http.request.method "GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"HEAD"|"OPTIONS"|string
+---HTTP server response
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.response)
+---@alias http.response userdata
+---HTTP server route
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.route)
+---@alias http.route userdata
+---HTTP server request handler
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.handler)
+---@alias http.server.handler fun(request:http.server.request):(http.response|integer|nil, table<string, string>|nil, string|nil)
+---Entries included in a ZIP archive
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.pack.entries)
+---@alias zip.pack.entries (string|zip.pack.entry)[]
+---ZIP entry containing a source path, optional archive target path, and optional compression settings
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.pack.entry)
+---@alias zip.pack.entry {[1]:string, [2]?:string, method?:zip.METHOD, level?:integer}
+
+---@class editor.command.context
+---Context provided to editor command handler functions
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.context)
+---@field selection? string|userdata|(string|userdata)[] current selection, populated when requested by the command query
+---@field active_view? userdata current active editor view, populated when requested by the command query
+---@field argument? any command argument, populated when requested by the command query
+
+---@class editor.command.options
+---Options used to create an editor command
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.options)
+---@field label string|editor.message user-visible command name, either a string or a localization message
+---@field locations editor.command.location[] non-empty list of locations where the command is displayed
+---@field query? editor.command.query query that controls command availability and provides context to its handler functions
+---@field id? string keyword identifier that may be used for assigning a shortcut to a command; should be a dot-separated identifier string, e.g. `"my-extension.do-stuff"`
+---@field active? fun(opts:editor.command.context):boolean function that additionally checks if a command is active in the current context; should be fast to execute since the editor might invoke it in response to UI interactions
+---@field run? fun(opts:editor.command.context):any function that is invoked when the user decides to execute the command
+
+---@class editor.command.query
+---A query that controls command availability and provides context to its handler functions
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.query)
+---@field selection? editor.command.query.selection current selection request
+---@field active_view? editor.command.query.active_view current active editor view request
+---@field argument? true set to true to provide the command argument to the handler functions
+
+---@class editor.command.query.active_view
+---Active editor view requested by an editor command
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.query.active_view)
+---@field type "code"|"scene"|"html"|"form" active editor view type
+
+---@class editor.command.query.selection
+---Selection requested by an editor command
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.command.query.selection)
+---@field type "resource"|"outline"|"scene" selection type
+---@field cardinality "one"|"many" either the first selected item or all selected items
+
+---@class editor.execute.options
+---Options for editor.execute
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.execute.options)
+---@field reload_resources? boolean whether the editor reloads resources from disk after the command is executed; defaults to true
+---@field out? "pipe"|"capture"|"discard" standard output mode; defaults to `"pipe"`
+---@field err? "pipe"|"stdout"|"discard" standard error output mode; defaults to `"pipe"`
+
+---@class editor.external_file_attributes.result
+---External file attributes
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.external_file_attributes.result)
+---@field path string resolved file path
+---@field exists boolean whether there is a file system entry at the path
+---@field is_file boolean whether the path corresponds to a file
+---@field is_directory boolean whether the path corresponds to a directory
+
+---@class editor.prefs.schema.array.options
+---Options for editor.prefs.schema.array
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.array.options)
+---@field item editor.schema array item schema
+---@field default? any[] default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.boolean.options
+---Options for editor.prefs.schema.boolean
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.boolean.options)
+---@field default? boolean default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.enum.options
+---Options for editor.prefs.schema.enum
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.enum.options)
+---@field values (nil|boolean|number|string)[] allowed values, must be scalar (nil, boolean, number or string)
+---@field default? any default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.integer.options
+---Options for editor.prefs.schema.integer
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.integer.options)
+---@field default? integer default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.keyword.options
+---Options for editor.prefs.schema.keyword
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.keyword.options)
+---@field default? string default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.number.options
+---Options for editor.prefs.schema.number
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.number.options)
+---@field default? number default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.object.options
+---Options for editor.prefs.schema.object
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.object.options)
+---@field properties table<string, editor.schema> a table from property key (string) to value schema
+---@field default? table<string, any> default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.object_of.options
+---Options for editor.prefs.schema.object_of
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.object_of.options)
+---@field key editor.schema table key schema
+---@field val editor.schema table value schema
+---@field default? table<any, any> default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.one_of.options
+---Options for editor.prefs.schema.one_of
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.one_of.options)
+---@field schemas editor.schema[] alternative schemas
+---@field default? any default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.password.options
+---Options for editor.prefs.schema.password
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.password.options)
+---@field default? string default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.set.options
+---Options for editor.prefs.schema.set
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.set.options)
+---@field item editor.schema set item schema
+---@field default? table<any, true> default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.string.options
+---Options for editor.prefs.schema.string
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.string.options)
+---@field default? string default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.prefs.schema.tuple.options
+---Options for editor.prefs.schema.tuple
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.prefs.schema.tuple.options)
+---@field items editor.schema[] schemas for the items
+---@field default? any[] default value
+---@field scope? editor.prefs.SCOPE preference scope; global values are shared by every project on this computer, while project values are stored separately per project
+
+---@class editor.resource_attributes.result
+---Project resource attributes
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.resource_attributes.result)
+---@field exists boolean whether a resource identified by the path exists in the project
+---@field is_file boolean whether the resource represents a file with some content
+---@field is_directory boolean whether the resource represents a directory
+
+---@class editor.ui.button.props
+---Properties for editor.ui.button
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.button.props)
+---@field on_pressed? function button press callback, will be invoked without arguments when the user presses the button
+---@field text? string|editor.message the text, either a string or a localization message
+---@field text_alignment? editor.ui.TEXT_ALIGNMENT text alignment within paragraph bounds
+---@field icon? editor.ui.ICON predefined icon name
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.check_box.props
+---Properties for editor.ui.check_box
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.check_box.props)
+---@field value? boolean determines if the checkbox should appear checked
+---@field on_value_changed? function change callback, will receive the new value
+---@field indeterminate? boolean determines if the checkbox should appear in the mixed state
+---@field text? string|editor.message the text, either a string or a localization message
+---@field text_alignment? editor.ui.TEXT_ALIGNMENT text alignment within paragraph bounds
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.dialog.props
+---Properties for editor.ui.dialog
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.dialog.props)
+---@field title string|editor.message OS dialog window title, either a string or a localization message
+---@field header? editor.component|false top part of the dialog, defaults to `editor.ui.heading({text = props.title})`
+---@field content? editor.component|false content of the dialog
+---@field width? number initial width of the dialog window in pixels
+---@field height? number initial height of the dialog window in pixels
+---@field resizable? boolean determines if the dialog window can be resized by the user
+---@field buttons? (editor.component|false)[] array of `editor.ui.dialog_button(...)` components, footer of the dialog. Defaults to a single Close button
+---@field modal? boolean if set to `false`, the dialog window stays on top but does not block interaction with the editor
+
+---@class editor.ui.dialog_button.props
+---Properties for editor.ui.dialog_button
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.dialog_button.props)
+---@field text string|editor.message button text, either a string or a localization message
+---@field result? any value returned by `editor.ui.show_dialog(...)` if this button is pressed
+---@field default? boolean if set, pressing `Enter` in the dialog will trigger this button
+---@field cancel? boolean if set, pressing `Escape` in the dialog will trigger this button
+---@field enabled? boolean determines if the button can be interacted with
+
+---@class editor.ui.external_file_field.props
+---Properties for editor.ui.external_file_field
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.external_file_field.props)
+---@field value? string file or directory path; resolved against project root if relative
+---@field on_value_changed? function value change callback, will receive the absolute path of a selected file/folder or nil if the field was cleared; even though the selector dialog allows selecting only files, it's possible to receive directories and non-existent file system entries using text field input
+---@field title? string|editor.message OS window title, either a string or a localization message
+---@field filters? editor.ui.external_file_filter[] File filters
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.external_file_filter
+---External file dialog filter
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.external_file_filter)
+---@field description string|editor.message text explaining the filter, either a literal string like `"Text files (*.txt)"` or a localization message
+---@field extensions string[] file extension patterns, e.g. `"*.txt"`, `"*.*"`, or `"game.project"`
+
+---@class editor.ui.grid.constraint
+---Grid row or column constraint
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.grid.constraint)
+---@field grow? boolean whether the row or column should grow to fill available space
+
+---@class editor.ui.grid.props
+---Properties for editor.ui.grid
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.grid.props)
+---@field children? ((editor.component|false)[]|false)[] array of arrays of child components
+---@field rows? (editor.ui.grid.constraint|false)[] separate configuration for each row
+---@field columns? (editor.ui.grid.constraint|false)[] separate configuration for each column
+---@field padding? editor.ui.PADDING|number empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
+---@field spacing? editor.ui.SPACING|number empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.heading.props
+---Properties for editor.ui.heading
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.heading.props)
+---@field text? string|editor.message the text, either a string or a localization message
+---@field text_alignment? editor.ui.TEXT_ALIGNMENT text alignment within paragraph bounds
+---@field color? editor.ui.COLOR semantic color, defaults to `editor.ui.COLOR.TEXT`
+---@field word_wrap? boolean determines if the lines of text are word-wrapped when they don't fit in the assigned bounds, defaults to true
+---@field style? editor.ui.HEADING_STYLE heading style, defaults to `editor.ui.HEADING_STYLE.H3`
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.horizontal.props
+---Properties for editor.ui.horizontal
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.horizontal.props)
+---@field children? (editor.component|false)[] array of child components
+---@field padding? editor.ui.PADDING|number empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
+---@field spacing? editor.ui.SPACING|number empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.icon.props
+---Properties for editor.ui.icon
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.icon.props)
+---@field icon editor.ui.ICON predefined icon name
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.image.props
+---Properties for editor.ui.image
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.image.props)
+---@field image string either a resource path (starts with `/`), or an URL
+---@field width? number width of the image view, the image will be fit inside it while preserving its aspect ratio
+---@field height? number height of the image view, the image will be fit inside it while preserving its aspect ratio
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.integer_field.props
+---Properties for editor.ui.integer_field
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.integer_field.props)
+---@field value? any value
+---@field on_value_changed? function value change callback, will receive the new value
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.issue
+---Issue associated with an input component
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.issue)
+---@field severity editor.ui.ISSUE_SEVERITY issue severity
+---@field message string|editor.message issue message shown in a tooltip, either a string or a localization message
+
+---@class editor.ui.label.props
+---Properties for editor.ui.label
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.label.props)
+---@field text? string|editor.message the text, either a string or a localization message
+---@field text_alignment? editor.ui.TEXT_ALIGNMENT text alignment within paragraph bounds
+---@field color? editor.ui.COLOR semantic color, defaults to `editor.ui.COLOR.TEXT`
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.number_field.props
+---Properties for editor.ui.number_field
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.number_field.props)
+---@field value? any value
+---@field on_value_changed? function value change callback, will receive the new value
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.paragraph.props
+---Properties for editor.ui.paragraph
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.paragraph.props)
+---@field text? string|editor.message the text, either a string or a localization message
+---@field text_alignment? editor.ui.TEXT_ALIGNMENT text alignment within paragraph bounds
+---@field color? editor.ui.COLOR semantic color, defaults to `editor.ui.COLOR.TEXT`
+---@field word_wrap? boolean determines if the lines of text are word-wrapped when they don't fit in the assigned bounds, defaults to true
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.resource_field.props
+---Properties for editor.ui.resource_field
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.resource_field.props)
+---@field value? string resource path (must start with `/`)
+---@field on_value_changed? function value change callback, will receive either resource path of a selected resource or nil when the field is cleared; even though the resource selector dialog allows filtering on resource extensions, it's possible to receive resources with other extensions and non-existent resources using text field input
+---@field title? string|editor.message dialog title, either a string or a localization message, defaults to `localization.message("dialog.select-resource.title")`
+---@field extensions? string[] if specified, restricts selectable resources in the dialog to specified file extensions; e.g. `{"collection", "go"}`
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.scroll.props
+---Properties for editor.ui.scroll
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.scroll.props)
+---@field content editor.component content component
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.select_box.props
+---Properties for editor.ui.select_box
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.select_box.props)
+---@field value? any selected value
+---@field on_value_changed? function change callback, will receive the selected value
+---@field options? any[] array of selectable options
+---@field to_string? function function that converts an item to a string (or a localization message); defaults to `tostring`
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.separator.props
+---Properties for editor.ui.separator
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.separator.props)
+---@field orientation? editor.ui.ORIENTATION separator line orientation, `editor.ui.ORIENTATION.VERTICAL` or `editor.ui.ORIENTATION.HORIZONTAL`
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.show_external_directory_dialog.options
+---Options for editor.ui.show_external_directory_dialog
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_external_directory_dialog.options)
+---@field path? string initial file or directory path; resolved against project root if relative
+---@field title? string|editor.message OS window title, either a string or a localization message
+
+---@class editor.ui.show_external_file_dialog.options
+---Options for editor.ui.show_external_file_dialog
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_external_file_dialog.options)
+---@field path? string initial file or directory path; resolved against project root if relative
+---@field title? string|editor.message OS window title, either a string or a localization message
+---@field filters? editor.ui.external_file_filter[] File filters
+
+---@class editor.ui.show_resource_dialog.options
+---Options for editor.ui.show_resource_dialog
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.show_resource_dialog.options)
+---@field extensions? string[] if specified, restricts selectable resources in the dialog to specified file extensions; e.g. `{"collection", "go"}`
+---@field selection? "single"|"multiple" selection mode, defaults to `"single"`
+---@field title? string|editor.message dialog title, either a string or a localization message, defaults to `localization.message("dialog.select-resource.title")`
+
+---@class editor.ui.string_field.props
+---Properties for editor.ui.string_field
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.string_field.props)
+---@field value? any value
+---@field on_value_changed? function value change callback, will receive the new value
+---@field issue? editor.ui.issue|false issue related to the input, or false if there is no issue
+---@field tooltip? string|editor.message tooltip message shown on hover; either a string or a localization message
+---@field enabled? boolean determines if the input component can be interacted with
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.tab.props
+---Properties for editor.ui.tab
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.tab.props)
+---@field text string|editor.message tab header text, either a string or a localization message
+---@field content? editor.component tab content component
+---@field icon? editor.component tab header icon component
+---@field enabled? boolean determines if the tab can be selected
+
+---@class editor.ui.tabs.props
+---Properties for editor.ui.tabs
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.tabs.props)
+---@field tabs? (editor.component|false)[] array of `editor.ui.tab(...)` components
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class editor.ui.vertical.props
+---Properties for editor.ui.vertical
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#editor.ui.vertical.props)
+---@field children? (editor.component|false)[] array of child components
+---@field padding? editor.ui.PADDING|number empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
+---@field spacing? editor.ui.SPACING|number empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
+---@field alignment? editor.ui.ALIGNMENT alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
+---@field grow? boolean determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
+---@field row_span? integer how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+---@field column_span? integer how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+
+---@class http.request.options
+---Options for http.request
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.request.options)
+---@field method? http.request.method request method, defaults to `"GET"`
+---@field headers? table<string, string> request headers
+---@field body? string request body
+---@field as? "string"|"json" response body converter; mutually exclusive with `path`
+---@field path? string destination file path, resolved against project root if relative; mutually exclusive with `as`
+
+---@class http.request.response
+---Response returned by http.request
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.request.response)
+---@field status integer response code
+---@field headers table<string, string|string[]> response headers, where keys are lowercase and repeated headers have arrays of values
+---@field body? any response body, present only when the `as` option was provided
+---@field path? string resolved absolute destination path, present after a successful response was written using the `path` option
+
+---@class http.server.request
+---HTTP server request
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#http.server.request)
+---@field [string] any route path parameter extracted from a path pattern
+---@field path string full matched path, starting with `/`
+---@field method string HTTP request method, e.g. `"POST"`
+---@field headers table<string, string|string[]> request headers, keyed by lowercase header name
+---@field query? string query string
+---@field body? any request body, whose type depends on the route's `as` argument
+
+---@class json.decode.options
+---Options for json.decode
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#json.decode.options)
+---@field all? boolean if true, decodes all JSON values in a string and returns an array
+
+---@class tilemap.tiles.get_info.result
+---Full tile information returned by tilemap.tiles.get_info
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.get_info.result)
+---@field index integer 1-indexed tile index of a tilemap's tilesource
+---@field h_flip boolean horizontal flip
+---@field v_flip boolean vertical flip
+---@field rotate_90 boolean whether the tile is rotated 90 degrees clockwise
+
+---@class tilemap.tiles.set.info
+---Tile information accepted by tilemap.tiles.set
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#tilemap.tiles.set.info)
+---@field index integer 1-indexed tile index of a tilemap's tilesource
+---@field h_flip? boolean horizontal flip
+---@field v_flip? boolean vertical flip
+---@field rotate_90? boolean whether the tile is rotated 90 degrees clockwise
+
+---@class zip.pack.options
+---Options for zip.pack
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.pack.options)
+---@field method? zip.METHOD compression method, defaults to `zip.METHOD.DEFLATED`
+---@field level? integer compression level from 0 to 9 for deflated entries; defaults to 6
+
+---@class zip.unpack.options
+---Options for zip.unpack
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.unpack.options)
+---@field on_conflict zip.ON_CONFLICT conflict resolution strategy

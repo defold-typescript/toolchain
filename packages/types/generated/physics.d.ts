@@ -336,7 +336,8 @@ declare global {
      */
     function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
     /**
-     * Gets collision shape data from a collision object
+     * Gets collision shape data from a collision object. Dimensions are in game units,
+     * independent of the `physics.scale` setting.
      *
      * @param url - the collision object.
      * @param shape - the name of the shape to get data for.
@@ -654,7 +655,8 @@ declare global {
      */
     function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
     /**
-     * Sets collision shape data for a collision object. Please note that updating data in 3D
+     * Sets collision shape data for a collision object. Dimensions are in game units,
+     * independent of the `physics.scale` setting. Please note that updating data in 3D
      * can be quite costly for box and capsules. Because of the physics engine, the cost
      * comes from having to recreate the shape objects when certain shapes needs to be updated.
      *

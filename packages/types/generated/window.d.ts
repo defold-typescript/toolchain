@@ -20,6 +20,27 @@ declare global {
       height?: number;
     }
     /**
+     * Window reserved-area data
+     */
+    interface ReservedArea {
+      /**
+       * Left edge in window pixels.
+       */
+      x: number;
+      /**
+       * Bottom edge in window pixels.
+       */
+      y: number;
+      /**
+       * Rectangle width in window pixels.
+       */
+      width: number;
+      /**
+       * Rectangle height in window pixels.
+       */
+      height: number;
+    }
+    /**
      * Window safe-area data
      */
     interface SafeArea {
@@ -91,7 +112,7 @@ declare global {
      */
     const WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" };
     /**
-     * resized window event This event is sent to a window event listener when the game window or app screen is resized. The new size is passed along in the data field to the event listener.
+     * resized window event This event is sent to a window event listener when the game window or app screen is resized. On iOS, it is also sent after orientation transitions and safe-area inset changes, even when the size is unchanged. After window.get_reserved_areas has been queried, changes to reserved areas also trigger this event on supported platforms. The current size is passed along in the data field to the event listener.
      */
     const WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" };
     /**
@@ -104,6 +125,8 @@ declare global {
     function get_dim_mode(): window.Dimming;
     /**
      * This returns the content scale of the current display.
+     * On HTML5, the scale respects `display.high_dpi`, `html5.min_pixel_ratio`
+     * and `html5.max_pixel_ratio`. When High DPI is disabled, the scale is 1.
      *
      * @returns The display scale
      */
@@ -114,6 +137,45 @@ declare global {
      * @returns The lock state
      */
     function get_mouse_lock(): boolean;
+    /**
+     * Returns an array of active occlusion rectangles intersecting the game window,
+     * such as camera cutouts and the Dynamic Island. Each rectangle is clipped to
+     * the window and uses a bottom-left origin and pixel units matching
+     * window.get_size. These coordinates are independent of GUI adjustment
+     * and the project's logical resolution.
+     * Supported on iOS 27.1+ and Android 9 (API level 28)+. On iOS, rectangles
+     * include the interaction margins supplied by UIKit. On Android, rectangles
+     * describe display cutouts. Folds, system bars, keyboards, and gesture areas
+     * are not reported by this API.
+     * Unsupported platforms and windows with no reported occlusions return an
+     * empty table. An empty result does not guarantee that the whole window is
+     * safe; use window.get_safe_area when a safe layout rectangle is needed.
+     * Query once during initialization and again following
+     * window.WINDOW_EVENT_RESIZED. On supported platforms this event also
+     * refreshes reserved areas when their geometry changes without a size change.
+     * The returned table is a snapshot and is not modified by subsequent events.
+     *
+     * @returns array of window.reserved_area rectangles
+     * @example
+     * ```ts
+     * function update_reserved_areas(self: { reserved_areas: window.ReservedArea[] }) {
+     *   self.reserved_areas = window.get_reserved_areas();
+     * }
+     *
+     * export default defineScript({
+     *   init() {
+     *     const state = { reserved_areas: window.get_reserved_areas() };
+     *     window.set_listener((self, event) => {
+     *       if (event === window.WINDOW_EVENT_RESIZED) {
+     *         update_reserved_areas(state);
+     *       }
+     *     });
+     *     return state;
+     *   },
+     * });
+     * ```
+     */
+    function get_reserved_areas(): window.ReservedArea[];
     /**
      * This returns the safe area rectangle (x, y, width, height) and the inset
      * values relative to the window edges. On platforms without a safe area,

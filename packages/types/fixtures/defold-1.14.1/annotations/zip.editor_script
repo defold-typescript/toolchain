@@ -1,0 +1,154 @@
+--[[
+Generated using the Defold build pipeline
+
+./scripts/build.py build_docs
+]]
+
+---@meta
+---@diagnostic disable: lowercase-global
+---@diagnostic disable: missing-return
+---@diagnostic disable: args-after-dots
+
+---@class defold_api.zip
+---@field METHOD defold_api.zip.METHOD
+---@field ON_CONFLICT defold_api.zip.ON_CONFLICT
+zip = {}
+
+---@class defold_api.zip.METHOD
+---`"deflated"` compression method
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.METHOD)
+---@field DEFLATED zip.METHOD
+---`"stored"` compression method, i.e. no compression
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.METHOD)
+---@field STORED zip.METHOD
+zip.METHOD = {}
+
+---@class defold_api.zip.ON_CONFLICT
+---`"error"`, any conflict aborts extraction
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.ON_CONFLICT)
+---@field ERROR zip.ON_CONFLICT
+---`"overwrite"`, existing file is overwritten
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.ON_CONFLICT)
+---@field OVERWRITE zip.ON_CONFLICT
+---`"skip"`, existing file is preserved
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.ON_CONFLICT)
+---@field SKIP zip.ON_CONFLICT
+zip.ON_CONFLICT = {}
+
+---@enum defold_enum.zip.METHOD: string
+local __defold_enum_zip_METHOD = {
+    DEFLATED = nil,
+    STORED = nil,
+}
+
+---Constants for zip compression methods
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.METHOD)
+---@alias zip.METHOD defold_enum.zip.METHOD
+---| `zip.METHOD.DEFLATED`
+---| `zip.METHOD.STORED`
+
+---@enum defold_enum.zip.ON_CONFLICT: string
+local __defold_enum_zip_ON_CONFLICT = {
+    ERROR = nil,
+    SKIP = nil,
+    OVERWRITE = nil,
+}
+
+---Constants defining conflict resolution strategies for zip archive extraction
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.ON_CONFLICT)
+---@alias zip.ON_CONFLICT defold_enum.zip.ON_CONFLICT
+---| `zip.ON_CONFLICT.ERROR`
+---| `zip.ON_CONFLICT.SKIP`
+---| `zip.ON_CONFLICT.OVERWRITE`
+
+---Create a ZIP archive
+---
+---**Examples:**
+---
+---Archive a file and a folder:
+---```
+---zip.pack("build.zip", {"build", "game.project"})
+---```
+---Change the location of the files within the archive:
+---```
+---zip.pack("build.zip", {
+---  {"build/wasm-web", "."},
+---  {"configs/prod.json", "config.json"}
+---})
+---```
+---Create archive without compression (much faster to create the archive, bigger archive file size, allows mmap access):
+---```
+---zip.pack("build.zip", {method = zip.METHOD.STORED}, {
+---  "build",
+---  "resources"
+---})
+---```
+---Don't compress one of the folders:
+---```
+---zip.pack("build.zip", {
+---  {"assets", method = zip.METHOD.STORED},
+---  "build/wasm-web"
+---})
+---```
+---Include files from outside the project:
+---```
+---zip.pack("build.zip", {
+---  "build",
+---  {"../secrets/auth-key.txt", "auth-key.txt"}
+---})
+---```
+---@overload fun(output_path:string, entries:zip.pack.entries)
+---@param output_path string output zip file path, resolved against project root if relative
+---@param opts? zip.pack.options compression options
+---@param entries zip.pack.entries files and folders to include in the archive
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.pack:output_path-opts-entries)
+function zip.pack(output_path, opts, entries) end
+
+---Extract a ZIP archive
+---
+---**Examples:**
+---
+---Extract everything to a build dir:
+---```lua
+---zip.unpack("build/dev/resources.zip")
+---```
+---Extract to a different directory:
+---```lua
+---zip.unpack(
+---  "build/dev/resources.zip",
+---  "build/dev/tmp",
+---)
+---```
+---Extract while overwriting existing files on conflict:
+---```lua
+---zip.unpack(
+---  "build/dev/resources.zip",
+---  {on_conflict = zip.ON_CONFLICT.OVERWRITE}
+---)
+---```
+---Extract a single file:
+---```lua
+---zip.unpack(
+---  "build/dev/resources.zip",
+---  {"config.json"}
+---)
+---```
+---@overload fun(archive_path:string, opts:zip.unpack.options)
+---@overload fun(archive_path:string, paths:string[])
+---@overload fun(archive_path:string, target_path:string, paths:string[])
+---@overload fun(archive_path:string, opts:zip.unpack.options, paths:string[])
+---@param archive_path string zip file path, resolved against project root if relative
+---@param target_path? string target path for extraction, defaults to parent of `archive_path` if omitted
+---@param opts? zip.unpack.options extraction options; conflict handling defaults to `zip.ON_CONFLICT.ERROR`
+---@param paths? string[] entries to extract, relative string paths
+---
+---[Open in Browser](https://defold.com/ref/editor-lua#zip.unpack:archive_path-target_path-opts-paths)
+function zip.unpack(archive_path, target_path, opts, paths) end

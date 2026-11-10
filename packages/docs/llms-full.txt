@@ -14,7 +14,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Messages](guide/messages.md)
 - [Vector math](guide/vector-math.md)
 
-> Tracked Defold versions: 1.14.0, 1.13.2, 1.13.1, 1.13.0, 1.12.4 (newest first).
+> Tracked Defold versions: 1.14.1, 1.14.0, 1.13.2, 1.13.1, 1.13.0, 1.12.4 (newest first).
 
 The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.
 
@@ -30,7 +30,7 @@ To target one project: (1) resolve the project's configured Defold target and it
 
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
-> Defold versions supported: 1.12.4, 1.13.0, 1.13.1, 1.13.2, 1.14.0
+> Defold versions supported: 1.12.4, 1.13.0, 1.13.1, 1.13.2, 1.14.0, 1.14.1
 
 > [!NOTE]
 > **Want to help shape v1.0?** Nothing is locked in yet, and the project ships often — see the [changelog](./changelog.md). Use it on a real project and [open an issue](https://github.com/defold-typescript/toolchain/issues) about whatever you hit: a missing or mistyped API, a rough edge in the tooling, docs that left your coding agent guessing, or what you would want built next. Pull requests stay closed until the release.
@@ -7167,8 +7167,8 @@ rejected with the resolvable targets listed, and nothing is written:
 
 ```
 defold-typescript set-target: error: '1.42.99' names a version the API registry
-cannot provide; nothing was written. Resolvable targets: 1.14.0, 1.13.2, 1.13.1,
-1.13.0, 1.12.4, 1.9.8. Pin one of them, or a channel (stable|beta|alpha).
+cannot provide; nothing was written. Resolvable targets: 1.14.1, 1.14.0, 1.13.2,
+1.13.1, 1.13.0, 1.12.4, 1.9.8. Pin one of them, or a channel (stable|beta|alpha).
 ```
 
 That catches the typo where you made it, instead of letting it surface later as
@@ -13154,8 +13154,7 @@ the old name.
 
 #### Defold 1.14.0
 
-Defold 1.14.0 is the current stable release and the toolchain's default API
-target. Its Lua API changes only add: nothing was removed, nothing was
+Defold 1.14.0's Lua API changes only add: nothing was removed, nothing was
 deprecated and no signature got narrower, so **a project on 1.13.2 needs no
 source change for the Lua API**. Move the pin and rebuild. The release also
 changes engine behavior and project settings that the compiler cannot check, so
@@ -13248,6 +13247,137 @@ Same change as `gui.get_layout_objects`, relative to the label's pivot. See the
 - **Native extensions need 1.14.0 builds.** The engine's native interface
   changed, so an extension that ships prebuilt libraries, and an extension with
   an editor plugin, must be updated to a release built for 1.14.0.
+
+<!-- release: 1.14.1 -->
+
+#### Defold 1.14.1
+
+Defold 1.14.1 is a **patch** over [1.14.0](#defold-1140) and the toolchain's
+default API target. Its Lua API changes add and widen: every call written
+against 1.14.0 keeps compiling, so **a project on 1.14.0 needs no source change
+for the Lua API**. The one removal is the `start_record` and `stop_record`
+messages, which only an untyped `msg.post` reaches. The release also changes
+shader, render target and GUI behavior and the custom iOS `Info.plist`, which the
+compiler cannot check, so walk the last topic below by hand. A project on 1.13.2
+migrates through the 1.14.0 notes above as well; the [1.13.2
+reference](/api/defold-1.13.2/go) keeps that release's surface.
+
+The runbook above, with this release's concrete targets:
+
+```sh
+# what you ship today
+bunx @defold-typescript/cli build --defold-target 1.14.0
+
+# the same project against the new surface
+bunx @defold-typescript/cli build --defold-target 1.14.1
+```
+
+##### Added Lua APIs
+
+These are additive, so no existing call changes. A project that uses them must
+pin `--defold-target 1.14.1` or newer.
+
+###### recorder.start
+
+`recorder.start` records the game window to an MP4 file, on the new 1.14.1
+[`recorder`](/api/defold-1.14.1/recorder) surface. It takes a
+`recorder.Options` table (`path`, and optional `fps` and `audio`) and a
+callback that receives `recorder.EVENT_STARTED`, then `recorder.EVENT_STOPPED`
+or `recorder.EVENT_ERROR` with a `recorder.Result`. It returns
+`LuaMultiReturn<[boolean | undefined, string | undefined]>`: `true` when the
+request is accepted, otherwise `undefined` and the reason. Only desktop debug
+engines carry the module; release, headless, mobile and web builds omit it, so
+the global is `nil` there at run time even though the declaration compiles.
+
+###### recorder.stop
+
+`recorder.stop` asks the active recording to finalize. Call it after the
+callback has received `recorder.EVENT_STARTED`; the file is ready when the
+callback receives `recorder.EVENT_STOPPED`. It returns the same accepted flag
+and reason as `recorder.start`.
+
+###### window.get_reserved_areas
+
+`window.get_reserved_areas` returns the screen areas a camera cutout or the
+Dynamic Island covers, as an array of `window.ReservedArea` (`x`, `y`, `width`,
+`height` in window pixels), on the 1.14.1 [`window`](/api/defold-1.14.1/window)
+surface. It reports areas on iOS and Android and returns an empty array
+elsewhere. Query it in `init` and again on `window.WINDOW_EVENT_RESIZED`.
+
+###### graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK
+
+`graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK` is a context feature flag for
+backbuffer readback support, on the 1.14.1
+[`graphics`](/api/defold-1.14.1/graphics) surface. It is a member of
+`graphics.ContextFeature`.
+
+##### Widened Lua APIs
+
+Each of these gains an optional trailing argument, so existing calls keep
+compiling. The [1.14.0 `sound` page](/api/defold-1.14.0/sound) and the [1.14.0
+`sys` page](/api/defold-1.14.0/sys) keep the older signatures.
+
+###### sound.set_gain
+
+`sound.set_gain` takes an optional third `properties` argument, a
+`sound.ParameterProperties` table. Pass its `play_id`, the id `sound.play`
+returns, to change one voice; omit it to change every voice and the gain the
+component uses for later playback. See the 1.14.1
+[`sound`](/api/defold-1.14.1/sound) surface. The `set_gain` message takes the
+same `play_id`.
+
+###### sound.set_pan
+
+`sound.set_pan` takes the same optional `properties` argument, with the same
+`play_id` rule, and the `set_pan` message takes the same `play_id`.
+
+###### sys.reboot
+
+`sys.reboot` takes two more optional string arguments, `arg7` and `arg8`, and
+the `reboot` message takes the same two fields. See the 1.14.1
+[`sys`](/api/defold-1.14.1/sys) surface.
+
+##### Input source
+
+The `on_input` action table carries `source`, a `Hash` of the input device
+category: `hash("keyboard")`, `hash("text")`, `hash("mouse")`, `hash("touch")`,
+`hash("gamepad")` or `hash("accelerometer")`. Compare it to tell a physical mouse
+click from one simulated by touch. `InputAction` types it as optional, because it
+types every pinned target and 1.14.0 and older never send it.
+
+##### Removed messages
+
+The `start_record` and `stop_record` messages to `@system` are gone; the
+`recorder` module replaces them and writes MP4 instead of VP8. The built-in
+message types follow the default target, so they no longer declare either
+message. A project pinned to 1.14.0 or older that still posts them does so
+through the untyped `msg.post` arm.
+
+##### Behavior and project migrations
+
+These compile unchanged against 1.14.1 and behave differently at run time or at
+build time.
+
+- **GLES 2.0 and WebGL 1 shaders are opt-in.** `Exclude GLES 2.0` in
+  `game.project` is on by default, so a game that must run on OpenGL ES 2.0 or
+  WebGL 1 has to turn it off.
+- **A render target needs an attachment.** A render target resource, or one a
+  render script creates, with no color, depth or stencil attachment is rejected.
+  Give a placeholder render target at least one attachment of at least 1x1.
+- **Sprites flip around the atlas pivot.** `sprite.set_hflip` and
+  `sprite.set_vflip` flip around the pivot set in the atlas, the same way a
+  negative scale does. A sprite with an off-center pivot no longer shifts when
+  flipped, so remove any offset that compensated for the shift.
+- **`layout_changed` arrives after `init`.** A GUI script no longer receives
+  `layout_changed` before `init`; layout notifications that arrive earlier are
+  combined and delivered once `init` succeeds.
+- **Legacy Spine GUIs need an updated Spine extension.** The Spine-specific GUI
+  migration moved into the extension, so building a legacy Spine GUI needs a
+  Spine extension release made for 1.14.1.
+- **A custom iOS `Info.plist` needs new keys.** Add
+  `UIApplicationSupportsIndirectInputEvents` set to true, and move the generated
+  orientation list into the new `DefoldSupportedInterfaceOrientations` key, to
+  match the built-in template.
 
 ### Typing native extensions
 
@@ -14800,7 +14930,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
 - type Playback = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG
 - interface PropertyOptions { index?: number; key?: Hash; keys?: Hash[]; } [since 1.13.2]
-- interface Action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.GamepadGuidInfo; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.Touch[]; text?: string; } [since 1.13.2]
+- interface Action { source: Hash; value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.GamepadGuidInfo; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.Touch[]; text?: string; } [since 1.13.2]
 - interface GamepadGuidInfo { vendor: number; product: number; bus: number; crc: number; version: number; } [since 1.13.2]
 - interface Touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; } [since 1.13.2]
 
@@ -14849,6 +14979,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - graphics.COMPRESSION_TYPE_WEBP_LOSSY: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP_LOSSY" }
 - graphics.CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" } [since 1.13.0]
 - graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK" } [since 1.14.1]
 - graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES" } [since 1.13.2]
 - graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" } [since 1.13.0]
 - graphics.CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" } [since 1.13.0]
@@ -14967,7 +15098,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
 - type CompareFunc = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL [since 1.13.2]
 - type CompressionType = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY [since 1.13.2]
-- type ContextFeature = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC [since 1.13.2]
+- type ContextFeature = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC [since 1.13.2]
 - type CoordinateSpace = typeof graphics.COORDINATE_SPACE_DEFAULT | typeof graphics.COORDINATE_SPACE_LOCAL | typeof graphics.COORDINATE_SPACE_WORLD [since 1.13.2]
 - type CubemapFace = typeof graphics.CUBEMAP_FACE_NEGATIVE_X | typeof graphics.CUBEMAP_FACE_NEGATIVE_Y | typeof graphics.CUBEMAP_FACE_NEGATIVE_Z | typeof graphics.CUBEMAP_FACE_POSITIVE_X | typeof graphics.CUBEMAP_FACE_POSITIVE_Y | typeof graphics.CUBEMAP_FACE_POSITIVE_Z [since 1.14.0]
 - type DataType = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT [since 1.13.2]
@@ -15493,6 +15624,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type Mode = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME
 - type ViewMode = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED
 
+### recorder
+
+- function start(options: recorder.Options, callback: (self: unknown, event: recorder.Event, result: recorder.Result) => void): LuaMultiReturn<[boolean | undefined, string | undefined]>; [since 1.14.1]
+- function stop(): LuaMultiReturn<[boolean | undefined, string | undefined]>; [since 1.14.1]
+- recorder.EVENT_ERROR: number & { readonly __brand: "recorder.EVENT_ERROR" } [since 1.14.1]
+- recorder.EVENT_STARTED: number & { readonly __brand: "recorder.EVENT_STARTED" } [since 1.14.1]
+- recorder.EVENT_STOPPED: number & { readonly __brand: "recorder.EVENT_STOPPED" } [since 1.14.1]
+- type Event = typeof recorder.EVENT_STARTED | typeof recorder.EVENT_STOPPED | typeof recorder.EVENT_ERROR [since 1.14.1]
+- interface Options { path: string; fps?: number; audio?: boolean; } [since 1.14.1]
+- interface Result { path: string; width: number; height: number; fps: number; audio: boolean; error?: string; } [since 1.14.1]
+
 ### render
 
 - function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;
@@ -15724,14 +15866,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_phone_call_active(): boolean;
 - function pause(url: string | Hash | Url, pause: boolean): void;
 - function play(url: string | Hash | Url, play_properties?: sound.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: sound.PlayCompletion, sender: Url) => void): number;
-- function set_gain(url: string | Hash | Url, gain: number): void;
+- function set_gain(url: string | Hash | Url, gain: number): void; [through 1.14.0] [signature transition]
+- function set_gain(url: string | Hash | Url, gain: number, properties?: sound.ParameterProperties): void; [since 1.14.1] [signature transition]
 - function set_group_gain(group: string | Hash, gain: number): void;
-- function set_pan(url: string | Hash | Url, pan: number): void;
+- function set_pan(url: string | Hash | Url, pan: number): void; [through 1.14.0] [signature transition]
+- function set_pan(url: string | Hash | Url, pan: number, properties?: sound.ParameterProperties): void; [since 1.14.1] [signature transition]
 - function stop(url: string | Hash | Url, stop_properties?: sound.StopProperties): void;
 - gain: number
 - pan: number
 - sound: Hash
 - speed: number
+- interface ParameterProperties { play_id?: number; } [since 1.14.1]
 - interface PlayCompletion { play_id: number; } [since 1.13.2]
 - interface PlayProperties { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number; } [since 1.13.2]
 - interface StopProperties { play_id?: number; } [since 1.13.2]
@@ -15781,7 +15926,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string): boolean;
 - function open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;
-- function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
+- function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void; [through 1.14.0] [signature transition]
+- function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string, arg7?: string, arg8?: string): void; [since 1.14.1] [signature transition]
 - function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;
 - function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;
 - function set_connectivity_host(host: string): void;
@@ -15909,6 +16055,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_dim_mode(): window.Dimming;
 - function get_display_scale(): number;
 - function get_mouse_lock(): boolean;
+- function get_reserved_areas(): window.ReservedArea[]; [since 1.14.1]
 - function get_safe_area(): window.SafeArea;
 - function get_size(): LuaMultiReturn<[number, number]>;
 - function set_dim_mode(mode: Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>): void;
@@ -15928,6 +16075,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
 - type Dimming = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
 - interface EventData { width?: number; height?: number; } [since 1.13.2]
+- interface ReservedArea { x: number; y: number; width: number; height: number; } [since 1.14.1]
 - interface SafeArea { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; } [since 1.13.2]
 - type WindowEvent = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
 
