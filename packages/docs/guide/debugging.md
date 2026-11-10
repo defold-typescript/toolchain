@@ -163,6 +163,58 @@ Either way, the launcher never builds for you. It stops when `build/default/game
 
    The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. The `BEGIN`/`END` sentinels are what let a later `setup-debug` run refresh the block if its wording changes.
 
+## The engine debugger
+
+From Defold 1.14.1, debug and headless engines carry their own debugger, which speaks the Debug Adapter Protocol (DAP). The Defold editor's debugger runs on it, and other DAP clients can attach to it.
+
+It steps through the generated Lua and reads no source maps. A breakpoint in a `.ts` file binds only through the `setup-debug` path this page describes.
+
+The two debuggers stay apart by how the engine is launched. `lldebugger.start()` does nothing unless VS Code's Local Lua Debugger launched the engine, and the engine debugger installs no hook until its listener starts. While a client is attached, it owns Lua's debug hooks, so use one debugger per session.
+
+### Calling the engine debugger from TypeScript
+
+`debugger` is a reserved word in TypeScript, and the API reference does not document the module, so the types package declares nothing for it. Declare it in your own `.d.ts` beside your scripts, under the same `include`[^src-root] pattern as `lldebugger.debug.d.ts`:
+
+```ts
+/** @customName debugger */
+declare const debugger_:
+  | {
+      /** Start the engine's debug listener and return its port; pass 0 for a free port. */
+      start(this: void, port?: number, address?: string): number;
+    }
+  | undefined;
+```
+
+`@customName` makes TSTL write the Lua global `debugger` wherever your code says `debugger_`. The global is `undefined` in release and web builds and on engines older than 1.14.1, so call it through `?.`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    const port = debugger_?.start(0);
+    if (port !== undefined) {
+      print(`engine debugger listening on port ${port}`);
+    }
+  },
+});
+```
+
+The script compiles to:
+
+```lua
+local ____exports = {}
+function init()
+    local port = debugger and debugger.start(0)
+    if port ~= nil then
+        print("engine debugger listening on port " .. tostring(port))
+    end
+end
+return ____exports
+```
+
+`start` raises a Lua error when it cannot bind the port.
+
 ## See also
 
 - [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.

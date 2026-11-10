@@ -721,8 +721,10 @@ default API target. Its Lua API changes add and widen: every call written
 against 1.14.0 keeps compiling, so **a project on 1.14.0 needs no source change
 for the Lua API**. The one removal is the `start_record` and `stop_record`
 messages, which only an untyped `msg.post` reaches. The release also changes
-shader, render target and GUI behavior and the custom iOS `Info.plist`, which the
-compiler cannot check, so walk the last topic below by hand. A project on 1.13.2
+shader, render target and GUI behavior, 3D physics shape sizes, iOS window resize
+events and the custom iOS `Info.plist`, and adds a build check on skinned
+materials over meshes without skin data. The compiler cannot check any of these,
+so walk the last topic below by hand. A project on 1.13.2
 migrates through the 1.14.0 notes above as well; the [1.13.2
 reference](/api/defold-1.13.2/go) keeps that release's surface.
 
@@ -817,6 +819,14 @@ message types follow the default target, so they no longer declare either
 message. A project pinned to 1.14.0 or older that still posts them does so
 through the untyped `msg.post` arm.
 
+### Untyped Lua APIs
+
+`debugger.start`, which starts the engine debugger's listener, has no
+declaration: the 1.14.1 API reference does not document it, and `debugger` is a
+reserved word in TypeScript. Declare it in your project instead, as [Calling the
+engine debugger from
+TypeScript](./debugging.md#calling-the-engine-debugger-from-typescript) shows.
+
 ### Behavior and project migrations
 
 These compile unchanged against 1.14.1 and behave differently at run time or at
@@ -842,3 +852,17 @@ build time.
   `UIApplicationSupportsIndirectInputEvents` set to true, and move the generated
   orientation list into the new `DefoldSupportedInterfaceOrientations` key, to
   match the built-in template.
+- **3D physics shapes are sized in game units.** `physics.get_shape` returns 3D
+  sphere, box and capsule dimensions in game units, independent of
+  `physics.scale`, and `physics.set_shape` applies `physics.scale` to a 3D sphere
+  radius. Drop any compensation for either.
+- **A skinned material needs a mesh with skin data.** A model that assigns a
+  skinned material, one whose shader reads `bone_weights` or `bone_indices`, to a
+  mesh with no skin data fails the build, where on some graphics backends, such
+  as Metal, it crashed at run time. Give that mesh a non-skinned material.
+  Animation clips play no part: a mesh with skin weights and bone indices passes
+  without them.
+- **iOS sends more resize events.** On iOS, `window.WINDOW_EVENT_RESIZED` also
+  arrives after orientation transitions and safe-area inset changes, and, once
+  `window.get_reserved_areas` has been queried, when reserved areas change. A
+  listener that assumes the size changed has to compare it with the last size.

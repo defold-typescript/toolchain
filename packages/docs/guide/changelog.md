@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Defold 1.14.1 is the default API target** ([what changed](./upgrading-defold-versions.md#defold-1141)), with [recorder](/api/recorder) typed.
-> - **`start_record` and `stop_record` lose their message types.**
+> - **`start_record` and `stop_record` lose their message types**; [recorder](/api/recorder) replaces them.
 
 ### Breaking
 
@@ -23,7 +23,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Defold 1.14.1 is the default API target**, so a project that pins no target compiles against it, and code written against 1.14.0 compiles unchanged. [Upgrading Defold versions](./upgrading-defold-versions.md#defold-1141) lists the engine and project changes the compiler cannot check, and `--defold-target 1.14.0` keeps the previous surface.
-- **Defold 1.14.1 APIs are typed**: `recorder.start` and `recorder.stop` record the game window to an MP4 file, `window.get_reserved_areas` returns the screen areas a camera cutout covers, and `graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK` joins the context features. `sound.set_gain` and `sound.set_pan` and their messages take a `play_id` to change one voice, `sys.reboot` takes `arg7` and `arg8`, the `on_input` action carries its input `source`, and editor scripts get `editor.resource_children`.
+- **Defold 1.14.1 APIs are typed**: `recorder.start` and `recorder.stop` record the game window to an MP4 file, `window.get_reserved_areas` returns the screen areas a camera cutout covers, `graphics.CONTEXT_FEATURE_BACKBUFFER_READBACK` joins the context features, `sound.set_gain`, `sound.set_pan` and their messages take a `play_id` to change one voice, `sys.reboot` takes `arg7` and `arg8`, the `on_input` action carries its input `source`, and editor scripts get `editor.resource_children`. The engine debugger's `debugger.start` stays untyped because the API reference does not document it, and [Calling the engine debugger from TypeScript](./debugging.md#calling-the-engine-debugger-from-typescript) shows how to declare and call it.
 
 ## v0.61.1
 
