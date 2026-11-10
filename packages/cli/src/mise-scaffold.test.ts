@@ -1,4 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { COMMAND_NAMES, renderHelpJson } from "./help";
+import { SCAFFOLD_DEV_DEPS } from "./init";
 import { MISE_TASKS_TOML, mergeMiseToml } from "./mise-scaffold";
 
 describe("MISE_TASKS_TOML", () => {
@@ -65,6 +71,166 @@ describe("MISE_TASKS_TOML", () => {
     for (const [i, line] of lines.entries()) {
       if (!line.startsWith("[tasks.")) continue;
       expect(lines[i - 1]).toBe("# managed by @defold-typescript");
+    }
+  });
+});
+
+interface MiseTask {
+  readonly run: string | readonly string[];
+}
+
+const CLI_PACKAGES = new Set(["@defold-typescript/cli", "@defold-typescript/cli@latest"]);
+
+function managedTasks(): Record<string, MiseTask | undefined> {
+  return (Bun.TOML.parse(MISE_TASKS_TOML) as { tasks: Record<string, MiseTask> }).tasks;
+}
+
+// A task's `run` is one command or a list of them; each splits on whitespace.
+function commandsOf(task: MiseTask): string[][] {
+  const runs = typeof task.run === "string" ? [task.run] : task.run;
+  return runs.map((command) => command.trim().split(/\s+/));
+}
+
+function everyCommand(): { task: string; argv: string[] }[] {
+  return Object.entries(managedTasks()).flatMap(([task, definition]) =>
+    definition === undefined ? [] : commandsOf(definition).map((argv) => ({ task, argv })),
+  );
+}
+
+function runsTheCli(argv: readonly string[]): boolean {
+  return CLI_PACKAGES.has(argv[1] ?? "");
+}
+
+function flagsOf(verb: string): Set<string> {
+  const { flags } = JSON.parse(renderHelpJson(verb)) as { flags: { flag: string }[] };
+  return new Set(flags.flatMap((f) => f.flag.match(/--[A-Za-z][\w-]*/g) ?? []));
+}
+
+// The `bin` map of a package as installed, and the directory its manifest sits in.
+function installedBins(pkg: string): { dir: string; bins: Record<string, string> } {
+  const manifestPath = createRequire(import.meta.url).resolve(`${pkg}/package.json`);
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    name: string;
+    bin?: string | Record<string, string>;
+  };
+  const bins =
+    typeof manifest.bin === "string"
+      ? { [manifest.name.split("/").at(-1) ?? manifest.name]: manifest.bin }
+      : (manifest.bin ?? {});
+  return { dir: dirname(manifestPath), bins };
+}
+
+// The typecheck task's command with `bunx --package <pkg> <bin>` swapped for the
+// installed bin, so the test runs the compiler the scaffold pins without
+// reaching the registry.
+function typecheckArgv(): string[] {
+  const task = managedTasks()["defold-typescript:typecheck"];
+  expect(task).toBeDefined();
+  const [command = []] = commandsOf(task ?? { run: [] });
+  const [bunx, packageFlag, pkg = "", bin = "", ...rest] = command;
+  expect([bunx, packageFlag]).toEqual(["bunx", "--package"]);
+  const { dir, bins } = installedBins(pkg);
+  const binPath = bins[bin];
+  expect(binPath).toBeDefined();
+  return [process.execPath, join(dir, binPath ?? ""), ...rest];
+}
+
+function typecheckProject(source: string): { exitCode: number; jsFiles: string[] } {
+  const dir = mkdtempSync(join(tmpdir(), "mise-typecheck-"));
+  try {
+    writeFileSync(
+      join(dir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { noEmit: false, strict: true },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    mkdirSync(join(dir, "src"));
+    writeFileSync(join(dir, "src", "main.ts"), source);
+    const result = Bun.spawnSync(typecheckArgv(), { cwd: dir, stdout: "pipe", stderr: "pipe" });
+    const jsFiles = readdirSync(dir, { recursive: true })
+      .map((entry) => String(entry).replaceAll("\\", "/"))
+      .filter((entry) => entry.endsWith(".js"));
+    return { exitCode: result.exitCode, jsFiles };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+describe("the managed tasks", () => {
+  const added = [
+    '[tasks."defold-typescript:bob-run"]',
+    '[tasks."defold-typescript:typecheck"]',
+    '[tasks."defold-typescript:scene-types"]',
+    '[tasks."defold-typescript:sync-target"]',
+  ];
+
+  test("every command that runs the CLI names a verb it dispatches, with flags its help lists", () => {
+    const cliCommands = everyCommand().filter(({ argv }) => runsTheCli(argv));
+    expect(cliCommands.length).toBeGreaterThan(0);
+    for (const { task, argv } of cliCommands) {
+      const verb = argv[2] ?? "";
+      expect({ task, verb, dispatched: COMMAND_NAMES.has(verb) }).toEqual({
+        task,
+        verb,
+        dispatched: true,
+      });
+      const flags = flagsOf(verb);
+      for (const token of argv.slice(3).filter((t) => t.startsWith("--"))) {
+        const flag = token.split("=")[0] ?? token;
+        expect({ task, flag, listed: flags.has(flag) }).toEqual({ task, flag, listed: true });
+      }
+    }
+  });
+
+  test("every other command runs a scaffolded dependency's binary", () => {
+    for (const { task, argv } of everyCommand().filter(({ argv }) => !runsTheCli(argv))) {
+      const [bunx, packageFlag, pkg = "", bin = ""] = argv;
+      expect({ task, bunx, packageFlag }).toEqual({
+        task,
+        bunx: "bunx",
+        packageFlag: "--package",
+      });
+      expect({ task, pkg, scaffolded: pkg in SCAFFOLD_DEV_DEPS }).toEqual({
+        task,
+        pkg,
+        scaffolded: true,
+      });
+      expect({ task, bin, installed: bin in installedBins(pkg).bins }).toEqual({
+        task,
+        bin,
+        installed: true,
+      });
+    }
+  });
+
+  test("typecheck writes no file when the project sets noEmit: false", () => {
+    const { exitCode, jsFiles } = typecheckProject("export const answer: number = 42;\n");
+    expect(jsFiles).toEqual([]);
+    expect(exitCode).toBe(0);
+  }, 30000);
+
+  test("typecheck fails on a type error", () => {
+    const { exitCode, jsFiles } = typecheckProject('export const answer: number = "42";\n');
+    expect(exitCode).not.toBe(0);
+    expect(jsFiles).toEqual([]);
+  }, 30000);
+
+  test("an upgraded project gains the four tasks with its user content byte-identical", () => {
+    const userContent = '[tools]\nbun = "1.3"\n\n[tasks.foo]\nrun = "echo hi"';
+    const priorManaged = MISE_TASKS_TOML.split("# managed by @defold-typescript\n")
+      .filter((block) => !added.some((header) => block.includes(header)))
+      .filter((block) => block !== "")
+      .map((block) => `# managed by @defold-typescript\n${block}`)
+      .join("");
+    for (const header of added) expect(priorManaged).not.toContain(header);
+
+    const merged = mergeMiseToml(`${userContent}\n\n${priorManaged}`);
+
+    for (const header of added) expect(merged.split(header).length - 1).toBe(1);
+    expect(merged.startsWith(`${userContent}\n\n`)).toBe(true);
+    for (const header of merged.match(/\[tasks\."defold-typescript:[^"]+"\]/g) ?? []) {
+      expect(merged.split(header).length - 1).toBe(1);
     }
   });
 });
