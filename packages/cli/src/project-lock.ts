@@ -14,9 +14,20 @@ export const PROJECT_LOCK_FILE = "defold-typescript.lock";
 
 const LOCK_VERSION = 1;
 const FILES_HASH = /^[0-9a-f]{64}$/;
-// A library key names a folder under the cache: `owner/repo`, or the bare repo an
-// earlier CLI wrote, whose pin a run drops. Neither segment may be `.` or `..`.
-const LIBRARY_KEY = /^(?:(?!\.{1,2}\/)[A-Za-z0-9._-]+\/)?(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
+// A library key names a folder under the cache: `host/owner/repo`, or a shorter
+// name an earlier CLI wrote, whose pin a run drops. Each of its one to three
+// segments is a plain name, never `.` or `..`.
+const LIBRARY_SEGMENT = /^[A-Za-z0-9._-]+$/;
+
+function isLibraryKey(key: string): boolean {
+  const segments = key.split("/");
+  return (
+    segments.length <= 3 &&
+    segments.every(
+      (segment) => LIBRARY_SEGMENT.test(segment) && segment !== "." && segment !== "..",
+    )
+  );
+}
 
 // `shared` is the commit `index-slot-classifications.json` is read from, the one
 // data file no library owns; `libraries` is the commit each used library is read from.
@@ -106,7 +117,7 @@ export function readProjectLock(cwd: string): ProjectLockRead {
     return invalid('has a "libraryData.libraries" value that is not a map');
   }
   for (const [name, commit] of Object.entries(libraries)) {
-    if (!LIBRARY_KEY.test(name)) {
+    if (!isLibraryKey(name)) {
       return invalid(`has a "libraryData.libraries" key ${name} that is not a library name`);
     }
     if (typeof commit !== "string" || !COMMIT_COMMENT.test(commit)) {

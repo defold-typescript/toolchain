@@ -99,8 +99,14 @@ function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {
       }
       continue;
     }
-    for (const repo of readdirSync(join(REAL_DATA_DIR, entry.name))) {
-      const folder = `${entry.name}/${repo}`;
+    const folders = readdirSync(join(REAL_DATA_DIR, entry.name)).flatMap((owner) =>
+      existsSync(join(REAL_DATA_DIR, entry.name, owner, "library.json"))
+        ? []
+        : readdirSync(join(REAL_DATA_DIR, entry.name, owner)).map(
+            (repo) => `${entry.name}/${owner}/${repo}`,
+          ),
+    );
+    for (const folder of folders) {
       if (!existsSync(join(REAL_DATA_DIR, folder, "library.json"))) continue;
       const library = JSON.parse(
         readFileSync(join(REAL_DATA_DIR, folder, "library.json"), "utf8"),
@@ -113,7 +119,9 @@ function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {
       }
     }
   }
-  const defcon = JSON.parse(readFileSync(join(data, "britzl/defcon", "library.json"), "utf8")) as {
+  const defcon = JSON.parse(
+    readFileSync(join(data, "github.com/britzl/defcon", "library.json"), "utf8"),
+  ) as {
     forks: Record<string, unknown>[];
   };
   defcon.forks.push({
@@ -122,7 +130,7 @@ function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {
     namespace: "monarch",
     apiDoc: "api-doc/monarch.json",
   });
-  writeFileSync(join(data, "britzl/defcon", "library.json"), JSON.stringify(defcon));
+  writeFileSync(join(data, "github.com/britzl/defcon", "library.json"), JSON.stringify(defcon));
   writeFileSync(
     join(data, "defold-extensions.json"),
     JSON.stringify({
@@ -138,15 +146,18 @@ function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {
       ],
     }),
   );
-  mkdirSync(join(data, "acme/native-share"), { recursive: true });
+  mkdirSync(join(data, "github.com/acme/native-share"), { recursive: true });
   writeFileSync(
-    join(data, "acme/native-share", "library.json"),
+    join(data, "github.com/acme/native-share", "library.json"),
     JSON.stringify({
       repo: "https://github.com/acme/native-share",
       native: { namespace: "share" },
     }),
   );
-  writeFileSync(join(data, "acme/native-share", "reviewed.json"), JSON.stringify({ ref: "1" }));
+  writeFileSync(
+    join(data, "github.com/acme/native-share", "reviewed.json"),
+    JSON.stringify({ ref: "1" }),
+  );
   writeFileSync(join(data, "asset-portal-aliases.json"), JSON.stringify({ aliases: {} }));
   writeFileSync(join(data, "asset-portal-verdicts.json"), JSON.stringify({ verdicts }));
   const manifest: AssetPortalManifest = {
@@ -181,7 +192,7 @@ function libraryFolder(
   fields: Record<string, unknown>,
   recipe?: Record<string, unknown>,
 ): void {
-  const folder = join(root, ...repo.toLowerCase().split("/").slice(-2));
+  const folder = join(root, ...repo.toLowerCase().split("/").slice(-3));
   mkdirSync(folder, { recursive: true });
   writeFileSync(join(folder, "library.json"), JSON.stringify({ repo, license: "MIT", ...fields }));
   writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref: "1.0.0" }));

@@ -1,8 +1,8 @@
 // Which data repo commit each library a project uses is read from. A library moves
 // only when asked to, or when its pin cannot serve this CLI, so a data merge never
 // changes a project's types on its own and moving one library leaves the others'
-// bytes alone. A pin is keyed by library name, `owner/repo`, the folder the library
-// sits in. A dependency uses the pin its URL matches among the pinned names and
+// bytes alone. A pin is keyed by library name, `host/owner/repo`, the folder the
+// library sits in. A dependency uses the pin its URL matches among the pinned names and
 // main's libraries (`matchLibraryName`), so a fork keeps the pin of the library it
 // reads.
 
@@ -17,7 +17,7 @@ import {
   libraryFolderChange,
 } from "./library-data-archive";
 import { assembleLibraryDataView, SHARED_DATA_FILES } from "./library-data-view";
-import { libraryName, matchedLibraryName } from "./library-match";
+import { libraryName, matchedLibraryName, namesSelectedBy } from "./library-match";
 import { librariesMatching, readLibraryDataOrNone } from "./library-registry";
 import type { LibraryDataPins } from "./project-lock";
 
@@ -30,8 +30,9 @@ export interface SelectLibraryPinsOptions extends LibraryDataSource {
   // that newer data has only now come to cover.
   readonly knownUrls: readonly string[];
   readonly pins: LibraryDataPins | null;
-  // Names as `--update` gives them, each a dependency's `owner/repo`; each moves the
-  // pin of the library its URL matches, so naming a fork moves its upstream's pin.
+  // Names as `--update` gives them, each any trailing part of a dependency's
+  // `host/owner/repo`; each moves the pin of the library its URL matches, so naming a
+  // fork moves its upstream's pin.
   readonly update?: LibraryDataUpdate;
 }
 
@@ -60,8 +61,11 @@ export interface FrozenLibraryData extends LibraryDataFolders {
   readonly error?: string;
 }
 
+// Whether `--update` moves `name`: every name, or one a typed name selects.
 export function wantsUpdate(update: LibraryDataUpdate | undefined, name: string): boolean {
-  return update === true || (update?.includes(name) ?? false);
+  return (
+    update === true || (update?.some((typed) => namesSelectedBy(typed, [name]).length > 0) ?? false)
+  );
 }
 
 const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -142,7 +146,7 @@ function updatedLibraries(
     return update;
   }
   const names = urls
-    .filter((url) => update.includes(libraryName(url)))
+    .filter((url) => wantsUpdate(update, libraryName(url)))
     .map(nameOf)
     .filter((name) => name !== null);
   return [...new Set(names)];

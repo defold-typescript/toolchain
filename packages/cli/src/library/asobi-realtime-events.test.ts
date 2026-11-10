@@ -12,7 +12,7 @@ import { printedModule } from "./print-corpus";
 const DECLARATION = await printedModule(LIBRARY_DATA_DIR, "asobi.realtime");
 const UPSTREAM = resolve(
   LIBRARY_DATA_DIR,
-  "widgrensit/asobi-defold/source/upstream/asobi/realtime.lua",
+  "github.com/widgrensit/asobi-defold/source/upstream/asobi/realtime.lua",
 );
 
 function declaredEvents(): Record<string, number> {

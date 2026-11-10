@@ -62,7 +62,7 @@ describe("updateLibraries", () => {
     rmSync(base, { recursive: true, force: true });
   });
 
-  const repoOf = (folder: string): string => `https://github.com/${folder}`;
+  const repoOf = (folder: string): string => `https://${folder}`;
   const urlOf = (folder: string, ref: string): string => `${repoOf(folder)}/archive/${ref}.zip`;
   const reviewedText = (folder: string): string =>
     readFileSync(join(dataDir, folder, "reviewed.json"), "utf8");
@@ -148,19 +148,19 @@ describe("updateLibraries", () => {
   const LATER_TAG = { name: "v3", sha: LATER_COMMIT, date: "2026-03-01T00:00:00Z" };
 
   describe("a tag-pinned library", () => {
-    beforeEach(() => pinLibrary("owner/tagged", "v1"));
+    beforeEach(() => pinLibrary("github.com/owner/tagged", "v1"));
 
-    const upstream = { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } };
+    const upstream = { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } };
 
     test("a newer tag with reviewed hashes adds the forge's commit and keeps the ref", async () => {
       const result = await update(upstream, {
-        [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME, ARCHIVE_COMMIT),
+        [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME, ARCHIVE_COMMIT),
       });
 
       expect(result).toEqual({
         updated: [
           {
-            library: "owner/tagged",
+            library: "github.com/owner/tagged",
             status: "recorded",
             recorded: [NEW_COMMIT],
             differs: [],
@@ -169,35 +169,41 @@ describe("updateLibraries", () => {
         ],
         failed: [],
       });
-      expect(readLibraryReviews(dataDir, "owner/tagged")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT, NEW_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/tagged")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT, NEW_COMMIT]]);
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v1"]);
     });
 
     test("a second run downloads nothing and writes nothing", async () => {
-      const archives = { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME) };
+      const archives = { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME) };
       await update(upstream, archives);
-      const recorded = reviewedText("owner/tagged");
+      const recorded = reviewedText("github.com/owner/tagged");
       downloaded = [];
 
       const result = await update(upstream, archives);
 
       expect(downloaded).toEqual([]);
-      expect(reviewedText("owner/tagged")).toBe(recorded);
+      expect(reviewedText("github.com/owner/tagged")).toBe(recorded);
       expect(result.updated).toEqual([
-        { library: "owner/tagged", status: "current", recorded: [], differs: [], written: [] },
+        {
+          library: "github.com/owner/tagged",
+          status: "current",
+          recorded: [],
+          differs: [],
+          written: [],
+        },
       ]);
     });
 
     test("a newer tag with a changed member moves the pin and records its review", async () => {
       const result = await update(upstream, {
-        [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
+        [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
       });
 
       expect(result.updated).toEqual([
         {
-          library: "owner/tagged",
+          library: "github.com/owner/tagged",
           status: "regenerated",
           recorded: [],
           differs: [NEW_COMMIT],
@@ -208,17 +214,16 @@ describe("updateLibraries", () => {
         },
       ]);
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v2"]);
-      expect(readLibraryReviews(dataDir, "owner/tagged")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT],
-        [NEW_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/tagged")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT], [NEW_COMMIT]]);
     });
 
     test("a change only to a function body differs, since its source hash moved", async () => {
       const bodyEdit = SAME.replace(") end", ") return 1 end");
 
       const result = await update(upstream, {
-        [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(bodyEdit),
+        [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(bodyEdit),
       });
 
       expect(result.updated[0]?.differs).toEqual([NEW_COMMIT]);
@@ -227,16 +232,16 @@ describe("updateLibraries", () => {
 
     test("candidates are walked oldest first, listing what recorded and what differs", async () => {
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [LATER_TAG, PIN_TAG, NEW_TAG] } },
+        { [repoOf("github.com/owner/tagged")]: { tags: [LATER_TAG, PIN_TAG, NEW_TAG] } },
         {
-          [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME),
-          [urlOf("owner/tagged", LATER_COMMIT)]: archiveOf(CHANGED),
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME),
+          [urlOf("github.com/owner/tagged", LATER_COMMIT)]: archiveOf(CHANGED),
         },
       );
 
       expect(downloaded).toEqual([
-        urlOf("owner/tagged", NEW_COMMIT),
-        urlOf("owner/tagged", LATER_COMMIT),
+        urlOf("github.com/owner/tagged", NEW_COMMIT),
+        urlOf("github.com/owner/tagged", LATER_COMMIT),
       ]);
       expect(result.updated[0]).toMatchObject({
         status: "regenerated",
@@ -244,15 +249,14 @@ describe("updateLibraries", () => {
         differs: [LATER_COMMIT],
         ref: "v3",
       });
-      expect(readLibraryReviews(dataDir, "owner/tagged")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT, NEW_COMMIT],
-        [LATER_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/tagged")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT, NEW_COMMIT], [LATER_COMMIT]]);
     });
 
     test("tags from another series or dated before the pin are not candidates", async () => {
       const result = await update({
-        [repoOf("owner/tagged")]: {
+        [repoOf("github.com/owner/tagged")]: {
           tags: [
             PIN_TAG,
             { name: "editor.9", sha: NEW_COMMIT, date: "2026-02-01T00:00:00Z" },
@@ -263,18 +267,24 @@ describe("updateLibraries", () => {
 
       expect(downloaded).toEqual([]);
       expect(result.updated).toEqual([
-        { library: "owner/tagged", status: "current", recorded: [], differs: [], written: [] },
+        {
+          library: "github.com/owner/tagged",
+          status: "current",
+          recorded: [],
+          differs: [],
+          written: [],
+        },
       ]);
     });
 
     test("two tags on one commit are one candidate", async () => {
       const result = await update(
         {
-          [repoOf("owner/tagged")]: {
+          [repoOf("github.com/owner/tagged")]: {
             tags: [PIN_TAG, NEW_TAG, { ...NEW_TAG, name: "v2.0" }],
           },
         },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(downloaded).toHaveLength(1);
@@ -283,89 +293,89 @@ describe("updateLibraries", () => {
 
     test("a tag that serves reviewed bytes does not vouch for a commit that differs", async () => {
       const result = await update(upstream, {
-        [urlOf("owner/tagged", "v2")]: archiveOf(SAME),
-        [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
+        [urlOf("github.com/owner/tagged", "v2")]: archiveOf(SAME),
+        [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
       });
 
       expect(result.updated[0]).toMatchObject({ status: "regenerated", differs: [NEW_COMMIT] });
-      expect(downloaded).toEqual([urlOf("owner/tagged", NEW_COMMIT)]);
+      expect(downloaded).toEqual([urlOf("github.com/owner/tagged", NEW_COMMIT)]);
     });
 
     test("a commit archive that names no commit still records the forge's commit", async () => {
       const result = await update(upstream, {
-        [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME),
+        [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME),
       });
 
       expect(result.updated).toEqual([
         {
-          library: "owner/tagged",
+          library: "github.com/owner/tagged",
           status: "recorded",
           recorded: [NEW_COMMIT],
           differs: [],
           written: ["reviewed.json"],
         },
       ]);
-      expect(readLibraryReviews(dataDir, "owner/tagged")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT, NEW_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/tagged")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT, NEW_COMMIT]]);
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v1"]);
     });
 
     test("a pinned tag upstream no longer lists fails the library", async () => {
-      const result = await update({ [repoOf("owner/tagged")]: { tags: [NEW_TAG] } });
+      const result = await update({ [repoOf("github.com/owner/tagged")]: { tags: [NEW_TAG] } });
 
       expect(result.updated).toEqual([]);
       expect(result.failed).toEqual([
-        { library: "owner/tagged", message: expect.stringContaining("v1") },
+        { library: "github.com/owner/tagged", message: expect.stringContaining("v1") },
       ]);
       expect(downloaded).toEqual([]);
     });
 
     test("a failed download after a match writes nothing for the library", async () => {
-      const before = reviewedText("owner/tagged");
+      const before = reviewedText("github.com/owner/tagged");
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
       expect(result.updated).toEqual([]);
       expect(result.failed).toEqual([
-        { library: "owner/tagged", message: expect.stringContaining("HTTP 404") },
+        { library: "github.com/owner/tagged", message: expect.stringContaining("HTTP 404") },
       ]);
-      expect(reviewedText("owner/tagged")).toBe(before);
+      expect(reviewedText("github.com/owner/tagged")).toBe(before);
     });
 
     test("a failed download fails the library even with a cached copy", async () => {
       await resolveExtensionArchive(
-        { index: 0, url: urlOf("owner/tagged", NEW_COMMIT) },
+        { index: 0, url: urlOf("github.com/owner/tagged", NEW_COMMIT) },
         {
           cacheDir,
-          download: serving({ [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) }),
+          download: serving({ [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) }),
         },
       );
 
       const result = await update(upstream, {});
 
       expect(result.failed).toEqual([
-        { library: "owner/tagged", message: expect.stringContaining("HTTP 404") },
+        { library: "github.com/owner/tagged", message: expect.stringContaining("HTTP 404") },
       ]);
     });
   });
 
   describe("what a library follows", () => {
     test("a commit pin with no follows takes its default branch's head as the candidate", async () => {
-      await pinLibrary("owner/branched", PIN_COMMIT);
+      await pinLibrary("github.com/owner/branched", PIN_COMMIT);
 
       const result = await update(
-        { [repoOf("owner/branched")]: { head: NEW_COMMIT } },
-        { [urlOf("owner/branched", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/branched")]: { head: NEW_COMMIT } },
+        { [urlOf("github.com/owner/branched", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
-      expect(forgeReads).toEqual([`repo ${repoOf("owner/branched")}`, "head main"]);
+      expect(forgeReads).toEqual([`repo ${repoOf("github.com/owner/branched")}`, "head main"]);
       expect(result.updated).toEqual([
         {
-          library: "owner/branched",
+          library: "github.com/owner/branched",
           status: "recorded",
           recorded: [NEW_COMMIT],
           differs: [],
@@ -376,18 +386,24 @@ describe("updateLibraries", () => {
     });
 
     test("a branch head that is the pin is current, reviewed or not", async () => {
-      writeLibrary("owner/branched", PIN_COMMIT);
+      writeLibrary("github.com/owner/branched", PIN_COMMIT);
 
-      const result = await update({ [repoOf("owner/branched")]: { head: PIN_COMMIT } });
+      const result = await update({ [repoOf("github.com/owner/branched")]: { head: PIN_COMMIT } });
 
       expect(downloaded).toEqual([]);
       expect(result.updated).toEqual([
-        { library: "owner/branched", status: "current", recorded: [], differs: [], written: [] },
+        {
+          library: "github.com/owner/branched",
+          status: "current",
+          recorded: [],
+          differs: [],
+          written: [],
+        },
       ]);
     });
 
     test("follows none is held, with no request", async () => {
-      await pinLibrary("owner/held", "v1", "none");
+      await pinLibrary("github.com/owner/held", "v1", "none");
 
       const result = await update({});
 
@@ -395,40 +411,46 @@ describe("updateLibraries", () => {
       expect(downloaded).toEqual([]);
       expect(result).toEqual({
         updated: [
-          { library: "owner/held", status: "held", recorded: [], differs: [], written: [] },
+          {
+            library: "github.com/owner/held",
+            status: "held",
+            recorded: [],
+            differs: [],
+            written: [],
+          },
         ],
         failed: [],
       });
     });
 
     test("an explicit follows wins over what the ref would default to", async () => {
-      await pinLibrary("owner/branched", "v1", "branch");
+      await pinLibrary("github.com/owner/branched", "v1", "branch");
 
       const result = await update(
-        { [repoOf("owner/branched")]: { head: NEW_COMMIT } },
-        { [urlOf("owner/branched", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/branched")]: { head: NEW_COMMIT } },
+        { [urlOf("github.com/owner/branched", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
-      expect(forgeReads).toEqual([`repo ${repoOf("owner/branched")}`, "head main"]);
+      expect(forgeReads).toEqual([`repo ${repoOf("github.com/owner/branched")}`, "head main"]);
       expect(result.updated[0]?.recorded).toEqual([NEW_COMMIT]);
     });
 
     test("a follows outside the set throws naming the file", () => {
-      writeLibrary("owner/odd", "v1", "sometimes");
+      writeLibrary("github.com/owner/odd", "v1", "sometimes");
 
       expect(() => readLibraryData(dataDir)).toThrow(LibraryDataError);
-      expect(() => readLibraryData(dataDir)).toThrow("owner/odd/library.json");
+      expect(() => readLibraryData(dataDir)).toThrow("github.com/owner/odd/library.json");
     });
 
     test("follows reads its default from the ref, and an explicit value as written", () => {
-      writeLibrary("owner/explicit", PIN_COMMIT, "tags");
-      writeLibrary("owner/sha", PIN_COMMIT);
-      writeLibrary("owner/tag", "v1");
+      writeLibrary("github.com/owner/explicit", PIN_COMMIT, "tags");
+      writeLibrary("github.com/owner/sha", PIN_COMMIT);
+      writeLibrary("github.com/owner/tag", "v1");
 
       expect(readLibraryData(dataDir).map(({ dir, follows }) => [dir, follows])).toEqual([
-        ["owner/explicit", "tags"],
-        ["owner/sha", "branch"],
-        ["owner/tag", "tags"],
+        ["github.com/owner/explicit", "tags"],
+        ["github.com/owner/sha", "branch"],
+        ["github.com/owner/tag", "tags"],
       ]);
     });
   });
@@ -476,12 +498,12 @@ describe("updateLibraries", () => {
     }
 
     test("a luals library's source folder matches the candidate's selection", async () => {
-      await pinLuals("owner/luals");
+      await pinLuals("github.com/owner/luals");
 
       const result = await update(
-        { [repoOf("owner/luals")]: TWO_TAGS },
+        { [repoOf("github.com/owner/luals")]: TWO_TAGS },
         {
-          [urlOf("owner/luals", NEW_COMMIT)]: archiveOfFiles({
+          [urlOf("github.com/owner/luals", NEW_COMMIT)]: archiveOfFiles({
             "mylib/mylib.lua": CHANGED,
             "mylib/added.lua": "return 1\n",
             "mylib/test/skipped.lua": "return 2\n",
@@ -498,9 +520,9 @@ describe("updateLibraries", () => {
         "mylib/added.lua",
         "mylib/mylib.lua",
       ]);
-      expect(readFileSync(file("owner/luals", "source/mylib/mylib/mylib.lua"), "utf8")).toBe(
-        CHANGED,
-      );
+      expect(
+        readFileSync(file("github.com/owner/luals", "source/mylib/mylib/mylib.lua"), "utf8"),
+      ).toBe(CHANGED);
       expect(result.updated[0]?.written).toEqual([
         "source/mylib/mylib/added.lua",
         "source/mylib/mylib/mylib.lua",
@@ -510,9 +532,9 @@ describe("updateLibraries", () => {
 
     test("a script_api library's source file holds the candidate's bytes", async () => {
       const bytes = "- name: mylib\r\n  type: table\r\n";
-      await pinLibrary("owner/scripted", "v1");
+      await pinLibrary("github.com/owner/scripted", "v1");
       writeDataFile(
-        "owner/scripted",
+        "github.com/owner/scripted",
         "recipe.json",
         JSON.stringify({
           scriptApi: [
@@ -527,9 +549,9 @@ describe("updateLibraries", () => {
       );
 
       const result = await update(
-        { [repoOf("owner/scripted")]: TWO_TAGS },
+        { [repoOf("github.com/owner/scripted")]: TWO_TAGS },
         {
-          [urlOf("owner/scripted", NEW_COMMIT)]: archiveOfFiles({
+          [urlOf("github.com/owner/scripted", NEW_COMMIT)]: archiveOfFiles({
             "mylib/mylib.lua": SAME,
             "mylib/mylib.script_api": bytes,
           }),
@@ -546,9 +568,9 @@ describe("updateLibraries", () => {
     });
 
     test("a script_api file the candidate no longer holds fails the library", async () => {
-      await pinLibrary("owner/scripted", "v1");
+      await pinLibrary("github.com/owner/scripted", "v1");
       writeDataFile(
-        "owner/scripted",
+        "github.com/owner/scripted",
         "recipe.json",
         JSON.stringify({
           scriptApi: [
@@ -561,39 +583,43 @@ describe("updateLibraries", () => {
           ],
         }),
       );
-      const before = dataFolderDigest(join(dataDir, "owner/scripted"));
+      const before = dataFolderDigest(join(dataDir, "github.com/owner/scripted"));
 
       const result = await update(
-        { [repoOf("owner/scripted")]: TWO_TAGS },
-        { [urlOf("owner/scripted", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/scripted")]: TWO_TAGS },
+        { [urlOf("github.com/owner/scripted", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(result.failed).toEqual([
-        { library: "owner/scripted", message: "mylib/mylib.script_api is gone from v2" },
+        { library: "github.com/owner/scripted", message: "mylib/mylib.script_api is gone from v2" },
       ]);
-      expect(dataFolderDigest(join(dataDir, "owner/scripted"))).toBe(before);
+      expect(dataFolderDigest(join(dataDir, "github.com/owner/scripted"))).toBe(before);
     });
 
     test("a fork's upstream files move and its declarations stay", async () => {
-      await pinLibrary("owner/forked", "v1");
-      extendLibrary("owner/forked", { forks: [FORK] });
-      writeDataFile("owner/forked", "source/upstream/mylib/mylib.lua", SAME);
-      writeDataFile("owner/forked", "fork/mylib.d.ts", "export {};\n");
-      writeDataFile("owner/forked", "usage/mylib.ts", "export {};\n");
-      const library = readFileSync(file("owner/forked", "library.json"), "utf8");
+      await pinLibrary("github.com/owner/forked", "v1");
+      extendLibrary("github.com/owner/forked", { forks: [FORK] });
+      writeDataFile("github.com/owner/forked", "source/upstream/mylib/mylib.lua", SAME);
+      writeDataFile("github.com/owner/forked", "fork/mylib.d.ts", "export {};\n");
+      writeDataFile("github.com/owner/forked", "usage/mylib.ts", "export {};\n");
+      const library = readFileSync(file("github.com/owner/forked", "library.json"), "utf8");
 
       const result = await update(
-        { [repoOf("owner/forked")]: TWO_TAGS },
-        { [urlOf("owner/forked", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/forked")]: TWO_TAGS },
+        { [urlOf("github.com/owner/forked", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(result.failed).toEqual([]);
-      expect(readFileSync(file("owner/forked", "source/upstream/mylib/mylib.lua"), "utf8")).toBe(
-        CHANGED,
+      expect(
+        readFileSync(file("github.com/owner/forked", "source/upstream/mylib/mylib.lua"), "utf8"),
+      ).toBe(CHANGED);
+      expect(readFileSync(file("github.com/owner/forked", "fork/mylib.d.ts"), "utf8")).toBe(
+        "export {};\n",
       );
-      expect(readFileSync(file("owner/forked", "fork/mylib.d.ts"), "utf8")).toBe("export {};\n");
-      expect(readFileSync(file("owner/forked", "usage/mylib.ts"), "utf8")).toBe("export {};\n");
-      expect(readFileSync(file("owner/forked", "library.json"), "utf8")).toBe(library);
+      expect(readFileSync(file("github.com/owner/forked", "usage/mylib.ts"), "utf8")).toBe(
+        "export {};\n",
+      );
+      expect(readFileSync(file("github.com/owner/forked", "library.json"), "utf8")).toBe(library);
       expect(result.updated[0]?.written).toEqual([
         "source/upstream/mylib/mylib.lua",
         "reviewed.json",
@@ -601,8 +627,8 @@ describe("updateLibraries", () => {
     });
 
     test("a native upstream file the candidate no longer holds leaves the folder as it was", async () => {
-      await pinLibrary("owner/native", "v1");
-      extendLibrary("owner/native", {
+      await pinLibrary("github.com/owner/native", "v1");
+      extendLibrary("github.com/owner/native", {
         native: {
           namespace: "mylib",
           manifestDir: "mylib/native",
@@ -610,48 +636,48 @@ describe("updateLibraries", () => {
           upstreamSource: "source/upstream/mylib/src/ext.cpp",
         },
       });
-      writeDataFile("owner/native", "source/upstream/mylib/mylib.lua", SAME);
-      writeDataFile("owner/native", "source/upstream/mylib/src/ext.cpp", "// pinned\n");
-      writeDataFile("owner/native", "fork/mylib.d.ts", "export {};\n");
-      const before = dataFolderDigest(join(dataDir, "owner/native"));
+      writeDataFile("github.com/owner/native", "source/upstream/mylib/mylib.lua", SAME);
+      writeDataFile("github.com/owner/native", "source/upstream/mylib/src/ext.cpp", "// pinned\n");
+      writeDataFile("github.com/owner/native", "fork/mylib.d.ts", "export {};\n");
+      const before = dataFolderDigest(join(dataDir, "github.com/owner/native"));
 
       const result = await update(
-        { [repoOf("owner/native")]: TWO_TAGS },
-        { [urlOf("owner/native", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/native")]: TWO_TAGS },
+        { [urlOf("github.com/owner/native", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(result.updated).toEqual([]);
       expect(result.failed).toEqual([
-        { library: "owner/native", message: "mylib/src/ext.cpp is gone from v2" },
+        { library: "github.com/owner/native", message: "mylib/src/ext.cpp is gone from v2" },
       ]);
-      expect(dataFolderDigest(join(dataDir, "owner/native"))).toBe(before);
+      expect(dataFolderDigest(join(dataDir, "github.com/owner/native"))).toBe(before);
     });
 
     test("a failed read in one lane leaves another lane's files as they were", async () => {
-      await pinLuals("owner/both");
-      extendLibrary("owner/both", { forks: [{ ...FORK, moduleId: "mylib.fork" }] });
-      writeDataFile("owner/both", "source/upstream/mylib/gone.lua", SAME);
-      const before = dataFolderDigest(join(dataDir, "owner/both"));
+      await pinLuals("github.com/owner/both");
+      extendLibrary("github.com/owner/both", { forks: [{ ...FORK, moduleId: "mylib.fork" }] });
+      writeDataFile("github.com/owner/both", "source/upstream/mylib/gone.lua", SAME);
+      const before = dataFolderDigest(join(dataDir, "github.com/owner/both"));
 
       const result = await update(
-        { [repoOf("owner/both")]: TWO_TAGS },
-        { [urlOf("owner/both", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/both")]: TWO_TAGS },
+        { [urlOf("github.com/owner/both", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(result.failed).toEqual([
-        { library: "owner/both", message: "mylib/gone.lua is gone from v2" },
+        { library: "github.com/owner/both", message: "mylib/gone.lua is gone from v2" },
       ]);
-      expect(dataFolderDigest(join(dataDir, "owner/both"))).toBe(before);
+      expect(dataFolderDigest(join(dataDir, "github.com/owner/both"))).toBe(before);
     });
 
     test("an entry that leaves its folder fails the library and is not written", async () => {
-      await pinLuals("owner/escaping");
-      const before = dataFolderDigest(join(dataDir, "owner/escaping"));
+      await pinLuals("github.com/owner/escaping");
+      const before = dataFolderDigest(join(dataDir, "github.com/owner/escaping"));
 
       const result = await update(
-        { [repoOf("owner/escaping")]: TWO_TAGS },
+        { [repoOf("github.com/owner/escaping")]: TWO_TAGS },
         {
-          [urlOf("owner/escaping", NEW_COMMIT)]: archiveOfFiles({
+          [urlOf("github.com/owner/escaping", NEW_COMMIT)]: archiveOfFiles({
             "mylib/mylib.lua": CHANGED,
             "mylib/../../../../evil.lua": "return 1\n",
           }),
@@ -660,23 +686,23 @@ describe("updateLibraries", () => {
 
       expect(result.failed).toEqual([
         {
-          library: "owner/escaping",
+          library: "github.com/owner/escaping",
           message: expect.stringContaining("leaves the library's folder"),
         },
       ]);
-      expect(dataFolderDigest(join(dataDir, "owner/escaping"))).toBe(before);
+      expect(dataFolderDigest(join(dataDir, "github.com/owner/escaping"))).toBe(before);
       expect(existsSync(join(base, "evil.lua"))).toBe(false);
       expect(existsSync(join(dataDir, "evil.lua"))).toBe(false);
     });
 
     test("only the newest differing tag is regenerated", async () => {
-      await pinLibrary("owner/tagged", "v1");
+      await pinLibrary("github.com/owner/tagged", "v1");
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
         {
-          [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
-          [urlOf("owner/tagged", LATER_COMMIT)]: archiveOf(moduleOf("a, b, c")),
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED),
+          [urlOf("github.com/owner/tagged", LATER_COMMIT)]: archiveOf(moduleOf("a, b, c")),
         },
       );
 
@@ -686,18 +712,18 @@ describe("updateLibraries", () => {
         ref: "v3",
       });
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v3"]);
-      const commits = readLibraryReviews(dataDir, "owner/tagged")?.flatMap(
+      const commits = readLibraryReviews(dataDir, "github.com/owner/tagged")?.flatMap(
         (review) => review.commits,
       );
       expect(commits).toEqual([PIN_COMMIT, LATER_COMMIT]);
     });
 
     test("a followed branch pins the commit", async () => {
-      await pinLibrary("owner/branched", PIN_COMMIT);
+      await pinLibrary("github.com/owner/branched", PIN_COMMIT);
 
       const result = await update(
-        { [repoOf("owner/branched")]: { head: NEW_COMMIT } },
-        { [urlOf("owner/branched", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/branched")]: { head: NEW_COMMIT } },
+        { [urlOf("github.com/owner/branched", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(result.updated[0]?.ref).toBe(NEW_COMMIT);
@@ -705,38 +731,40 @@ describe("updateLibraries", () => {
     });
 
     test("a restored pin compares with its own review, not the last one", async () => {
-      await pinLuals("owner/restored", TWO_FUNCTIONS);
+      await pinLuals("github.com/owner/restored", TWO_FUNCTIONS);
       await update(
-        { [repoOf("owner/restored")]: TWO_TAGS },
-        { [urlOf("owner/restored", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/restored")]: TWO_TAGS },
+        { [urlOf("github.com/owner/restored", NEW_COMMIT)]: archiveOf(SAME) },
       );
-      const moved = JSON.parse(reviewedText("owner/restored")) as Record<string, unknown>;
+      const moved = JSON.parse(reviewedText("github.com/owner/restored")) as Record<
+        string,
+        unknown
+      >;
       writeFileSync(
-        file("owner/restored", "reviewed.json"),
+        file("github.com/owner/restored", "reviewed.json"),
         JSON.stringify({ ...moved, ref: "v1" }),
       );
-      writeDataFile("owner/restored", "source/mylib/mylib/mylib.lua", TWO_FUNCTIONS);
+      writeDataFile("github.com/owner/restored", "source/mylib/mylib/mylib.lua", TWO_FUNCTIONS);
 
-      const restored = await reviewLibraries(dataDir, ["owner/restored"], {
+      const restored = await reviewLibraries(dataDir, ["github.com/owner/restored"], {
         cacheDir,
         download: serving({
-          [urlOf("owner/restored", "v1")]: archiveOf(TWO_FUNCTIONS, PIN_COMMIT),
+          [urlOf("github.com/owner/restored", "v1")]: archiveOf(TWO_FUNCTIONS, PIN_COMMIT),
         }),
       });
 
       expect(restored).toEqual({
-        reviewed: [{ library: "owner/restored", commit: PIN_COMMIT, added: false }],
+        reviewed: [{ library: "github.com/owner/restored", commit: PIN_COMMIT, added: false }],
         failed: [],
       });
-      expect(readLibraryReviews(dataDir, "owner/restored")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT],
-        [NEW_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/restored")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT], [NEW_COMMIT]]);
 
       const result = await update(
-        { [repoOf("owner/restored")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [repoOf("github.com/owner/restored")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
         {
-          [urlOf("owner/restored", LATER_COMMIT)]: archiveOf(
+          [urlOf("github.com/owner/restored", LATER_COMMIT)]: archiveOf(
             SAME.replace(") end", ") return 1 end"),
           ),
         },
@@ -751,29 +779,35 @@ describe("updateLibraries", () => {
     });
 
     test("a run after a regeneration reads current and downloads nothing", async () => {
-      await pinLibrary("owner/tagged", "v1");
-      const upstream = { [repoOf("owner/tagged")]: TWO_TAGS };
-      const archives = { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) };
+      await pinLibrary("github.com/owner/tagged", "v1");
+      const upstream = { [repoOf("github.com/owner/tagged")]: TWO_TAGS };
+      const archives = { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) };
       await update(upstream, archives);
-      const recorded = reviewedText("owner/tagged");
+      const recorded = reviewedText("github.com/owner/tagged");
       downloaded = [];
 
       const result = await update(upstream, archives);
 
       expect(downloaded).toEqual([]);
-      expect(reviewedText("owner/tagged")).toBe(recorded);
+      expect(reviewedText("github.com/owner/tagged")).toBe(recorded);
       expect(result.updated).toEqual([
-        { library: "owner/tagged", status: "current", recorded: [], differs: [], written: [] },
+        {
+          library: "github.com/owner/tagged",
+          status: "current",
+          recorded: [],
+          differs: [],
+          written: [],
+        },
       ]);
     });
   });
 
   describe("classifying a change", () => {
     async function classified(lua: string, pinned: string = SAME) {
-      await pinLibrary("owner/tagged", "v1", undefined, pinned);
+      await pinLibrary("github.com/owner/tagged", "v1", undefined, pinned);
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(lua) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(lua) },
       );
       expect(result.failed).toEqual([]);
       return result.updated[0];
@@ -828,21 +862,21 @@ describe("updateLibraries", () => {
     });
 
     test("a changed whole file is a change that names it", async () => {
-      writeLibrary("owner/tagged", "v1");
+      writeLibrary("github.com/owner/tagged", "v1");
       const pinned = archiveOfFiles(
         { "mylib/mylib.lua": SAME, "mylib/ext.cpp": "// one\n" },
         PIN_COMMIT,
       );
-      const reviewed = await reviewLibraries(dataDir, ["owner/tagged"], {
+      const reviewed = await reviewLibraries(dataDir, ["github.com/owner/tagged"], {
         cacheDir,
-        download: serving({ [urlOf("owner/tagged", "v1")]: pinned }),
+        download: serving({ [urlOf("github.com/owner/tagged", "v1")]: pinned }),
       });
       expect(reviewed.failed).toEqual([]);
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
         {
-          [urlOf("owner/tagged", NEW_COMMIT)]: archiveOfFiles({
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOfFiles({
             "mylib/mylib.lua": SAME,
             "mylib/ext.cpp": "// two\n",
           }),
@@ -857,11 +891,11 @@ describe("updateLibraries", () => {
     });
 
     test("a library with no reviews is a change with nothing to name", async () => {
-      writeLibrary("owner/tagged", "v1");
+      writeLibrary("github.com/owner/tagged", "v1");
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
       expect(result.updated[0]?.change).toBe("changed");
@@ -869,16 +903,23 @@ describe("updateLibraries", () => {
     });
 
     test("a review of another fingerprint version compares with nothing", async () => {
-      await pinLibrary("owner/tagged", "v1");
-      const reviewed = JSON.parse(reviewedText("owner/tagged")) as {
+      await pinLibrary("github.com/owner/tagged", "v1");
+      const reviewed = JSON.parse(reviewedText("github.com/owner/tagged")) as {
         reviews: { version: number }[];
       };
       for (const review of reviewed.reviews) review.version = FINGERPRINT_VERSION + 1;
-      writeFileSync(join(dataDir, "owner/tagged", "reviewed.json"), JSON.stringify(reviewed));
+      writeFileSync(
+        join(dataDir, "github.com/owner/tagged", "reviewed.json"),
+        JSON.stringify(reviewed),
+      );
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        {
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(
+            SAME.replace(") end", ") return 1 end"),
+          ),
+        },
       );
 
       expect(result.updated[0]?.change).toBe("changed");
@@ -886,16 +927,16 @@ describe("updateLibraries", () => {
     });
 
     test("a change compares with the review of the pin's commit", async () => {
-      await pinLibrary("owner/tagged", "v1");
+      await pinLibrary("github.com/owner/tagged", "v1");
       await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
         {
-          [urlOf("owner/tagged", LATER_COMMIT)]: archiveOf(
+          [urlOf("github.com/owner/tagged", LATER_COMMIT)]: archiveOf(
             CHANGED.replace(") end", ") return 1 end"),
           ),
         },
@@ -905,11 +946,19 @@ describe("updateLibraries", () => {
     });
 
     test("a pinned tag that now names an unreviewed commit compares with nothing", async () => {
-      await pinLibrary("owner/tagged", "v1");
+      await pinLibrary("github.com/owner/tagged", "v1");
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [{ ...PIN_TAG, sha: ARCHIVE_COMMIT }, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+        {
+          [repoOf("github.com/owner/tagged")]: {
+            tags: [{ ...PIN_TAG, sha: ARCHIVE_COMMIT }, NEW_TAG],
+          },
+        },
+        {
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(
+            SAME.replace(") end", ") return 1 end"),
+          ),
+        },
       );
 
       expect(result.updated[0]?.change).toBe("changed");
@@ -917,20 +966,25 @@ describe("updateLibraries", () => {
     });
 
     test("a pin two reviews list compares with nothing", async () => {
-      await pinLibrary("owner/tagged", "v1");
-      const conflicting = await reviewLibraries(dataDir, ["owner/tagged"], {
+      await pinLibrary("github.com/owner/tagged", "v1");
+      const conflicting = await reviewLibraries(dataDir, ["github.com/owner/tagged"], {
         cacheDir: join(base, "second-cache"),
-        download: serving({ [urlOf("owner/tagged", "v1")]: archiveOf(CHANGED, PIN_COMMIT) }),
+        download: serving({
+          [urlOf("github.com/owner/tagged", "v1")]: archiveOf(CHANGED, PIN_COMMIT),
+        }),
       });
       expect(conflicting.failed).toEqual([]);
-      expect(readLibraryReviews(dataDir, "owner/tagged")?.map(({ commits }) => commits)).toEqual([
-        [PIN_COMMIT],
-        [PIN_COMMIT],
-      ]);
+      expect(
+        readLibraryReviews(dataDir, "github.com/owner/tagged")?.map(({ commits }) => commits),
+      ).toEqual([[PIN_COMMIT], [PIN_COMMIT]]);
 
       const result = await update(
-        { [repoOf("owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+        { [repoOf("github.com/owner/tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        {
+          [urlOf("github.com/owner/tagged", NEW_COMMIT)]: archiveOf(
+            SAME.replace(") end", ") return 1 end"),
+          ),
+        },
       );
 
       expect(result.updated[0]?.change).toBe("changed");
@@ -938,12 +992,14 @@ describe("updateLibraries", () => {
     });
 
     test("a followed branch compares with the review of its pinned commit", async () => {
-      await pinLibrary("owner/branched", PIN_COMMIT);
+      await pinLibrary("github.com/owner/branched", PIN_COMMIT);
 
       const result = await update(
-        { [repoOf("owner/branched")]: { head: NEW_COMMIT } },
+        { [repoOf("github.com/owner/branched")]: { head: NEW_COMMIT } },
         {
-          [urlOf("owner/branched", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")),
+          [urlOf("github.com/owner/branched", NEW_COMMIT)]: archiveOf(
+            SAME.replace(") end", ") return 1 end"),
+          ),
         },
       );
 
@@ -953,41 +1009,41 @@ describe("updateLibraries", () => {
 
   describe("across libraries", () => {
     test("a forge failure is reported by name and the next library is still updated", async () => {
-      await pinLibrary("owner/first", "v1");
-      await pinLibrary("owner/second", "v1");
-      const firstBefore = reviewedText("owner/first");
+      await pinLibrary("github.com/owner/first", "v1");
+      await pinLibrary("github.com/owner/second", "v1");
+      const firstBefore = reviewedText("github.com/owner/first");
 
       const result = await update(
-        { [repoOf("owner/second")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("owner/second", NEW_COMMIT)]: archiveOf(SAME) },
+        { [repoOf("github.com/owner/second")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("github.com/owner/second", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
       expect(result.failed).toEqual([
-        { library: "owner/first", message: expect.stringContaining("404") },
+        { library: "github.com/owner/first", message: expect.stringContaining("404") },
       ]);
       expect(result.updated).toEqual([
         {
-          library: "owner/second",
+          library: "github.com/owner/second",
           status: "recorded",
           recorded: [NEW_COMMIT],
           differs: [],
           written: ["reviewed.json"],
         },
       ]);
-      expect(reviewedText("owner/first")).toBe(firstBefore);
+      expect(reviewedText("github.com/owner/first")).toBe(firstBefore);
     });
 
     test("a named library is the only one read", async () => {
-      await pinLibrary("owner/first", "v1", "none");
-      await pinLibrary("owner/second", "v1", "none");
+      await pinLibrary("github.com/owner/first", "v1", "none");
+      await pinLibrary("github.com/owner/second", "v1", "none");
 
-      const result = await update({}, {}, ["owner/second"]);
+      const result = await update({}, {}, ["github.com/owner/second"]);
 
-      expect(result.updated.map(({ library }) => library)).toEqual(["owner/second"]);
+      expect(result.updated.map(({ library }) => library)).toEqual(["github.com/owner/second"]);
     });
 
     test("an unknown name throws before any request", async () => {
-      await pinLibrary("owner/first", "v1");
+      await pinLibrary("github.com/owner/first", "v1");
 
       await expect(update({}, {}, ["nope"])).rejects.toThrow("nope");
 

@@ -178,8 +178,12 @@ describe("runShippedTypesCheck verdicts", () => {
       ref: "2.0.0",
       files: ["a.d.ts"],
       retire: [
-        { lane: "luals", id: "widget.widget", source: "acme/widget/source/widget/" },
-        { lane: "native", id: "widgetnative", source: "acme/widget/fork/widgetnative.d.ts" },
+        { lane: "luals", id: "widget.widget", source: "github.com/acme/widget/source/widget/" },
+        {
+          lane: "native",
+          id: "widgetnative",
+          source: "github.com/acme/widget/fork/widgetnative.d.ts",
+        },
       ],
     });
     expect(run.actionable).toBe(true);
@@ -195,9 +199,9 @@ describe("runShippedTypesCheck verdicts", () => {
     expect(widget.issueTitle).toBe("retire curated types for acme/widget: 2.0.0 ships types");
     for (const fragment of [
       "widget.widget",
-      "acme/widget/source/widget/",
+      "github.com/acme/widget/source/widget/",
       "widgetnative",
-      "acme/widget/fork/widgetnative.d.ts",
+      "github.com/acme/widget/fork/widgetnative.d.ts",
       "a.d.ts",
       `${LIBRARY_DOCS_URL}/guides/refreshing-library-pins`,
     ]) {

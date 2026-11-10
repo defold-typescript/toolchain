@@ -239,8 +239,8 @@ order, after editing the pinned `ref`:
 | OpenAPI | `openapi-targets.json` | `bun packages/cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
 | script_api | the library folder's `reviewed.json` | `bun packages/cli/src/library/sync-script-api-types.ts --fetch --fidelity --data packages/library-types/data`, then `bun run --cwd packages/library-types api-doc` |
 
-A library folder sits in the newest version-named folder of `packages/library-types/data/`, named for its repository: the URL's last path
-segment, lowercased, without `.git`.
+A library folder sits in the newest version-named folder of `packages/library-types/data/`, named for its repository: its
+`<host>/<owner>/<repo>`, lowercased, without `.git`.
 
 `--fetch` is the only step that touches the network; everything after it reads
 the committed fixtures, so a regeneration is reproducible offline. No lane
