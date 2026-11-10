@@ -145,10 +145,12 @@ bound it:
   warns and moves on.
 - It reports itself as *suppressed* whenever the component-id universe has a
   hole — an unparseable scene, or a dependency `game.project` declares that
-  [`resolve`](./resolve.md) has not materialized — naming the reasons. A
-  suppressed check found nothing because it did not run, which is not the same
-  as finding nothing. A project with no scenes *and* no hole is silent: there is
-  no address universe to check against. A project whose scenes are missing
+  [`resolve`](./resolve.md) has not materialized — naming the reasons. A reason
+  for a dependency `resolve` has not materialized ends by telling you to run
+  `defold-typescript resolve`, which fills the hole. A suppressed check found
+  nothing because it did not run, which is not the same as finding nothing. A
+  project with no scenes *and* no hole is silent: there is no address universe
+  to check against. A project whose scenes are missing
   because its dependency is missing still reports the check as suppressed.
 
 [`watch`](./watch.md) runs the same check on every rebuild, so an address you
