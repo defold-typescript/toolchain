@@ -10,6 +10,7 @@
 import {
   archiveGameProjectEntry,
   archiveWrapperOf,
+  libraryIncludeDirFiles,
   libraryIncludedEntries,
 } from "@defold-typescript/transpiler";
 import {
@@ -23,6 +24,7 @@ import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
 import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
 import type { ArchiveIdentity } from "./extension-version";
+import { isApiPath } from "./library/library-evidence";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { locateShippedDeclarations, selectShippedDeclarations } from "./shipped-declarations";
 
@@ -41,6 +43,10 @@ export interface ExtensionDeclarations {
   // leading GitHub archive-wrapper dir stripped). Downstream library matching
   // verifies a repo-name match against these before emitting.
   readonly luaModules: string[];
+  // Whether the archive's own `game.project` shares a `.lua` file outside every
+  // example, test, demo and sample directory. Unlike `luaModules`, which counts
+  // every `.lua` in the archive, this is Lua a depending project can require.
+  readonly sharesLua: boolean;
   // Directories holding an `ext.manifest`, wrapper stripped (`daabbcc`). A native
   // extension ships no Lua module, so this is what confirms a curated native
   // target the way `luaModules` confirms a library.
@@ -65,6 +71,12 @@ export interface ExtensionDeclarations {
 function readArchiveGameProject(zip: ExtensionZip): string | undefined {
   const entry = archiveGameProjectEntry(zip.entries());
   return entry === undefined ? undefined : zip.read(entry);
+}
+
+function archiveSharesLua(zip: ExtensionZip): boolean {
+  return libraryIncludeDirFiles(zip.entries(), readArchiveGameProject(zip)).some(
+    ({ path }) => /\.lua$/i.test(path) && isApiPath(path),
+  );
 }
 
 function archiveSceneSources(zip: ExtensionZip): {
@@ -139,6 +151,7 @@ export async function resolveExtensionDeclarations(
   for (const archive of resolved) {
     const zip = await open(archive.archivePath);
     const luaModules = archiveLuaModules(zip.entries());
+    const sharesLua = archiveSharesLua(zip);
     const manifestDirs = archiveManifestDirs(zip.entries());
     const { sceneSources, sceneReasons, sceneRefused } = archiveSceneSources(zip);
     const shipped = selectShippedDeclarations(
@@ -158,6 +171,7 @@ export async function resolveExtensionDeclarations(
         ...warning,
         declarations: [],
         luaModules,
+        sharesLua,
         manifestDirs,
         sceneSources,
         sceneReasons,
@@ -182,6 +196,7 @@ export async function resolveExtensionDeclarations(
       ...warning,
       declarations,
       luaModules,
+      sharesLua,
       manifestDirs,
       sceneSources,
       sceneReasons,

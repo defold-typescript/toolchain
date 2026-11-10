@@ -34,6 +34,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     archivePath: "archive.zip",
     declarations,
     luaModules: [],
+    sharesLua: false,
     manifestDirs: [],
     sceneSources: [],
     sceneReasons: [],
