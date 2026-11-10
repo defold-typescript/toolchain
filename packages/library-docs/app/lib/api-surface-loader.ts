@@ -371,7 +371,7 @@ function parseListingSummary(
 }
 
 // Defold's libraries that ship no `.script_api` (`docs: []`). Each gets a
-// `/libraries/<owner>/<repo>` page from an authored summary in
+// `/libraries/<host>/<owner>/<repo>` page from an authored summary in
 // `defold-extensions/summaries/<repo>.md`, whose frontmatter records whether the
 // library registers anything a script calls (`api`) and how a reader adopts it
 // (`adoption`, `standard` when absent). A listing without a summary, or a
@@ -456,20 +456,25 @@ interface AssetPortalEntry {
 // listing: its `include_dirs` hold shaders, materials, sounds or editor scripts,
 // so there is nothing to type and the portal description is the whole page lead.
 // A repo that already has a Defold listing or a typed library page keeps that one,
-// matched case-folded since GitHub owner and repo names are case-insensitive. A
-// listed entry with a blank description throws rather than ship an empty page. An
-// absent manifest degrades to no portal listings.
+// matched by host, owner and repo, case-folded since forge hosts and GitHub owner
+// and repo names are case-insensitive; the same owner and repo on another host is
+// another library and keeps its listing. A listed entry with a blank description
+// throws rather than ship an empty page. An absent manifest degrades to no portal
+// listings.
 export function portalListingsFromManifest(dirs: LibraryDirs): LibraryListing[] {
   const path = join(dirs.dataDir, "asset-portal.json");
   if (!existsSync(path)) return [];
   const { entries } = JSON.parse(readFileSync(path, "utf8")) as { entries: AssetPortalEntry[] };
   const engineReleases = loadDefoldEngineReleases(dirs.dataDir);
-  const repoKey = (owner: string, repo: string): string => `${owner}/${repo}`.toLowerCase();
+  const repoKey = (url: string): string => {
+    const host = URL.canParse(url) ? new URL(url).host : "";
+    return `${host}/${githubOwner(url)}/${githubRepo(url)}`.toLowerCase();
+  };
   const listed = new Set([
-    ...[...libraryOriginByNamespace(dirs).values()].map(({ owner, repo }) => repoKey(owner, repo)),
-    ...loadDefoldExtensions(dirs).map((entry) =>
-      repoKey(githubOwner(entry.repo), githubRepo(entry.repo)),
+    ...[...libraryOriginByNamespace(dirs).values()].flatMap(({ url }) =>
+      url === undefined ? [] : [repoKey(url)],
     ),
+    ...loadDefoldExtensions(dirs).map((entry) => repoKey(entry.repo)),
   ]);
   return entries.flatMap((entry): LibraryListing[] => {
     if (entry.kind !== "no-lua-api" || !entry.repo || !entry.ref || !entry.refKind) return [];
@@ -477,7 +482,7 @@ export function portalListingsFromManifest(dirs: LibraryDirs): LibraryListing[] 
     assertUrlPart(entry.ref, `asset-portal.json: entry "${entry.id}" ref`);
     const owner = githubOwner(entry.repo);
     const repo = githubRepo(entry.repo);
-    if (owner === "" || repo === "" || listed.has(repoKey(owner, repo))) return [];
+    if (owner === "" || repo === "" || listed.has(repoKey(entry.repo))) return [];
     const description = entry.description.trim();
     if (description === "") {
       throw new Error(`asset-portal.json: entry "${entry.id}" has no description to lead its page`);
@@ -702,7 +707,7 @@ export function loadLibraryProvenance(dirs: LibraryDirs): (namespace: string) =>
 // Docs-only pages for the vendored third-party libraries in
 // `@defold-typescript/library-types`: each `api-doc/*.json` fixture parsed by
 // `parseDefoldApiDoc`, gated on a library target naming it,
-// tagged `category: "library"`, routed at `/api/<owner>/<repo>/<namespace>`
+// tagged `category: "library"`, routed at `/api/<host>/<owner>/<repo>/<namespace>`
 // from the page's origin repo and the namespace its doc declares (no version
 // prefix — a library is pinned to its own upstream ref, not a Defold version),
 // and carrying a structured `libraryMeta` the render layer

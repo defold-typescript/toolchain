@@ -217,39 +217,54 @@ export function libraryPathSegments(owner: string, repo: string, namespace: stri
   );
 }
 
+interface RepoNode {
+  repo: string;
+  host: string;
+  modules: Namespace[];
+  listing?: LibraryGroup["listing"];
+}
+
+const originHost = (url: string | undefined): string =>
+  url !== undefined && URL.canParse(url) ? new URL(url).host : "";
+
 // Group library pages by GitHub owner, then repo, then namespace for the
 // Libraries tab. Labels stay slash-free: owner handle, repo name, and namespace.
 // Untyped listings join their owner as module-less repos, sorted among the typed
-// ones; the sidebar and the Libraries index both read this one grouping.
+// ones; the sidebar and the Libraries index both read this one grouping. A repo
+// is keyed by its origin host as well, so the same owner and repo on two forges
+// are two repos under the owner, and a listing yields only to typed pages from
+// its own host.
 export function libraryOwnerGroups(
   pages: LibraryNavPage[],
   origins: Map<string, LibraryOrigin>,
   listings: LibraryListing[],
 ): LibraryOwnerGroup[] {
-  const byOwner = new Map<string, Map<string, Namespace[]>>();
-  const listingByRepo = new Map<string, LibraryGroup["listing"]>();
+  const byOwner = new Map<string, Map<string, RepoNode>>();
   const officialOwners = new Set<string>();
-  const libraryRepos = (owner: string): Map<string, Namespace[]> => {
-    const libraries = byOwner.get(owner) ?? new Map<string, Namespace[]>();
+  const libraryRepos = (owner: string): Map<string, RepoNode> => {
+    const libraries = byOwner.get(owner) ?? new Map<string, RepoNode>();
     byOwner.set(owner, libraries);
     return libraries;
   };
   for (const page of pages) {
-    const { owner, repo, official } = libraryLineage(page.namespace, origins);
+    const { owner, repo, url, official } = libraryLineage(page.namespace, origins);
     const libraries = libraryRepos(owner);
-    const modules = libraries.get(repo) ?? [];
-    modules.push({ label: page.namespace, route: page.route });
-    libraries.set(repo, modules);
+    const host = originHost(url);
+    const node = libraries.get(`${host}/${repo}`) ?? { repo, host, modules: [] };
+    node.modules.push({ label: page.namespace, route: page.route });
+    libraries.set(`${host}/${repo}`, node);
     if (official) officialOwners.add(owner);
   }
   for (const listing of listings) {
     const libraries = libraryRepos(listing.owner);
     if (listing.official) officialOwners.add(listing.owner);
-    if (libraries.has(listing.repo)) continue;
-    libraries.set(listing.repo, []);
-    listingByRepo.set(`${listing.owner}/${listing.repo}`, {
-      route: listing.route,
-      api: listing.api,
+    const host = originHost(listing.url);
+    if (libraries.has(`${host}/${listing.repo}`)) continue;
+    libraries.set(`${host}/${listing.repo}`, {
+      repo: listing.repo,
+      host,
+      modules: [],
+      listing: { route: listing.route, api: listing.api },
     });
   }
 
@@ -259,17 +274,16 @@ export function libraryOwnerGroups(
         owner,
         label: owner,
         ...(officialOwners.has(owner) ? { official: true as const } : {}),
-        libraries: [...libraries.entries()]
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([repo, modules]): LibraryGroup => {
-            const listing = listingByRepo.get(`${owner}/${repo}`);
-            return {
+        libraries: [...libraries.values()]
+          .sort((a, b) => a.repo.localeCompare(b.repo) || a.host.localeCompare(b.host))
+          .map(
+            ({ repo, modules, listing }): LibraryGroup => ({
               repo,
               label: repo,
               modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
               ...(listing ? { listing } : {}),
-            };
-          }),
+            }),
+          ),
       }),
     )
     .sort(compareLibraryOwners);

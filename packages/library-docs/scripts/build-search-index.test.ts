@@ -65,9 +65,9 @@ describe("searchIndexOutputs", () => {
     ]);
   });
 
-  test("a library member is found at its /api/<owner>/<repo>/<namespace> route", () => {
+  test("a library member is found at its /api/<host>/<owner>/<repo>/<namespace> route", () => {
     const member = records(dirs).find((record) => record.title === "demo.one.greet");
-    expect(member?.route).toStartWith("/api/someone/demolib/demo.one#");
+    expect(member?.route).toStartWith("/api/github.com/someone/demolib/demo.one#");
     expect(member?.text).toContain("Say hello to the player");
   });
 
@@ -75,12 +75,12 @@ describe("searchIndexOutputs", () => {
     const member = records(siteDirs(join(import.meta.dir, ".."))).find(
       (record) => record.title === "gui.new_spine_node",
     );
-    expect(member?.route).toStartWith("/api/defold/extension-spine/gui#");
+    expect(member?.route).toStartWith("/api/github.com/defold/extension-spine/gui#");
   });
 
-  test("a listing is found at its /libraries/<owner>/<repo> route", () => {
+  test("a listing is found at its /libraries/<host>/<owner>/<repo> route", () => {
     const listing = records(dirs).find((record) => record.title === "someone/shader-pack");
-    expect(listing?.route).toBe("/libraries/someone/shader-pack");
+    expect(listing?.route).toBe("/libraries/github.com/someone/shader-pack");
     expect(listing?.text).toContain("A pack of toon shaders");
   });
 
@@ -98,8 +98,10 @@ describe("symbolIndexOutputs", () => {
       { route: string }
     >;
 
-  test("a library member resolves to its /api/<owner>/<repo>/<namespace> route", () => {
-    expect(index(dirs)["demo.one.greet"]?.route).toStartWith("/api/someone/demolib/demo.one#");
+  test("a library member resolves to its /api/<host>/<owner>/<repo>/<namespace> route", () => {
+    expect(index(dirs)["demo.one.greet"]?.route).toStartWith(
+      "/api/github.com/someone/demolib/demo.one#",
+    );
   });
 
   test("a link-only toolchain page gets no tooltip entry", () => {
