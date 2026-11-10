@@ -347,25 +347,25 @@ pinned to.
 
 | Extension | Namespace | Confirmed by        |
 | --------- | --------- | ------------------- |
-| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/abadonna/defold-detour/detour) | `detour/ext.manifest` |
-| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/agulev/defold-extension-uptime/uptime) | `uptime/ext.manifest` |
-| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/britzl/defold-gyro/gyro) | `gyro/ext.manifest` |
-| [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/britzl/defold-imp/imp) | `imp/ext.manifest` |
-| [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/britzl/defold-png/png) | `png/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/britzl/defold-sharing/share) | `share/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
-| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
-| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/lerg/extension-directories/directories) | `directories/ext.manifest` |
-| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/lerg/extension-openal/openal) | `openal/ext.manifest` |
-| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
-| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/selimanac/defold-tile-raycast/tile_raycast) | `tile-raycast/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/selimanac/defold-uuid4/uuid4) | `uuid4/ext.manifest` |
-| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/selimanac/defold-wave/wave) | `wave/ext.manifest` |
+| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/github.com/abadonna/defold-detour/detour) | `detour/ext.manifest` |
+| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/github.com/agulev/defold-extension-uptime/uptime) | `uptime/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-gyro/gyro) | `gyro/ext.manifest` |
+| [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-imp/imp) | `imp/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-png/png) | `png/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-sharing/share) | `share/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/github.com/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
+| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/github.com/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
+| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/github.com/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/github.com/lerg/extension-directories/directories) | `directories/ext.manifest` |
+| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/github.com/lerg/extension-openal/openal) | `openal/ext.manifest` |
+| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/github.com/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/github.com/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
+| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/github.com/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-tile-raycast/tile_raycast) | `tile-raycast/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-uuid4/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-wave/wave) | `wave/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 

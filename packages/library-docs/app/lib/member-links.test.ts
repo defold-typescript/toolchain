@@ -10,7 +10,7 @@ import {
 } from "@defold-typescript/docs-render/symbol-index";
 import { Hono } from "hono";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
-import { createApiNamespaceRoute } from "../routes/api/[owner]/[repo]/[namespace]";
+import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
 import { apiPages, siteDirs } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
 
@@ -83,7 +83,7 @@ describe("a member key two libraries share", () => {
     modelDir: join(root, "api-doc"),
   };
   const app = new Hono();
-  app.get("/api/:owner/:repo/:namespace", ...createApiNamespaceRoute(dirs));
+  app.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(dirs));
 
   const greetLinks = async (page: ApiPage): Promise<string[]> => {
     const html = await (await app.request(page.route)).text();

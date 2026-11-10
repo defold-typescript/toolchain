@@ -8,7 +8,7 @@ function pinLabel(ref: string): string {
   return /^[0-9a-f]{40}$/.test(ref) ? ref.slice(0, 7) : ref;
 }
 
-// An untyped library's `/libraries/<owner>/<repo>` page body in the typed library
+// An untyped library's `/libraries/<host>/<owner>/<repo>` page body in the typed library
 // page's order: the authored lead, the api-kind sentence, the linked GitHub pin
 // with the setup steps nested under it, then the optional `Engine APIs` section.
 // Only a `standard` adoption opens the steps with the shared dependency step; a
