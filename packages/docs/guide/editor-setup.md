@@ -88,9 +88,15 @@ It rebuilds Lua when files under `src/` change; run the game from the Defold edi
 - **`defold-typescript:build`** — `bunx @defold-typescript/cli build`. Builds once with the project's CLI.
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
 - **`defold-typescript:resolve`** — `bunx @defold-typescript/cli resolve`. Materializes the native-extension and vendored-library type surfaces from `game.project` dependencies. `watch` runs this automatically on every `game.project` change, so it is mainly a one-off after adding a dependency.
+- **`defold-typescript:scene-types`** — `bunx @defold-typescript/cli scene-types`. Regenerates the [scene-address declaration](./scene-types.md); `watch` does this on every scene change, so it is mainly a one-off without `watch` running.
+- **`defold-typescript:typecheck`** — `bunx --package typescript tsc --noEmit`. Type-checks the sources with the project's pinned TypeScript and writes no file, whatever `noEmit` your `tsconfig.json` sets.
+- **`defold-typescript:bob-run`** — `bunx @defold-typescript/cli build`, then `bunx @defold-typescript/cli bob run`. Builds the TypeScript, then downloads the Defold target, makes a debug build and launches the game with [`bob run`](./bob.md); needs Java.
+- **`defold-typescript:sync-target`** — `bunx @defold-typescript/cli set-target --detected`. Pins `defold-target` to the installed Defold editor's version (see [`--detected`](./set-target.md#--detected)).
 - **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
 - **`defold-typescript:init-agents`** — `bunx @defold-typescript/cli init-agents .`. Materialize or refresh the `AGENTS.md` / `CLAUDE.md` AI-harness contract.
 - **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest upgrade`. The deliberate upgrade path; see [`upgrade`](./upgrading.md).
+
+`mise run <task> <args>` appends the arguments to the task's last command, so a flag needs no task of its own: `mise run defold-typescript:resolve --update`.
 
 > [!NOTE] As you might noticed, the majority of commands that `mise.toml` scaffolds carry no `@latest` version tag after `/cli`. This ensures that inside an installed project `bunx` resolves the `@defold-typescript/cli` as a pinned devDependency. The commands this way run the version locked alongside the pinned `@defold-typescript/types`. The `upgrade` is the only task that intentionally pulls `@latest`. As a result, the `upgrade` verb re-pins both managed deps to the new CLI's version and reinstalls.
 
