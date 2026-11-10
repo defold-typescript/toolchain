@@ -17,6 +17,7 @@ import {
   debugLaunchConfig,
   isGeneratedDebugLauncher,
 } from "./debug-launcher";
+import { LLDEBUGGER_URL } from "./lldebugger";
 import {
   AMBIENT_DECLARATION,
   AMBIENT_DTS_REL,
@@ -25,7 +26,6 @@ import {
   BLOCK_END,
   findEntryScriptCandidates,
   LEGACY_BOOTSTRAP_MARKER,
-  LLDEBUGGER_URL,
   runSetupDebug,
   upsertManagedBlock,
 } from "./setup-debug";

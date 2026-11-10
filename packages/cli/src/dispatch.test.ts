@@ -56,6 +56,7 @@ import {
 } from "./library-data-fixture";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
+import { LLDEBUGGER_URL } from "./lldebugger";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
 import {
@@ -4731,7 +4732,10 @@ describe("dispatch resolve", () => {
   const withoutDigests = (text: string): string =>
     text.replace(/sha256:[0-9a-f]{64}/g, "sha256:<digest>");
 
-  function resolveInternals(url: string): {
+  function resolveInternals(
+    url: string,
+    entries: readonly string[] = ["ext/api/alpha.script_api"],
+  ): {
     resolveInternals: {
       libraryDataDir: null;
       download: DownloadExtensionArchive;
@@ -4751,7 +4755,7 @@ describe("dispatch resolve", () => {
             throw new Error(`no fake archive for ${zipPath}`);
           }
           return {
-            entries: () => ["ext/api/alpha.script_api"],
+            entries: () => [...entries],
             comment: () => "",
             bytes: () => new Uint8Array(0),
             read: () => ALPHA,
@@ -4819,6 +4823,23 @@ describe("dispatch resolve", () => {
       },
     ] as unknown as typeof parsed.extensions);
     expect(parsed).not.toHaveProperty("sharedNamespaces");
+  });
+
+  test("the human path lists the setup-debug dependency as the debugger", async () => {
+    const { io, out } = captureStreams();
+    writeProject(`[project]\ndependencies#0 = ${LLDEBUGGER_URL}\n`);
+
+    const code = await dispatch(
+      ["resolve", cwd],
+      io,
+      resolveInternals(LLDEBUGGER_URL, ["lldebugger/debug.lua"]),
+    );
+
+    expect(code).toBe(0);
+    expect(out()).toContain(
+      `  lldebugger.debug <- ${LLDEBUGGER_URL} (debugger, declared by setup-debug)\n`,
+    );
+    expect(out()).not.toContain("asset-only, skipped");
   });
 
   describe("a namespace two dependencies share", () => {
