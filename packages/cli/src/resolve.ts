@@ -90,6 +90,10 @@ import {
 } from "./project-lock";
 import { checkShippedDeclarations } from "./shipped-declarations";
 
+// The guide section a dependency sharing Lua that nothing types is pointed at.
+export const UNTYPED_LIBRARY_GUIDE =
+  "https://defold-typescript.github.io/toolchain/resolve#a-library-nobody-types";
+
 // Which type surface a dependency actually contributed. `assetOnly` cannot
 // express this on its own: a superseded bundle is `assetOnly: false` and still
 // contributes no namespace, and an asset-only archive with no confirmed match
@@ -973,6 +977,23 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return report;
   });
 
+  // A run that read no library data cannot tell whether it would type the library,
+  // so it gives no advice to type it by hand.
+  const sharesLua = new Set(extensionBundles.filter((b) => b.sharesLua).map((b) => b.url));
+  const untypedLuaUrls =
+    libraryDataDir === null
+      ? []
+      : [
+          ...new Set(
+            extensions
+              .filter(
+                ({ url, assetOnly, typeSurface }) =>
+                  assetOnly && typeSurface === "none" && sharesLua.has(url),
+              )
+              .map(({ url }) => url),
+          ),
+        ];
+
   const notices = [
     ...libraryData.notices,
     ...followed.notices,
@@ -984,6 +1005,11 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       : []),
     ...statusMessages.notices,
     ...nameNotices,
+    ...(untypedLuaUrls.length > 0
+      ? [
+          `no types cover the Lua modules from ${untypedLuaUrls.join(", ")}: declare the ones you require in src/types/, see ${UNTYPED_LIBRARY_GUIDE}`,
+        ]
+      : []),
   ];
   return {
     ok: true,
