@@ -341,11 +341,14 @@ async function selectLibraryData(
 
 // How each dependency library data types stands against the reviews it records. A
 // `.script_api`, shipped or unmatched dependency has no review to stand against.
+// Matching against the `names` the matchers used finds the library that typed each
+// dependency, including a fork on a host only a library outside the view is on.
 async function classifyLibraries(
   bundles: readonly ExtensionDeclarations[],
   confirmedNativeUrls: ReadonlySet<string>,
   printedFrom: ReadonlyMap<string, readonly ("archive" | "pinned")[]>,
   libraryData: SelectedLibraryData,
+  names: readonly string[],
   cliVersion: string,
   open: ReadExtensionZip,
 ): Promise<Map<string, LibraryStatus>> {
@@ -356,7 +359,6 @@ async function classifyLibraries(
   }
   const typed = bundles.filter(({ url }) => confirmedNativeUrls.has(url) || printedFrom.has(url));
   const libraries = readLibraryDataOrNone(dir, cliVersion);
-  const names = libraries.map(({ dir: folder }) => folder);
   for (const { url, archivePath, identity } of typed) {
     const name = matchedLibraryName(url, names);
     const library = libraries.find(({ dir: folder }) => folder === name);
@@ -922,6 +924,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     confirmedNativeUrls,
     printedFrom,
     libraryData,
+    libraryNames,
     cliVersion,
     opts.readZip ?? defaultReadZip,
   );
