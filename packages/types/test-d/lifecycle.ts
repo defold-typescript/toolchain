@@ -61,6 +61,7 @@ const hooks = defineScript<Self>({
     const _screenX: number | undefined = action.screen_x;
     const _text: string | undefined = action.text;
     const _accX: number | undefined = action.acc_x;
+    const _source: Hash | undefined = action.source;
     // @ts-expect-error the engine sends no marked_text field
     void action.marked_text;
     const touch = action.touch?.[0];
@@ -88,6 +89,7 @@ const hooks = defineScript<Self>({
     void _screenX;
     void _text;
     void _accX;
+    void _source;
     return true;
   },
   final(self) {

@@ -216,6 +216,24 @@ declare global {
      */
     function resource_attributes(resource_path: string): editor.resource_attributes.Result;
     /**
+     * List resource paths directly inside a folder or file. For example, a glTF file can contain meshes, materials, and images. Call this function on each returned path to explore all contents.
+     * Returns an empty list if there are no children. Throws an error if the path does not exist.
+     *
+     * @param resource_path - Resource path (starting with `/`)
+     * @returns child resource paths, starting with `/`
+     * @example
+     * ```ts
+     * function walk(path: string) {
+     *   print(path);
+     *   for (const child of editor.resource_children(path)) {
+     *     walk(child);
+     *   }
+     * }
+     * walk("/assets");
+     * ```
+     */
+    function resource_children(resource_path: string): string[];
+    /**
      * Persist any unsaved changes to disk
      */
     function save(): void;

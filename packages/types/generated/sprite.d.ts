@@ -133,6 +133,7 @@ declare global {
      * Sets horizontal flipping of the provided sprite's animations.
      * The sprite is identified by its URL.
      * If the currently playing animation is flipped by default, flipping it again will make it appear like the original texture.
+     * The sprite is flipped around the pivot of its image, which gives the same result as a negative x scale.
      *
      * @param url - the sprite that should flip its animations
      * @param flip - `true` if the sprite should flip its animations, `false` if not
@@ -157,6 +158,7 @@ declare global {
      * Sets vertical flipping of the provided sprite's animations.
      * The sprite is identified by its URL.
      * If the currently playing animation is flipped by default, flipping it again will make it appear like the original texture.
+     * The sprite is flipped around the pivot of its image, which gives the same result as a negative y scale.
      *
      * @param url - the sprite that should flip its animations
      * @param flip - `true` if the sprite should flip its animations, `false` if not

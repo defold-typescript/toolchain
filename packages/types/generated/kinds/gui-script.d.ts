@@ -35,6 +35,7 @@ import "../msg";
 import "../particlefx";
 import "../physics";
 import "../profiler";
+import "../recorder";
 import "../resource";
 import "../socket";
 import "../sound";

@@ -208,10 +208,10 @@ describe("lifecycle hook-member docs", () => {
   test("every InputAction field carries a preceding JSDoc block", () => {
     const span = interfaceBraceSpan(lifecycleSource, "InputAction");
     const fields = interfaceFieldNames(span);
-    // InputAction's documented field count. `interfaceFieldNames` is a regex
-    // extractor with no second source to cross-check, so without this a partial
-    // parse would silently make the per-field doc loop below vacuous.
-    expect(fields.length).toBe(26);
+    // The reference's on_input.action member count. `interfaceFieldNames` is a
+    // regex extractor, so without this second source a partial parse would
+    // silently make the per-field doc loop below vacuous.
+    expect(fields.length).toBe(onInputStructDocs("action").size);
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\??:`))).toBe(true);
     }
@@ -225,6 +225,12 @@ describe("lifecycle hook-member docs", () => {
     for (const f of fields) {
       expect(memberHasPrecedingDoc(span, new RegExp(`^\\s*${f}\\??:`))).toBe(true);
     }
+  });
+
+  test("InputAction declares every field the reference says on_input receives", () => {
+    const fields = new Set(interfaceFieldNames(interfaceBraceSpan(lifecycleSource, "InputAction")));
+    const missing = [...onInputStructDocs("action").keys()].filter((name) => !fields.has(name));
+    expect(missing).toEqual([]);
   });
 
   test("each InputAction field summary equals its on_input.action member doc (drift guard)", () => {

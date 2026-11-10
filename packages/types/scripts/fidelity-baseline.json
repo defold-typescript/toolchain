@@ -350,6 +350,15 @@
     "optionalAsRequired": 0,
     "bindingOpen": 0
   },
+  "recorder": {
+    "droppedElements": 0,
+    "unknownTokens": [],
+    "recordTables": 0,
+    "multiReturn": 0,
+    "droppedMembers": 0,
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
+  },
   "render": {
     "droppedElements": 0,
     "unknownTokens": [],

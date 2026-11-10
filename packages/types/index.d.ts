@@ -49,6 +49,7 @@ import "./generated/msg";
 import "./generated/particlefx";
 import "./generated/physics";
 import "./generated/profiler";
+import "./generated/recorder";
 import "./generated/render";
 import "./src/render-overloads";
 import "./generated/resource";
