@@ -13,11 +13,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`resolve` lists the debugger](./resolve.md#a-library-nobody-types)** with no untyped-Lua notice.
+> - **[`resolve` lists the debugger](./resolve.md#a-library-nobody-types)** without a notice.
+> - **[Dependency warnings](./build.md#what-it-does)** name `resolve` as the fix.
 
 ### Fixed
 
 - **`resolve` treated the `lldebugger` dependency [`setup-debug`](./debugging.md) adds as a library nobody types:** it listed it as `asset-only, skipped` and named it in the notice to declare its modules in `src/types/`, though `setup-debug` already declares the one module a project requires from it. `resolve` now lists it as `lldebugger.debug <- <url> (debugger, declared by setup-debug)` and leaves it out of the notice, which still names every other untyped dependency ([A library nobody types](./resolve.md#a-library-nobody-types)); `--json` leaves it out of `notices` too.
+- **A warning about a dependency `resolve` had not materialized did not name the fix:** the reason `build`, `watch` and `scene-types` print for it, and for a materialized dependency `game.project` no longer declares, now ends with `` run `defold-typescript resolve` `` ([What it does](./build.md#what-it-does)); `--json` carries the same string in `warnings`.
 
 ## v0.61.0
 

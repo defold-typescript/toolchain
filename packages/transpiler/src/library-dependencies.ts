@@ -241,6 +241,7 @@ export function libraryIncludedEntries(
 // walk composes.
 export const LIBRARY_DEPENDENCY_ROOT = ".defold-types/dependencies";
 const LIBRARY_DEPENDENCY_MANIFEST = `${LIBRARY_DEPENDENCY_ROOT}/dependencies.json`;
+const RESOLVE_HINT = "run `defold-typescript resolve`";
 
 export interface LibrarySceneDocument {
   // The merged Defold resource path this document is addressed by, which is the
@@ -297,7 +298,10 @@ function readMaterializedKeys(manifestText: string): Map<string, string> | undef
  * absent or unusable manifest, a declared dependency the last `resolve` did not
  * materialize, a materialized directory `game.project` no longer declares, and
  * a file that would not read. A dependency that contributes nothing silently is
- * exactly the hole `readSceneDocuments` promises not to have.
+ * exactly the hole `readSceneDocuments` promises not to have. The refusals a
+ * `resolve` run repairs — the manifest, an unmaterialized dependency and a
+ * directory no longer declared — end by naming that command; a collision and a
+ * failed read do not, because `resolve` fixes neither.
  */
 export function readLibrarySceneDocuments(
   host: SceneReadHost,
@@ -321,7 +325,7 @@ export function readLibrarySceneDocuments(
   if (manifestText === undefined) {
     for (const { url } of declared) {
       unreadable.push(
-        `${url}: is declared by game.project but ${LIBRARY_DEPENDENCY_MANIFEST} is absent`,
+        `${url}: is declared by game.project but ${LIBRARY_DEPENDENCY_MANIFEST} is absent; ${RESOLVE_HINT}`,
       );
     }
     return { documents, unreadable };
@@ -331,7 +335,7 @@ export function readLibrarySceneDocuments(
   if (keyByUrl === undefined) {
     for (const { url } of declared) {
       unreadable.push(
-        `${url}: is declared by game.project but ${LIBRARY_DEPENDENCY_MANIFEST} is not a readable dependency manifest`,
+        `${url}: is declared by game.project but ${LIBRARY_DEPENDENCY_MANIFEST} is not a readable dependency manifest; ${RESOLVE_HINT}`,
       );
     }
     return { documents, unreadable };
@@ -346,7 +350,7 @@ export function readLibrarySceneDocuments(
     const key = keyByUrl.get(url);
     if (key === undefined) {
       unreadable.push(
-        `${url}: is declared by game.project but was not materialized by the last resolve`,
+        `${url}: is declared by game.project but was not materialized by the last resolve; ${RESOLVE_HINT}`,
       );
       continue;
     }
@@ -398,7 +402,7 @@ export function readLibrarySceneDocuments(
 
   for (const key of [...stray].sort()) {
     unreadable.push(
-      `${LIBRARY_DEPENDENCY_ROOT}/${key}: is materialized but no longer declared by game.project, so its scenes are left out`,
+      `${LIBRARY_DEPENDENCY_ROOT}/${key}: is materialized but no longer declared by game.project, so its scenes are left out; ${RESOLVE_HINT}`,
     );
   }
 

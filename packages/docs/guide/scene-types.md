@@ -166,9 +166,10 @@ Two consequences worth knowing:
 - **An unresolved dependency is reported, never skipped.** A dependency you
   declared but have not resolved is named on the warning channel of
   `scene-types`, [`build`](./build.md) and [`watch`](./watch.md) — the
-  URL, and why it contributed nothing — and `--json` carries the same strings in
-  `warnings`. The exit code is unchanged and the declaration is still written
-  from whatever did resolve: completions come from the partial universe, because
+  URL, why it contributed nothing, and the `defold-typescript resolve` run that
+  repairs it — and `--json` carries the same strings in `warnings`. The exit
+  code is unchanged and the declaration is still written from whatever did
+  resolve: completions come from the partial universe, because
   a suggestion claims nothing about what is absent. Running `resolve` clears it.
 
 Your own file always wins if a project scene and a library scene land on the
