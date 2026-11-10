@@ -30,7 +30,7 @@ Each part is covered below. If you would rather wire things by hand, the manual 
 
 Six files — three in your project, three under `.vscode/`:
 
-- **`game.project`** — the `lldebugger` library dependency, at the next free `dependencies#N` index. Skipped if it is already there.
+- **`game.project`** — the `lldebugger` library dependency, at the next free `dependencies#N` index. Skipped if it is already there. [`resolve`](./resolve.md) lists it as `lldebugger.debug <- <url> (debugger, declared by setup-debug)`.
 - **your entry script** — a gated `lldebugger.start()` bootstrap, inside a managed `BEGIN`/`END` block.
 - **`lldebugger.debug.d.ts`** — the ambient `@noResolution declare module`, written next to the entry script so the same `include`[^src-root] pattern covers both.
 - **`.vscode/launch.json`** — a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`.
