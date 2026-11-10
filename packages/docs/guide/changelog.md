@@ -13,23 +13,23 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Libraries are named by `owner/repo`](./resolve.md#vendored-library-types)**, so two repositories sharing a name can both be typed.
+> - **[Libraries are named by `host/owner/repo`](./resolve.md#vendored-library-types)**, so repositories sharing a name can all be typed, and a dependency on an unknown host gets none.
 > - **[`minCli`](./library.md#what-library-add-writes)** keeps a library from a CLI too old to read it.
 > - **[Untyped Lua](./resolve.md#a-library-nobody-types)** draws a `resolve` notice on how to type it yourself.
 
 ### Breaking
 
-- **Library data names each library by its lowercase `owner/repo`** ([Library data](./resolve.md#library-data)): lockfile pins, `resolve --update=<name>`, the `library` commands' `<name>` and folders, and the `--json` `source` of a `resolve` match all use it, so `--update=monarch` becomes `--update=britzl/monarch`. A pin an earlier CLI recorded under a bare repo name is dropped, and that library is pinned again at the newest data.
+- **Library data names each library by its lowercase `host/owner/repo`** ([Library data](./resolve.md#library-data)), the name lockfile pins, the `library` commands' folders and the `--json` `source` of a `resolve` match use; a pin an earlier CLI recorded under a bare repo name is pinned again at the newest data. A dependency on a host no library's repository is on, such as a company git server or an IP address, matches no library data ([Vendored library types](./resolve.md#vendored-library-types)).
 
 ### Improved
 
-- **A dependency matches the library holding its exact `owner/repo`, else the one library sharing its repo name**, so a fork keeps its upstream's types with a notice that they may not fit, and a repo name two libraries share types the dependency with neither, with a notice ([Vendored library types](./resolve.md#vendored-library-types)). `export-types` takes an `owner/repo` or a dependency URL.
+- **A dependency matches the library holding its exact `host/owner/repo`, else the one library sharing its repo name**, so a fork keeps its upstream's types with a notice that they may not fit, and a repo name two libraries share types the dependency with neither, with a notice ([Vendored library types](./resolve.md#vendored-library-types)). `resolve --update=<name>`, the `library` commands and `export-types` take any trailing part of a library's name (`monarch`, `britzl/monarch`, `github.com/britzl/monarch`), and `export-types` also a dependency URL.
 - **A library's `library.json` can set `minCli`**, the first CLI release that reads it: an older CLI reads no data for that library, so `resolve` types it from the dependency's own archive and the `library` commands leave it out ([library](./library.md#what-library-add-writes)).
 - **`resolve` adds one notice naming every dependency that shares Lua nothing types**, linking a new guide section that shows how to declare its modules in `src/types/<library>.d.ts` and how to share them upstream ([A library nobody types](./resolve.md#a-library-nobody-types)).
 
 ### Fixed
 
-- **`library add` refuses a repository URL whose owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`**, before it downloads, so it writes only inside the data folder: on Windows a backslash in the repo could write outside it ([library](./library.md#what-library-add-writes)).
+- **`library add` refuses a repository URL whose host, owner or repo holds anything but `a-z`, `0-9`, `.`, `_` and `-`**, before it downloads, so it writes only inside the data folder: on Windows a backslash in the repo could write outside it ([library](./library.md#what-library-add-writes)).
 - **On a phone, opening a link to a heading in the guide, the API reference or the library reference shows the heading below the top bar** instead of behind it.
 
 ## v0.60.0

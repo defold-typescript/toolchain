@@ -24,7 +24,7 @@ function write(root: string, path: string, contents: unknown): void {
 // native extension with one index slot.
 function writeDataFolder(): string {
   const root = mkdtempSync(join(tmpdir(), "library-data-"));
-  write(root, "pause-games/flow/library.json", {
+  write(root, "github.com/pause-games/flow/library.json", {
     repo: "https://github.com/Pause-Games/flow",
     license: "MIT",
     forks: [
@@ -37,8 +37,8 @@ function writeDataFolder(): string {
       },
     ],
   });
-  write(root, "pause-games/flow/reviewed.json", { ref: "v1.2.0" });
-  write(root, "pause-games/flow/recipe.json", {
+  write(root, "github.com/pause-games/flow/reviewed.json", { ref: "v1.2.0" });
+  write(root, "github.com/pause-games/flow/recipe.json", {
     luals: [
       {
         sourceGlobs: ["flow/**/*.lua"],
@@ -48,10 +48,18 @@ function writeDataFolder(): string {
       },
     ],
   });
-  write(root, "pause-games/flow/fork/flow.ui.d.ts", FLOW_FORK);
-  write(root, "pause-games/flow/source/upstream/flow/ui.lua", "local M = {}\nreturn M\n");
-  write(root, "pause-games/flow/source/flow.layout/flow/layout.lua", "local M = {}\nreturn M\n");
-  write(root, "owner/box2d/library.json", {
+  write(root, "github.com/pause-games/flow/fork/flow.ui.d.ts", FLOW_FORK);
+  write(
+    root,
+    "github.com/pause-games/flow/source/upstream/flow/ui.lua",
+    "local M = {}\nreturn M\n",
+  );
+  write(
+    root,
+    "github.com/pause-games/flow/source/flow.layout/flow/layout.lua",
+    "local M = {}\nreturn M\n",
+  );
+  write(root, "github.com/owner/box2d/library.json", {
     repo: "https://github.com/owner/box2d",
     license: "MIT",
     refKind: "tag",
@@ -68,8 +76,8 @@ function writeDataFolder(): string {
       },
     },
   });
-  write(root, "owner/box2d/reviewed.json", { ref: "v2.0" });
-  write(root, "owner/box2d/fork/box2d.d.ts", "declare module 'box2d' {}\n");
+  write(root, "github.com/owner/box2d/reviewed.json", { ref: "v2.0" });
+  write(root, "github.com/owner/box2d/fork/box2d.d.ts", "declare module 'box2d' {}\n");
   return root;
 }
 
@@ -80,7 +88,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
       const [box2d, flow] = readLibraryData(root);
 
       expect(flow).toEqual({
-        dir: "pause-games/flow",
+        dir: "github.com/pause-games/flow",
         repo: "https://github.com/Pause-Games/flow",
         ref: "v1.2.0",
         license: "MIT",
@@ -95,7 +103,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
             namespace: "flow.layout",
             typeRenames: { vector3: "Vector3" },
             ignore: [],
-            sourceDir: "pause-games/flow/source/flow.layout",
+            sourceDir: "github.com/pause-games/flow/source/flow.layout",
           },
         ],
         scriptApi: [],
@@ -104,12 +112,12 @@ describe("readLibraryData projects each library folder into lane targets", () =>
             repo: "https://github.com/Pause-Games/flow",
             ref: "v1.2.0",
             license: "MIT",
-            authored: "pause-games/flow/fork/flow.ui.d.ts",
+            authored: "github.com/pause-games/flow/fork/flow.ui.d.ts",
             moduleId: "flow.ui",
             namespace: "flow.ui",
             apiDoc: "api-doc/flow.ui.json",
             fidelity: "fidelity/flow.ui.json",
-            upstreamLua: ["pause-games/flow/source/upstream/flow/ui.lua"],
+            upstreamLua: ["github.com/pause-games/flow/source/upstream/flow/ui.lua"],
           },
         ],
         native: [],
@@ -119,7 +127,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         usage: [],
       });
       expect(box2d).toEqual({
-        dir: "owner/box2d",
+        dir: "github.com/owner/box2d",
         repo: "https://github.com/owner/box2d",
         ref: "v2.0",
         license: "MIT",
@@ -136,8 +144,8 @@ describe("readLibraryData projects each library folder into lane targets", () =>
             license: "MIT",
             namespace: "box2d",
             manifestDir: "box2d",
-            declaration: "owner/box2d/fork/box2d.d.ts",
-            upstreamSource: "owner/box2d/source/upstream/box2d/src/box2d.cpp",
+            declaration: "github.com/owner/box2d/fork/box2d.d.ts",
+            upstreamSource: "github.com/owner/box2d/source/upstream/box2d/src/box2d.cpp",
           },
         ],
         indexSlots: {
@@ -158,15 +166,15 @@ describe("readLibraryData projects each library folder into lane targets", () =>
   test("a library's usage examples are every .ts file under its usage folder, sorted", () => {
     const root = writeDataFolder();
     try {
-      write(root, "pause-games/flow/usage/nested/b.test-d.ts", "export {};\n");
-      write(root, "pause-games/flow/usage/a.test-d.ts", "export {};\n");
-      write(root, "pause-games/flow/usage/notes.md", "# notes\n");
+      write(root, "github.com/pause-games/flow/usage/nested/b.test-d.ts", "export {};\n");
+      write(root, "github.com/pause-games/flow/usage/a.test-d.ts", "export {};\n");
+      write(root, "github.com/pause-games/flow/usage/notes.md", "# notes\n");
 
       const [box2d, flow] = readLibraryData(root);
 
       expect(flow?.usage).toEqual([
-        "pause-games/flow/usage/a.test-d.ts",
-        "pause-games/flow/usage/nested/b.test-d.ts",
+        "github.com/pause-games/flow/usage/a.test-d.ts",
+        "github.com/pause-games/flow/usage/nested/b.test-d.ts",
       ]);
       expect(box2d?.usage).toEqual([]);
     } finally {
@@ -192,7 +200,7 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
   test("a module two library folders name is refused, naming both folders", () => {
     const root = writeDataFolder();
     try {
-      write(root, "someone/other-flow/library.json", {
+      write(root, "github.com/someone/other-flow/library.json", {
         repo: "https://github.com/someone/other-flow",
         license: "MIT",
         forks: [
@@ -205,7 +213,7 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
           },
         ],
       });
-      write(root, "someone/other-flow/reviewed.json", { ref: "1.0" });
+      write(root, "github.com/someone/other-flow/reviewed.json", { ref: "1.0" });
 
       expect(() => readLibraryData(root)).toThrow(/flow\.ui.*\bflow\b.*\bother-flow\b/);
     } finally {
@@ -216,9 +224,9 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
   test("a library folder without reviewed.json is refused, naming the missing file", () => {
     const root = writeDataFolder();
     try {
-      rmSync(join(root, "owner/box2d/reviewed.json"));
+      rmSync(join(root, "github.com/owner/box2d/reviewed.json"));
 
-      expect(() => readLibraryData(root)).toThrow("owner/box2d/reviewed.json");
+      expect(() => readLibraryData(root)).toThrow("github.com/owner/box2d/reviewed.json");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -227,7 +235,7 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
   test("a folder named other than its repo is refused, naming both", () => {
     const root = writeDataFolder();
     try {
-      write(root, "pause-games/flow/library.json", {
+      write(root, "github.com/pause-games/flow/library.json", {
         repo: "https://github.com/Pause-Games/flow-ui",
         license: "MIT",
       });
@@ -241,7 +249,7 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
   test("a recipe entry missing a required field is refused, naming the recipe", () => {
     const root = writeDataFolder();
     try {
-      write(root, "pause-games/flow/recipe.json", {
+      write(root, "github.com/pause-games/flow/recipe.json", {
         luals: [{ moduleId: "flow.layout", namespace: "flow.layout" }],
       });
 
@@ -257,13 +265,13 @@ describe("readLibraryData refuses a data folder that breaks its invariants", () 
 describe("readLibraryData leaves out a library whose minCli is above the CLI", () => {
   function withGated(fields: Record<string, unknown> = {}): string {
     const root = writeDataFolder();
-    write(root, "owner/gated/library.json", {
+    write(root, "github.com/owner/gated/library.json", {
       repo: "https://github.com/owner/gated",
       license: "MIT",
       minCli: "0.62.0",
       ...fields,
     });
-    write(root, "owner/gated/reviewed.json", { ref: "1.0" });
+    write(root, "github.com/owner/gated/reviewed.json", { ref: "1.0" });
     return root;
   }
 
@@ -285,7 +293,10 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
   test("a CLI below it reads every other library and not that one", () => {
     const root = withGated();
     try {
-      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+      expect(readDirs(root, "0.61.0")).toEqual([
+        "github.com/owner/box2d",
+        "github.com/pause-games/flow",
+      ]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -296,9 +307,9 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
       const root = withGated();
       try {
         expect(readDirs(root, cliVersion)).toEqual([
-          "owner/box2d",
-          "owner/gated",
-          "pause-games/flow",
+          "github.com/owner/box2d",
+          "github.com/owner/gated",
+          "github.com/pause-games/flow",
         ]);
       } finally {
         rmSync(root, { recursive: true, force: true });
@@ -309,7 +320,11 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
   test("a reader given no CLI version reads it", () => {
     const root = withGated();
     try {
-      expect(readDirs(root)).toEqual(["owner/box2d", "owner/gated", "pause-games/flow"]);
+      expect(readDirs(root)).toEqual([
+        "github.com/owner/box2d",
+        "github.com/owner/gated",
+        "github.com/pause-games/flow",
+      ]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -318,10 +333,13 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
   test("a CLI below it skips the library before reading a field it would refuse", () => {
     const root = withGated({ forks: "x" });
     try {
-      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+      expect(readDirs(root, "0.61.0")).toEqual([
+        "github.com/owner/box2d",
+        "github.com/pause-games/flow",
+      ]);
       const error = caught(() => readDirs(root, "0.62.0"));
       expect(error).toBeInstanceOf(LibraryDataError);
-      expect((error as LibraryDataError).library).toBe("owner/gated");
+      expect((error as LibraryDataError).library).toBe("github.com/owner/gated");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -334,7 +352,7 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
         try {
           const error = caught(() => readDirs(root, cliVersion));
           expect(error).toBeInstanceOf(LibraryDataError);
-          expect((error as LibraryDataError).library).toBe("owner/gated");
+          expect((error as LibraryDataError).library).toBe("github.com/owner/gated");
           expect((error as LibraryDataError).message).toContain("minCli");
         } finally {
           rmSync(root, { recursive: true, force: true });
@@ -356,7 +374,10 @@ describe("readLibraryData leaves out a library whose minCli is above the CLI", (
       ],
     });
     try {
-      expect(readDirs(root, "0.61.0")).toEqual(["owner/box2d", "pause-games/flow"]);
+      expect(readDirs(root, "0.61.0")).toEqual([
+        "github.com/owner/box2d",
+        "github.com/pause-games/flow",
+      ]);
       expect(() => readDirs(root, "0.62.0")).toThrow(/flow\.ui.*\bowner\/gated\b/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -406,7 +427,7 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
   };
 
   function writeFlowFork(root: string, fork: Record<string, unknown>): void {
-    write(root, "pause-games/flow/library.json", {
+    write(root, "github.com/pause-games/flow/library.json", {
       repo: "https://github.com/Pause-Games/flow",
       license: "MIT",
       forks: [{ ...FLOW_FORK_ENTRY, ...fork }],
@@ -414,11 +435,11 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
   }
 
   function writeFlowRecipe(root: string, recipe: Record<string, unknown>): void {
-    write(root, "pause-games/flow/recipe.json", recipe);
+    write(root, "github.com/pause-games/flow/recipe.json", recipe);
   }
 
   function writeBox2dNative(root: string, native: Record<string, unknown>): void {
-    write(root, "owner/box2d/library.json", {
+    write(root, "github.com/owner/box2d/library.json", {
       repo: "https://github.com/owner/box2d",
       license: "MIT",
       native: { ...BOX2D_NATIVE, ...native },
@@ -466,7 +487,10 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
       test(`${what} of ${JSON.stringify(id)} is refused, naming the folder and the value`, () => {
         const message = refusal((root) => edit(root, id));
 
-        const folder = what === "a native namespace" ? "owner/box2d/" : "pause-games/flow/";
+        const folder =
+          what === "a native namespace"
+            ? "github.com/owner/box2d/"
+            : "github.com/pause-games/flow/";
         expect(message).toContain(folder);
         expect(message).toContain(JSON.stringify(id));
       });
@@ -476,27 +500,27 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
   const PATH_CASES: [string, string, (root: string, path: string) => void][] = [
     [
       "a fork authored path",
-      "pause-games/flow/",
+      "github.com/pause-games/flow/",
       (root, path) => writeFlowFork(root, { authored: path }),
     ],
     [
       "a fork upstreamLua path",
-      "pause-games/flow/",
+      "github.com/pause-games/flow/",
       (root, path) => writeFlowFork(root, { upstreamLua: [path] }),
     ],
     [
       "a native declaration path",
-      "owner/box2d/",
+      "github.com/owner/box2d/",
       (root, path) => writeBox2dNative(root, { declaration: path }),
     ],
     [
       "a native upstreamSource path",
-      "owner/box2d/",
+      "github.com/owner/box2d/",
       (root, path) => writeBox2dNative(root, { upstreamSource: path }),
     ],
     [
       "a recipe sourceGlobs entry",
-      "pause-games/flow/",
+      "github.com/pause-games/flow/",
       (root, path) =>
         writeFlowRecipe(root, { luals: [{ ...FLOW_LUALS_ENTRY, sourceGlobs: [path] }] }),
     ],
@@ -518,9 +542,11 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
     try {
       writeFlowFork(root, { authored: "fork/../fork/flow.ui.d.ts" });
 
-      const flow = readLibraryData(root).find(({ dir }) => dir === "pause-games/flow");
+      const flow = readLibraryData(root).find(({ dir }) => dir === "github.com/pause-games/flow");
 
-      expect(flow?.authored[0]?.authored).toBe("pause-games/flow/fork/../fork/flow.ui.d.ts");
+      expect(flow?.authored[0]?.authored).toBe(
+        "github.com/pause-games/flow/fork/../fork/flow.ui.d.ts",
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -528,12 +554,19 @@ describe("readLibraryData refuses a name or path that leaves its library folder"
 });
 
 describe("libraryFolderName", () => {
-  test("is the repo's owner/repo, lowercased, without .git", () => {
+  test("is the repo's host/owner/repo, lowercased, without .git", () => {
+    expect(libraryFolderName("https://github.com/britzl/boom")).toBe("github.com/britzl/boom");
     expect(libraryFolderName("https://github.com/HGPoint/Defold_Live_Unbundler.git")).toBe(
-      "hgpoint/defold_live_unbundler",
+      "github.com/hgpoint/defold_live_unbundler",
     );
     expect(libraryFolderName("https://codeberg.org/Klaleus/defold-shutter/")).toBe(
-      "klaleus/defold-shutter",
+      "codeberg.org/klaleus/defold-shutter",
+    );
+  });
+
+  test("throws, naming the port, for a repo on a host with one", () => {
+    expect(() => libraryFolderName("http://git.acme.com:3000/games/monarch")).toThrow(
+      "repo http://git.acme.com:3000/games/monarch is on git.acme.com:3000, and a library folder cannot hold a port",
     );
   });
 
@@ -543,12 +576,12 @@ describe("libraryFolderName", () => {
     "https://host/owner/a\\..\\..\\mylib",
   ])("throws, naming the repo, for %s, whose owner or repo is not a plain name", (repo) => {
     expect(() => libraryFolderName(repo)).toThrow(
-      `repo ${repo} is not an owner/repo of plain names`,
+      `repo ${repo} is not a host/owner/repo of plain names`,
     );
   });
 });
 
-describe("readLibraryData reads each library at its owner/repo folder", () => {
+describe("readLibraryData reads each library at its host/owner/repo folder", () => {
   function writeBoom(root: string, folder: string, repo: string): void {
     write(root, `${folder}/library.json`, { repo, license: "MIT" });
     write(root, `${folder}/reviewed.json`, { ref: "v1.0" });
@@ -564,24 +597,37 @@ describe("readLibraryData reads each library at its owner/repo folder", () => {
     throw new Error("readLibraryData accepted the data folder");
   }
 
-  test("a library at owner/repo is read with that folder as its dir", () => {
+  test("a library at host/owner/repo is read with that folder as its dir", () => {
     const root = mkdtempSync(join(tmpdir(), "library-data-"));
     try {
-      writeBoom(root, "britzl/boom", "https://github.com/Britzl/Boom");
+      writeBoom(root, "github.com/britzl/boom", "https://github.com/Britzl/Boom");
       write(root, "asset-portal-script-api/api-doc/x.json", "{}");
 
-      expect(readLibraryData(root).map(({ dir }) => dir)).toEqual(["britzl/boom"]);
+      expect(readLibraryData(root).map(({ dir }) => dir)).toEqual(["github.com/britzl/boom"]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  test("a library in a top-level folder is refused, naming its owner/repo folder", () => {
+  test("a library left at owner/repo is refused, naming its host/owner/repo folder", () => {
+    const root = mkdtempSync(join(tmpdir(), "library-data-"));
+    try {
+      writeBoom(root, "owner/mylib", "https://github.com/owner/mylib");
+
+      const refused = refusalOf(root);
+      expect(refused.library).toBe("owner/mylib");
+      expect(refused.message).toContain("belongs in folder github.com/owner/mylib");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a library in a top-level folder is refused, naming its host/owner/repo folder", () => {
     const root = mkdtempSync(join(tmpdir(), "library-data-"));
     try {
       writeBoom(root, "boom", "https://github.com/Britzl/Boom");
 
-      expect(refusalOf(root).message).toContain("britzl/boom");
+      expect(refusalOf(root).message).toContain("github.com/britzl/boom");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -630,11 +676,15 @@ describe("readLibraryData reads a library's coverage floors and parity exception
               upstreamSource: "source/upstream/box2d/src/box2d.cpp",
             },
           };
-    write(root, `${folder === "flow" ? "pause-games/flow" : "owner/box2d"}/library.json`, {
-      ...library,
-      floors,
-      ...(parityExceptions === undefined ? {} : { parityExceptions }),
-    });
+    write(
+      root,
+      `${folder === "flow" ? "github.com/pause-games/flow" : "github.com/owner/box2d"}/library.json`,
+      {
+        ...library,
+        floors,
+        ...(parityExceptions === undefined ? {} : { parityExceptions }),
+      },
+    );
     return root;
   }
 
@@ -694,7 +744,7 @@ describe("readLibraryData reads a library's coverage floors and parity exception
   // own key, where a `{ __proto__: 1 }` literal sets a prototype and writes no key.
   function writeProtoFloor(lane: "luals" | "fork", floor: unknown): string {
     const root = mkdtempSync(join(tmpdir(), "library-data-"));
-    write(root, "owner/lib/library.json", {
+    write(root, "github.com/owner/lib/library.json", {
       repo: "https://github.com/owner/lib",
       ...(lane === "fork"
         ? {
@@ -711,9 +761,9 @@ describe("readLibraryData reads a library's coverage floors and parity exception
         : {}),
       floors: JSON.parse(`{"__proto__": ${JSON.stringify(floor)}}`),
     });
-    write(root, "owner/lib/reviewed.json", { ref: "v1.0.0" });
+    write(root, "github.com/owner/lib/reviewed.json", { ref: "v1.0.0" });
     if (lane === "luals") {
-      write(root, "owner/lib/recipe.json", {
+      write(root, "github.com/owner/lib/recipe.json", {
         luals: [{ sourceGlobs: ["**/*.lua"], moduleId: "__proto__", namespace: "lib" }],
       });
     }
@@ -754,13 +804,13 @@ describe("readLibraryData reads a library's coverage floors and parity exception
 
   test("a floor for a module the library does not serve is refused, naming the library and the key", () => {
     const error = refusal(writeFloors({ "flow.gone": 1 }));
-    expect(error.library).toBe("pause-games/flow");
+    expect(error.library).toBe("github.com/pause-games/flow");
     expect(error.message).toContain('"flow.gone"');
   });
 
   test("a floor for a fork that records a parity verdict is refused, since nothing measures it", () => {
     const root = writeDataFolder();
-    write(root, "pause-games/flow/library.json", {
+    write(root, "github.com/pause-games/flow/library.json", {
       repo: "https://github.com/Pause-Games/flow",
       floors: { "flow.ui": { callable: 1, field: 1 } },
       forks: [
@@ -774,7 +824,7 @@ describe("readLibraryData reads a library's coverage floors and parity exception
       ],
     });
     const error = refusal(root);
-    expect(error.library).toBe("pause-games/flow");
+    expect(error.library).toBe("github.com/pause-games/flow");
     expect(error.message).toContain('"flow.ui"');
   });
 
@@ -811,7 +861,7 @@ describe("readLibraryData reads a library's coverage floors and parity exception
   test("parity exceptions for a fork the library does not measure are refused, naming the key", () => {
     const entry = { name: "init", kind: "script-lifecycle", reason: "ui.lua:1 says so" };
     const error = refusal(writeFloors({}, { "flow.gone": [entry] }));
-    expect(error.library).toBe("pause-games/flow");
+    expect(error.library).toBe("github.com/pause-games/flow");
     expect(error.message).toContain('"flow.gone"');
   });
 
@@ -825,7 +875,7 @@ describe("readLibraryData reads a library's coverage floors and parity exception
     ];
     for (const [raw, message] of malformed) {
       const error = refusal(writeFloors({}, raw));
-      expect(error.library).toBe("pause-games/flow");
+      expect(error.library).toBe("github.com/pause-games/flow");
       expect(error.message).toMatch(message);
     }
   });
@@ -845,10 +895,10 @@ describe("a library's recorded reviews", () => {
     const root = writeDataFolder();
     try {
       expect(readLibraryData(root).map(({ dir }) => dir)).toEqual([
-        "owner/box2d",
-        "pause-games/flow",
+        "github.com/owner/box2d",
+        "github.com/pause-games/flow",
       ]);
-      expect(readLibraryReviews(root, "pause-games/flow")).toBeNull();
+      expect(readLibraryReviews(root, "github.com/pause-games/flow")).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -857,12 +907,12 @@ describe("a library's recorded reviews", () => {
   test("a written review reads back through the reader", () => {
     const root = writeDataFolder();
     try {
-      writeReviewedJson(root, "pause-games/flow", { ref: "v1.2.0", reviews: [REVIEW] });
+      writeReviewedJson(root, "github.com/pause-games/flow", { ref: "v1.2.0", reviews: [REVIEW] });
 
-      expect(readLibraryData(root).find(({ dir }) => dir === "pause-games/flow")?.ref).toBe(
-        "v1.2.0",
-      );
-      expect(readLibraryReviews(root, "pause-games/flow")).toEqual([REVIEW]);
+      expect(
+        readLibraryData(root).find(({ dir }) => dir === "github.com/pause-games/flow")?.ref,
+      ).toBe("v1.2.0");
+      expect(readLibraryReviews(root, "github.com/pause-games/flow")).toEqual([REVIEW]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -883,7 +933,7 @@ describe("a library's recorded reviews", () => {
     test(`${what} is refused, naming reviewed.json and the library`, () => {
       const root = writeDataFolder();
       try {
-        write(root, "pause-games/flow/reviewed.json", { ref: "v1.2.0", reviews });
+        write(root, "github.com/pause-games/flow/reviewed.json", { ref: "v1.2.0", reviews });
 
         let refused: unknown;
         try {
@@ -893,8 +943,10 @@ describe("a library's recorded reviews", () => {
         }
 
         expect(refused).toBeInstanceOf(LibraryDataError);
-        expect((refused as LibraryDataError).library).toBe("pause-games/flow");
-        expect((refused as LibraryDataError).message).toContain("pause-games/flow/reviewed.json");
+        expect((refused as LibraryDataError).library).toBe("github.com/pause-games/flow");
+        expect((refused as LibraryDataError).message).toContain(
+          "github.com/pause-games/flow/reviewed.json",
+        );
         expect((refused as LibraryDataError).message).toContain(field);
       } finally {
         rmSync(root, { recursive: true, force: true });

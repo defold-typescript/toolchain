@@ -19,7 +19,7 @@ import {
   LIBRARY_DATA_MAIN_URL,
   libraryDataCacheDir,
 } from "./library-data-archive";
-import { matchLibraryName } from "./library-match";
+import { matchLibraryName, namesSelectedBy } from "./library-match";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
@@ -145,19 +145,32 @@ function selectLibraryData(
   });
 }
 
+// The library `library` names: a dependency URL as `resolve` matches it, else the one
+// library a typed name selects; "" when none does.
+function exportedLibrary(library: string, names: readonly string[]): string {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(library)) {
+    const match = matchLibraryName(library, names);
+    if (match?.kind === "shared") {
+      throw new Error(
+        `"${library}" shares its repo name with ${match.names.join(", ")}: name one as host/owner/repo`,
+      );
+    }
+    return match?.name ?? "";
+  }
+  const selected = namesSelectedBy(library, names);
+  if (selected.length > 1) {
+    throw new Error(`"${library}" names more than one library: ${selected.join(", ")}`);
+  }
+  return selected[0] ?? "";
+}
+
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
   const cliVersion = opts.cliVersion ?? readCliVersion();
   const data = await selectLibraryData(opts, cliVersion);
-  const match = matchLibraryName(
+  const sourceId = exportedLibrary(
     opts.library,
     readLibraryDataOrNone(data.dir, cliVersion).map(({ dir }) => dir),
   );
-  if (match?.kind === "shared") {
-    throw new Error(
-      `"${opts.library}" shares its repo name with ${match.names.join(", ")}: name one as owner/repo`,
-    );
-  }
-  const sourceId = match?.name ?? "";
   const sources = sourceId === "" ? [] : await curatedFiles(sourceId, data.dir, cliVersion);
   if (sources.length === 0) {
     const why = data.reason === undefined ? "" : `: ${data.reason}`;

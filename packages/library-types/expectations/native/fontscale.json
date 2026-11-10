@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "myopic-design/defold-fontscale",
+    "sourceId": "github.com/myopic-design/defold-fontscale",
     "manifestDir": "fontscale"
   },
   "resolve": {

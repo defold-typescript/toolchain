@@ -49,7 +49,7 @@ describe("loadVendoredLibraryRegistry", () => {
       });
       expect(loadVendoredLibraryRegistry(dir)).toEqual([
         {
-          sourceId: "owner/dicebag",
+          sourceId: "github.com/owner/dicebag",
           modules: ["dicebag.dicebag"],
           namespaces: { "dicebag.dicebag": "dicebag" },
         },
@@ -61,7 +61,7 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("includes the druid LuaLS target alongside the pure-Lua entries", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
-    const druid = registry.find((library) => library.sourceId === "insality/druid");
+    const druid = registry.find((library) => library.sourceId === "github.com/insality/druid");
     expect(druid).toBeDefined();
     expect(druid?.modules).toEqual(["druid.druid"]);
     expect(druid?.namespaces?.["druid.druid"]).toBe("druid");
@@ -71,7 +71,9 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("includes the bridge script_api target so resolve still materializes it", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
-    const bridge = registry.find((library) => library.sourceId === "playgama/bridge-defold");
+    const bridge = registry.find(
+      (library) => library.sourceId === "github.com/playgama/bridge-defold",
+    );
     expect(bridge).toBeDefined();
     expect(bridge?.modules).toEqual(["bridge.bridge"]);
     expect(bridge?.namespaces?.["bridge.bridge"]).toBe("bridge");
@@ -79,7 +81,7 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("includes the defcon authored target so resolve materializes its dotted module", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
-    const defcon = registry.find((library) => library.sourceId === "britzl/defcon");
+    const defcon = registry.find((library) => library.sourceId === "github.com/britzl/defcon");
     expect(defcon).toBeDefined();
     expect(defcon?.modules).toEqual(["defcon.console"]);
     expect(defcon?.namespaces?.["defcon.console"]).toBe("defcon");
@@ -87,7 +89,9 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("groups defold-saver's two modules into a single entry with both generated stems", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
-    const saver = registry.filter((library) => library.sourceId === "insality/defold-saver");
+    const saver = registry.filter(
+      (library) => library.sourceId === "github.com/insality/defold-saver",
+    );
     expect(saver).toHaveLength(1);
     expect(saver[0]?.modules).toEqual(["saver.saver", "saver.storage"]);
     expect(saver[0]?.namespaces?.["saver.saver"]).toBe("saver.saver");
@@ -96,7 +100,9 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("keeps nakama-defold's five modules in one entry now that all come from the authored lane", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
-    const nakama = registry.filter((library) => library.sourceId === "heroiclabs/nakama-defold");
+    const nakama = registry.filter(
+      (library) => library.sourceId === "github.com/heroiclabs/nakama-defold",
+    );
     expect(nakama).toHaveLength(1);
     expect(nakama[0]?.modules).toEqual([
       "nakama.engine.defold",
@@ -120,7 +126,7 @@ describe("loadVendoredLibraryRegistry", () => {
   test("keeps defold-gamepush's entry module and its 32 typed modules in one entry", () => {
     const registry = loadVendoredLibraryRegistry(LIBRARY_DATA_DIR);
     const gamepush = registry.filter(
-      (library) => library.sourceId === "megalanthus/defold-gamepush",
+      (library) => library.sourceId === "github.com/megalanthus/defold-gamepush",
     );
     expect(gamepush).toHaveLength(1);
     const core = [
@@ -193,10 +199,10 @@ describe("loadVendoredNativeRegistry", () => {
     withRoot(write, (root) => {
       expect(loadVendoredNativeRegistry(root)).toEqual([
         {
-          sourceId: "selimanac/defold-daabbcc",
+          sourceId: "github.com/selimanac/defold-daabbcc",
           namespace: "daabbcc",
           manifestDir: "daabbcc",
-          declarationPath: join(root, "selimanac/defold-daabbcc/fork/daabbcc.d.ts"),
+          declarationPath: join(root, "github.com/selimanac/defold-daabbcc/fork/daabbcc.d.ts"),
         },
       ]);
     });
@@ -211,8 +217,8 @@ describe("loadVendoredNativeRegistry", () => {
     );
     withRoot(
       (root) => {
-        mkdirSync(join(root, "britzl/defold-sharing"), { recursive: true });
-        writeFileSync(join(root, "britzl/defold-sharing", "library.json"), "{ not json");
+        mkdirSync(join(root, "github.com/britzl/defold-sharing"), { recursive: true });
+        writeFileSync(join(root, "github.com/britzl/defold-sharing", "library.json"), "{ not json");
       },
       (root) => {
         expect(loadVendoredNativeRegistry(root)).toEqual([]);

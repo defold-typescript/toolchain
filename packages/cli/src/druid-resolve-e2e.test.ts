@@ -19,10 +19,14 @@ import { runResolve } from "./resolve";
 const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryDataDir = LIBRARY_DATA_DIR;
-const vendoredDruid = join(libraryDataDir, "insality/druid", "source", "druid");
+const vendoredDruid = join(libraryDataDir, "github.com/insality/druid", "source", "druid");
 
 const druidRegistry = [
-  { sourceId: "insality/druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
+  {
+    sourceId: "github.com/insality/druid",
+    modules: ["druid.druid"],
+    namespaces: { "druid.druid": "druid" },
+  },
 ];
 
 function tmp(): string {
@@ -84,7 +88,7 @@ async function resolveDruid(cwd: string): Promise<void> {
   expect(result.libraries).toEqual([
     {
       url,
-      source: "insality/druid",
+      source: "github.com/insality/druid",
       modules: ["druid.druid"],
       provenance: "vendored",
       verified: true,

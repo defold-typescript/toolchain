@@ -34,7 +34,7 @@ async function comparison() {
   const target = nakamaTarget();
   const emitted = await emitOpenApiDeclaration(LANE_EVALUATIONS_ROOT, target);
   const snapshot = readFileSync(
-    join(DATA_DIR, "heroiclabs/nakama-defold/fork", `${target.moduleId}.d.ts`),
+    join(DATA_DIR, "github.com/heroiclabs/nakama-defold/fork", `${target.moduleId}.d.ts`),
     "utf8",
   );
   return { target, ...compareFidelityToTsDefold(emitted, snapshot) };

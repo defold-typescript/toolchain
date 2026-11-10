@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "britzl/defold-sharing",
+    "sourceId": "github.com/britzl/defold-sharing",
     "manifestDir": "share"
   },
   "resolve": {

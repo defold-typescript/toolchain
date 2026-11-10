@@ -4952,7 +4952,7 @@ describe("dispatch resolve", () => {
     return {
       resolveInternals: {
         cacheDir,
-        libraryRegistry: [{ sourceId: "owner/mylib", modules: ["mylib.core"] }],
+        libraryRegistry: [{ sourceId: "github.com/owner/mylib", modules: ["mylib.core"] }],
         libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
@@ -4989,7 +4989,7 @@ describe("dispatch resolve", () => {
     return {
       resolveInternals: {
         cacheDir,
-        libraryRegistry: [{ sourceId: "owner/mylib", modules: ["mylib.core"] }],
+        libraryRegistry: [{ sourceId: "github.com/owner/mylib", modules: ["mylib.core"] }],
         libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
@@ -5027,7 +5027,7 @@ describe("dispatch resolve", () => {
     expect(parsed.libraries).toEqual([
       {
         url,
-        source: "owner/mylib",
+        source: "github.com/owner/mylib",
         modules: ["mylib.core"],
         provenance: "vendored",
         verified: true,
@@ -5137,7 +5137,13 @@ describe("dispatch resolve", () => {
       libraries: { url: string; source: string; modules: string[]; verified: boolean }[];
     };
     expect(parsed.libraries).toEqual([
-      { url, source: "owner/mylib", modules: [], provenance: "vendored", verified: false },
+      {
+        url,
+        source: "github.com/owner/mylib",
+        modules: [],
+        provenance: "vendored",
+        verified: false,
+      },
     ] as unknown as typeof parsed.libraries);
   });
 
@@ -5181,7 +5187,7 @@ describe("dispatch resolve", () => {
         cacheDir,
         libraryRegistry: [
           {
-            sourceId: "owner/mylib",
+            sourceId: "github.com/owner/mylib",
             modules: ["mylib.core"],
             namespaces: { "mylib.core": "alpha" },
           },
@@ -5674,7 +5680,7 @@ describe("dispatch resolve", () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { libraries: { source: string; modules: string[] }[] };
     expect(parsed.libraries.map(({ source, modules }) => ({ source, modules }))).toEqual([
-      { source: "owner/mylib", modules: ["mylib.core"] },
+      { source: "github.com/owner/mylib", modules: ["mylib.core"] },
     ]);
   });
 
@@ -9742,10 +9748,10 @@ describe("dispatch library check fork doc notices", () => {
     dispatch(["library", "check", "--data", base, ...args], io, { cliVersion: "0.61.0" });
 
   const noticeLine = (): string =>
-    `example/fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc ${fixtureFlushPin()}\n`;
+    `github.com/example/fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc ${fixtureFlushPin()}\n`;
 
   const notice = () => ({
-    library: "example/fixture-fork",
+    library: "github.com/example/fixture-fork",
     module: "tally.tally",
     member: "flush",
     kind: "unpinned",
@@ -9786,7 +9792,12 @@ describe("dispatch library check fork doc notices", () => {
 
   test("a folder with a problem exits 1 and lists the notices too", async () => {
     const dataDir = writeData();
-    const usage = path.join(dataDir, "example/fixture-fork", "usage", "tally-usage.test-d.ts");
+    const usage = path.join(
+      dataDir,
+      "github.com/example/fixture-fork",
+      "usage",
+      "tally-usage.test-d.ts",
+    );
     writeFileSync(usage, `${readFileSync(usage, "utf8")}tally.missing();\n`);
     const { io, out } = captureStreams();
 
@@ -9794,7 +9805,7 @@ describe("dispatch library check fork doc notices", () => {
 
     expect(code).toBe(1);
     expect(out()).toMatch(
-      /^example\/fixture-fork: compile: usage\/tally-usage\.test-d\.ts:\d+ .*'missing'.*\n/,
+      /^github\.com\/example\/fixture-fork: compile: usage\/tally-usage\.test-d\.ts:\d+ .*'missing'.*\n/,
     );
     expect(out().endsWith(noticeLine())).toBe(true);
 
@@ -9811,7 +9822,9 @@ describe("dispatch library check fork doc notices", () => {
     const code = await run([], io);
 
     expect(code).toBe(1);
-    expect(out()).toMatch(/^example\/fixture-fork: print: [^\n]*tally\.broken[^\n]*\n/);
+    expect(out()).toMatch(
+      /^github\.com\/example\/fixture-fork: print: [^\n]*tally\.broken[^\n]*\n/,
+    );
     expect(out().endsWith(noticeLine())).toBe(true);
     expect(err()).toContain(": 1 problem in ");
 
@@ -9821,7 +9834,7 @@ describe("dispatch library check fork doc notices", () => {
       ok: false,
       problems: [
         {
-          library: "example/fixture-fork",
+          library: "github.com/example/fixture-fork",
           check: "print",
           message: expect.stringContaining("tally.broken"),
         },
@@ -9871,10 +9884,13 @@ describe("dispatch library check", () => {
         },
       ],
     });
-    mkdirSync(path.join(dataDir, "owner/mylib", "fork"), { recursive: true });
-    writeFileSync(path.join(dataDir, "owner/mylib", "fork", "mylib.core.d.ts"), FORK);
-    mkdirSync(path.join(dataDir, "owner/mylib", "usage"), { recursive: true });
-    writeFileSync(path.join(dataDir, "owner/mylib", "usage", "core.test-d.ts"), usage(call));
+    mkdirSync(path.join(dataDir, "github.com/owner/mylib", "fork"), { recursive: true });
+    writeFileSync(path.join(dataDir, "github.com/owner/mylib", "fork", "mylib.core.d.ts"), FORK);
+    mkdirSync(path.join(dataDir, "github.com/owner/mylib", "usage"), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, "github.com/owner/mylib", "usage", "core.test-d.ts"),
+      usage(call),
+    );
     mkdirSync(path.join(base, "0.2.0", "broken"), { recursive: true });
     writeFileSync(path.join(base, "0.2.0", "broken", "library.json"), "{}");
     return dataDir;
@@ -9895,9 +9911,9 @@ describe("dispatch library check", () => {
       })),
     });
     apiDocs.forEach((_, index) => {
-      mkdirSync(path.join(dataDir, `owner/lib${index}`, "fork"), { recursive: true });
+      mkdirSync(path.join(dataDir, `github.com/owner/lib${index}`, "fork"), { recursive: true });
       writeFileSync(
-        path.join(dataDir, `owner/lib${index}`, "fork", "main.d.ts"),
+        path.join(dataDir, `github.com/owner/lib${index}`, "fork", "main.d.ts"),
         `declare module 'lib${index}.main' {\n  export function start(): void;\n}\n`,
       );
     });
@@ -9926,7 +9942,9 @@ describe("dispatch library check", () => {
     const code = await run(["check", "--data", base], io);
 
     expect(code).toBe(1);
-    expect(out()).toMatch(/^owner\/mylib: compile: usage\/core\.test-d\.ts:6 .*'stop'.*\n$/);
+    expect(out()).toMatch(
+      /^github\.com\/owner\/mylib: compile: usage\/core\.test-d\.ts:6 .*'stop'.*\n$/,
+    );
   });
 
   test("--json reports the subcommand and the problems", async () => {
@@ -9944,7 +9962,7 @@ describe("dispatch library check", () => {
       dataFolder: dataDir,
       problems: [
         {
-          library: "owner/mylib",
+          library: "github.com/owner/mylib",
           check: "compile",
           message: expect.stringMatching(/^usage\/core\.test-d\.ts:6 .*'stop'/),
         },
@@ -10136,19 +10154,19 @@ describe("dispatch library add", () => {
     expect(code).toBe(0);
     expect(out()).toBe(
       [
-        `defold-typescript library add: wrote ${path.join(dataDir, "owner/mylib")}`,
+        `defold-typescript library add: wrote ${path.join(dataDir, "github.com/owner/mylib")}`,
         `next: defold-typescript library check --data ${dataFlag()}`,
         "",
       ].join("\n"),
     );
     const reviewed = JSON.parse(
-      readFileSync(path.join(dataDir, "owner/mylib", "reviewed.json"), "utf8"),
+      readFileSync(path.join(dataDir, "github.com/owner/mylib", "reviewed.json"), "utf8"),
     ) as { ref: string; reviews: unknown[] };
     expect(reviewed.ref).toBe("1.2.3");
     expect(reviewed.reviews).toHaveLength(1);
-    expect(existsSync(path.join(dataDir, "owner/mylib", "source/mylib/mylib/mylib.lua"))).toBe(
-      true,
-    );
+    expect(
+      existsSync(path.join(dataDir, "github.com/owner/mylib", "source/mylib/mylib/mylib.lua")),
+    ).toBe(true);
     expect(readdirSync(path.join(base, "data", "0.2.0"))).toEqual([]);
   });
 
@@ -10189,9 +10207,9 @@ describe("dispatch library add", () => {
       command: "library",
       ok: true,
       subcommand: "add",
-      library: "owner/mylib",
+      library: "github.com/owner/mylib",
       dataFolder: dataDir,
-      written: [path.join(dataDir, "owner/mylib")],
+      written: [path.join(dataDir, "github.com/owner/mylib")],
       warnings: [],
     });
   });
@@ -10217,14 +10235,14 @@ describe("dispatch library add", () => {
   });
 
   test("a library that already exists exits 1 with the addLibrary error", async () => {
-    mkdirSync(path.join(dataDir, "owner/mylib"), { recursive: true });
+    mkdirSync(path.join(dataDir, "github.com/owner/mylib"), { recursive: true });
     const { io, out, err } = captureStreams();
 
     const code = await run([TAG_URL, "--data", dataFlag()], io);
 
     expect(code).toBe(1);
     expect(out()).toBe("");
-    expect(err()).toContain("library folder owner/mylib already exists");
+    expect(err()).toContain("library folder github.com/owner/mylib already exists");
   });
 });
 
@@ -10239,7 +10257,7 @@ describe("dispatch library review", () => {
     mkdirSync(path.join(dataDir, folder), { recursive: true });
     writeFileSync(
       path.join(dataDir, folder, "library.json"),
-      JSON.stringify({ repo: `https://github.com/${folder}` }),
+      JSON.stringify({ repo: `https://${folder}` }),
     );
     writeFileSync(path.join(dataDir, folder, "reviewed.json"), JSON.stringify({ ref }));
   };
@@ -10248,8 +10266,8 @@ describe("dispatch library review", () => {
     base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-review-"));
     failing = new Set([BAD_URL]);
     dataDir = path.join(base, "data", "0.1.0");
-    writeLibrary("owner/first", "1.0.0");
-    writeLibrary("owner/second", "2.0.0");
+    writeLibrary("github.com/owner/first", "1.0.0");
+    writeLibrary("github.com/owner/second", "2.0.0");
     // Newer than this CLI, so landing here shows the flag was not read as `check` reads it.
     mkdirSync(path.join(base, "data", "0.2.0"));
   });
@@ -10287,45 +10305,47 @@ describe("dispatch library review", () => {
 
   test("a named library is recorded, reported and exits 0", async () => {
     const { io, out, err } = captureStreams();
-    const untouched = readFileSync(reviewedPath("owner/second"), "utf8");
+    const untouched = readFileSync(reviewedPath("github.com/owner/second"), "utf8");
 
-    const code = await run(["owner/first", "--data", dataFlag()], io);
+    const code = await run(["github.com/owner/first", "--data", dataFlag()], io);
 
     expect(err()).toBe("");
     expect(code).toBe(0);
     expect(out()).toBe(
       [
-        `owner/first: recorded ${COMMIT}`,
+        `github.com/owner/first: recorded ${COMMIT}`,
         `defold-typescript library review: ${dataDir}: 1 reviewed, 0 failed`,
         "",
       ].join("\n"),
     );
-    expect(readFileSync(reviewedPath("owner/second"), "utf8")).toBe(untouched);
+    expect(readFileSync(reviewedPath("github.com/owner/second"), "utf8")).toBe(untouched);
     expect(readdirSync(path.join(base, "data", "0.2.0"))).toEqual([]);
   });
 
   test("--json reports each review and added is false on a repeat run", async () => {
     const first = captureStreams();
-    expect(await run(["owner/first", "--data", dataFlag(), "--json"], first.io)).toBe(0);
+    expect(await run(["github.com/owner/first", "--data", dataFlag(), "--json"], first.io)).toBe(0);
     expect(JSON.parse(first.out())).toEqual({
       command: "library",
       ok: true,
       subcommand: "review",
       dataFolder: dataDir,
-      written: [reviewedPath("owner/first")],
-      reviewed: [{ library: "owner/first", commit: COMMIT, added: true }],
+      written: [reviewedPath("github.com/owner/first")],
+      reviewed: [{ library: "github.com/owner/first", commit: COMMIT, added: true }],
       failed: [],
     });
 
     const repeat = captureStreams();
-    expect(await run(["owner/first", "--data", dataFlag(), "--json"], repeat.io)).toBe(0);
+    expect(await run(["github.com/owner/first", "--data", dataFlag(), "--json"], repeat.io)).toBe(
+      0,
+    );
     expect(JSON.parse(repeat.out())).toEqual({
       command: "library",
       ok: true,
       subcommand: "review",
       dataFolder: dataDir,
       written: [],
-      reviewed: [{ library: "owner/first", commit: COMMIT, added: false }],
+      reviewed: [{ library: "github.com/owner/first", commit: COMMIT, added: false }],
       failed: [],
     });
   });
@@ -10336,32 +10356,36 @@ describe("dispatch library review", () => {
     const code = await run(["--data", dataFlag()], io);
 
     expect(code).toBe(1);
-    expect(out()).toContain(`owner/first: recorded ${COMMIT}`);
-    expect(err()).toContain("owner/second: ");
+    expect(out()).toContain(`github.com/owner/first: recorded ${COMMIT}`);
+    expect(err()).toContain("github.com/owner/second: ");
     expect(err()).toContain("HTTP 404");
     expect(err()).toContain("library review: error: ");
-    expect(JSON.parse(readFileSync(reviewedPath("owner/first"), "utf8")).reviews).toHaveLength(1);
-    expect(JSON.parse(readFileSync(reviewedPath("owner/second"), "utf8"))).toEqual({
+    expect(
+      JSON.parse(readFileSync(reviewedPath("github.com/owner/first"), "utf8")).reviews,
+    ).toHaveLength(1);
+    expect(JSON.parse(readFileSync(reviewedPath("github.com/owner/second"), "utf8"))).toEqual({
       ref: "2.0.0",
     });
   });
 
   test("a failed download fails the library even with a cached copy", async () => {
     const firstUrl = "https://github.com/owner/first/archive/1.0.0.zip";
-    expect(await run(["owner/first", "--data", dataFlag()], captureStreams().io)).toBe(0);
-    writeLibrary("owner/first", "1.0.0");
-    const restored = readFileSync(reviewedPath("owner/first"), "utf8");
+    expect(await run(["github.com/owner/first", "--data", dataFlag()], captureStreams().io)).toBe(
+      0,
+    );
+    writeLibrary("github.com/owner/first", "1.0.0");
+    const restored = readFileSync(reviewedPath("github.com/owner/first"), "utf8");
     failing = new Set([firstUrl]);
     const { io, out, err } = captureStreams();
 
     const code = await run(["--data", dataFlag()], io);
 
     expect(code).toBe(1);
-    expect(err()).toContain("owner/first: ");
+    expect(err()).toContain("github.com/owner/first: ");
     expect(err()).toContain("HTTP 404");
     expect(err()).toContain("library review: error: ");
-    expect(out()).toContain(`owner/second: recorded ${COMMIT}`);
-    expect(readFileSync(reviewedPath("owner/first"), "utf8")).toBe(restored);
+    expect(out()).toContain(`github.com/owner/second: recorded ${COMMIT}`);
+    expect(readFileSync(reviewedPath("github.com/owner/first"), "utf8")).toBe(restored);
   });
 
   test("--json on a failed download exits 1 with both lists", async () => {
@@ -10376,8 +10400,10 @@ describe("dispatch library review", () => {
       error: `library review: 1 failed in ${dataDir}`,
       subcommand: "review",
       dataFolder: dataDir,
-      reviewed: [{ library: "owner/first", commit: COMMIT, added: true }],
-      failed: [{ library: "owner/second", message: expect.stringContaining("HTTP 404") }],
+      reviewed: [{ library: "github.com/owner/first", commit: COMMIT, added: true }],
+      failed: [
+        { library: "github.com/owner/second", message: expect.stringContaining("HTTP 404") },
+      ],
     });
   });
 
@@ -10390,7 +10416,9 @@ describe("dispatch library review", () => {
     expect(out()).toBe("");
     expect(err()).toContain("library review: error: ");
     expect(err()).toContain("nope");
-    expect(JSON.parse(readFileSync(reviewedPath("owner/first"), "utf8"))).toEqual({ ref: "1.0.0" });
+    expect(JSON.parse(readFileSync(reviewedPath("github.com/owner/first"), "utf8"))).toEqual({
+      ref: "1.0.0",
+    });
   });
 
   test("no --data exits 1 naming the review verb", async () => {
@@ -10469,7 +10497,7 @@ describe("dispatch library update", () => {
     mkdirSync(path.join(dataDir, folder), { recursive: true });
     writeFileSync(
       path.join(dataDir, folder, "library.json"),
-      JSON.stringify({ repo: `https://github.com/${folder}` }),
+      JSON.stringify({ repo: `https://${folder}` }),
     );
     writeFileSync(reviewedPath(folder), JSON.stringify({ ref: "1.0.0" }));
   };
@@ -10477,9 +10505,9 @@ describe("dispatch library update", () => {
   beforeEach(async () => {
     base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-update-"));
     dataDir = path.join(base, "data", "0.1.0");
-    writeLibrary("owner/first");
+    writeLibrary("github.com/owner/first");
     const reviewed = await dispatch(
-      ["library", "review", "owner/first", "--data", path.join(base, "data")],
+      ["library", "review", "github.com/owner/first", "--data", path.join(base, "data")],
       captureStreams().io,
       {
         cliVersion: "0.1.5",
@@ -10506,10 +10534,10 @@ describe("dispatch library update", () => {
       ok: true,
       subcommand: "update",
       dataFolder: reportedDir(),
-      written: [`${reportedDir()}/owner/first/reviewed.json`],
+      written: [`${reportedDir()}/github.com/owner/first/reviewed.json`],
       updated: [
         {
-          library: "owner/first",
+          library: "github.com/owner/first",
           status: "regenerated",
           recorded: [],
           differs: [NEWER],
@@ -10521,7 +10549,9 @@ describe("dispatch library update", () => {
       ],
       failed: [],
     });
-    expect(JSON.parse(readFileSync(reviewedPath("owner/first"), "utf8")).ref).toBe("1.1.0");
+    expect(JSON.parse(readFileSync(reviewedPath("github.com/owner/first"), "utf8")).ref).toBe(
+      "1.1.0",
+    );
   });
 
   test("--json names the file it changed by an absolute forward-slash path", async () => {
@@ -10539,20 +10569,20 @@ describe("dispatch library update", () => {
     expect(path.isAbsolute(changed)).toBe(true);
     expect(changed).not.toContain("\\");
     expect(existsSync(changed)).toBe(true);
-    expect(path.resolve(changed)).toBe(path.resolve(reviewedPath("owner/first")));
+    expect(path.resolve(changed)).toBe(path.resolve(reviewedPath("github.com/owner/first")));
   });
 
   test("the plain report names each commit and the counts", async () => {
     const { io, out, err } = captureStreams();
 
-    const code = await run(["owner/first", "--data", dataFlag()], io);
+    const code = await run(["github.com/owner/first", "--data", dataFlag()], io);
 
     expect(err()).toBe("");
     expect(code).toBe(0);
     expect(out()).toBe(
       [
-        `owner/first: differs at ${NEWER}`,
-        "owner/first: moved to 1.1.0 (changed)",
+        `github.com/owner/first: differs at ${NEWER}`,
+        "github.com/owner/first: moved to 1.1.0 (changed)",
         `defold-typescript library update: ${reportedDir()}: 1 checked, 0 failed`,
         "",
       ].join("\n"),
@@ -10560,19 +10590,21 @@ describe("dispatch library update", () => {
   });
 
   test("a failing library exits 1, names it on stderr and still updates the others", async () => {
-    writeLibrary("owner/second");
+    writeLibrary("github.com/owner/second");
     const { io, out, err } = captureStreams();
 
     const code = await run(["--data", dataFlag()], io);
 
     expect(code).toBe(1);
     expect(err()).toContain("library update: error: ");
-    expect(err()).toContain("owner/second: GET https://github.com/owner/second responded 503");
-    expect(out()).toContain(`owner/first: differs at ${NEWER}`);
+    expect(err()).toContain(
+      "github.com/owner/second: GET https://github.com/owner/second responded 503",
+    );
+    expect(out()).toContain(`github.com/owner/first: differs at ${NEWER}`);
   });
 
   test("--json on a failure exits 1 with both lists", async () => {
-    writeLibrary("owner/second");
+    writeLibrary("github.com/owner/second");
     const { io, out } = captureStreams();
 
     const code = await run(["--data", dataFlag(), "--json"], io);
@@ -10582,8 +10614,8 @@ describe("dispatch library update", () => {
       ok: false,
       error: `library update: 1 failed in ${reportedDir()}`,
       subcommand: "update",
-      updated: [{ library: "owner/first", status: "regenerated" }],
-      failed: [{ library: "owner/second" }],
+      updated: [{ library: "github.com/owner/first", status: "regenerated" }],
+      failed: [{ library: "github.com/owner/second" }],
     });
   });
 
@@ -10661,7 +10693,9 @@ describe("library data from the data repo", () => {
     path.join(cwd, ".defold-types", librariesDirName(readCliVersion()), "mylib.core.d.ts");
   const recordedCommit = () => {
     const read = readProjectLock(cwd);
-    return read.status === "ok" ? read.lock.libraryData?.libraries["owner/mylib"] : undefined;
+    return read.status === "ok"
+      ? read.lock.libraryData?.libraries["github.com/owner/mylib"]
+      : undefined;
   };
   // This fixture's data records no reviews, which `resolve` says on every run.
   const unrecordedLine = () =>
@@ -10781,7 +10815,9 @@ describe("library data from the data repo", () => {
       expect(code).toBe(0);
       expect(recordedCommit()).toBe(COMMIT);
       expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
-      expect(err()).toContain("defold-typescript resolve: newer library data changes owner/mylib;");
+      expect(err()).toContain(
+        "defold-typescript resolve: newer library data changes github.com/owner/mylib;",
+      );
       expect(err()).toContain("resolve --update");
       expect(err()).not.toContain("warning: newer library data");
       expect(out()).not.toContain("resolve --update");
@@ -10849,7 +10885,9 @@ describe("library data from the data repo", () => {
 
       expect(await result).toBe(0);
       expect(recordedCommit()).toBe(COMMIT);
-      expect(err()).toContain("defold-typescript resolve: newer library data changes owner/mylib;");
+      expect(err()).toContain(
+        "defold-typescript resolve: newer library data changes github.com/owner/mylib;",
+      );
       expect(err()).not.toContain("warning: newer library data");
       rmSync(sourceGeneratedDir, { recursive: true, force: true });
     });
@@ -11082,7 +11120,7 @@ describe("library data from the data repo", () => {
 
     expect(code).toBe(1);
     expect(`${out()}${err()}`).toContain("nope");
-    expect(`${out()}${err()}`).toContain("owner/mylib");
+    expect(`${out()}${err()}`).toContain("github.com/owner/mylib");
     expect(requests).toEqual([]);
     expect(existsSync(path.join(cwd, PROJECT_LOCK_FILE))).toBe(false);
     expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
@@ -11133,7 +11171,7 @@ describe("dispatch resolve library status", () => {
     const libraryDataDir = writeAuthoredLibraryData({
       "statuslib.core": 'declare module "statuslib.core" {}\n',
     });
-    writeReviewedJson(libraryDataDir, "owner/statuslib", { ref: "1.0.0", reviews });
+    writeReviewedJson(libraryDataDir, "github.com/owner/statuslib", { ref: "1.0.0", reviews });
     const project = tempDir();
     writeFileSync(path.join(project, "game.project"), `[project]\ndependencies#0 = ${URL}\n`);
     return {
@@ -11198,7 +11236,7 @@ describe("dispatch resolve library status", () => {
     cpSync(internals.resolveInternals.libraryDataDir, folder, { recursive: true });
     const archivePath = path.join(tempDir(), "served.zip");
     writeFileSync(archivePath, archiveOf(COMMIT_B, moduleWith("start", "added")));
-    const newer = path.join(root, "0.60.0", "owner/statuslib");
+    const newer = path.join(root, "0.60.0", "github.com/owner/statuslib");
     mkdirSync(newer, { recursive: true });
     writeFileSync(
       path.join(newer, "reviewed.json"),

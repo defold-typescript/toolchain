@@ -52,7 +52,7 @@ export function readLibraryDataOrNone(dataDir: string | null, cliVersion?: strin
 }
 
 // The libraries the URLs read, each matched by `matchLibraryName` over every
-// library given: its own `owner/repo`, else the one library sharing its repo name.
+// library given: its own `host/owner/repo`, else the one library sharing its repo name.
 export function librariesMatching(
   libraries: readonly LibraryData[],
   urls: readonly string[],

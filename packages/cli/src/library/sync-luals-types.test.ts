@@ -41,7 +41,7 @@ const GLINT: LualsTarget = {
   namespace: "glint",
   typeRenames: {},
   ignore: ["**/test/**", "**/example/**", "**/example_*/**"],
-  sourceDir: "example/glint/source/glint",
+  sourceDir: "github.com/example/glint/source/glint",
 };
 
 // A second library, in a folder that sorts after GLINT's.
@@ -53,7 +53,7 @@ const SPARK: LualsTarget = {
   namespace: "spark",
   typeRenames: {},
   ignore: [],
-  sourceDir: "example/spark/source/spark",
+  sourceDir: "github.com/example/spark/source/spark",
 };
 
 // GLINT's sources, spread over several files: the module file with a local helper,
@@ -185,13 +185,13 @@ describe("readLualsTargets", () => {
     const root = writeConfig([missingGlobs]);
     expect(() => readLualsTargets(root)).toThrow(/sourceGlobs/);
     expect(() => readLualsTargets(root)).toThrow(/glint\.glint/);
-    expect(() => readLualsTargets(root)).toThrow("example/glint/recipe.json");
+    expect(() => readLualsTargets(root)).toThrow("github.com/example/glint/recipe.json");
   });
 
   test("throws naming the library's reviewed.json when it pins no ref", () => {
     const { ref: _drop, ...missingRef } = GLINT;
     const root = writeConfig([missingRef]);
-    expect(() => readLualsTargets(root)).toThrow("example/glint/reviewed.json");
+    expect(() => readLualsTargets(root)).toThrow("github.com/example/glint/reviewed.json");
   });
 
   test("names the entry index when moduleId itself is the missing field", () => {
@@ -227,13 +227,13 @@ describe("readLualsTargets", () => {
   });
 
   test("every committed entry reads back with the fields its recipe declares", () => {
-    const entries = readdirSync(FIXTURE_DATA_DIR)
-      .sort()
-      .flatMap((owner) =>
-        readdirSync(join(FIXTURE_DATA_DIR, owner))
-          .sort()
-          .map((repo) => `${owner}/${repo}`),
-      )
+    const below = (dir: string) =>
+      readdirSync(join(FIXTURE_DATA_DIR, dir))
+        .sort()
+        .map((name) => (dir === "" ? name : `${dir}/${name}`));
+    const entries = below("")
+      .flatMap(below)
+      .flatMap(below)
       .flatMap((dir) => {
         const recipe = join(FIXTURE_DATA_DIR, dir, "recipe.json");
         if (!existsSync(recipe)) return [];
@@ -253,8 +253,8 @@ describe("readLualsTargets", () => {
   test("reads a second library's target with its own pin, in folder order — the generality proof", () => {
     const targets = readLualsTargets(writeConfig([SPARK, GLINT]));
     expect(targets.map((t) => [t.moduleId, t.namespace, t.repo, t.ref, t.sourceDir])).toEqual([
-      ["glint.glint", "glint", GLINT.repo, "1.2.5", "example/glint/source/glint"],
-      ["spark.spark", "spark", SPARK.repo, "0.3.0", "example/spark/source/spark"],
+      ["glint.glint", "glint", GLINT.repo, "1.2.5", "github.com/example/glint/source/glint"],
+      ["spark.spark", "spark", SPARK.repo, "0.3.0", "github.com/example/spark/source/spark"],
     ]);
   });
 });
@@ -267,7 +267,7 @@ describe("selectLualsSources", () => {
       "glint/test/foo.lua",
       "glint/example/demo.lua",
       "glint/readme.md",
-      "other/thing.lua",
+      "github.com/other/thing.lua",
     ];
     expect(selectLualsSources(paths, GLINT)).toEqual([
       "glint/glint.lua",
@@ -301,8 +301,8 @@ describe("fetchLualsFixtures", () => {
     ]);
 
     // Selected files land under <sourceDir>/<relpath>, tree shape preserved.
-    const glintLua = join(root, "example/glint/source/glint/glint/glint.lua");
-    const buttonLua = join(root, "example/glint/source/glint/glint/widget/button.lua");
+    const glintLua = join(root, "github.com/example/glint/source/glint/glint/glint.lua");
+    const buttonLua = join(root, "github.com/example/glint/source/glint/glint/widget/button.lua");
     expect(existsSync(glintLua)).toBe(true);
     expect(existsSync(buttonLua)).toBe(true);
     expect(readFileSync(glintLua, "utf8")).toBe(
@@ -310,8 +310,10 @@ describe("fetchLualsFixtures", () => {
     );
 
     // Ignored and non-matching paths are never written.
-    expect(existsSync(join(root, "example/glint/source/glint/glint/test/x.lua"))).toBe(false);
-    expect(existsSync(join(root, "example/glint/source/glint/readme.md"))).toBe(false);
+    expect(existsSync(join(root, "github.com/example/glint/source/glint/glint/test/x.lua"))).toBe(
+      false,
+    );
+    expect(existsSync(join(root, "github.com/example/glint/source/glint/readme.md"))).toBe(false);
   });
 });
 

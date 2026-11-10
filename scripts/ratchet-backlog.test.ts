@@ -132,11 +132,11 @@ function tempRoot(
     copyFileSync(join(COMMITTED_DATA, file), join(data, file));
   }
   const committedData = COMMITTED_DATA;
-  const folders = readdirSync(committedData, { withFileTypes: true })
-    .filter((owner) => owner.isDirectory())
-    .flatMap((owner) =>
-      readdirSync(join(committedData, owner.name)).map((repo) => `${owner.name}/${repo}`),
-    );
+  const below = (dir: string) =>
+    readdirSync(join(committedData, dir), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => (dir === "" ? entry.name : `${dir}/${entry.name}`));
+  const folders = below("").flatMap(below).flatMap(below);
   for (const folder of folders) {
     for (const file of LIBRARY_DATA_FILES) {
       if (!existsSync(join(committedData, folder, file))) continue;
@@ -163,10 +163,10 @@ function tempRoot(
   const tokenModules = Object.keys(fidelity).map((report) =>
     report.replace(/^fidelity\/(.+)\.json$/, "$1"),
   );
-  mkdirSync(join(data, "owner/a"), { recursive: true });
-  writeFileSync(join(data, "owner/a", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  mkdirSync(join(data, "github.com/owner/a"), { recursive: true });
+  writeFileSync(join(data, "github.com/owner/a", "reviewed.json"), JSON.stringify({ ref: "v1" }));
   writeFileSync(
-    join(data, "owner/a", "recipe.json"),
+    join(data, "github.com/owner/a", "recipe.json"),
     JSON.stringify({
       luals: tokenModules.map((namespace) => ({
         sourceGlobs: [`${namespace}/**/*.lua`],
@@ -176,7 +176,7 @@ function tempRoot(
     }),
   );
   writeFileSync(
-    join(data, "owner/a", "library.json"),
+    join(data, "github.com/owner/a", "library.json"),
     JSON.stringify({
       repo: "https://github.com/owner/a",
       floors: Object.fromEntries(
@@ -184,10 +184,10 @@ function tempRoot(
       ),
     }),
   );
-  mkdirSync(join(data, "owner/b"), { recursive: true });
-  writeFileSync(join(data, "owner/b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  mkdirSync(join(data, "github.com/owner/b"), { recursive: true });
+  writeFileSync(join(data, "github.com/owner/b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
   writeFileSync(
-    join(data, "owner/b", "library.json"),
+    join(data, "github.com/owner/b", "library.json"),
     JSON.stringify({
       repo: "https://github.com/owner/b",
       forks: [

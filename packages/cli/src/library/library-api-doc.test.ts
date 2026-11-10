@@ -57,10 +57,17 @@ describe("libraryApiDocs", () => {
         },
       ],
     });
-    const lua = join(dataDir, "owner/lualib", "source", "lualib.core", "lualib", "core.lua");
+    const lua = join(
+      dataDir,
+      "github.com/owner/lualib",
+      "source",
+      "lualib.core",
+      "lualib",
+      "core.lua",
+    );
     mkdirSync(dirname(lua), { recursive: true });
     writeFileSync(lua, "local M = {}\n\n---@return number\nfunction M.tick() end\n\nreturn M\n");
-    const fork = join(dataDir, "owner/forklib", "fork", "forklib.main.d.ts");
+    const fork = join(dataDir, "github.com/owner/forklib", "fork", "forklib.main.d.ts");
     mkdirSync(dirname(fork), { recursive: true });
     writeFileSync(fork, "declare module 'forklib.main' {\n  export function start(): void;\n}\n");
 
@@ -86,7 +93,7 @@ describe("libraryApiDocs", () => {
       })),
     });
     apiDocs.forEach((_, index) => {
-      const fork = join(dataDir, `owner/lib${index}`, "fork", "main.d.ts");
+      const fork = join(dataDir, `github.com/owner/lib${index}`, "fork", "main.d.ts");
       mkdirSync(dirname(fork), { recursive: true });
       writeFileSync(fork, `declare module 'lib${index}.main' {\n  export const a: number;\n}\n`);
     });

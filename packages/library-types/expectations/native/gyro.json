@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "britzl/defold-gyro",
+    "sourceId": "github.com/britzl/defold-gyro",
     "manifestDir": "gyro"
   },
   "resolve": {

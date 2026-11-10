@@ -10,7 +10,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import { COMMIT_COMMENT } from "../extension-version";
-import { libraryName } from "../library-match";
+import { libraryName, namesSelectedBy } from "../library-match";
 import {
   compareTriples,
   isUnversioned,
@@ -181,22 +181,52 @@ export const DEFOLD_EXTENSIONS_FILE = "defold-extensions.json";
 const PLAIN_SEGMENT = /^[a-z0-9._-]+$/;
 
 /**
- * The folder a repo's library data sits in: its library name, `owner/repo`. Each
- * segment is a plain name, never `.` or `..`, so the folder stays inside the data
- * folder on every OS.
+ * The folder a repo's library data sits in: its library name, `host/owner/repo`.
+ * Each segment is a plain name, never `.` or `..`, so the folder stays inside the
+ * data folder on every OS, and a host with a port is refused: written any other
+ * way, its `:` would spell a different host's folder.
  */
 export function libraryFolderName(repo: string): string {
   const name = libraryName(repo);
-  if (!name.includes("/")) {
-    throw new Error(`repo ${repo} names no owner, so it has no owner/repo folder`);
+  const segments = name.split("/");
+  if (segments.length < 3) {
+    throw new Error(`repo ${repo} names no owner, so it has no host/owner/repo folder`);
   }
-  const plain = name
-    .split("/")
-    .every((segment) => PLAIN_SEGMENT.test(segment) && segment !== "." && segment !== "..");
-  if (!plain) {
-    throw new Error(`repo ${repo} is not an owner/repo of plain names`);
+  const host = segments[0] as string;
+  if (host.includes(":")) {
+    throw new Error(`repo ${repo} is on ${host}, and a library folder cannot hold a port`);
+  }
+  const plain = segments.every(
+    (segment) => PLAIN_SEGMENT.test(segment) && segment !== "." && segment !== "..",
+  );
+  if (segments.length !== 3 || !plain) {
+    throw new Error(`repo ${repo} is not a host/owner/repo of plain names`);
   }
   return name;
+}
+
+/**
+ * The library folders the typed names select (`namesSelectedBy`), in `folders`
+ * order. Throws, naming the candidates, on a typed name that selects no folder or
+ * more than one.
+ */
+export function selectLibraryFolders(
+  dataDir: string,
+  folders: readonly string[],
+  typed: readonly string[],
+): string[] {
+  const selected = new Set<string>();
+  for (const name of typed) {
+    const matches = namesSelectedBy(name, folders);
+    if (matches.length === 0) {
+      throw new Error(`no library ${name} in ${dataDir}`);
+    }
+    if (matches.length > 1) {
+      throw new Error(`${name} names more than one library: ${matches.join(", ")}`);
+    }
+    selected.add(matches[0] as string);
+  }
+  return folders.filter((folder) => selected.has(folder));
 }
 
 /** The `library.json` a repo's entries live in, relative to the data folder. */
@@ -747,32 +777,29 @@ export class LibraryDataError extends Error {
   }
 }
 
-// Each `<owner>/<repo>` folder holding a `library.json`, with `/` on every OS. A
-// top-level folder holding one is returned too, for `readLibrary` to refuse.
-function libraryDirs(dataDir: string): string[] {
+// Each `<host>/<owner>/<repo>` folder holding a `library.json`, with `/` on every OS.
+// A shallower folder holding one is returned too, for `readLibrary` to refuse.
+function libraryDirs(dataDir: string, prefix = "", depth = 0): string[] {
   const dirs: string[] = [];
-  for (const entry of readdirSync(dataDir, { withFileTypes: true })) {
+  for (const entry of readdirSync(join(dataDir, prefix), { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    if (existsSync(join(dataDir, entry.name, LIBRARY_FILE))) {
-      dirs.push(entry.name);
-      continue;
-    }
-    for (const repo of readdirSync(join(dataDir, entry.name), { withFileTypes: true })) {
-      if (repo.isDirectory() && existsSync(join(dataDir, entry.name, repo.name, LIBRARY_FILE))) {
-        dirs.push(`${entry.name}/${repo.name}`);
-      }
+    const dir = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+    if (existsSync(join(dataDir, dir, LIBRARY_FILE))) {
+      dirs.push(dir);
+    } else if (depth < 2) {
+      dirs.push(...libraryDirs(dataDir, dir, depth + 1));
     }
   }
   return dirs.sort();
 }
 
 /**
- * Every library folder under `dataDir`, `<owner>/<repo>`, in folder-name order.
+ * Every library folder under `dataDir`, `<host>/<owner>/<repo>`, in folder-name order.
  * Paths the targets name are relative to `dataDir`
- * (`pause-games/flow/fork/flow.ui.d.ts`); `apiDoc` and
+ * (`github.com/pause-games/flow/fork/flow.ui.d.ts`); `apiDoc` and
  * `fidelity` stay relative to the library-types package root, where the toolchain
  * writes them. Throws a `LibraryDataError` on a folder whose name is not its
- * repo's `owner/repo` (a top-level folder included), on a missing `reviewed.json`,
+ * repo's `host/owner/repo` (a shallower folder included), on a missing `reviewed.json`,
  * on a malformed entry, on a module id or
  * path that leaves its folder, on a floor or parity exception for a module its
  * library does not measure, on a module two folders name, and on a `minCli` that

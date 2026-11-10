@@ -54,7 +54,7 @@ function writeLibrary(
   },
 ): void {
   const { repo, ref, refKind, namespace, lane = "native" } = library;
-  const folder = join(dataDir, ...repo.toLowerCase().split("/").slice(-2));
+  const folder = join(dataDir, ...repo.toLowerCase().split("/").slice(-3));
   mkdirSync(folder, { recursive: true });
   writeFileSync(
     join(folder, "library.json"),
@@ -211,15 +211,14 @@ describe("loadApiSurface library displayName", () => {
 });
 
 describe("loadLibraryProvenance — curated native extensions", () => {
-  const targets = readdirSync(REAL_DIRS.dataDir)
-    .sort()
-    .map((owner) => join(REAL_DIRS.dataDir, owner))
-    .filter((owner) => statSync(owner).isDirectory())
-    .flatMap((owner) =>
-      readdirSync(owner)
-        .sort()
-        .map((repo) => join(owner, repo)),
-    )
+  const below = (dir: string) =>
+    readdirSync(dir)
+      .sort()
+      .map((name) => join(dir, name))
+      .filter((path) => statSync(path).isDirectory());
+  const targets = below(REAL_DIRS.dataDir)
+    .flatMap(below)
+    .flatMap(below)
     .filter((dir) => existsSync(join(dir, "library.json")))
     .flatMap((dir) => {
       const { repo, license, native } = JSON.parse(
