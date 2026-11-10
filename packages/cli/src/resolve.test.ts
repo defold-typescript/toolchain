@@ -4795,6 +4795,20 @@ describe("runResolve reports each library's status", () => {
     return folder;
   }
 
+  // The library data archive serving every file of `folder` at commit `dataCommit`.
+  function libraryDataZip(folder: string, dataCommit: string): Uint8Array {
+    const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
+      statSync(join(folder, path)).isFile(),
+    );
+    return writeZipArchive(
+      files.map((path) => ({
+        name: `library-data-${dataCommit}/data/0.0.1/${path.replace(/\\/g, "/")}`,
+        text: readFileSync(join(folder, path), "utf8"),
+      })),
+      { comment: dataCommit },
+    );
+  }
+
   async function resolveAt(commit: string, bytes: Uint8Array, libraryDataDir: string | null) {
     const cwd = tmp();
     const url = urlAt(commit);
@@ -5071,19 +5085,9 @@ describe("runResolve reports each library's status", () => {
   test("a frozen run reports the same status from its pin and asks for no library data", async () => {
     const dataUrl = "https://example.test/library-data/archive/refs/heads/main.zip";
     const dataCommit = "1".repeat(40);
-    const folder = writeStatusData(
-      "fork",
-      reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]),
-    );
-    const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
-      statSync(join(folder, path)).isFile(),
-    );
-    const data = writeZipArchive(
-      files.map((path) => ({
-        name: `library-data-${dataCommit}/data/0.0.1/${path.replace(/\\/g, "/")}`,
-        text: readFileSync(join(folder, path), "utf8"),
-      })),
-      { comment: dataCommit },
+    const data = libraryDataZip(
+      writeStatusData("fork", reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A])),
+      dataCommit,
     );
     const dependency = archiveOf(COMMIT_B, luaModule(1, "added"));
     const url = urlAt(COMMIT_B);
@@ -5118,6 +5122,97 @@ describe("runResolve reports each library's status", () => {
       plain.extensions[0]?.libraryStatus as LibraryStatus,
     );
     expect(requests).toEqual([url]);
+  });
+
+  describe("a fork on a host only an unused library is on", () => {
+    const dataUrl = "https://example.test/library-data/archive/refs/heads/main.zip";
+    const dataCommit = "1".repeat(40);
+    const url = `https://codeberg.org/fork/statuslib/archive/${COMMIT_B}.zip`;
+    const expected: LibraryStatus = {
+      status: "unsupported",
+      closest: COMMIT_A,
+      members: ["statuslib/core.lua#added"],
+    };
+
+    function project() {
+      const folder = writeStatusData(
+        "fork",
+        reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]),
+      );
+      writeLibraryTargets(folder, {
+        luals: [
+          {
+            repo: "https://codeberg.org/owner/otherlib",
+            ref: "1.0.0",
+            sourceGlobs: ["otherlib/**/*.lua"],
+            moduleId: "otherlib.core",
+            namespace: "otherlib.core",
+          },
+        ],
+      });
+      const data = libraryDataZip(folder, dataCommit);
+      const dependency = archiveOf(COMMIT_B, luaModule(1, "added"));
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+      return { cwd, cacheDir: tmp(), data, dependency };
+    }
+
+    const warning = () => libraryStatusMessages([{ url, status: expected }]).warnings[0] as string;
+
+    test("a plain run gives it its upstream's status and pins the upstream alone", async () => {
+      const { cwd, cacheDir, data, dependency } = project();
+
+      const result = await runResolve({
+        cwd,
+        cacheDir,
+        libraryDataUrl: dataUrl,
+        download: async (requested) => ({
+          status: "ok",
+          bytes: requested === url ? dependency : data,
+        }),
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.libraryStatus).toEqual(expected);
+      expect(result.warnings).toContain(warning());
+      const read = readProjectLock(cwd);
+      if (read.status !== "ok") {
+        throw new Error(`expected a readable lockfile, got ${read.status}`);
+      }
+      expect(Object.keys(read.lock.libraryData?.libraries ?? {})).toEqual([
+        "github.com/owner/statuslib",
+      ]);
+    });
+
+    test("a frozen run after it reports the same status and warning", async () => {
+      const { cwd, cacheDir, data, dependency } = project();
+      await runResolve({
+        cwd,
+        cacheDir,
+        libraryDataUrl: dataUrl,
+        download: async (requested) => ({
+          status: "ok",
+          bytes: requested === url ? dependency : data,
+        }),
+      });
+
+      const frozen = await runResolve({
+        cwd,
+        cacheDir,
+        libraryDataUrl: dataUrl,
+        freeze: true,
+        download: async (requested) => {
+          if (requested !== url) {
+            throw new Error(`no request expected: ${requested}`);
+          }
+          return { status: "ok", bytes: dependency };
+        },
+      });
+
+      expect(frozen.ok).toBe(true);
+      expect(frozen.extensions[0]?.libraryStatus).toEqual(expected);
+      expect(frozen.warnings).toContain(warning());
+    });
   });
 
   describe("the plain report", () => {
