@@ -1,7 +1,10 @@
 // The library docs site addresses each page by where its library lives, never by
-// an internal page key: an API page at `/api/<owner>/<repo>/<namespace>` and an
-// untyped listing at `/libraries/<owner>/<repo>`, every segment lowercased. The
-// forge host is left out, so a Codeberg origin routes like a GitHub one.
+// an internal page key: an API page at `/api/<host>/<owner>/<repo>/<namespace>`
+// and an untyped listing at `/libraries/<host>/<owner>/<repo>`, every segment
+// lowercased. The host is the forge's (`github.com`, `codeberg.org`), so one
+// owner and repo on two forges are two libraries with two addresses. A default
+// port drops out of the host; any other port is refused, since its `:` is no
+// file-name character and library data refuses one too.
 
 const WINDOWS_DEVICE_STEM = /^(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(?:\.|$)/i;
 
@@ -30,7 +33,8 @@ function originSegments(repoUrl: string): string[] {
   if (owner === "" || repo === "") {
     throw new Error(`library route: ${JSON.stringify(repoUrl)} names no owner and repo`);
   }
-  return [routeSegment(owner, repoUrl), routeSegment(repo, repoUrl)];
+  const host = new URL(repoUrl).host;
+  return [routeSegment(host, repoUrl), routeSegment(owner, repoUrl), routeSegment(repo, repoUrl)];
 }
 
 export function libraryApiRoute(repoUrl: string, namespace: string): string {

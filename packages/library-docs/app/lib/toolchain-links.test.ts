@@ -12,7 +12,7 @@ import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain
 import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[owner]/[repo]/[namespace]";
+import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
 import { apiPages, siteDirs } from "./api-content";
 import {
   pointAtToolchainDocs,
@@ -87,7 +87,7 @@ describe("toolchain member links on library pages", () => {
     async () => {
       const REAL_DIRS = siteDirs(SITE_DIR);
       const app = new Hono();
-      app.get("/api/:owner/:repo/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
+      app.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
       const linkPattern = new RegExp(
         `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
         "g",
@@ -183,10 +183,10 @@ describe("pointAtToolchainDocs", () => {
   test("repoints a single-segment link to the toolchain docs and keeps a library page route", () => {
     expect(
       pointAtToolchainDocs(
-        "Reads [`sys`](/api/sys#a), [`iap`](/api/defold/extension-iap/iap) and [`gui`](/api/gui).",
+        "Reads [`sys`](/api/sys#a), [`iap`](/api/github.com/defold/extension-iap/iap) and [`gui`](/api/gui).",
       ),
     ).toBe(
-      `Reads [\`sys\`](${TOOLCHAIN_DOCS_URL}/api/sys#a), [\`iap\`](/api/defold/extension-iap/iap) and [\`gui\`](${TOOLCHAIN_DOCS_URL}/api/gui).`,
+      `Reads [\`sys\`](${TOOLCHAIN_DOCS_URL}/api/sys#a), [\`iap\`](/api/github.com/defold/extension-iap/iap) and [\`gui\`](${TOOLCHAIN_DOCS_URL}/api/gui).`,
     );
   });
 });

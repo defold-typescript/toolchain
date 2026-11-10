@@ -1379,7 +1379,7 @@ A script that already dispatches with `onMessage` (see [Messages](./messages.md)
 
 An addon that sends messages to your script needs no adapter. Declare its messages once in `CustomMessages`, then list the ones the machine handles in `messageEvents`. This works when the addon builds each id as `hash("<name>")` for the name you declare, so check the addon's source for how it makes its ids.
 
-[Monarch](https://defold-typescript.github.io/library-data/api/britzl/monarch/monarch.monarch) tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. Its `SCREEN_TRANSITION_*` constants are `hash("monarch_screen_transition_in_started")` and so on, so the five messages are declared by those names, beside one of the game's own:
+[Monarch](https://defold-typescript.github.io/library-data/api/github.com/britzl/monarch/monarch.monarch) tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. Its `SCREEN_TRANSITION_*` constants are `hash("monarch_screen_transition_in_started")` and so on, so the five messages are declared by those names, beside one of the game's own:
 
 ```ts excerpt
 declare global {

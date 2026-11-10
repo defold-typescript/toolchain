@@ -370,7 +370,7 @@ types that pair with them — `cancel` and `cancellation_token` — were themsel
 among the 16 members it never declared. 26 declared names were not on this module
 at all, the realtime socket surface among them: the pinned `nakama.lua` `require`s
 that module privately and exposes it only through `create_socket`. Eleven of the 26
-have a counterpart on [nakama.socket](/api/heroiclabs/nakama-defold/nakama.socket), now vendored as a target
+have a counterpart on [nakama.socket](/api/github.com/heroiclabs/nakama-defold/nakama.socket), now vendored as a target
 of its own; the other fifteen — thirteen message constructors, a stream-presence
 listener and a request constructor upstream no longer generates — match neither
 module at the pin and were phantoms on an older nakama-defold. The field axis then

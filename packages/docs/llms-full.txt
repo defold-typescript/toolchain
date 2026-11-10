@@ -4400,7 +4400,7 @@ A script that already dispatches with `onMessage` (see [Messages](./messages.md)
 
 An addon that sends messages to your script needs no adapter. Declare its messages once in `CustomMessages`, then list the ones the machine handles in `messageEvents`. This works when the addon builds each id as `hash("<name>")` for the name you declare, so check the addon's source for how it makes its ids.
 
-[Monarch](https://defold-typescript.github.io/library-data/api/britzl/monarch/monarch.monarch) tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. Its `SCREEN_TRANSITION_*` constants are `hash("monarch_screen_transition_in_started")` and so on, so the five messages are declared by those names, beside one of the game's own:
+[Monarch](https://defold-typescript.github.io/library-data/api/github.com/britzl/monarch/monarch.monarch) tells every script registered with `monarch.add_listener` when a screen starts or finishes showing or hiding, and when it fails to show. Its `SCREEN_TRANSITION_*` constants are `hash("monarch_screen_transition_in_started")` and so on, so the five messages are declared by those names, beside one of the game's own:
 
 ```ts excerpt
 declare global {
@@ -8771,25 +8771,25 @@ pinned to.
 
 | Extension | Namespace | Confirmed by        |
 | --------- | --------- | ------------------- |
-| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/abadonna/defold-detour/detour) | `detour/ext.manifest` |
-| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/agulev/defold-extension-uptime/uptime) | `uptime/ext.manifest` |
-| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/britzl/defold-gyro/gyro) | `gyro/ext.manifest` |
-| [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/britzl/defold-imp/imp) | `imp/ext.manifest` |
-| [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/britzl/defold-png/png) | `png/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/britzl/defold-sharing/share) | `share/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
-| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
-| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/lerg/extension-directories/directories) | `directories/ext.manifest` |
-| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/lerg/extension-openal/openal) | `openal/ext.manifest` |
-| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
-| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/selimanac/defold-tile-raycast/tile_raycast) | `tile-raycast/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/selimanac/defold-uuid4/uuid4) | `uuid4/ext.manifest` |
-| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/selimanac/defold-wave/wave) | `wave/ext.manifest` |
+| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/github.com/abadonna/defold-detour/detour) | `detour/ext.manifest` |
+| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/github.com/agulev/defold-extension-uptime/uptime) | `uptime/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-gyro/gyro) | `gyro/ext.manifest` |
+| [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-imp/imp) | `imp/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-png/png) | `png/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-sharing/share) | `share/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/github.com/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
+| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/github.com/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
+| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/github.com/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/github.com/lerg/extension-directories/directories) | `directories/ext.manifest` |
+| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/github.com/lerg/extension-openal/openal) | `openal/ext.manifest` |
+| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/github.com/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/github.com/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
+| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/github.com/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-tile-raycast/tile_raycast) | `tile-raycast/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-uuid4/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-wave/wave) | `wave/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 
@@ -13370,7 +13370,7 @@ it installs are `@globalTable` modules, so a project writes
 
 The extensions Defold publishes on GitHub have reference pages under
 [Libraries](https://defold-typescript.github.io/library-data) › defold, one per `.script_api` doc, such as
-[iap](https://defold-typescript.github.io/library-data/api/defold/extension-iap/iap) and [spine.gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui). The defold section is listed
+[iap](https://defold-typescript.github.io/library-data/api/github.com/defold/extension-iap/iap) and [spine.gui](https://defold-typescript.github.io/library-data/api/github.com/defold/extension-spine/gui). The defold section is listed
 first, in the sidebar and on the Libraries page, and marked `(official)` so it
 reads apart from community libraries. Each page shows the pin it was
 read from — the latest release, else the newest tag, else a commit. A release
@@ -13380,22 +13380,22 @@ only fixes what the page shows: which version your project depends on is still
 your choice in `game.project`, and `resolve` types whichever one you pick.
 
 Defold libraries that ship no `.script_api` have pages there too, such as
-[extension-qrcode](https://defold-typescript.github.io/library-data/libraries/defold/extension-qrcode) and
-[asset-pbr](https://defold-typescript.github.io/library-data/libraries/defold/asset-pbr). Their sidebar entries and cards are
+[extension-qrcode](https://defold-typescript.github.io/library-data/libraries/github.com/defold/extension-qrcode) and
+[asset-pbr](https://defold-typescript.github.io/library-data/libraries/github.com/defold/asset-pbr). Their sidebar entries and cards are
 marked with a no-typed-API icon. Each page describes what the library ships and
 whether it registers a Lua API that is simply not typed, then shows the same
 GitHub pin and numbered setup steps as a typed library page: add the dependency
 at that pin, then the library's own steps. Two kinds of repo depart from that.
 A placeholder repo with nothing in it yet, such as
-[extension-playintegrity](https://defold-typescript.github.io/library-data/libraries/defold/extension-playintegrity), has no
+[extension-playintegrity](https://defold-typescript.github.io/library-data/libraries/github.com/defold/extension-playintegrity), has no
 install step. A repo upstream asks you to fork, such as
-[extension-prometheus](https://defold-typescript.github.io/library-data/libraries/defold/extension-prometheus), starts with
+[extension-prometheus](https://defold-typescript.github.io/library-data/libraries/github.com/defold/extension-prometheus), starts with
 forking it and depending on your fork. `resolve` still reports each one as
 `asset-only, skipped`.
 
 Libraries on the [Defold Asset Portal](https://defold.com/assets/) that ship a
 `.script_api` have reference pages under their GitHub owner, one per doc, such
-as [defos](https://defold-typescript.github.io/library-data/api/subsoap/defos/defos) and [astar](https://defold-typescript.github.io/library-data/api/selimanac/defold-astar/astar). Each page is read from the doc
+as [defos](https://defold-typescript.github.io/library-data/api/github.com/subsoap/defos/defos) and [astar](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-astar/astar). Each page is read from the doc
 at the pin the portal survey recorded, gives the dependency step for that pin,
 and links the library's Asset Portal entry. A doc with no description of its own
 leads with the portal's. `resolve` types these libraries from your dependency
@@ -13403,7 +13403,7 @@ like any other extension.
 
 Portal libraries that ship no Lua API, such as shaders, materials, sounds and
 editor scripts, are listed the same way under their GitHub owner, such as
-[defold-sharp-sprite](https://defold-typescript.github.io/library-data/libraries/indiesoftby/defold-sharp-sprite). Each page
+[defold-sharp-sprite](https://defold-typescript.github.io/library-data/libraries/github.com/indiesoftby/defold-sharp-sprite). Each page
 leads with the portal's description of the library, gives the dependency step
 for its pin, and links its Asset Portal entry. On both kinds of portal page, a
 release or tag pin also names the Defold version that was current when it was
@@ -13415,15 +13415,17 @@ cache location — see [Resolve](./resolve.md).
 #### Library page addresses
 
 A library page's address names the repo the library comes from. A typed
-library's API page is `/api/<owner>/<repo>/<namespace>` and an untyped library's
-listing is `/libraries/<owner>/<repo>`, all lowercase. `<owner>/<repo>` is the
-library's repo on GitHub or Codeberg, with the forge left out. `<namespace>` is
+library's API page is `/api/<host>/<owner>/<repo>/<namespace>` and an untyped
+library's listing is `/libraries/<host>/<owner>/<repo>`, all lowercase. `<host>`
+is the forge the repo lives on (`github.com`, `codeberg.org`) and
+`<owner>/<repo>` is the repo there, so the same owner and repo on two forges are
+two libraries with two addresses. `<namespace>` is
 the module the page documents, so a repo that ships several modules has several
-pages: [defold/extension-spine/gui](https://defold-typescript.github.io/library-data/api/defold/extension-spine/gui) is one of
+pages: [defold/extension-spine/gui](https://defold-typescript.github.io/library-data/api/github.com/defold/extension-spine/gui) is one of
 extension-spine's. The repo in the path also keeps apart two libraries that ship
 the same module, such as the two `mpeg` pages,
-[defold/extension-videoplayer-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/defold/extension-videoplayer-mpeg/mpeg)
-and [morgerion/defold-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/morgerion/defold-mpeg/mpeg).
+[defold/extension-videoplayer-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/github.com/defold/extension-videoplayer-mpeg/mpeg)
+and [morgerion/defold-mpeg/mpeg](https://defold-typescript.github.io/library-data/api/github.com/morgerion/defold-mpeg/mpeg).
 
 ### Shipping types with a library
 
