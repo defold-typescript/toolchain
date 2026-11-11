@@ -10,6 +10,32 @@ import { buildSymbolIndex } from "./symbol-index";
 // map, so the fixture carries the same summaries/`@remarks`/`@example` the real
 // source does.
 const SRC = `
+declare const NonTableBrand: unique symbol;
+/**
+ * The phantom brand of a value Lua does not hold as a plain table: engine
+ * userdata (vectors, matrices, hashes, URLs, handles) and functions.
+ *
+ * @remarks
+ * The brand is an optional \`unique symbol\` property that exists only in the type
+ * system and is erased at transpile.
+ */
+export interface NonTable {
+  readonly [NonTableBrand]?: true;
+}
+
+/**
+ * Any value Lua holds as a plain table: an object literal, a value typed by an
+ * interface or a type alias, a \`LuaMap\`, a \`LuaTable\` or an array. Engine
+ * userdata and functions carry the {@link NonTable} brand and are rejected.
+ *
+ * @remarks
+ * The \`Record\` arm stays because an object literal checked against the
+ * intersection alone fails the excess-property check.
+ */
+export type PlainTable = Record<string, unknown> | (object & { readonly [NonTableBrand]?: never });
+
+export type SocketHandleReceiver = keyof typeof SOCKET_HANDLE_NAMES;
+
 /**
  * A numeric vector of any size, accessed by index for reads and writes;
  * \`v.length()\` is its component count.
@@ -231,7 +257,9 @@ describe("parseGlobalTypes", () => {
       "ConstantArray",
       "Hash",
       "Matrix4",
+      "NonTable",
       "Opaque",
+      "PlainTable",
       "Quaternion",
       "Url",
       "Vector",
@@ -319,6 +347,21 @@ describe("parseGlobalTypes", () => {
     // The @example fence — and its `Opaque<"node">` comment — survives intact,
     // no longer eaten by an HTML tag-strip.
     expect(md).toContain('```ts\nconst node = gui.get_node("button"); // Opaque<"node">\n```');
+  });
+
+  test("PlainTable is a type alias page whose brief and description come from its JSDoc", () => {
+    const plain = pageNamed("PlainTable");
+    expect(plain.module.properties).toEqual([]);
+    expect(plain.module.functions).toEqual([]);
+    expect(plain.brief).toBe(
+      "Any value Lua holds as a plain table: an object literal, a value typed by an interface or a type alias, a `LuaMap`, a `LuaTable` or an array.",
+    );
+    expect(plain.module.description).toContain("`NonTable` brand");
+    expect(plain.module.description).toContain("excess-property check");
+  });
+
+  test("an exported type alias outside the documented set gets no page", () => {
+    expect(PAGES.map((p) => p.namespace)).not.toContain("SocketHandleReceiver");
   });
 
   test("Opaque is a brand-only page with no inspectable members", () => {

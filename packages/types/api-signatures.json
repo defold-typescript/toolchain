@@ -676,7 +676,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -1646,8 +1646,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string, arg7?: string, arg8?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
@@ -2451,7 +2451,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -3411,8 +3411,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
@@ -4212,7 +4212,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5165,8 +5165,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
@@ -11649,7 +11649,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<string | Hash, unknown> | Record<string, unknown>",
+          "type": "LuaMap<string | Hash, unknown> | PlainTable",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -13472,13 +13472,13 @@
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         },
         "return:0:buffer": { "type": "string", "optional": false }
@@ -16470,7 +16470,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<string | Hash, unknown> | Record<string, unknown>",
+          "type": "LuaMap<string | Hash, unknown> | PlainTable",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -18276,13 +18276,13 @@
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         },
         "return:0:buffer": { "type": "string", "optional": false }
@@ -21260,7 +21260,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<string | Hash, unknown> | Record<string, unknown>",
+          "type": "LuaMap<string | Hash, unknown> | PlainTable",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -23066,13 +23066,13 @@
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
         "param:1:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:table": {
-          "type": "LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]",
+          "type": "LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]",
           "optional": false
         },
         "return:0:buffer": { "type": "string", "optional": false }

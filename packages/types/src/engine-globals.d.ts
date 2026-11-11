@@ -52,4 +52,8 @@ declare global {
   type Matrix4 = Core.Matrix4;
   /** An array constant read back from a constant buffer, 1-based with no length; see {@link Core.ConstantArray}. */
   type ConstantArray<T> = Core.ConstantArray<T>;
+  /** The phantom brand of a value Lua does not hold as a plain table (engine userdata and functions); see {@link Core.NonTable}. */
+  type NonTable = Core.NonTable;
+  /** Any value Lua holds as a plain table, and no engine userdata or function; see {@link Core.PlainTable}. */
+  type PlainTable = Core.PlainTable;
 }

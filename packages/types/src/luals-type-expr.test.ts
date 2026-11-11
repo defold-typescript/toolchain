@@ -94,8 +94,16 @@ describe("mapLualsExpression position-aware tables", () => {
   });
 
   test("an any-keyed table admits string keys, so it widens in input position", () => {
-    expect(input("table<any, any>")).toBe("LuaMap<AnyNotNil, unknown> | Record<string, unknown>");
+    expect(input("table<any, any>")).toBe("LuaMap<AnyNotNil, unknown> | PlainTable");
     expect(output("table<any, any>")).toBe("LuaTable<AnyNotNil, unknown>");
+  });
+
+  // An interface has no implicit index signature, so `Record<string, unknown>`
+  // would reject it; `PlainTable` admits it as well as a literal.
+  test("an unknown-valued string-keyed table admits any plain table in input position", () => {
+    expect(input("table<string, any>")).toBe("LuaMap<string, unknown> | PlainTable");
+    expect(input("table<string|hash, any>")).toBe("LuaMap<string | Hash, unknown> | PlainTable");
+    expect(output("table<string, any>")).toBe("LuaTable<string, unknown>");
   });
 
   test("a nested string-keyed table widens at every level in input position and none in output", () => {
@@ -130,7 +138,7 @@ describe("mapLualsExpression position-aware tables", () => {
 
   test("a widened table maps its value once, so an unknown leaf is reported once", () => {
     expect(mapLualsExpression("table<string, buffer_data>", resolveLeaf, "input")).toEqual({
-      ts: "LuaMap<string, unknown> | Record<string, unknown>",
+      ts: "LuaMap<string, unknown> | PlainTable",
       unknowns: ["buffer_data"],
     });
   });
