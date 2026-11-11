@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { BUNDLED_LIBRARIES, bundledModules } from "@defold-typescript/transpiler";
 import { loadApiTargetsRegistry } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
 import { readCliVersion } from "./cli-version";
@@ -1384,6 +1385,43 @@ describe("pinned root paths", () => {
         expect(existsSync(abs) || existsSync(path.join(abs, "index.d.ts"))).toBe(true);
       }
     }
+  });
+
+  test("never routes a bundled library module away from its bun runtime", () => {
+    // Bun applies tsconfig `paths` when it runs a test file, so a key matching a
+    // library specifier would send the import to a `.d.ts` instead of the
+    // package's `bun` condition.
+    writeTsconfig({ strict: true });
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: path.join(PKG_ROOT, "generated"),
+    });
+
+    ensureMaterializedReference(cwd, materializedDir);
+
+    const keys = Object.keys(readPaths() ?? {});
+    const matches = (key: string, specifier: string): boolean => {
+      const star = key.indexOf("*");
+      if (star === -1) {
+        return key === specifier;
+      }
+      const prefix = key.slice(0, star);
+      const suffix = key.slice(star + 1);
+      return (
+        specifier.length >= prefix.length + suffix.length &&
+        specifier.startsWith(prefix) &&
+        specifier.endsWith(suffix)
+      );
+    };
+    const specifiers = BUNDLED_LIBRARIES.flatMap((library) =>
+      bundledModules(library).map(({ specifier }) => specifier),
+    );
+    expect(specifiers).toContain(`${MANAGED}/hsm`);
+    const intercepted = specifiers.flatMap((specifier) =>
+      keys.filter((key) => matches(key, specifier)).map((key) => `${specifier} <- ${key}`),
+    );
+    expect(intercepted).toEqual([]);
   });
 
   test("never remaps the shared core-types brand or a JSON data subpath", () => {

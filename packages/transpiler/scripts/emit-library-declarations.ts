@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import * as ts from "typescript";
 import { BUNDLED_LIBRARIES, type BundledLibrary, bundledModules } from "../src/bundled-libraries";
@@ -12,8 +12,56 @@ export function libraryDeclarationsDir(library: BundledLibrary): string {
   return path.join(PACKAGES_ROOT, "types", library.id);
 }
 
+/**
+ * Where a library's TypeScript runtime copies live in `@defold-typescript/types`,
+ * the target of each module's `bun` export condition. Kept apart from the
+ * `.d.ts` files so a declaration's `./index` import never resolves a copy.
+ */
+export function libraryRuntimeDir(library: BundledLibrary): string {
+  return path.join(libraryDeclarationsDir(library), "runtime");
+}
+
 function header(library: BundledLibrary, name: string): string {
   return `// Generated from packages/${library.id}/src/${name}.ts by \`${REGENERATE_DECLARATIONS}\`; do not edit.\n`;
+}
+
+function runtimeHeader(library: BundledLibrary, name: string): string {
+  return `// Copied from packages/${library.id}/src/${name}.ts by \`${REGENERATE_DECLARATIONS}\`; do not edit.\n`;
+}
+
+/** The TypeScript source each module of a library runs as under Bun, keyed by module name. */
+export function libraryRuntimeCopies(library: BundledLibrary): Record<string, string> {
+  const sourceDir = path.join(PACKAGES_ROOT, library.id, "src");
+  const copies: Record<string, string> = {};
+  for (const { name } of bundledModules(library)) {
+    const source = readFileSync(path.join(sourceDir, `${name}.ts`), "utf8");
+    copies[name] = `${runtimeHeader(library, name)}${source}`;
+  }
+  return copies;
+}
+
+function writeGenerated(
+  dir: string,
+  extension: string,
+  files: Readonly<Record<string, string>>,
+): void {
+  mkdirSync(dir, { recursive: true });
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (
+      entry.isFile() &&
+      entry.name.endsWith(extension) &&
+      !(path.basename(entry.name, extension) in files)
+    ) {
+      rmSync(path.join(dir, entry.name));
+    }
+  }
+  for (const [name, text] of Object.entries(files)) {
+    const file = path.join(dir, `${name}${extension}`);
+    writeFileSync(file, text);
+    process.stdout.write(
+      `wrote packages/${path.relative(PACKAGES_ROOT, file).split(path.sep).join("/")}\n`,
+    );
+  }
 }
 
 function describeDiagnostic(root: string, d: ts.Diagnostic): string {
@@ -82,17 +130,7 @@ export function emitLibraryDeclarations(library: BundledLibrary): Record<string,
 
 if (import.meta.main) {
   for (const library of BUNDLED_LIBRARIES) {
-    const declarations = emitLibraryDeclarations(library);
-    const dir = libraryDeclarationsDir(library);
-    mkdirSync(dir, { recursive: true });
-    for (const entry of readdirSync(dir)) {
-      if (entry.endsWith(".d.ts") && !(path.basename(entry, ".d.ts") in declarations)) {
-        rmSync(path.join(dir, entry));
-      }
-    }
-    for (const [name, text] of Object.entries(declarations)) {
-      writeFileSync(path.join(dir, `${name}.d.ts`), text);
-      process.stdout.write(`wrote packages/types/${library.id}/${name}.d.ts\n`);
-    }
+    writeGenerated(libraryDeclarationsDir(library), ".d.ts", emitLibraryDeclarations(library));
+    writeGenerated(libraryRuntimeDir(library), ".ts", libraryRuntimeCopies(library));
   }
 }

@@ -24,7 +24,7 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 
 ## Layout invariants
 
-- `packages/types` — typings only, no runtime code.
+- `packages/types` — typings only, plus the Bun-only TypeScript copies of the bundled libraries under `<id>/runtime/`, generated and never edited; no code that reaches a game.
 - `packages/transpiler` — depends on `@defold-typescript/types`; produces Lua output.
 - `packages/cli` — the only package that exposes a binary (`defold-typescript`).
 - New packages go under `packages/`; do not create siblings at the repo root.
