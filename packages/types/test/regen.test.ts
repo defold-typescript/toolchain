@@ -188,6 +188,31 @@ describe("root entrypoint completeness", () => {
     );
     expect(missing).toEqual([]);
   });
+
+  // The root is what the build loads; the kind indexes are what `tsc` reads by
+  // default. An augmentation on one side only types a symbol in one tool.
+  test("the root imports exactly the src augmentations the kind indexes carry", () => {
+    const root = readFileSync(resolve(import.meta.dir, "..", "index.d.ts"), "utf8");
+    const imported = [...root.matchAll(/^import "\.\/src\/([^"]+)";$/gm)].map((match) => match[1]);
+    expect([...imported].sort()).toEqual([...SRC_AUGMENTATION_MODULES].sort());
+  });
+
+  test("every src declaration that declares globals reaches a kind index", () => {
+    const srcDir = resolve(import.meta.dir, "..", "src");
+    const routed = new Set([
+      ...SRC_AUGMENTATION_MODULES,
+      ...KIND_MODULE_MANIFEST.flatMap((entry) => entry.extraModules ?? []).map((specifier) =>
+        specifier.replace(/^\.\.\/\.\.\/src\//, ""),
+      ),
+    ]);
+    const missing = readdirSync(srcDir)
+      .filter((name) => name.endsWith(".d.ts"))
+      .filter((name) => /^declare global\b/m.test(readFileSync(resolve(srcDir, name), "utf8")))
+      .map((name) => name.replace(/\.d\.ts$/, ""))
+      .filter((name) => !routed.has(name))
+      .sort();
+    expect(missing).toEqual([]);
+  });
 });
 
 describe("regen drift guard", () => {
