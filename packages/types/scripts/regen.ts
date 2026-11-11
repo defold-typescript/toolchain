@@ -927,6 +927,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/message-guard" },
   { specifier: "../../src/window-event-guard" },
   { specifier: "../../src/physics-event-guard" },
+  { specifier: "../../src/message-dispatch" },
   { specifier: "../../src/scene-addresses" },
   // `go.property` is listed by hand: `GetScript` finds no `.script` instance in
   // a render script and returns null rather than raising, and `Script_Property`
@@ -939,6 +940,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/gui-overloads", restrictedTo: "gui" },
   { specifier: "../../src/gui-texture-removal", restrictedTo: "gui", since: "1.13.1" },
+  { specifier: "../../src/socket-types" },
   { specifier: "../../src/vmath-overloads" },
   { specifier: "../../src/sys-overloads" },
 ];
