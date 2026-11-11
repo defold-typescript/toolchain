@@ -69,7 +69,7 @@ An expanded snippet emits every lifecycle hook the installed `@defold-typescript
 1. **Restart the TypeScript server first.** A stale language-server process keeps the old type surface in memory after a dependency upgrade, so the error survives even once the right types are on disk. In VS Code, run *TypeScript: Restart TS Server* from the command palette. This clears most false positives.
 2. **Then bring the types up to the CLI.** The snippet emits whatever the *CLI* knows about, so a newer hook (such as `fixed_update` or `late_update`) errors when the project's resolved `@defold-typescript/types` lags the CLI that wrote the snippet. Upgrade to the latest and keep them in lockstep: `bunx @defold-typescript/cli@latest init . --force` repins the managed `@defold-typescript/types` dependency to the CLI's own version.
 
-Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts.render_script` component files, helper `.lua` modules, and their `.map` siblings next to your sources as build output; the scaffolded `.gitignore` keeps them out of version control.
+Edit TypeScript under `src/`. Treat generated `.ts.script`/`.ts.gui_script`/`.ts.render_script`/`.ts.editor_script` component files, helper `.lua` modules, and their `.map` siblings next to your sources as build output. The scaffolded `.gitignore` keeps the component files and every `.map` sibling out of version control. Generated helper `.lua` modules stay tracked unless [`compilerOptions.outDir`](./init.md) moves them out of your source folders.
 
 ## Run the watch loop
 
