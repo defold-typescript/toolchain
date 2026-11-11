@@ -129,13 +129,17 @@ describe("@defold-typescript/types bundled-library surface", () => {
   const typesDir = resolve(PKG_DIR, "../types");
   const paths = packedPaths(typesDir);
 
-  test("ships a declaration and an export entry for every bundled library module", async () => {
+  test("ships a declaration, a Bun runtime copy and an export entry for every bundled library module", async () => {
     const manifest = await Bun.file(resolve(typesDir, "package.json")).json();
     for (const library of BUNDLED_LIBRARIES) {
       for (const { name, specifier } of bundledModules(library)) {
         expect(paths).toContain(`${library.id}/${name}.d.ts`);
+        expect(paths).toContain(`${library.id}/runtime/${name}.ts`);
         const subpath = `.${specifier.slice("@defold-typescript/types".length)}`;
-        expect(manifest.exports[subpath]).toEqual({ types: `./${library.id}/${name}.d.ts` });
+        expect(manifest.exports[subpath]).toEqual({
+          types: `./${library.id}/${name}.d.ts`,
+          bun: `./${library.id}/runtime/${name}.ts`,
+        });
       }
     }
   });

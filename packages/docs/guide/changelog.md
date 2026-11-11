@@ -9,13 +9,18 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.62.1
+## v0.63.0
 
 > Summary:
 >
+> - **`bun test` runs `hsm` and `ecs`** from a plain import ([State machines](./state-machines.md#test-a-machine-with-bun)).
 > - **`tsc` types `onMessage`** and [socket](/api/socket) aliases.
 > - **Interface values pass as tables** to `sys.save` and other any-table slots.
-> - **Scaffolds are clean out of the box:** docs paths, `.gitignore` and `biome check` ([init](./init.md)).
+> - **Clean scaffolds:** docs paths, `.gitignore` and `biome check` ([init](./init.md)).
+
+### Added
+
+- **`@defold-typescript/types/hsm`, `@defold-typescript/types/ecs` and their sub-modules run under `bun test`**, so a machine or a world can be unit-tested with a plain import and no Defold engine. See [State machines](./state-machines.md#test-a-machine-with-bun) and [Entity systems](./entity-systems.md#test-a-world-with-bun).
 
 ### Fixed
 

@@ -1442,6 +1442,39 @@ hsm door frame 330: /open -> /closed (after: /open, 3) [/closed]
 
 `inspect` is built on `onMove(listener)` and [`onUnhandled(listener)`](#listen-for-unhandled-events), which every instance has. The `onMove` listener receives the old leaf path, the new one (`undefined` after `stop()`), the cause and the event (`undefined` unless the cause is `event`), after the move's `enter` hooks have run. It is not called for the first entry at `start` or for a rule with no `to`. Each call adds a listener and returns a function that removes it.
 
+## Test a machine with Bun
+
+`@defold-typescript/types/hsm` and its sub-modules also run under Bun, so a machine in a [plain module](#define-a-machine-in-a-plain-module) can be tested with `bun test`, with no Defold engine and no mock of the import. Keep test files out of `src/`: `build` compiles every `.ts` file there to Lua, and `bun:test` has no Lua module. A test imports the machine from its module under `src/`, or defines one itself:
+
+```ts title="test/lamp.test.ts"
+import { expect, test } from "bun:test";
+import { defineMachine } from "@defold-typescript/types/hsm";
+
+const lamp = defineMachine<{ presses: number }, { type: "PRESS" }>()({
+  initial: "/off",
+  states: {
+    off: { on: { PRESS: "/on" } },
+    on: {
+      enter: (ctx) => {
+        ctx.presses += 1;
+      },
+      on: { PRESS: "/off" },
+    },
+  },
+});
+
+test("a press turns the lamp on", () => {
+  const instance = lamp.start({ presses: 0 });
+
+  instance.send({ type: "PRESS" });
+
+  expect(instance.path).toBe("/on");
+  expect(instance.ctx.presses).toBe(1);
+});
+```
+
+The core module needs nothing from the engine. A few sub-modules call engine functions, which a test defines on `globalThis` before it uses them: `hsm/defold`'s `messageEvents` calls `hash`, `wait` inside an `hsm/async` `sequence` calls `timer.delay`, and `hsm/debug`'s `inspect` calls `sys.get_engine_info` and `msg.post`.
+
 ## Animation states with one-shots
 
 A character has three kinds of animation:
