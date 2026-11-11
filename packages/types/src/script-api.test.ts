@@ -898,7 +898,7 @@ describe("scriptApiToRefDoc bracketed slots", () => {
       .filter((line) => line.startsWith("function open_file("));
     expect(lines).toEqual([
       "function open_file(callback: (...args: unknown[]) => unknown): number;",
-      "function open_file(options: Record<string | number, unknown> | undefined, callback: (...args: unknown[]) => unknown): number;",
+      "function open_file(options: PlainTable | undefined, callback: (...args: unknown[]) => unknown): number;",
     ]);
   });
 });

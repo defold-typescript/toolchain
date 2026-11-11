@@ -72,7 +72,7 @@ declare global {
      * @param tile_or_info - Either 1-indexed tile index of a tilemap's tilesource or full tile information table with the following keys:`index integer`1-indexed tile index of a tilemap's tilesource`h_flip boolean`horizontal flip`v_flip boolean`vertical flip`rotate_90 boolean`whether the tile is rotated 90 degrees clockwise. **⚠️ 1-based; passed to Defold unchanged.** **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @returns unbounded 2d grid of tiles
      */
-    export function set(tiles: unknown, x: number, y: number, tile_or_info: number | Record<string | number, unknown>): unknown;
+    export function set(tiles: unknown, x: number, y: number, tile_or_info: number | PlainTable): unknown;
     export { _new as new };
   }
 }

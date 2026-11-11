@@ -625,7 +625,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -2400,7 +2400,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -4161,7 +4161,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5423,7 +5423,7 @@
       "b2d.joint\u0000CONSTANT\u0000b2d.joint.LIMIT_STATE_EQUAL\u0000": "const LIMIT_STATE_EQUAL: number & { readonly __brand: \"b2d.joint.LIMIT_STATE_EQUAL\" };",
       "b2d.joint\u0000CONSTANT\u0000b2d.joint.LIMIT_STATE_INACTIVE\u0000": "const LIMIT_STATE_INACTIVE: number & { readonly __brand: \"b2d.joint.LIMIT_STATE_INACTIVE\" };",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_distance\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_distance(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
-      "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_filter(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: Record<string | number, unknown>): Opaque<\"b2Joint\">;",
+      "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_filter(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: PlainTable): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_friction\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_friction(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_gear\u0000[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_gear(joint1: Opaque<\"b2Joint\">, joint2: Opaque<\"b2Joint\">, definition?: { ratio?: number }): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_motor\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_motor(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
@@ -5645,7 +5645,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5655,7 +5655,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string | Hash): string[];",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: PlainTable | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "compute\u0000FUNCTION\u0000compute.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
@@ -5690,7 +5690,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -6182,7 +6182,7 @@
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;\nfunction load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;\nfunction load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
-      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;",
+      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: PlainTable, options?: { encode_empty_table_as_object?: string }): string;",
       "json\u0000VARIABLE\u0000json.null\u0000": "const _null: unknown;",
       "label\u0000FUNCTION\u0000label.get_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(url: string | Hash | Url): string;",
       "label\u0000FUNCTION\u0000label.set_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false}]->[]": "function set_text(url: string | Hash | Url, text: string | number): void;",
@@ -6376,7 +6376,7 @@
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "render\u0000TYPEDEF\u0000ConstantBuffer\u0000": "type ConstantBuffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000RenderTarget\u0000": "type RenderTarget = Opaque<\"render_target\">;",
-      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = Record<string | number, unknown>;",
+      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = PlainTable;",
       "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000Texture\u0000": "type Texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -6538,8 +6538,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -6781,7 +6781,7 @@
       "b2d.joint\u0000CONSTANT\u0000b2d.joint.LIMIT_STATE_EQUAL\u0000": "const LIMIT_STATE_EQUAL: number & { readonly __brand: \"b2d.joint.LIMIT_STATE_EQUAL\" };",
       "b2d.joint\u0000CONSTANT\u0000b2d.joint.LIMIT_STATE_INACTIVE\u0000": "const LIMIT_STATE_INACTIVE: number & { readonly __brand: \"b2d.joint.LIMIT_STATE_INACTIVE\" };",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_distance\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_distance(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
-      "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_filter(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: Record<string | number, unknown>): Opaque<\"b2Joint\">;",
+      "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_filter(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: PlainTable): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_friction\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_friction(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_gear\u0000[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_gear(joint1: Opaque<\"b2Joint\">, joint2: Opaque<\"b2Joint\">, definition?: { ratio?: number }): Opaque<\"b2Joint\">;",
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_motor\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": "function create_motor(body_a: Opaque<\"b2Body\">, body_b: Opaque<\"b2Body\">, definition?: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<\"b2Joint\">;",
@@ -7003,7 +7003,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -7047,7 +7047,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -7538,7 +7538,7 @@
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;\nfunction load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;\nfunction load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
-      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;",
+      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: PlainTable, options?: { encode_empty_table_as_object?: string }): string;",
       "json\u0000VARIABLE\u0000json.null\u0000": "const _null: unknown;",
       "label\u0000FUNCTION\u0000label.get_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(url: string | Hash | Url): string;",
       "label\u0000FUNCTION\u0000label.set_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false}]->[]": "function set_text(url: string | Hash | Url, text: string | number): void;",
@@ -7732,7 +7732,7 @@
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "render\u0000TYPEDEF\u0000ConstantBuffer\u0000": "type ConstantBuffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000RenderTarget\u0000": "type RenderTarget = Opaque<\"render_target\">;",
-      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = Record<string | number, unknown>;",
+      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = PlainTable;",
       "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000Texture\u0000": "type Texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -7894,8 +7894,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -8101,7 +8101,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -8139,7 +8139,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -8592,7 +8592,7 @@
       "image\u0000FUNCTION\u0000image.load\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;\nfunction load(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: string } | undefined;",
       "image\u0000FUNCTION\u0000image.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function load_buffer(buffer: string): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;\nfunction load_buffer(buffer: string, options: { premultiply_alpha?: boolean; flip_vertically?: boolean }): { width: number; height: number; type: Opaque<\"constant\">; buffer: Opaque<\"buffer\"> & { length: LuaLengthMethod<number> } } | undefined;",
       "json\u0000FUNCTION\u0000json.decode\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function decode(json: string, options?: { decode_null_as_userdata?: boolean }): Record<string | number, unknown>;",
-      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;",
+      "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function encode(tbl: PlainTable, options?: { encode_empty_table_as_object?: string }): string;",
       "json\u0000VARIABLE\u0000json.null\u0000": "const _null: unknown;",
       "label\u0000FUNCTION\u0000label.get_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(url: string | Hash | Url): string;",
       "label\u0000FUNCTION\u0000label.set_text\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false}]->[]": "function set_text(url: string | Hash | Url, text: string | number): void;",
@@ -8756,7 +8756,7 @@
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
       "render\u0000TYPEDEF\u0000ConstantBuffer\u0000": "type ConstantBuffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };",
       "render\u0000TYPEDEF\u0000RenderTarget\u0000": "type RenderTarget = Opaque<\"render_target\">;",
-      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = Record<string | number, unknown>;",
+      "render\u0000TYPEDEF\u0000RenderTargetParams\u0000": "type RenderTargetParams = PlainTable;",
       "render\u0000TYPEDEF\u0000RenderTargetTextureType\u0000": "type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;",
       "render\u0000TYPEDEF\u0000Texture\u0000": "type Texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -8917,8 +8917,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string): boolean;\nfunction open_url(url: string, attributes: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: PlainTable | readonly unknown[]): boolean;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: PlainTable | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -11527,7 +11527,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -16348,7 +16348,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -21138,7 +21138,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -23944,7 +23944,7 @@
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"b2Body\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "param:2:definition": { "type": "Record<string | number, unknown>", "optional": true },
+        "param:2:definition": { "type": "PlainTable", "optional": true },
         "return:0:joint": { "type": "Opaque<\"b2Joint\">", "optional": false }
       },
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_friction\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": {
@@ -24975,7 +24975,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -25008,10 +25008,7 @@
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
-        "param:1:options": {
-          "type": "Record<string | number, unknown> | undefined",
-          "optional": false
-        },
+        "param:1:options": { "type": "PlainTable | undefined", "optional": false },
         "param:2:callback": {
           "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
           "optional": false
@@ -25108,7 +25105,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -25802,7 +25799,7 @@
         "return:0:data": { "type": "Record<string | number, unknown>", "optional": false }
       },
       "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:tbl": { "type": "Record<string | number, unknown>", "optional": false },
+        "param:0:tbl": { "type": "PlainTable", "optional": false },
         "param:1:options": {
           "type": "{ encode_empty_table_as_object?: string }",
           "optional": true
@@ -26964,16 +26961,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
-        "param:1:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        }
+        "param:1:table": { "type": "PlainTable | readonly unknown[]", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        },
+        "param:0:table": { "type": "PlainTable | readonly unknown[]", "optional": false },
         "return:0:buffer": { "type": "string", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {
@@ -27849,7 +27840,7 @@
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_filter\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": {
         "param:0:body_a": { "type": "Opaque<\"b2Body\">", "optional": false },
         "param:1:body_b": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "param:2:definition": { "type": "Record<string | number, unknown>", "optional": true },
+        "param:2:definition": { "type": "PlainTable", "optional": true },
         "return:0:joint": { "type": "Opaque<\"b2Joint\">", "optional": false }
       },
       "b2d.joint\u0000FUNCTION\u0000b2d.joint.create_friction\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Opaque<\\\"b2Joint\\\">\"],\"isOptional\":false}]": {
@@ -28880,7 +28871,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -29002,7 +28993,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -29696,7 +29687,7 @@
         "return:0:data": { "type": "Record<string | number, unknown>", "optional": false }
       },
       "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:tbl": { "type": "Record<string | number, unknown>", "optional": false },
+        "param:0:tbl": { "type": "PlainTable", "optional": false },
         "param:1:options": {
           "type": "{ encode_empty_table_as_object?: string }",
           "optional": true
@@ -30858,16 +30849,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
-        "param:1:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        }
+        "param:1:table": { "type": "PlainTable | readonly unknown[]", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        },
+        "param:0:table": { "type": "PlainTable | readonly unknown[]", "optional": false },
         "return:0:buffer": { "type": "string", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {
@@ -31597,7 +31582,7 @@
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
         "param:3:properties": {
-          "type": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
+          "type": "LuaMap<Hash, PlainTable> | Record<string, PlainTable>",
           "optional": true
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
@@ -31677,7 +31662,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": { "type": "Record<string | number, unknown>", "optional": true },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -32362,7 +32347,7 @@
         "return:0:data": { "type": "Record<string | number, unknown>", "optional": false }
       },
       "json\u0000FUNCTION\u0000json.encode\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:tbl": { "type": "Record<string | number, unknown>", "optional": false },
+        "param:0:tbl": { "type": "PlainTable", "optional": false },
         "param:1:options": {
           "type": "{ encode_empty_table_as_object?: string }",
           "optional": true
@@ -33440,16 +33425,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": { "type": "string", "optional": false },
-        "param:1:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        }
+        "param:1:table": { "type": "PlainTable | readonly unknown[]", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": {
-          "type": "Record<string | number, unknown> | readonly unknown[]",
-          "optional": false
-        },
+        "param:0:table": { "type": "PlainTable | readonly unknown[]", "optional": false },
         "return:0:buffer": { "type": "string", "optional": false }
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {

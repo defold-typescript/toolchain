@@ -108,6 +108,7 @@ import {
   inlineTableType,
   isKnownDefoldTypeToken,
   MAPPING_TABLE_SLOTS,
+  mapTypeWithVocabulary,
   NESTED_FIELD_CURATIONS,
   OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
@@ -1324,7 +1325,7 @@ describe("emitDeclarations", () => {
     );
   });
 
-  test("a bare table slot with no <dl> still emits Record", () => {
+  test("a bare table slot with no <dl> still emits the opaque table type", () => {
     const module: ApiModule = {
       namespace: "ns",
       brief: "",
@@ -1345,9 +1346,7 @@ describe("emitDeclarations", () => {
       properties: [],
       typedefs: [],
     };
-    expect(emitDeclarations(module)).toContain(
-      "function opaque(t: Record<string | number, unknown>): void;",
-    );
+    expect(emitDeclarations(module)).toContain("function opaque(t: PlainTable): void;");
   });
 
   test("a <dl> field typed table maps to Record (no recursion); a field typed int maps to number", () => {
@@ -3042,8 +3041,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "collectionfactory.create")],
     });
-    const properties =
-      "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>";
+    const properties = "LuaMap<Hash, PlainTable> | Record<string, PlainTable>";
     expect(out).toContain(
       `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`,
     );
@@ -3822,7 +3820,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
     });
   }
 
-  test("a table slot on an element absent from HOMOGENEOUS_ARRAY_SLOTS still emits Record", () => {
+  test("a table slot on an element absent from HOMOGENEOUS_ARRAY_SLOTS still emits the opaque table type", () => {
     const out = emitDeclarations(
       moduleOf("buffer", [
         {
@@ -3834,7 +3832,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
         },
       ]),
     );
-    expect(out).toContain("function other(t: Record<string | number, unknown>): void;");
+    expect(out).toContain("function other(t: PlainTable): void;");
   });
 });
 
@@ -4180,7 +4178,7 @@ describe("slot-level array-of-object recovery", () => {
     );
     expect(out).toContain(
       "  namespace a {\n    namespace b {\n" +
-        "      function c(opts: Record<string | number, unknown>): string;\n    }\n  }",
+        "      function c(opts: PlainTable): string;\n    }\n  }",
     );
   });
 
@@ -6860,9 +6858,7 @@ describe("overload slot aliases", () => {
 
   test("render.RenderTargetParams aliases the slot type where the reference leaves the slot a table", () => {
     const lines = emittedLines(render113Doc);
-    expect(slotDeclarations(lines)).toEqual([
-      "type RenderTargetParams = Record<string | number, unknown>;",
-    ]);
+    expect(slotDeclarations(lines)).toEqual(["type RenderTargetParams = PlainTable;"]);
     expect(lines.join("\n")).not.toContain("render_target_params =");
   });
 
@@ -6880,9 +6876,7 @@ describe("overload slot aliases", () => {
 
   test("the slot alias signs the line the declarations print", () => {
     expect(slotSignatures(render113Doc)).toEqual(slotDeclarations(emittedLines(render113Doc)));
-    expect(slotSignatures(render113Doc)).toEqual([
-      "type RenderTargetParams = Record<string | number, unknown>;",
-    ]);
+    expect(slotSignatures(render113Doc)).toEqual(["type RenderTargetParams = PlainTable;"]);
   });
 
   test("the reference's own declaration is the slot's only signature where the reference declares it", () => {
@@ -7023,7 +7017,7 @@ describe("corrections the engine bindings demand", () => {
 
   test("a value the binding returns undocumented is declared", () => {
     expect(line(sysDoc, "function save(")).toBe(
-      "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;",
+      "function save(filename: string, table: PlainTable | readonly unknown[]): boolean;",
     );
   });
 
@@ -7062,6 +7056,15 @@ describe("defaultMapType LuaLS fallback", () => {
     expect(defaultMapType("message.render.set_view_projection")).toBe(
       'BuiltinMessages["set_view_projection"]',
     );
+  });
+
+  test("a bare table takes PlainTable in input position and the readable record elsewhere", () => {
+    const vocabularyMapType = mapTypeWithVocabulary({ leaves: { widget: "Widget" } });
+    for (const mapType of [defaultMapType, vocabularyMapType]) {
+      expect(mapType("table", "input")).toBe("PlainTable");
+      expect(mapType("table")).toBe("Record<string | number, unknown>");
+      expect(mapType("table", "output")).toBe("Record<string | number, unknown>");
+    }
   });
 
   test("1.13.1 tokens keep their whole-token mapping", () => {
@@ -8233,9 +8236,7 @@ describe("upstream-pinned corrections", () => {
         ),
         "create",
       ),
-    ).toContain(
-      "properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
-    );
+    ).toContain("properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>");
   });
 
   // Verbatim 1.13.2 struct (`gamesys-script_sound.cpp_doc.json`), which marks
@@ -8558,6 +8559,26 @@ describe("slots typed from ref-doc fields", () => {
     });
     expect(out).toContain(
       "function set_listener(listener: (self: unknown, code: number, data: { id: string }) => void): void;",
+    );
+  });
+
+  test("a bare table parameter takes PlainTable", () => {
+    const out = emitSlot({ name: "options", doc: "", types: ["table"] });
+    expect(out).toContain("function set_listener(options: PlainTable): void;");
+  });
+
+  test("a bare table callback argument keeps the readable record", () => {
+    const out = emitSlot({
+      name: "listener",
+      doc: "called back",
+      types: ["function"],
+      fields: [
+        { name: "self", doc: "the script", types: ["object"] },
+        { name: "payload", doc: "", types: ["table"] },
+      ],
+    });
+    expect(out).toContain(
+      "function set_listener(listener: (self: unknown, payload: Record<string | number, unknown>) => void): void;",
     );
   });
 

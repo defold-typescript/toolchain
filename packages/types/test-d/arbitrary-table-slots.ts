@@ -56,6 +56,10 @@ sys.save("/save.dat", msg.url());
 sys.save("/save.dat", () => 1);
 // @ts-expect-error a number is not a table
 sys.save("/save.dat", 42);
+// @ts-expect-error a Lua file handle is not a table
+sys.save("/save.dat", io.stdout);
+// @ts-expect-error a Lua file handle is not a table
+sys.serialize(io.stdout);
 
 // Runtime-owned passthrough: the spawn-time `properties` overrides are keyed by
 // the spawned object's own script-property names, so the table is an arbitrary

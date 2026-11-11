@@ -302,6 +302,28 @@ describe("markdown fidelity", () => {
   });
 });
 
+// A bare `table` parameter emits `PlainTable`, which names no field and no
+// element type, so against a concrete ts-defold type it is as lost as `unknown`.
+describe("compareFidelityToTsDefold downgrade term", () => {
+  test("a PlainTable parameter downgrades a concrete ts-defold type", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(rows: PlainTable): void;",
+      "function f(rows: Array<[number, string]>): void;",
+    );
+    expect(comparison.downgradedMembers).toEqual(["f"]);
+    expect(comparison.decision).toBe("no-go");
+  });
+
+  test("a PlainTable the ts-defold side also spells is no downgrade", () => {
+    const comparison = compareFidelityToTsDefold(
+      "function f(rows: PlainTable): void;",
+      "function f(rows: PlainTable): void;",
+    );
+    expect(comparison.downgradedMembers).toEqual([]);
+    expect(comparison.decision).toBe("go");
+  });
+});
+
 // A prose-only README documents member *names* with no `**PARAMETERS**` /
 // `**RETURN**` blocks, so the flat parse keeps every member and emits it
 // zero-arity `(): void`. Neither the missing-member term nor the `unknown`

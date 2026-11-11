@@ -309,13 +309,13 @@ describe("overload slot alias of a withheld function", () => {
     expect(contents).not.toContain("function render_target(");
   });
 
-  test("the 1.13.1 render surface types the alias as the bare record", () => {
+  test("the 1.13.1 render surface types the alias as the parameter's plain table", () => {
     const render = VERSIONED_MODULE_MANIFEST.find(
       (e) => e.versionId === "defold-1.13.1" && e.namespace === "render",
     );
     if (!render) throw new Error("defold-1.13.1 render manifest entry missing");
     const { contents } = generateModuleDeclaration(render);
-    expect(contents).toContain("type RenderTargetParams = Record<string | number, unknown>;");
+    expect(contents).toContain("type RenderTargetParams = PlainTable;");
     expect(contents).not.toContain("type render_target_params");
     expect(contents).not.toContain("function render_target(");
   });
