@@ -207,15 +207,19 @@ describe("evaluatePropertyDefaults sandbox", () => {
   test.each([
     ['string.find(("a"):rep(40), ("a-"):rep(30) .. "b")'],
     ["table.move({}, 1, 2^53, 2, {})"],
-  ])("%s, which runs in C, stops at the time limit and the next evaluation succeeds", (statement) => {
-    const started = performance.now();
-    const message = messageOf(evaluateLua(statement));
-    expect(message).toContain("timeout");
-    expect(performance.now() - started).toBeLessThan(5000);
-    expect(valuesOf(evaluateLua("____properties = { x = 2 }"))).toEqual({
-      x: { kind: "number", value: 2 },
-    });
-  }, 15000);
+  ])(
+    "%s, which runs in C, stops at the time limit and the next evaluation succeeds",
+    (statement) => {
+      const started = performance.now();
+      const message = messageOf(evaluateLua(statement));
+      expect(message).toContain("timeout");
+      expect(performance.now() - started).toBeLessThan(5000);
+      expect(valuesOf(evaluateLua("____properties = { x = 2 }"))).toEqual({
+        x: { kind: "number", value: 2 },
+      });
+    },
+    15000,
+  );
 
   test("an allocation past the memory limit fails and the next evaluation succeeds", () => {
     const message = messageOf(
@@ -229,18 +233,14 @@ describe("evaluatePropertyDefaults sandbox", () => {
 });
 
 describe("evaluatePropertyDefaults values", () => {
-  test.each([
-    ["{ 1, 2 }"],
-    ["function() end"],
-    ["0/0"],
-    ['"a\\0b"'],
-    ['hash("a\\0b")'],
-    ["nil"],
-  ])("x = %s is not a property value", (expression) => {
-    const result = evaluateLua(`____properties = { x = ${expression} }`);
-    expect(result.ok).toBe(false);
-    expect(result.ok ? undefined : result.error.name).toBe("x");
-  });
+  test.each([["{ 1, 2 }"], ["function() end"], ["0/0"], ['"a\\0b"'], ['hash("a\\0b")'], ["nil"]])(
+    "x = %s is not a property value",
+    (expression) => {
+      const result = evaluateLua(`____properties = { x = ${expression} }`);
+      expect(result.ok).toBe(false);
+      expect(result.ok ? undefined : result.error.name).toBe("x");
+    },
+  );
 
   test("a requested name the properties table lacks fails on that name", () => {
     const result = evaluateLua("____properties = { y = 1 }", ["x"]);

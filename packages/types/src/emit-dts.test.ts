@@ -8203,9 +8203,12 @@ describe("upstream-pinned corrections", () => {
       "): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
     ],
     ["socket", "newtry", newtry, "): <T>(value: T | undefined, ...rest: T extends"],
-  ] as const)("%s.%s keeps its correction on the 1.13.2 spelling", (namespace, local, element, slot) => {
-    expect(signature(emitted(namespace, element), local)).toContain(slot);
-  });
+  ] as const)(
+    "%s.%s keeps its correction on the 1.13.2 spelling",
+    (namespace, local, element, slot) => {
+      expect(signature(emitted(namespace, element), local)).toContain(slot);
+    },
+  );
 
   test("an added member the mapped union already has is emitted once", () => {
     const line = signature(emitted("render", setRenderTarget), "set_render_target");

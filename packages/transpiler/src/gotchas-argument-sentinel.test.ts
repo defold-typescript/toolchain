@@ -54,38 +54,40 @@ const NIL_ARGUMENT = /[(,][^(),]*\bnil\s*[,)]/;
 describe("the gotchas page's `undefined`-argument examples", () => {
   const blocks = argumentBlocks();
 
-  test.each(
-    blocks.map((block, index) => [index, block] as const),
-  )("block %i type-checks and lowers its omitted argument to Lua nil", (index, block) => {
-    const result = transpile(block);
-    if (result.diagnostics.length > 0) {
-      throw new Error(
-        `block ${index} of "${HEADING}" does not type-check against the ` +
-          `shipped declarations:\n${result.diagnostics.join("\n")}`,
-      );
-    }
-    expect(result.lua).toMatch(NIL_ARGUMENT);
-  });
+  test.each(blocks.map((block, index) => [index, block] as const))(
+    "block %i type-checks and lowers its omitted argument to Lua nil",
+    (index, block) => {
+      const result = transpile(block);
+      if (result.diagnostics.length > 0) {
+        throw new Error(
+          `block ${index} of "${HEADING}" does not type-check against the ` +
+            `shipped declarations:\n${result.diagnostics.join("\n")}`,
+        );
+      }
+      expect(result.lua).toMatch(NIL_ARGUMENT);
+    },
+  );
 
   // The half that proves the passage's claim rather than restating it: the
   // spelling it warns against really is rejected. This holds only while every
   // extracted block spells `undefined` in an argument position; a future block
   // that mentions `undefined` elsewhere must be excluded from this half rather
   // than have the assertion weakened to accommodate it.
-  test.each(
-    blocks.map((block, index) => [index, block] as const),
-  )("block %i is rejected when its `undefined` is respelled `null`", (index, block) => {
-    const respelled = block.replaceAll("undefined", "null");
-    expect(respelled).not.toBe(block);
-    const result = transpile(respelled);
-    if (result.diagnostics.length === 0) {
-      throw new Error(
-        `block ${index} of "${HEADING}" still compiles with \`null\` in the ` +
-          "argument position. The passage tells readers that slot accepts " +
-          "only `undefined`; a declaration that widened it to `null` has " +
-          "made the page wrong.",
-      );
-    }
-    expect(result.diagnostics.length).toBeGreaterThan(0);
-  });
+  test.each(blocks.map((block, index) => [index, block] as const))(
+    "block %i is rejected when its `undefined` is respelled `null`",
+    (index, block) => {
+      const respelled = block.replaceAll("undefined", "null");
+      expect(respelled).not.toBe(block);
+      const result = transpile(respelled);
+      if (result.diagnostics.length === 0) {
+        throw new Error(
+          `block ${index} of "${HEADING}" still compiles with \`null\` in the ` +
+            "argument position. The passage tells readers that slot accepts " +
+            "only `undefined`; a declaration that widened it to `null` has " +
+            "made the page wrong.",
+        );
+      }
+      expect(result.diagnostics.length).toBeGreaterThan(0);
+    },
+  );
 });

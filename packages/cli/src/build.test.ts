@@ -1286,81 +1286,79 @@ describe("runBuild runtime folder", () => {
     { outDir: undefined, runtimeDir: undefined, folder: "lib/defold_typescript" },
     { outDir: "out/lua", runtimeDir: undefined, folder: "out/lua/lib/defold_typescript" },
     { outDir: "out/lua", runtimeDir: "vendor/rt", folder: "out/lua/vendor/rt" },
-  ])("writes every runtime file in $folder, and every require loads a written file", ({
-    outDir,
-    runtimeDir,
-    folder,
-  }) => {
-    writeRuntimeProject(outDir, runtimeDir);
+  ])(
+    "writes every runtime file in $folder, and every require loads a written file",
+    ({ outDir, runtimeDir, folder }) => {
+      writeRuntimeProject(outDir, runtimeDir);
 
-    const result = runBuild({ cwd });
+      const result = runBuild({ cwd });
 
-    const runtimeRels = [
-      `${folder}/lualib_bundle.lua`,
-      `${folder}/timers.lua`,
-      `${folder}/hsm/index.lua`,
-      `${folder}/hsm/defold.lua`,
-      `${folder}/hsm/async.lua`,
-    ];
-    for (const rel of runtimeRels) {
-      expect(result.written).toContain(rel);
-    }
-    const outputRoot = outDir ?? "";
-    for (const legacy of [
-      "lualib_bundle.lua",
-      "defold_typescript_timers.lua",
-      "defold_typescript_hsm",
-    ]) {
-      expect(existsSync(path.join(cwd, outputRoot, legacy))).toBe(false);
-    }
-
-    // Lua's loader turns every dot in a require name into a folder separator,
-    // so each require must name a file the build wrote under cwd.
-    const required = new Set<string>();
-    for (const rel of result.written) {
-      if (!rel.endsWith(".lua") && !rel.endsWith(".ts.script")) {
-        continue;
+      const runtimeRels = [
+        `${folder}/lualib_bundle.lua`,
+        `${folder}/timers.lua`,
+        `${folder}/hsm/index.lua`,
+        `${folder}/hsm/defold.lua`,
+        `${folder}/hsm/async.lua`,
+      ];
+      for (const rel of runtimeRels) {
+        expect(result.written).toContain(rel);
       }
-      for (const { path: requirePath } of scanEmittedRequires(
-        readFileSync(path.join(cwd, rel), "utf8"),
-      )) {
-        required.add(requirePath);
-        const loadPath = `${requirePath.replace(/\./g, "/")}.lua`;
-        expect({ rel, requirePath, loads: existsSync(path.join(cwd, loadPath)) }).toEqual({
-          rel,
-          requirePath,
-          loads: true,
-        });
+      const outputRoot = outDir ?? "";
+      for (const legacy of [
+        "lualib_bundle.lua",
+        "defold_typescript_timers.lua",
+        "defold_typescript_hsm",
+      ]) {
+        expect(existsSync(path.join(cwd, outputRoot, legacy))).toBe(false);
       }
-    }
-    for (const rel of runtimeRels) {
-      expect([...required]).toContain(requirePathForRel(rel));
-    }
-  });
+
+      // Lua's loader turns every dot in a require name into a folder separator,
+      // so each require must name a file the build wrote under cwd.
+      const required = new Set<string>();
+      for (const rel of result.written) {
+        if (!rel.endsWith(".lua") && !rel.endsWith(".ts.script")) {
+          continue;
+        }
+        for (const { path: requirePath } of scanEmittedRequires(
+          readFileSync(path.join(cwd, rel), "utf8"),
+        )) {
+          required.add(requirePath);
+          const loadPath = `${requirePath.replace(/\./g, "/")}.lua`;
+          expect({ rel, requirePath, loads: existsSync(path.join(cwd, loadPath)) }).toEqual({
+            rel,
+            requirePath,
+            loads: true,
+          });
+        }
+      }
+      for (const rel of runtimeRels) {
+        expect([...required]).toContain(requirePathForRel(rel));
+      }
+    },
+  );
 
   test.each([
     { outDir: undefined, runtimeDir: undefined, folder: "lib/defold_typescript" },
     { outDir: "out/lua", runtimeDir: "a/b/c/rt", folder: "out/lua/a/b/c/rt" },
-  ])("each hsm map in $folder opens the hsm source the module was compiled from", ({
-    outDir,
-    runtimeDir,
-    folder,
-  }) => {
-    writeRuntimeProject(outDir, runtimeDir);
+  ])(
+    "each hsm map in $folder opens the hsm source the module was compiled from",
+    ({ outDir, runtimeDir, folder }) => {
+      writeRuntimeProject(outDir, runtimeDir);
 
-    runBuild({ cwd });
+      runBuild({ cwd });
 
-    const sourceDir = resolveLibrarySourceDir(HSM_LIBRARY);
-    expect(sourceDir).not.toBeNull();
-    for (const name of ["index", "defold", "async"]) {
-      const mapAbs = path.join(cwd, folder, "hsm", `${name}.lua.map`);
-      const map = JSON.parse(readFileSync(mapAbs, "utf8"));
-      // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.
-      const source = path.resolve(path.dirname(mapAbs), map.sourceRoot || ".", map.sources[0]);
-      expect(source).toBe(path.join(sourceDir ?? "", `${name}.ts`));
-      expect(existsSync(source)).toBe(true);
-    }
-  });
+      const sourceDir = resolveLibrarySourceDir(HSM_LIBRARY);
+      expect(sourceDir).not.toBeNull();
+      for (const name of ["index", "defold", "async"]) {
+        const mapAbs = path.join(cwd, folder, "hsm", `${name}.lua.map`);
+        const map = JSON.parse(readFileSync(mapAbs, "utf8"));
+        // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.
+        const source = path.resolve(path.dirname(mapAbs), map.sourceRoot || ".", map.sources[0]);
+        expect(source).toBe(path.join(sourceDir ?? "", `${name}.ts`));
+        expect(existsSync(source)).toBe(true);
+      }
+    },
+  );
 
   test("a line of the written async module maps to the hsm source line it came from", () => {
     writeRuntimeProject(undefined, undefined);
@@ -1890,22 +1888,22 @@ describe("build --editor-compile", () => {
     expect(lines[0]).toContain(wording);
   });
 
-  test.each([
-    "unsupported",
-    "unavailable",
-  ] as const)("%s puts only the outcome in --json and stays ok", async (outcome) => {
-    const editor = makeBuildEditor(null, () => ({ outcome, result: null }));
-    const { io, out } = captureStreams();
+  test.each(["unsupported", "unavailable"] as const)(
+    "%s puts only the outcome in --json and stays ok",
+    async (outcome) => {
+      const editor = makeBuildEditor(null, () => ({ outcome, result: null }));
+      const { io, out } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--editor-compile", "--json"], io, {
-      editorClient: editor.client,
-    });
+      const code = await dispatch(["build", cwd, "--editor-compile", "--json"], io, {
+        editorClient: editor.client,
+      });
 
-    expect(code).toBe(0);
-    const payload = JSON.parse(out());
-    expect(payload.ok).toBe(true);
-    expect(payload.editorCompile).toEqual({ outcome });
-  });
+      expect(code).toBe(0);
+      const payload = JSON.parse(out());
+      expect(payload.ok).toBe(true);
+      expect(payload.editorCompile).toEqual({ outcome });
+    },
+  );
 
   test.each([
     ["skipped", null],
@@ -2063,28 +2061,31 @@ describe("build --editor-run", () => {
   test.each([
     ["unsupported", "--editor-run needs Defold 1.13.2"],
     ["unavailable", "no Defold editor is attached"],
-  ] as const)("%s exits 0 with one plain stderr line and only the outcome in --json", async (outcome, wording) => {
-    const editor = makeBuildEditor(null, undefined, () => ({ outcome, result: null }));
-    const { io, err } = captureStreams();
+  ] as const)(
+    "%s exits 0 with one plain stderr line and only the outcome in --json",
+    async (outcome, wording) => {
+      const editor = makeBuildEditor(null, undefined, () => ({ outcome, result: null }));
+      const { io, err } = captureStreams();
 
-    const code = await dispatch(["build", cwd, "--editor-run"], io, {
-      editorClient: editor.client,
-    });
+      const code = await dispatch(["build", cwd, "--editor-run"], io, {
+        editorClient: editor.client,
+      });
 
-    expect(code).toBe(0);
-    const lines = err().trimEnd().split("\n");
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain(wording);
+      expect(code).toBe(0);
+      const lines = err().trimEnd().split("\n");
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toContain(wording);
 
-    const json = captureStreams();
-    const jsonCode = await dispatch(["build", cwd, "--editor-run", "--json"], json.io, {
-      editorClient: editor.client,
-    });
-    expect(jsonCode).toBe(0);
-    const payload = JSON.parse(json.out());
-    expect(payload.ok).toBe(true);
-    expect(payload.editorRun).toEqual({ outcome });
-  });
+      const json = captureStreams();
+      const jsonCode = await dispatch(["build", cwd, "--editor-run", "--json"], json.io, {
+        editorClient: editor.client,
+      });
+      expect(jsonCode).toBe(0);
+      const payload = JSON.parse(json.out());
+      expect(payload.ok).toBe(true);
+      expect(payload.editorRun).toEqual({ outcome });
+    },
+  );
 
   test("--editor-run with --editor-compile posts only the run", async () => {
     const editor = makeBuildEditor("http://localhost:4242");

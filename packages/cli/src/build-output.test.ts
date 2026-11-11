@@ -393,32 +393,32 @@ describe("retargetLibrarySourceMap in a published install", () => {
     rmSync(cwd, { recursive: true, force: true });
   });
 
-  test.each([
-    "lib/defold_typescript/hsm/index.lua",
-    "out/lua/a/b/c/rt/hsm/index.lua",
-  ])("the map beside %s opens the installed hsm source", (moduleRel) => {
-    const packageRoot = path.join(cwd, "node_modules/@defold-typescript/transpiler");
-    const installed = path.join(packageRoot, "dist/hsm/index.ts");
-    mkdirSync(path.dirname(installed), { recursive: true });
-    writeFileSync(installed, "export {};\n");
-    const dir = resolveLibrarySourceDir(HSM_LIBRARY, packageRoot);
-    expect(dir).toBe(path.dirname(installed));
-    const program = transpileProject({
-      files: {
-        "door.ts":
-          'import { defineMachine } from "@defold-typescript/types/hsm";\nexport const define = defineMachine;\n',
-      },
-    });
-    const real = program.librarySourceMaps?.["defold_typescript_hsm.index"];
-    expect(real).toBeDefined();
+  test.each(["lib/defold_typescript/hsm/index.lua", "out/lua/a/b/c/rt/hsm/index.lua"])(
+    "the map beside %s opens the installed hsm source",
+    (moduleRel) => {
+      const packageRoot = path.join(cwd, "node_modules/@defold-typescript/transpiler");
+      const installed = path.join(packageRoot, "dist/hsm/index.ts");
+      mkdirSync(path.dirname(installed), { recursive: true });
+      writeFileSync(installed, "export {};\n");
+      const dir = resolveLibrarySourceDir(HSM_LIBRARY, packageRoot);
+      expect(dir).toBe(path.dirname(installed));
+      const program = transpileProject({
+        files: {
+          "door.ts":
+            'import { defineMachine } from "@defold-typescript/types/hsm";\nexport const define = defineMachine;\n',
+        },
+      });
+      const real = program.librarySourceMaps?.["defold_typescript_hsm.index"];
+      expect(real).toBeDefined();
 
-    const retargeted = retargetLibrarySourceMap(cwd, moduleRel, real, dir ?? "");
+      const retargeted = retargetLibrarySourceMap(cwd, moduleRel, real, dir ?? "");
 
-    const map = JSON.parse(retargeted ?? "");
-    // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.
-    const mapDir = path.dirname(path.join(cwd, moduleRel));
-    expect(path.resolve(mapDir, map.sourceRoot || ".", map.sources[0])).toBe(installed);
-  });
+      const map = JSON.parse(retargeted ?? "");
+      // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.
+      const mapDir = path.dirname(path.join(cwd, moduleRel));
+      expect(path.resolve(mapDir, map.sourceRoot || ".", map.sources[0])).toBe(installed);
+    },
+  );
 });
 
 describe("writeScriptFile source-map sibling", () => {

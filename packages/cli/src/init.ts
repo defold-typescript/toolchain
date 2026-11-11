@@ -139,12 +139,20 @@ const GITATTRIBUTES_LINES = [
   "*.gui_script linguist-language=Lua",
 ];
 
-const BIOME_SCHEMA = "https://biomejs.dev/schemas/2.5.1/schema.json";
+// One version feeds both the schema URL and the exact dev-dependency pin, so the
+// Biome a project installs always reads the schema the scaffold wrote.
+export const BIOME_VERSION = "2.6.6";
+export const BIOME_SCHEMA = `https://biomejs.dev/schemas/${BIOME_VERSION}/schema.json`;
+const DEFOLD_TYPES_IGNORE = "!.defold-types";
 
 // The `src`-shaped managed rules v0.36.0 shipped, quoted from that tag. A user's
 // file records no provenance, so retirement runs per file only when that file
 // carries the *complete* released set — the scaffold's signature. A partial set
 // may be the user's own and is never touched.
+//
+// The Biome entries are single values every earlier scaffold wrote verbatim, so
+// each one is brought forward on its own: a schema URL, a dev-dependency range
+// and the folder negation Biome 2.2+ reports.
 export const RETIRED_MANAGED_ENTRIES = {
   gitignore: [
     "src/**/*.ts.script",
@@ -158,6 +166,12 @@ export const RETIRED_MANAGED_ENTRIES = {
   ],
   biomeIncludes: ["src/**/*.ts", "!src/**/*.lua", "!src/**/*.lua.map"],
   ignoreDir: ["src"],
+  biomeSchemas: [
+    "https://biomejs.dev/schemas/2.4.15/schema.json",
+    "https://biomejs.dev/schemas/2.5.1/schema.json",
+  ],
+  biomeDevDeps: ["^2.2.0", "^2.5.0"],
+  biomeIgnoreFolder: "!.defold-types/**",
 } as const;
 
 // `include` answers two different questions, and conflating them is what these
@@ -228,7 +242,7 @@ export function biomeIncludesFromInclude(include: readonly string[]): string[] {
     "!**/*.ts.render_script",
     // The materialized type surface is generated, so it is read by the compiler
     // but never linted or formatted.
-    "!.defold-types/**",
+    DEFOLD_TYPES_IGNORE,
   ];
 }
 
@@ -556,7 +570,7 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/cli": typesVersionSpec(),
   "@defold-typescript/tstl-plugin": typesVersionSpec(),
   "@defold-typescript/docs": typesVersionSpec(),
-  "@biomejs/biome": "^2.5.0",
+  "@biomejs/biome": BIOME_VERSION,
   // The `.vscode/defold-debug.ts` launcher is a Bun script importing `node:fs`/
   // `node:path` and using `Bun.*`/`process`/`fetch`; `@types/bun` resolves those
   // (it pulls in `@types/node`). The project tsconfig pins `types` to
@@ -594,6 +608,16 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
   if (force || devDeps.typescript?.startsWith("workspace:")) {
     devDeps.typescript = TYPESCRIPT_SPEC;
   }
+  // Biome is repinned only from a range an earlier scaffold wrote; any other
+  // value is the user's own choice.
+  const biome = devDeps["@biomejs/biome"];
+  if (force && biome !== undefined && isOneOf(biome, RETIRED_MANAGED_ENTRIES.biomeDevDeps)) {
+    devDeps["@biomejs/biome"] = BIOME_VERSION;
+  }
+}
+
+function isOneOf(value: string, released: readonly string[]): boolean {
+  return released.includes(value);
 }
 
 // Whether a file carries every entry the released scaffold wrote, which is the
@@ -715,6 +739,40 @@ function migrateBiomeIncludes(raw: string, include: readonly string[]): string |
   return `${formatJsonLikeBiome(value)}\n`;
 }
 
+// Bring forward the Biome values an earlier scaffold wrote verbatim: its schema
+// URL becomes `BIOME_SCHEMA`, and its `"!.defold-types/**"` becomes the folder
+// form Biome 2.2+ expects. A schema or include of the user's own stays. Returns
+// the re-serialized JSON, or `null` when neither is present or the file does not
+// parse as JSON.
+function migrateBiomeReleasedForms(raw: string): string | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const root = value as { $schema?: unknown; files?: { includes?: unknown } };
+  let changed = false;
+  if (
+    typeof root.$schema === "string" &&
+    isOneOf(root.$schema, RETIRED_MANAGED_ENTRIES.biomeSchemas)
+  ) {
+    root.$schema = BIOME_SCHEMA;
+    changed = true;
+  }
+  const includes = root.files?.includes;
+  const released = RETIRED_MANAGED_ENTRIES.biomeIgnoreFolder;
+  if (Array.isArray(includes) && includes.includes(released)) {
+    const brought = includes.map((entry) => (entry === released ? DEFOLD_TYPES_IGNORE : entry));
+    (root.files as { includes: unknown[] }).includes = brought.filter(
+      (entry, index) =>
+        entry !== DEFOLD_TYPES_IGNORE || brought.indexOf(DEFOLD_TYPES_IGNORE) === index,
+    );
+    changed = true;
+  }
+  return changed ? `${formatJsonLikeBiome(value)}\n` : null;
+}
+
 function writeBiome(
   cwd: string,
   written: string[],
@@ -728,19 +786,19 @@ function writeBiome(
       return;
     }
     const raw = readFileSync(biomePath, "utf8");
-    // Both passes are independent: a project can carry the deprecated rules key
-    // and the retired include list at once, so the second runs on the first's
-    // output rather than instead of it.
+    // The passes are independent: a project can carry the deprecated rules key,
+    // the retired include list and the released Biome values at once, so each
+    // runs on the previous one's output rather than instead of it.
     const withPreset = migrateBiomeRecommended(raw);
-    const migrated = migrateBiomeIncludes(withPreset ?? raw, include) ?? withPreset;
+    const withIncludes = migrateBiomeIncludes(withPreset ?? raw, include) ?? withPreset;
+    const migrated = migrateBiomeReleasedForms(withIncludes ?? raw) ?? withIncludes;
     if (migrated !== null) {
       writeFileSync(biomePath, migrated);
       written.push("biome.json");
       return;
     }
-    // `migrateBiomeRecommended` and the include reconciliation both take a plain
-    // `JSON.parse`, so a hand-edited JSONC file is reported rather than rewritten
-    // with its comments destroyed.
+    // Every pass takes a plain `JSON.parse`, so a hand-edited JSONC file is
+    // reported rather than rewritten with its comments destroyed.
     try {
       JSON.parse(raw);
     } catch {

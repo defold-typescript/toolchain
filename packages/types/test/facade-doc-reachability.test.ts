@@ -56,16 +56,17 @@ describe("facade doc reachability — hand-authored .d.ts surface is documented"
 
   const LIFECYCLE_FACTORIES = ["defineScript", "defineGuiScript", "defineRenderScript"];
 
-  test.each(
-    LIFECYCLE_FACTORIES,
-  )("lifecycle.ts: %s carries a description, a documented `hooks` param, and an @example", async (factory) => {
-    const surface = extractSurface(await readFacade("lifecycle.ts"));
-    const doc = surface.get(factory);
-    expect(doc).toBeDefined();
-    expect(doc?.hasDescription).toBe(true);
-    expect(doc?.hasExample).toBe(true);
-    expect(doc?.paramNames.has("hooks")).toBe(true);
-  });
+  test.each(LIFECYCLE_FACTORIES)(
+    "lifecycle.ts: %s carries a description, a documented `hooks` param, and an @example",
+    async (factory) => {
+      const surface = extractSurface(await readFacade("lifecycle.ts"));
+      const doc = surface.get(factory);
+      expect(doc).toBeDefined();
+      expect(doc?.hasDescription).toBe(true);
+      expect(doc?.hasExample).toBe(true);
+      expect(doc?.paramNames.has("hooks")).toBe(true);
+    },
+  );
 
   test("lifecycle.ts: every line inside a /** */ block begins with *", async () => {
     const offending = offGridLines(await readFacade("lifecycle.ts"));

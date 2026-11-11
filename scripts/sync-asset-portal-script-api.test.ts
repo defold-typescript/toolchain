@@ -542,15 +542,18 @@ describe("syncAssetPortalScriptApi — page keys", () => {
     "CON.api",
     "nul.tar.gz",
     "Aux.cmd",
-  ])("key %p is a Windows device name and throws before any file under the package changes", async (namespace) => {
-    const { entries, source } = declaring([{ repo: "device", namespace }]);
-    const root = seededDataFolder(entries);
-    const before = snapshot(dirname(root));
-    await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
-      `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/device/device/api.script_api `,
-    );
-    expect(snapshot(dirname(root))).toEqual(before);
-  });
+  ])(
+    "key %p is a Windows device name and throws before any file under the package changes",
+    async (namespace) => {
+      const { entries, source } = declaring([{ repo: "device", namespace }]);
+      const root = seededDataFolder(entries);
+      const before = snapshot(dirname(root));
+      await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
+        `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/device/device/api.script_api `,
+      );
+      expect(snapshot(dirname(root))).toEqual(before);
+    },
+  );
 
   test("a derived key whose stem is a Windows device name throws naming the derived key", async () => {
     const { entries, source } = declaring([{ repo: "defold-nul", namespace: "gui" }]);

@@ -588,17 +588,17 @@ describe("the field axis compares the non-callable surface", () => {
 // declared as a `FUNCTION` empties the missing set and reads `fieldCoverage: 1` while
 // leaving `declaredFields` short — the one wrong shape the ratio cannot see.
 describe("the constants the metrics and dicebag forks left undeclared", () => {
-  test.each([
-    "metrics.fps",
-    "metrics.mem",
-  ])("%s declares upstream's three drawing defaults", (namespace) => {
-    const report = buildAuthoredParity(DATA_DIR, target(namespace));
-    expect(report.upstreamFields).toBe(3);
-    expect(report.declaredFields).toBe(3);
-    expect(report.missingFields).toEqual([]);
-    expect(report.phantomFields).toEqual([]);
-    expect(report.fieldCoverage).toBe(1);
-  });
+  test.each(["metrics.fps", "metrics.mem"])(
+    "%s declares upstream's three drawing defaults",
+    (namespace) => {
+      const report = buildAuthoredParity(DATA_DIR, target(namespace));
+      expect(report.upstreamFields).toBe(3);
+      expect(report.declaredFields).toBe(3);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.fieldCoverage).toBe(1);
+    },
+  );
 
   test("dicebag declares the two tables upstream keeps its bag and roll state in", () => {
     const report = buildAuthoredParity(DATA_DIR, target("dicebag"));

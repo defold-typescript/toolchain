@@ -428,7 +428,7 @@ describe("createBuildSession", () => {
     const incremental = session.applyEvents(["src/main.ts"], []);
     expect(incremental.warnings).toEqual([]);
   });
-  const POST_TO = (fragment: string): string =>
+  const postToSource = (fragment: string): string =>
     `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("#${fragment}", "hello"); } });\n`;
 
   function universe(...ids: string[]): SceneComponentIndex {
@@ -437,14 +437,14 @@ describe("createBuildSession", () => {
 
   test("applyEvents reports a fragment that a source edit broke", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+    writeIn(cwd, "src/main.ts", postToSource("sprite"));
 
     const session = createBuildSession({ cwd, sceneIndex: () => universe("sprite") });
     const first = session.buildAll();
     expect(first.warnings).toEqual([]);
     const mainOutput = first.written.find((rel) => rel.includes("main"));
 
-    writeIn(cwd, "src/main.ts", POST_TO("nobody"));
+    writeIn(cwd, "src/main.ts", postToSource("nobody"));
     const rebuilt = session.applyEvents(["src/main.ts"], []);
 
     expect(rebuilt.warnings.some((w) => w.includes("nobody"))).toBe(true);
@@ -454,7 +454,7 @@ describe("createBuildSession", () => {
 
   test("applyEvents reports a fragment broken in a file it was not handed", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/a.ts", POST_TO("nobody"));
+    writeIn(cwd, "src/a.ts", postToSource("nobody"));
     writeIn(cwd, "src/b.ts", "export const b = 1;\n");
 
     const session = createBuildSession({ cwd, sceneIndex: () => universe("sprite") });
@@ -468,7 +468,7 @@ describe("createBuildSession", () => {
 
   test("applyEvents stops reporting once the scene declares the component", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/main.ts", POST_TO("nobody"));
+    writeIn(cwd, "src/main.ts", postToSource("nobody"));
 
     let ids = new Set<string>(["sprite"]);
     const session = createBuildSession({
@@ -478,7 +478,7 @@ describe("createBuildSession", () => {
     expect(session.buildAll().warnings.some((w) => w.includes("nobody"))).toBe(true);
 
     ids = new Set<string>(["sprite", "nobody"]);
-    writeIn(cwd, "src/main.ts", `${POST_TO("nobody")}export const touched = 1;\n`);
+    writeIn(cwd, "src/main.ts", `${postToSource("nobody")}export const touched = 1;\n`);
     const rebuilt = session.applyEvents(["src/main.ts"], []);
 
     expect(rebuilt.warnings).toEqual([]);
@@ -486,7 +486,7 @@ describe("createBuildSession", () => {
 
   test("rescanReachability reports a fragment the index stopped declaring", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+    writeIn(cwd, "src/main.ts", postToSource("sprite"));
 
     let ids = new Set<string>(["sprite"]);
     const session = createBuildSession({
@@ -511,7 +511,7 @@ describe("createBuildSession", () => {
 
   test("rescanReachability clears a finding once the index declares the component again", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+    writeIn(cwd, "src/main.ts", postToSource("sprite"));
 
     let ids = new Set<string>();
     const session = createBuildSession({
@@ -530,7 +530,7 @@ describe("createBuildSession", () => {
 
   test("rescanReachability writes no outputs", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+    writeIn(cwd, "src/main.ts", postToSource("sprite"));
 
     let ids = new Set<string>(["sprite"]);
     const session = createBuildSession({

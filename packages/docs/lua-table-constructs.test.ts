@@ -200,14 +200,14 @@ describe("the guide's working routes", () => {
     }
   });
 
-  test.each([
-    ROUTE_A_HEADING,
-    ROUTE_B_HEADING,
-  ])("%s transpiles to exactly the Lua the page publishes", (heading) => {
-    const [ts] = fencesUnder(heading);
-    const [lua] = fencesUnder(heading, "lua");
-    expect(strippedLua(transpile(ts).lua)).toBe(lua.trimEnd());
-  });
+  test.each([ROUTE_A_HEADING, ROUTE_B_HEADING])(
+    "%s transpiles to exactly the Lua the page publishes",
+    (heading) => {
+      const [ts] = fencesUnder(heading);
+      const [lua] = fencesUnder(heading, "lua");
+      expect(strippedLua(transpile(ts).lua)).toBe(lua.trimEnd());
+    },
+  );
 
   test.each([ROUTE_A_HEADING, ROUTE_B_HEADING])("%s transpiles without diagnostics", (heading) => {
     const [ts] = fencesUnder(heading);
