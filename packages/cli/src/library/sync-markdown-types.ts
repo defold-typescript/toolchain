@@ -235,12 +235,13 @@ export async function buildMarkdownFidelity(
 /** The result of comparing an emitted markdown surface against the ts-defold
  * `.d.ts` it would replace. `decision` is `no-go` whenever a ts-defold member is
  * absent from the markdown emit (a missing member), **or** a member both surfaces
- * share was downgraded to `unknown` by the markdown emit (a lost type), **or** a
- * shared member kept its name but lost part of its signature (dropped parameters,
- * or a non-`void` return collapsed to `void`), **or** a shared member kept its
- * arity but emitted an optional ts-defold parameter as required, **or** the
- * ts-defold side presents no comparable member at all (an opaque surface), which
- * would otherwise leave every other term vacuously empty and read as `go`. */
+ * share was downgraded to `unknown` or `PlainTable` by the markdown emit (a lost
+ * type), **or** a shared member kept its name but lost part of its signature
+ * (dropped parameters, or a non-`void` return collapsed to `void`), **or** a
+ * shared member kept its arity but emitted an optional ts-defold parameter as
+ * required, **or** the ts-defold side presents no comparable member at all (an
+ * opaque surface), which would otherwise leave every other term vacuously empty
+ * and read as `go`. */
 export interface FidelityComparison {
   tsDefoldMembers: string[];
   markdownMembers: string[];
@@ -584,11 +585,11 @@ function signatureShape(signature: string): SignatureShape | undefined {
  * Compare the emitted markdown `.d.ts` against the ts-defold `.d.ts` it would
  * replace and derive the go/no-go decision. A ts-defold member absent from the
  * markdown emit is a missing member; a shared member whose markdown signature
- * introduced `unknown` the ts-defold declaration lacked is a type downgrade; a
- * shared member that kept its name but dropped parameters, or collapsed a
- * non-`void` return to `void`, is a signature loss; a shared member that kept
- * every ts-defold parameter but emitted an optional one as required is an
- * optionality loss. A ts-defold side whose only top-level declaration is its
+ * introduced `unknown` or `PlainTable` the ts-defold declaration lacked is a type
+ * downgrade; a shared member that kept its name but dropped parameters, or
+ * collapsed a non-`void` return to `void`, is a signature loss; a shared member
+ * that kept every ts-defold parameter but emitted an optional one as required is
+ * an optionality loss. A ts-defold side whose only top-level declaration is its
  * `export =` re-export handle — one whose type named no readable shape, since a
  * handle that resolves is already flattened to its members — or which declares
  * no top-level member at all is an opaque surface: there is nothing to compare
@@ -605,8 +606,9 @@ export function compareFidelityToTsDefold(
   const mdMembers = [...mdMap.keys()].sort();
   const missingMembers = tsMembers.filter((name) => !mdMap.has(name));
   const addedMembers = mdMembers.filter((name) => !tsMap.has(name));
+  // A bare `table` parameter emits `PlainTable`, as untyped as `unknown`.
   const hasUnknown = (member: TsDefoldMember | undefined): boolean =>
-    member !== undefined && /\bunknown\b/.test(member.signature);
+    member !== undefined && /\b(?:unknown|PlainTable)\b/.test(member.signature);
   const downgradedMembers = tsMembers.filter(
     (name) => hasUnknown(mdMap.get(name)) && !hasUnknown(tsMap.get(name)),
   );

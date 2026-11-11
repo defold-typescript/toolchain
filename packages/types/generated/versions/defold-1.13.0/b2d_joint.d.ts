@@ -92,7 +92,7 @@ declare global {
      * @param definition - optional definition table
      * @returns created joint
      */
-    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: Record<string | number, unknown>): Opaque<"b2Joint">;
+    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: PlainTable): Opaque<"b2Joint">;
     /**
      * Create a friction joint.
      *

@@ -77,7 +77,7 @@ declare module "webview" {
    * local request_id = webview.open(webview_id, "http://www.defold.com", {hidden = true})
    * ```
    */
-  function open(webview_id: number, url: string, options: { hidden?: boolean; headers?: Record<string | number, unknown>; transparent?: boolean }): void;
+  function open(webview_id: number, url: string, options: { hidden?: boolean; headers?: PlainTable; transparent?: boolean }): void;
   /**
    * Opens a web page in the webview, using HTML data. Once the request is done, the callback (registered in `webview.create()`) is invoked.
    *
@@ -90,7 +90,7 @@ declare module "webview" {
    * local request_id = webview.open_raw(webview_id, html, {hidden = true})
    * ```
    */
-  function open_raw(webview_id: number, html: string, options: Record<string | number, unknown>): void;
+  function open_raw(webview_id: number, html: string, options: PlainTable): void;
   /**
    * Sets the position and size of the webview
    *

@@ -181,11 +181,12 @@ function safeParamName(name: string, index: number): string {
 // Two kinds: the serialization/JSON passthrough functions (Defold-internal — the
 // engine round-trips an arbitrary lua value), and the platform/OS-sourced opaque
 // blobs (external — the shape is set by the host OS or invoking app, not by
-// Defold, so there is no documented field list). Their emitted
-// `Record<string | number, unknown>` is the faithful "any lua table" type, not a
-// `recordTables` fidelity loss, so the audit consults this set to avoid counting
-// them. A new ref-doc function with an opaque table must be added here
-// deliberately; until then it surfaces under `recordTables` as a visible signal.
+// Defold, so there is no documented field list). Their emitted `PlainTable` in a
+// parameter slot and `Record<string | number, unknown>` in a return are the
+// faithful "any lua table" type, not a `recordTables` fidelity loss, so the
+// audit consults this set to avoid counting them. A new ref-doc function with an
+// opaque table must be added here deliberately; until then it surfaces under
+// `recordTables` as a visible signal.
 export const ARBITRARY_TABLE_SLOTS = new Set([
   "json.encode",
   "json.decode",
@@ -6445,8 +6446,8 @@ const SCENE_ADDRESS_ALIASES: Readonly<Record<string, string>> = {
 // becomes the matching scene-derived alias. Wrapping `mapType` rather than
 // rewriting the finished union leaves `mapSlotUnion`'s member ordering and
 // de-duplication in charge, so only the one token moves.
-function addressMapType(mapType: DefoldTypeMapper, alias: string): (t: string) => string {
-  return (token) => (token === "string" ? alias : mapType(token));
+function addressMapType(mapType: DefoldTypeMapper, alias: string): DefoldTypeMapper {
+  return (token, position) => (token === "string" ? alias : mapType(token, position));
 }
 
 // The mapped slot type of a parameter, without the name, `?` or `| undefined`
@@ -6463,8 +6464,8 @@ function parameterType(
 ): string {
   const concrete = p.types.filter((t) => t !== "nil");
   // The caller supplies a parameter, so a string-keyed table in it also takes an
-  // object literal.
-  const inputMapType = (token: string): string => mapType(token, "input");
+  // object literal. A callback inside it states its own position.
+  const inputMapType: DefoldTypeMapper = (token, position = "input") => mapType(token, position);
   // The table is keyed by the *raw* ref-doc parameter name, not the emitted
   // `safeParamName` fallback.
   const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
@@ -6916,9 +6917,11 @@ function callbackTypeFromFields(
   while (trailingOptionalFrom > 0 && fields[trailingOptionalFrom - 1]?.isOptional === true) {
     trailingOptionalFrom--;
   }
+  // The engine hands these values to the callback, so they are output.
+  const outputMapType = (token: string): string => mapType(token, "output");
   const args = fields.map((field, index) => {
     const name = safeParamName(field.name, index);
-    const ts = callbackArgumentType(field, mapType, constantsNamed);
+    const ts = callbackArgumentType(field, outputMapType, constantsNamed);
     if (index >= trailingOptionalFrom) return `${name}?: ${ts}`;
     if (!field.isOptional) return `${name}: ${ts}`;
     const operand = isFunctionTypeText(ts) ? `(${ts})` : ts;
@@ -7295,8 +7298,12 @@ function discriminatedMessageArm(token: string): string | undefined {
 }
 
 // Whole-token lookup and callback recovery run first, so the grammar sees only
-// what they miss; every pre-1.13.2 token resolves before it is reached.
-function wholeTokenMapping(token: string): string | undefined {
+// what they miss; every pre-1.13.2 token resolves before it is reached. A bare
+// `table` the caller supplies takes `PlainTable`, so a value typed by an
+// interface passes; elsewhere it keeps the readable record `DEFOLD_TYPE_MAP`
+// holds.
+function wholeTokenMapping(token: string, position?: LualsPosition): string | undefined {
+  if (token === "table" && position === "input") return "PlainTable";
   if (Object.hasOwn(DEFOLD_TYPE_MAP, token)) {
     const mapped = DEFOLD_TYPE_MAP[token];
     if (typeof mapped === "string") return mapped;
@@ -7316,7 +7323,9 @@ export function isKnownDefoldTypeToken(token: string): boolean {
 }
 
 export function defaultMapType(token: string, position?: LualsPosition): string {
-  return wholeTokenMapping(token) ?? mapLualsExpression(token, resolveDefoldLeaf, position).ts;
+  return (
+    wholeTokenMapping(token, position) ?? mapLualsExpression(token, resolveDefoldLeaf, position).ts
+  );
 }
 
 /**
@@ -7338,7 +7347,7 @@ export function mapTypeWithVocabulary(vocabulary: {
   return (token, position) => {
     if (Object.hasOwn(leaves, token)) return leaves[token] as string;
     return (
-      wholeTokenMapping(token) ??
+      wholeTokenMapping(token, position) ??
       declared.get(token) ??
       mapLualsExpression(token, resolveLeaf, position).ts
     );
