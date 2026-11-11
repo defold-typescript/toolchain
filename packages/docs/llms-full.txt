@@ -14890,7 +14890,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### factory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;
 - function get_status(url: string | Hash | Url): factory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
@@ -16015,8 +16015,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void; [through 1.14.0] [signature transition]
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string, arg7?: string, arg8?: string): void; [since 1.14.1] [signature transition]
-- function save(filename: string, table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): boolean;
-- function serialize(table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[]): string;
+- function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;
+- function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;
 - function set_connectivity_host(host: string): void;
 - sys.set_engine_throttle(enable: false): void
 - sys.set_engine_throttle(enable: boolean, cooldown: number): void
@@ -16203,7 +16203,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - c2: Readonly<Vector4>
 - c3: Readonly<Vector4>
 
+### NonTable
+
+
 ### Opaque
+
+
+### PlainTable
 
 
 ### Quaternion

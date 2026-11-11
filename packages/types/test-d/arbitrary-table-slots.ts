@@ -28,6 +28,35 @@ sys.save("/save.dat", { score: 42 });
 void arbTableEncoded;
 void arbTableSerialized;
 
+// A value typed by an interface has no implicit index signature, and is still
+// accepted wherever an arbitrary table is.
+interface SaveData {
+  level: number;
+  name: string;
+}
+const arbTableSaveData: SaveData = { level: 3, name: "hero" };
+sys.save("/save.dat", arbTableSaveData);
+const arbTableSerializedInterface: string = sys.serialize(arbTableSaveData);
+const arbTableSpawnedInterface: Hash | undefined = factory.create(
+  "#factory",
+  undefined,
+  undefined,
+  arbTableSaveData,
+);
+void arbTableSerializedInterface;
+void arbTableSpawnedInterface;
+// Engine values and functions are not tables, so they stay rejected.
+// @ts-expect-error a Vector3 is not a table
+sys.save("/save.dat", vmath.vector3());
+// @ts-expect-error a Hash is not a table
+sys.save("/save.dat", hash("x"));
+// @ts-expect-error a Url is not a table
+sys.save("/save.dat", msg.url());
+// @ts-expect-error a function is not a table
+sys.save("/save.dat", () => 1);
+// @ts-expect-error a number is not a table
+sys.save("/save.dat", 42);
+
 // Runtime-owned passthrough: the spawn-time `properties` overrides are keyed by
 // the spawned object's own script-property names, so the table is an arbitrary
 // literal accepted as-is, not a typed shape.

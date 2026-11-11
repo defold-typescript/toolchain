@@ -3435,15 +3435,15 @@ describe("socket handle method interfaces", () => {
       const names = typeDeclarationNames(out);
       for (const name of SOCKET_HANDLE_INTERFACES) {
         expect(names.filter((declared) => declared === name)).toEqual([name]);
-        expect(out).toContain(`interface ${name} {`);
+        expect(out).toContain(`interface ${name} extends NonTable {`);
         expect(out).not.toContain(`type ${name} =`);
       }
       for (const receiver of RECEIVERS) {
         expect(names).not.toContain(receiver);
         expect(names).not.toContain(`socket_${receiver}`);
       }
-      expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}send\(/);
-      expect(out).toMatch(/interface SocketMaster \{[\s\S]*?\n {4}listen\(/);
+      expect(out).toMatch(/interface SocketClient extends NonTable \{[\s\S]*?\n {4}send\(/);
+      expect(out).toMatch(/interface SocketMaster extends NonTable \{[\s\S]*?\n {4}listen\(/);
     });
   }
 
@@ -3490,20 +3490,20 @@ describe("socket handle method interfaces", () => {
     const out = emitDeclarations(module);
 
     // The handles are interfaces, not Opaque typedef aliases.
-    expect(out).toContain("interface SocketClient {");
+    expect(out).toContain("interface SocketClient extends NonTable {");
     expect(out).not.toContain('type client = Opaque<"client">');
     expect(out).not.toContain('type master = Opaque<"master">');
     expect(out).not.toContain('type unconnected = Opaque<"unconnected">');
 
     // The interface carries its documented methods; the final colon segment is
     // the emitted member name (no `function` keyword inside an interface).
-    expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}send\(/);
-    expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}close\(\): void;/);
+    expect(out).toMatch(/interface SocketClient extends NonTable \{[\s\S]*?\n {4}send\(/);
+    expect(out).toMatch(/interface SocketClient extends NonTable \{[\s\S]*?\n {4}close\(\): void;/);
 
     // server and connected exist only via colon methods (no TYPEDEF element), yet
     // are still emitted as interfaces.
-    expect(out).toContain("interface SocketServer {");
-    expect(out).toContain("interface SocketConnected {");
+    expect(out).toContain("interface SocketServer extends NonTable {");
+    expect(out).toContain("interface SocketConnected extends NonTable {");
 
     // No leftover socket handle brands anywhere in the module.
     expect(out).not.toContain('Opaque<"client">');
@@ -7558,7 +7558,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
       parseDefoldApiDoc({ info: { namespace: "socket" }, elements: [socketClient, send] }),
     );
     expect(aliasLine(socket, "SocketClient")).toBeUndefined();
-    expect(socket).toContain("interface SocketClient {");
+    expect(socket).toContain("interface SocketClient extends NonTable {");
     expect(socket).not.toContain("interface client {");
   });
 
@@ -8188,13 +8188,13 @@ describe("upstream-pinned corrections", () => {
       "sys",
       "save",
       sysSave,
-      "table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[])",
+      "table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[])",
     ],
     [
       "sys",
       "serialize",
       sysSerialize,
-      "table: LuaMap<AnyNotNil, unknown> | Record<string, unknown> | readonly unknown[])",
+      "table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[])",
     ],
     [
       "socket",

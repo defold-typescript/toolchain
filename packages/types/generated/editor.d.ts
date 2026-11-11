@@ -768,7 +768,7 @@ declare global {
        * @param value - Added item for the property, a table from property key to either a valid `editor.tx.set()`-able value, or an array of valid `editor.tx.add()`-able values
        * @returns A transaction step
        */
-      function add(node: string | Opaque<"userdata">, property: string, value: LuaMap<string, unknown> | Record<string, unknown>): Opaque<"transaction_step">;
+      function add(node: string | Opaque<"userdata">, property: string, value: LuaMap<string, unknown> | PlainTable): Opaque<"transaction_step">;
       /**
        * Create a transaction step that will remove all items from node's list property when transacted with `editor.transact()`.
        *
