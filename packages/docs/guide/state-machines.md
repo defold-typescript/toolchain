@@ -25,7 +25,7 @@ import { messageEvents } from "@defold-typescript/types/hsm/defold";
 - `build` and `watch` write each module your code uses to the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/hsm/` by default), inside `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
 - A source of your own that would compile to one of those paths fails the build.
 - The library upgrades with the CLI, and a project scaffolded by `init` gitignores the runtime folder.
-- Each module is written with a source map that points at the library's own `.ts`, which a local install keeps under `node_modules/@defold-typescript/transpiler/dist/hsm/`. A [debugger](./debugging.md) frame inside the library opens that file, and `watch` and `reload` console lines name it when it sits inside your project.
+- Each module is written with a source map that points at the library's own `.ts`, which ships inside the installed `@defold-typescript/transpiler` package under its `dist/hsm/` folder. A [debugger](./debugging.md) frame inside the library opens that file, and `watch` and `reload` console lines name it when it sits inside your project.
 
 ## States and paths
 

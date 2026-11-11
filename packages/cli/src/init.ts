@@ -542,12 +542,16 @@ export const TYPESCRIPT_SPEC = "6.0.2";
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
 // inside an installed project) both ship into the consumer. The transpiler must NOT be a direct
-// consumer dep — it arrives transitively through the CLI. Pin both managed deps
-// to this CLI's own version so the coordinated-release set stays in lockstep.
+// consumer dep — it arrives transitively through the CLI. @defold-typescript/docs
+// is a direct dep so the `node_modules/@defold-typescript/docs/` paths the managed
+// `AGENTS.md` points to exist under any linker, including Bun's isolated installs.
+// Pin every managed `@defold-typescript/*` dep to this CLI's own version so the
+// coordinated-release set stays in lockstep.
 export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/types": typesVersionSpec(),
   "@defold-typescript/cli": typesVersionSpec(),
   "@defold-typescript/tstl-plugin": typesVersionSpec(),
+  "@defold-typescript/docs": typesVersionSpec(),
   "@biomejs/biome": "^2.5.0",
   // The `.vscode/defold-debug.ts` launcher is a Bun script importing `node:fs`/
   // `node:path` and using `Bun.*`/`process`/`fetch`; `@types/bun` resolves those
@@ -563,7 +567,8 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
 // `bun install` in consumers. The additive merge in `writeTsSurface` never
 // repairs an entry it didn't itself create, so repair them explicitly: the
 // transpiler is CLI-internal and must not be a consumer dep at all, and a
-// `workspace:` types/cli pin must become a concrete published version. A
+// `workspace:` pin on a managed `@defold-typescript/*` dep must become a
+// concrete published version. A
 // concrete user-chosen pin is left alone unless `force` is set, the explicit
 // opt-in to refresh the managed pins (and only those) to the CLI's version.
 function repairManagedDevDeps(devDeps: Record<string, string>, force = false): void {
@@ -572,6 +577,7 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
     "@defold-typescript/types",
     "@defold-typescript/cli",
     "@defold-typescript/tstl-plugin",
+    "@defold-typescript/docs",
   ]) {
     if (force || devDeps[name]?.startsWith("workspace:")) {
       devDeps[name] = typesVersionSpec();

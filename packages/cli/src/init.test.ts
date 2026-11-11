@@ -223,6 +223,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/types": TYPES_SPEC,
       "@defold-typescript/cli": TYPES_SPEC,
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
+      "@defold-typescript/docs": TYPES_SPEC,
       "@biomejs/biome": "^2.5.0",
       "@types/bun": "latest",
       "lua-types": LUA_TYPES_SPEC,
@@ -832,6 +833,18 @@ describe("runInit (repairs stale managed devDeps)", () => {
     const devDeps = devDepsAfterInit({ "@defold-typescript/cli": "^0.0.1" }, true);
 
     expect(devDeps["@defold-typescript/cli"]).toBe(TYPES_SPEC);
+  });
+
+  test("rewrites a workspace:* docs pin to the published CLI version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/docs": "workspace:*" });
+
+    expect(devDeps["@defold-typescript/docs"]).toBe(TYPES_SPEC);
+  });
+
+  test("--force rewrites a stale concrete docs pin to the published version", () => {
+    const devDeps = devDepsAfterInit({ "@defold-typescript/docs": "^0.0.1" }, true);
+
+    expect(devDeps["@defold-typescript/docs"]).toBe(TYPES_SPEC);
   });
 
   test("--force does not overwrite a user's third-party pin or other deps", () => {
