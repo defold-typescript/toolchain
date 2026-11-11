@@ -687,37 +687,38 @@ describe("materializeApiSurface editor surface", () => {
     expect(DECLARING_TARGETS.map((target) => target.id)).toContain("defold-1.13.0");
   });
 
-  test.each(
-    cases,
-  )("%s: carries its editor modules, hand-authored deps and editor kind", (_id, target) => {
-    const dir = materializeTarget(target);
+  test.each(cases)(
+    "%s: carries its editor modules, hand-authored deps and editor kind",
+    (_id, target) => {
+      const dir = materializeTarget(target);
 
-    for (const rel of [
-      "editor.d.ts",
-      "editor-vm/http.d.ts",
-      "editor-vm/localization.d.ts",
-      "editor-overloads.d.ts",
-      "editor-vm-globals.d.ts",
-      "editor-vm-types.d.ts",
-      "kinds/editor-script.d.ts",
-    ]) {
-      expect(existsSync(path.join(dir, ...rel.split("/")))).toBe(true);
-    }
+      for (const rel of [
+        "editor.d.ts",
+        "editor-vm/http.d.ts",
+        "editor-vm/localization.d.ts",
+        "editor-overloads.d.ts",
+        "editor-vm-globals.d.ts",
+        "editor-vm-types.d.ts",
+        "kinds/editor-script.d.ts",
+      ]) {
+        expect(existsSync(path.join(dir, ...rel.split("/")))).toBe(true);
+      }
 
-    // The aggregate index stays the runtime surface: `editor.d.ts` is a
-    // top-level module and was always in it, but the editor VM and the
-    // hand-authored ambients belong to the editor kind alone.
-    const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
-    expect(index).toContain('import "./editor";');
-    expect(index).not.toContain("editor-vm");
-    expect(index).not.toContain("editor-overloads");
+      // The aggregate index stays the runtime surface: `editor.d.ts` is a
+      // top-level module and was always in it, but the editor VM and the
+      // hand-authored ambients belong to the editor kind alone.
+      const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
+      expect(index).toContain('import "./editor";');
+      expect(index).not.toContain("editor-vm");
+      expect(index).not.toContain("editor-overloads");
 
-    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as Record<
-      string,
-      unknown
-    >;
-    expect(Object.keys(pkg).sort()).toEqual(["name", "types", "version"]);
-  });
+      const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as Record<
+        string,
+        unknown
+      >;
+      expect(Object.keys(pkg).sort()).toEqual(["name", "types", "version"]);
+    },
+  );
 
   test.each(cases)("%s: the relocated kind index resolves from its new location", (_id, target) => {
     const dir = materializeTarget(target);
@@ -741,25 +742,27 @@ describe("materializeApiSurface editor surface", () => {
     expect(written).not.toContain("/src/");
   });
 
-  test.each(
-    cases,
-  )("%s: a copied editor-vm module's core-types import is depth-aware", (_id, target) => {
-    const dir = materializeTarget(target);
+  test.each(cases)(
+    "%s: a copied editor-vm module's core-types import is depth-aware",
+    (_id, target) => {
+      const dir = materializeTarget(target);
 
-    const localization = readFileSync(path.join(dir, "editor-vm", "localization.d.ts"), "utf8");
-    expect(localization).toContain('from "../core-types"');
-    expect(localization).not.toContain('from "./core-types"');
-    expect(localization).not.toContain("src/core-types");
+      const localization = readFileSync(path.join(dir, "editor-vm", "localization.d.ts"), "utf8");
+      expect(localization).toContain('from "../core-types"');
+      expect(localization).not.toContain('from "./core-types"');
+      expect(localization).not.toContain("src/core-types");
 
-    // A surface-root module keeps today's flat rewrite.
-    expect(readFileSync(path.join(dir, "editor.d.ts"), "utf8")).toContain('from "./core-types"');
-  });
+      // A surface-root module keeps today's flat rewrite.
+      expect(readFileSync(path.join(dir, "editor.d.ts"), "utf8")).toContain('from "./core-types"');
+    },
+  );
 
-  test.each(
-    cases,
-  )("%s: every relative specifier in the materialized surface resolves on disk", (_id, target) => {
-    expect(danglingSpecifiers(materializeTarget(target))).toEqual([]);
-  });
+  test.each(cases)(
+    "%s: every relative specifier in the materialized surface resolves on disk",
+    (_id, target) => {
+      expect(danglingSpecifiers(materializeTarget(target))).toEqual([]);
+    },
+  );
 
   test("derives the editor surface from the pinned target's kind index, not the package's", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-typesroot-"));

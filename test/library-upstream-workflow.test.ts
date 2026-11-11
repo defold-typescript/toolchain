@@ -321,14 +321,15 @@ describe("library upstream check workflow", () => {
     for (const condition of conditions) expect(condition).toMatch(/^(!cancelled\(\)|always\(\))$/);
   });
 
-  test.each(
-    CHECKS,
-  )("keeps the %s step failing the job, so an unreadable source is never a quiet green", (check) => {
-    const scanStep = steps().find((step) => (step.run ?? "").includes(`bun scripts/${check}.ts`));
-    expect(scanStep).toBeDefined();
-    // The tempting wrong fix for the same bug: `continue-on-error` on the scan
-    // would isolate the failure by discarding it, turning a renamed or deleted
-    // repo into a green week.
-    expect(scanStep?.["continue-on-error"]).toBeUndefined();
-  });
+  test.each(CHECKS)(
+    "keeps the %s step failing the job, so an unreadable source is never a quiet green",
+    (check) => {
+      const scanStep = steps().find((step) => (step.run ?? "").includes(`bun scripts/${check}.ts`));
+      expect(scanStep).toBeDefined();
+      // The tempting wrong fix for the same bug: `continue-on-error` on the scan
+      // would isolate the failure by discarding it, turning a renamed or deleted
+      // repo into a green week.
+      expect(scanStep?.["continue-on-error"]).toBeUndefined();
+    },
+  );
 });

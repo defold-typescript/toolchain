@@ -246,7 +246,7 @@ test("a two-return method keeps two returnvalues entries with their distinct doc
   };
 
   const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
-  const fn = (typedef?.functions as Record<string, unknown>[])[0];
+  const fn = (typedef?.functions as Record<string, unknown>[] | undefined)?.[0];
   expect(fn?.returnvalues).toEqual([
     { name: "", doc: "The text width", types: ["number"] },
     { name: "", doc: "The text height", types: ["number"] },
@@ -352,7 +352,7 @@ test("a generic interface method carries a `generics` clause and keeps its bound
   };
 
   const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
-  const fn = (typedef?.functions as Record<string, unknown>[])[0];
+  const fn = (typedef?.functions as Record<string, unknown>[] | undefined)?.[0];
   expect(fn?.generics).toBe("<T>");
   expect(fn?.parameters).toEqual([
     { name: "x", doc: "", types: ["T"], is_optional: "False", is_vararg: "False" },
@@ -454,10 +454,9 @@ test("a trailing nil-bearing param lowers to is_optional True; a mid-list one st
   };
 
   const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
-  const flags = (fn?.parameters as { name: string; is_optional: string }[]).map((p) => [
-    p.name,
-    p.is_optional,
-  ]);
+  const flags = (fn?.parameters as { name: string; is_optional: string }[] | undefined)?.map(
+    (p) => [p.name, p.is_optional],
+  );
   // Same trailing-run rule as the emitter: a is nil-bearing but a required b follows,
   // so only the trailing c is optional. Keeps the `/api` signature matching the `.d.ts`.
   expect(flags).toEqual([

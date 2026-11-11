@@ -80,7 +80,7 @@ To update to the latest version:
 bunx @defold-typescript/cli@latest init . --force
 ```
 
-Despite the intimidating name, `--force` does not overwrite your source files — `src/main.ts`, `.script`, `.collection`, `game.project`, and other engine assets are left alone. It only refreshes the managed config (`tsconfig.json`, `biome.json`, and the `@defold-typescript` dependency pins), so an existing project keeps up with the current toolchain.
+Despite the intimidating name, `--force` does not overwrite your source files — `src/main.ts`, `.script`, `.collection`, `game.project`, and other engine assets are left alone. It only refreshes the managed config (`tsconfig.json`, `biome.json`, and the managed dependency pins), so an existing project keeps up with the current toolchain.
 
 ## Project structure
 
@@ -92,7 +92,7 @@ The scaffold declares its `devDependencies` in `package.json`:
 lockstep with those types
 * `@defold-typescript/tstl-plugin` for the live transpile diagnostics
 * `@defold-typescript/docs` for the guide and agent docs the managed `AGENTS.md` points to
-* `@biomejs/biome` for lint and format
+* `@biomejs/biome` for lint and format, pinned exactly to the version whose schema `biome.json` names
 * `@types/bun` for the `.vscode/` debug launcher
 * `lua-types` for the ambient Lua standard library so `math`/`string`/`table`/… resolve
 * `typescript` pinned to the exact version TypeScript-to-Lua supports
@@ -109,7 +109,7 @@ If you forget to do so, your editor reports the Defold globals as unresolved.
 >
 > Pass `--suppress-install-reminder` to silence that line when you install through your own tooling.
 
-The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key and leaves your other settings in place.
+The scaffold also ships an opinionated `biome.json`, so the project lints and formats cleanly out of the box. An existing `biome.json` is left untouched, unless you pass `--force`, which migrates the one deprecated Biome `recommended` key, updates the schema and `.defold-types` ignore an earlier scaffold wrote, and leaves your other settings in place.
 
 If the scaffolded `@defold-typescript/types` pin still looks older than the CLI you expect, your `bunx` cache is stale — `@latest` above already forces the current release, which is more reliable than clearing the cache with `bun pm cache rm`.
 

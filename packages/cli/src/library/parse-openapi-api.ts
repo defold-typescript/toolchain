@@ -172,7 +172,9 @@ function parseSwaggerDefinitions(root: SwaggerRoot): OpenApiElement[] {
     elements.push({
       type: "FUNCTION",
       name: `create_${snake(name)}`,
-      description: (root.definitions?.[name] as { description?: string }).description?.trim() ?? "",
+      description:
+        (root.definitions?.[name] as { description?: string } | undefined)?.description?.trim() ??
+        "",
       parameters,
       returnvalues: [{ name: "result", doc: "", types: ["table"] }],
     });

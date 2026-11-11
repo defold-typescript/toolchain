@@ -328,6 +328,7 @@ test("the machine's time runs, holds and starts over", async ({ page }) => {
   const timer = demo.getByRole("timer", { name: "Machine time" });
   await expect(timer).toHaveText(/^00:00:\d\d$/);
   await expect(timer).toHaveClass(/hsm-timer-on/);
+  // biome-ignore lint/performance/useDomNodeTextContent: `timer` is a Playwright Locator, not a DOM node.
   const seconds = async () => Number((await timer.innerText()).slice(6));
   await expect.poll(seconds).toBeGreaterThanOrEqual(1);
 

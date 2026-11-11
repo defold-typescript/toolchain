@@ -142,12 +142,15 @@ describe("editorCompileReport", () => {
     ["skipped", null, "refused the request"],
     ["unavailable", null, "no Defold editor is attached"],
     ["compiled", null, "returned no result"],
-  ] as const)("%s with no result carries only the outcome and its notice", (outcome, result, wording) => {
-    const report = editorCompileReport(cwd, { outcome: outcome as CompileOutcome, result });
+  ] as const)(
+    "%s with no result carries only the outcome and its notice",
+    (outcome, result, wording) => {
+      const report = editorCompileReport(cwd, { outcome: outcome as CompileOutcome, result });
 
-    expect(report.json).toEqual({ outcome });
-    expect(report.lines).toHaveLength(1);
-    expect(report.lines[0]).toContain(wording);
-    expect("error" in report).toBe(false);
-  });
+      expect(report.json).toEqual({ outcome });
+      expect(report.lines).toHaveLength(1);
+      expect(report.lines[0]).toContain(wording);
+      expect("error" in report).toBe(false);
+    },
+  );
 });

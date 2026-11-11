@@ -83,13 +83,14 @@ describe("bob library folder", () => {
     expect(listedCommit(RELEASE_URL)).toBe("");
   });
 
-  test.each(
-    URLS,
-  )("%s lands in one zip under the URL's sha1, its comment the listed commit", (url) => {
-    const zips = zipsOf(url);
-    expect(zips).toHaveLength(1);
-    expect(readZip(join(lib, zips[0] as string)).comment()).toBe(listedCommit(url) as string);
-  });
+  test.each(URLS)(
+    "%s lands in one zip under the URL's sha1, its comment the listed commit",
+    (url) => {
+      const zips = zipsOf(url);
+      expect(zips).toHaveLength(1);
+      expect(readZip(join(lib, zips[0] as string)).comment()).toBe(listedCommit(url) as string);
+    },
+  );
 
   test.each(URLS)("the gate reads what bob wrote for %s", async (url) => {
     expect(await findDefoldBuildArchive(cwd, url, readZip)).toEqual({

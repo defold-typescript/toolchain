@@ -578,9 +578,12 @@ describe("parseExemptions", () => {
     "b2d.shape.SHAPE_TYPE_CAPSULE:constant",
     "b2d.joint.JOINT_TYPE_GEAR:constant@v3",
     "material.CONSTANT_TYPE_VIEW:constant",
-  ])("accepts an engine error for %s, which a Box2D backend or unlinked module leaves absent", (key) => {
-    expect(parseExemptions(JSON.stringify({ [key]: valid }))).toEqual({ [key]: valid });
-  });
+  ])(
+    "accepts an engine error for %s, which a Box2D backend or unlinked module leaves absent",
+    (key) => {
+      expect(parseExemptions(JSON.stringify({ [key]: valid }))).toEqual({ [key]: valid });
+    },
+  );
 
   test.each([
     "gui.PIVOT_N:constant",
@@ -591,13 +594,13 @@ describe("parseExemptions", () => {
     expect(parseKey(key)).toThrow(key);
   });
 
-  test.each([
-    "b2d.body.B2_DYNAMIC_BODY:constant",
-    "b2d.body.B2_DYNAMIC_BODY:constant@v3",
-  ])("rejects %s, a constant both Box2D backends register, naming its key", (key) => {
-    expect(parseKey(key)).toThrow(ExemptionValidationError);
-    expect(parseKey(key)).toThrow(key);
-  });
+  test.each(["b2d.body.B2_DYNAMIC_BODY:constant", "b2d.body.B2_DYNAMIC_BODY:constant@v3"])(
+    "rejects %s, a constant both Box2D backends register, naming its key",
+    (key) => {
+      expect(parseKey(key)).toThrow(ExemptionValidationError);
+      expect(parseKey(key)).toThrow(key);
+    },
+  );
 
   test.each([
     ["b2d.joint.JOINT_TYPE_GEAR:constant", "v2"],
@@ -632,14 +635,14 @@ describe("parseExemptions", () => {
     expect(parseKey(key)).toThrow(key);
   });
 
-  test.each([
-    "ok",
-    "bad-argument",
-  ] as const)("rejects a Box2D constant exemption recording %s", (result) => {
-    const key = "b2d.shape.SHAPE_TYPE_CAPSULE:constant";
-    expect(parseKey(key, { ...valid, outcome: result })).toThrow(ExemptionValidationError);
-    expect(parseKey(key, { ...valid, outcome: result })).toThrow(key);
-  });
+  test.each(["ok", "bad-argument"] as const)(
+    "rejects a Box2D constant exemption recording %s",
+    (result) => {
+      const key = "b2d.shape.SHAPE_TYPE_CAPSULE:constant";
+      expect(parseKey(key, { ...valid, outcome: result })).toThrow(ExemptionValidationError);
+      expect(parseKey(key, { ...valid, outcome: result })).toThrow(key);
+    },
+  );
 });
 
 describe("committed probe-exemptions.json", () => {

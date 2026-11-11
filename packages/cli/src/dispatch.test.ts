@@ -2179,28 +2179,28 @@ describe("dispatch", () => {
       expect(compiles).toBe(1);
     });
 
-    test.each([
-      "--editor-run",
-      "--editor-focus",
-    ])("watch %s is rejected before a watcher starts", async (flag) => {
-      scaffoldBuildProject();
-      let watchers = 0;
-      const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => {
-        watchers++;
-        return { close() {} };
-      };
-      const { io, err } = captureStreams();
+    test.each(["--editor-run", "--editor-focus"])(
+      "watch %s is rejected before a watcher starts",
+      async (flag) => {
+        scaffoldBuildProject();
+        let watchers = 0;
+        const factory: WatcherFactory = (_srcDir, _onEvent): Watcher => {
+          watchers++;
+          return { close() {} };
+        };
+        const { io, err } = captureStreams();
 
-      const code = await dispatch(["watch", cwd, flag], io, {
-        watcherFactory: factory,
-        onWatchStart: (handle) => handle.stop(),
-        detectEditorVersion: () => null,
-      });
+        const code = await dispatch(["watch", cwd, flag], io, {
+          watcherFactory: factory,
+          onWatchStart: (handle) => handle.stop(),
+          detectEditorVersion: () => null,
+        });
 
-      expect(code).toBe(1);
-      expect(err()).toContain(buildFlagLine(flag));
-      expect(watchers).toBe(0);
-    });
+        expect(code).toBe(1);
+        expect(err()).toContain(buildFlagLine(flag));
+        expect(watchers).toBe(0);
+      },
+    );
 
     test("run --editor-compile names it as a build or watch flag", async () => {
       const spawned: string[][] = [];
@@ -7849,10 +7849,10 @@ describe("watch scene-address surface wiring", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
-  const GET_POSITION = (address: string): string =>
+  const getPositionSource = (address: string): string =>
     `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { go.get_position("${address}"); } });\n`;
 
-  const POST_TO = (fragment: string): string =>
+  const postToSource = (fragment: string): string =>
     `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("#${fragment}", "hello"); } });\n`;
 
   // A project whose one scene declares `sprite` and whose one source addresses
@@ -7865,7 +7865,7 @@ describe("watch scene-address surface wiring", () => {
     );
     write("game.project", "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n");
     write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
-    write("src/main.ts", POST_TO("sprite"));
+    write("src/main.ts", postToSource("sprite"));
   }
 
   function reachabilityWatcherPair(): {
@@ -7908,7 +7908,7 @@ describe("watch scene-address surface wiring", () => {
     await handle.waitForIdle();
     expect(err()).not.toContain("nobody");
 
-    write("src/main.ts", POST_TO("nobody"));
+    write("src/main.ts", postToSource("nobody"));
     triggerMain();
     await handle.waitForIdle();
 
@@ -7944,7 +7944,7 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    write("src/main.ts", POST_TO("nobody"));
+    write("src/main.ts", postToSource("nobody"));
     triggerMain();
     await handle.waitForIdle();
 
@@ -7981,7 +7981,7 @@ describe("watch scene-address surface wiring", () => {
     ]);
   });
 
-  const PLAYER_GO = (id: string): string =>
+  const playerGoSource = (id: string): string =>
     `embedded_components {\n  id: "${id}"\n  type: "sprite"\n}\n`;
 
   type SceneTypesEvent = {
@@ -8022,7 +8022,7 @@ describe("watch scene-address surface wiring", () => {
     await handle.waitForIdle();
     expect(watchWarningLines(err()).some((line) => line.includes("sprite"))).toBe(false);
 
-    write("game/player.go", PLAYER_GO("body"));
+    write("game/player.go", playerGoSource("body"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8052,7 +8052,7 @@ describe("watch scene-address surface wiring", () => {
     await handle.waitForIdle();
     const afterStartup = out().length;
 
-    write("game/player.go", PLAYER_GO("body"));
+    write("game/player.go", playerGoSource("body"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8083,13 +8083,13 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    write("game/player.go", PLAYER_GO("body"));
+    write("game/player.go", playerGoSource("body"));
     triggerScene();
     await handle.waitForIdle();
     expect(watchWarningLines(err()).some((line) => line.includes("sprite"))).toBe(true);
     const afterBreak = err().length;
 
-    write("game/player.go", PLAYER_GO("sprite"));
+    write("game/player.go", playerGoSource("sprite"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8101,7 +8101,7 @@ describe("watch scene-address surface wiring", () => {
     );
   });
 
-  const POST_TO_ADDRESS = (address: string): string =>
+  const postToAddressSource = (address: string): string =>
     `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("${address}", "hello"); } });\n`;
 
   // `/player` owns "sprite" and `/hud` owns "sprit", so both ids are in the
@@ -8120,9 +8120,9 @@ describe("watch scene-address surface wiring", () => {
       'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n' +
         'instances {\n  id: "hud"\n  prototype: "/game/hud.go"\n}\n',
     );
-    write("game/player.go", PLAYER_GO("sprite"));
-    write("game/hud.go", PLAYER_GO("sprit"));
-    write("src/main.ts", POST_TO_ADDRESS("/player#sprite"));
+    write("game/player.go", playerGoSource("sprite"));
+    write("game/hud.go", playerGoSource("sprit"));
+    write("src/main.ts", postToAddressSource("/player#sprite"));
   }
 
   function scopedFindingLines(text: string): string[] {
@@ -8147,7 +8147,7 @@ describe("watch scene-address surface wiring", () => {
     await handle.waitForIdle();
     expect(scopedFindingLines(err())).toEqual([]);
 
-    write("src/main.ts", POST_TO_ADDRESS("/player#sprit"));
+    write("src/main.ts", postToAddressSource("/player#sprit"));
     triggerMain();
     await handle.waitForIdle();
 
@@ -8177,14 +8177,14 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    write("src/main.ts", POST_TO_ADDRESS("/player#sprit"));
+    write("src/main.ts", postToAddressSource("/player#sprit"));
     triggerMain();
     await handle.waitForIdle();
     expect(scopedFindingLines(err()).length).toBeGreaterThan(0);
     const afterBreak = err().length;
 
     // No source edit: the object the address names now owns the id it names.
-    write("game/player.go", PLAYER_GO("sprit"));
+    write("game/player.go", playerGoSource("sprit"));
     triggerScene();
     await handle.waitForIdle();
     expect(scopedFindingLines(err().slice(afterBreak))).toEqual([]);
@@ -8192,7 +8192,7 @@ describe("watch scene-address surface wiring", () => {
 
     // And back: a finding that reappears can only have come from a re-read
     // index, which a cleared finding alone would not prove.
-    write("game/player.go", PLAYER_GO("sprite"));
+    write("game/player.go", playerGoSource("sprite"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8219,7 +8219,7 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    write("game/player.go", PLAYER_GO("body"));
+    write("game/player.go", playerGoSource("body"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8263,7 +8263,7 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    write("game/player.go", PLAYER_GO("sprite"));
+    write("game/player.go", playerGoSource("sprite"));
     triggerScene();
     await handle.waitForIdle();
 
@@ -8301,7 +8301,7 @@ describe("watch scene-address surface wiring", () => {
     writeLevel("mylevel");
     write("game/home.go", 'components {\n  id: "brain"\n  component: "/src/main.ts.script"\n}\n');
     write("game/enemy.go", 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n');
-    write("src/main.ts", GET_POSITION(address));
+    write("src/main.ts", getPositionSource(address));
   }
 
   function writeLevel(socket: string): void {
@@ -8375,7 +8375,7 @@ describe("watch scene-address surface wiring", () => {
     const startup = watchEvents(out()).find((e) => e.event === "build");
     expect(Object.hasOwn(startup as object, "crossWorldAddresses")).toBe(false);
 
-    write("src/main.ts", GET_POSITION("other:/enemy"));
+    write("src/main.ts", getPositionSource("other:/enemy"));
     triggerMain();
     await handle.waitForIdle();
 
@@ -8452,7 +8452,7 @@ describe("watch scene-address surface wiring", () => {
     await handle.waitForIdle();
     expect(err()).not.toContain("other:/enemy");
 
-    write("src/main.ts", GET_POSITION("other:/enemy"));
+    write("src/main.ts", getPositionSource("other:/enemy"));
     triggerMain();
     await handle.waitForIdle();
 
@@ -9284,7 +9284,7 @@ describe("dispatch error lines", () => {
 describe("view", () => {
   const HSM_IMPORT = 'import { defineMachine } from "@defold-typescript/types/hsm";';
   const ECS_IMPORT = 'import { system, world } from "@defold-typescript/types/ecs";';
-  const MACHINE = (name: string): string => `defineMachine("${name}")({
+  const machineSource = (name: string): string => `defineMachine("${name}")({
   initial: "/off",
   states: {
     off: { on: { TOGGLE: "/on" } },
@@ -9292,7 +9292,7 @@ describe("view", () => {
   },
 })`;
   const LAMP = `${HSM_IMPORT}
-export const lamp = ${MACHINE("lamp")};
+export const lamp = ${machineSource("lamp")};
 `;
   const GARDEN = `${ECS_IMPORT}
 export const garden = world(system("move")({ update() {} }));
@@ -9302,8 +9302,8 @@ export const garden = world(system("move")({ update() {} }));
   const BOTH = `import { defineScript } from "@defold-typescript/types";
 ${HSM_IMPORT}
 ${ECS_IMPORT}
-export const lampMachine = ${MACHINE("lamp")};
-export const fanMachine = ${MACHINE("fan")};
+export const lampMachine = ${machineSource("lamp")};
+export const fanMachine = ${machineSource("fan")};
 export default defineScript({
   init() {
     return {
@@ -10869,49 +10869,49 @@ describe("library data from the data repo", () => {
       expect(err()).not.toContain("resolve --update");
     });
 
-    test.each([
-      "--update",
-      "--update=owner/mylib",
-    ])("watch holds it and prints the notice, with %s accepted and ignored", async (flag) => {
-      writeFileSync(path.join(cwd, "main.script"), "");
-      const { resolveInternals } = await recordedBehindNewer();
-      const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
-      writeFileSync(
-        path.join(sourceGeneratedDir, "label.d.ts"),
-        "declare const __label: unknown;\n",
-      );
-      let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
-      const main: WatcherFactory = (_dir, onEvent): Watcher => {
-        triggerMain = (kind, rel) => onEvent({ kind, path: rel });
-        return { close() {} };
-      };
-      const component: WatcherFactory = (): Watcher => ({ close() {} });
-      const { onWatchStart, ready } = watchHandle();
-      const { io, err } = captureStreams();
+    test.each(["--update", "--update=owner/mylib"])(
+      "watch holds it and prints the notice, with %s accepted and ignored",
+      async (flag) => {
+        writeFileSync(path.join(cwd, "main.script"), "");
+        const { resolveInternals } = await recordedBehindNewer();
+        const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+        writeFileSync(
+          path.join(sourceGeneratedDir, "label.d.ts"),
+          "declare const __label: unknown;\n",
+        );
+        let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+        const main: WatcherFactory = (_dir, onEvent): Watcher => {
+          triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+          return { close() {} };
+        };
+        const component: WatcherFactory = (): Watcher => ({ close() {} });
+        const { onWatchStart, ready } = watchHandle();
+        const { io, err } = captureStreams();
 
-      const result = dispatch(["watch", flag, cwd], io, {
-        debounceMs: 5,
-        watcherFactory: main,
-        componentWatcherFactory: component,
-        sourceGeneratedDir,
-        detectEditorVersion: () => null,
-        resolveInternals,
-        onWatchStart,
-      });
-      const handle = await ready;
-      await handle?.waitForIdle();
-      triggerMain?.("change", "game.project");
-      await handle?.waitForIdle();
-      handle?.stop();
+        const result = dispatch(["watch", flag, cwd], io, {
+          debounceMs: 5,
+          watcherFactory: main,
+          componentWatcherFactory: component,
+          sourceGeneratedDir,
+          detectEditorVersion: () => null,
+          resolveInternals,
+          onWatchStart,
+        });
+        const handle = await ready;
+        await handle?.waitForIdle();
+        triggerMain?.("change", "game.project");
+        await handle?.waitForIdle();
+        handle?.stop();
 
-      expect(await result).toBe(0);
-      expect(recordedCommit()).toBe(COMMIT);
-      expect(err()).toContain(
-        "defold-typescript resolve: newer library data changes github.com/owner/mylib;",
-      );
-      expect(err()).not.toContain("warning: newer library data");
-      rmSync(sourceGeneratedDir, { recursive: true, force: true });
-    });
+        expect(await result).toBe(0);
+        expect(recordedCommit()).toBe(COMMIT);
+        expect(err()).toContain(
+          "defold-typescript resolve: newer library data changes github.com/owner/mylib;",
+        );
+        expect(err()).not.toContain("warning: newer library data");
+        rmSync(sourceGeneratedDir, { recursive: true, force: true });
+      },
+    );
   });
 
   test.each<[string, string, string[]]>([
@@ -11130,22 +11130,25 @@ describe("library data from the data repo", () => {
   test.each<[string, string[]]>([
     ["text", []],
     ["json", ["--json"]],
-  ])("resolve --update=<unknown> exits 1 naming the declared names, requesting and writing nothing: %s", async (_label, extra) => {
-    writeDependentProject();
-    const { requests, resolveInternals } = seams();
-    const { io, out, err } = captureStreams();
+  ])(
+    "resolve --update=<unknown> exits 1 naming the declared names, requesting and writing nothing: %s",
+    async (_label, extra) => {
+      writeDependentProject();
+      const { requests, resolveInternals } = seams();
+      const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["resolve", cwd, "--update=nope", ...extra], io, {
-      resolveInternals,
-    });
+      const code = await dispatch(["resolve", cwd, "--update=nope", ...extra], io, {
+        resolveInternals,
+      });
 
-    expect(code).toBe(1);
-    expect(`${out()}${err()}`).toContain("nope");
-    expect(`${out()}${err()}`).toContain("github.com/owner/mylib");
-    expect(requests).toEqual([]);
-    expect(existsSync(path.join(cwd, PROJECT_LOCK_FILE))).toBe(false);
-    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
-  });
+      expect(code).toBe(1);
+      expect(`${out()}${err()}`).toContain("nope");
+      expect(`${out()}${err()}`).toContain("github.com/owner/mylib");
+      expect(requests).toEqual([]);
+      expect(existsSync(path.join(cwd, PROJECT_LOCK_FILE))).toBe(false);
+      expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+    },
+  );
 
   test("export-types reads the data repo through the same seam", async () => {
     const { requests, resolveInternals } = seams();

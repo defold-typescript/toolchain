@@ -84,13 +84,17 @@ The file rules the scaffold manages read your layout off `tsconfig.json`
 their `.map` files) is ignored by its `.ts.` suffix, which no hand-authored Defold
 path has, so it needs no folder at all; every `.lua.map` is ignored anywhere in the
 project, since Defold never reads one; `biome.json` lints exactly the patterns you
-compile; and
+compile, skips the generated `.defold-types` folder, and names the schema of the
+Biome version `package.json` pins exactly, so a fresh `biome check` is clean; and
 `Lua.workspace.ignoreDir` claims one of your source roots only when nothing under
 it is hand-authored Lua, reporting the file it found when it skips. A generated
 `.lua` module is therefore tracked like any other file — set
 `compilerOptions.outDir` to keep build artifacts out of the tree. Re-running
 `init` retires the older `src`-shaped rules from a project that still carries the
-complete set, leaving every entry you added in place. The one exception is a
+complete set, leaving every entry you added in place. `init --force` likewise
+updates a Biome schema URL, a Biome dependency range and the `.defold-types`
+ignore that an earlier scaffold wrote, and keeps a Biome version or schema you
+chose. The one exception is a
 `biome.json` you have hand-edited to hold comments: it cannot be rewritten
 without destroying them, so it is reported and left for you to update.
 
@@ -117,7 +121,9 @@ starter itself, `["src/main.ts"]`, seeds one normally.
   synthesize.
 - `--force` — re-scaffold in place: repin the managed `@defold-typescript/types`
   and `@defold-typescript/cli` dependencies to the CLI's own version, migrate a
-  deprecated Biome `recommended` key, re-sync the managed `AGENTS.md` block, and
+  deprecated Biome `recommended` key, bring forward the Biome schema, pin and
+  `.defold-types` ignore an earlier scaffold wrote, re-sync the managed
+  `AGENTS.md` block, and
   refresh an existing `.vscode/defold-debug.ts` only when its normalized checksum
   proves it is generated. An absent launcher stays absent; a customized one stays
   byte-identical and produces a warning naming the path and checksum mismatch. To

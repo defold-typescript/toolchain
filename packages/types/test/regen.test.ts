@@ -216,39 +216,42 @@ describe("root entrypoint completeness", () => {
 });
 
 describe("regen drift guard", () => {
-  test.each(
-    COMMITTED_MODULES.map((entry) => [entry.namespace, entry] as const),
-  )("%s: committed generated file matches a fresh pipeline run byte-for-byte", async (_namespace, entry) => {
-    const { contents: fresh } = generateModuleDeclaration(
-      entry,
-      MODULE_MANIFEST.includes(entry) ? DEFAULT_REGEN_OPTIONS : undefined,
-    );
-    const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
-    if (committed !== fresh) {
-      throw new Error(`${entry.outFile} is stale — run \`bun run regen\` in \`packages/types/\``);
-    }
-    expect(committed).toBe(fresh);
-  });
+  test.each(COMMITTED_MODULES.map((entry) => [entry.namespace, entry] as const))(
+    "%s: committed generated file matches a fresh pipeline run byte-for-byte",
+    async (_namespace, entry) => {
+      const { contents: fresh } = generateModuleDeclaration(
+        entry,
+        MODULE_MANIFEST.includes(entry) ? DEFAULT_REGEN_OPTIONS : undefined,
+      );
+      const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
+      if (committed !== fresh) {
+        throw new Error(`${entry.outFile} is stale — run \`bun run regen\` in \`packages/types/\``);
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
 
-  test.each(
-    COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const),
-  )("%s: committed generated file is syntactically-valid TypeScript", async (_outFile, entry) => {
-    const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
-    const transpiler = new Bun.Transpiler({ loader: "ts" });
-    expect(() => transpiler.scan(content)).not.toThrow();
-  });
+  test.each(COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const))(
+    "%s: committed generated file is syntactically-valid TypeScript",
+    async (_outFile, entry) => {
+      const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
+      const transpiler = new Bun.Transpiler({ loader: "ts" });
+      expect(() => transpiler.scan(content)).not.toThrow();
+    },
+  );
 
-  test.each(
-    COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const),
-  )("%s: committed generated namespace has a JSDoc block", async (_outFile, entry) => {
-    const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
-    expect(content).toContain(`  namespace ${entry.namespace} {`);
-    expect(content).toMatch(
-      new RegExp(
-        `declare global \\{\\n(?:[\\s\\S]*?\\n)?  /\\*\\*[\\s\\S]*?\\n  namespace ${entry.namespace} \\{`,
-      ),
-    );
-  });
+  test.each(COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const))(
+    "%s: committed generated namespace has a JSDoc block",
+    async (_outFile, entry) => {
+      const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
+      expect(content).toContain(`  namespace ${entry.namespace} {`);
+      expect(content).toMatch(
+        new RegExp(
+          `declare global \\{\\n(?:[\\s\\S]*?\\n)?  /\\*\\*[\\s\\S]*?\\n  namespace ${entry.namespace} \\{`,
+        ),
+      );
+    },
+  );
 
   test("every MODULE_MANIFEST entry has a committed generated file", () => {
     for (const entry of COMMITTED_MODULES) {
@@ -961,11 +964,12 @@ describe("editor namespace emit", () => {
     expect([...new Set(offenders)]).toEqual(["socket.skip(...)"]);
   });
 
-  test.each(
-    KIND_MODULE_MANIFEST.filter((e) => e.kind !== "editor-script").map((e) => [e.kind]),
-  )("%s: the runtime kind index never imports the editor namespace", (kind) => {
-    expect(generateKindIndex(kind)).not.toContain('import "../editor";');
-  });
+  test.each(KIND_MODULE_MANIFEST.filter((e) => e.kind !== "editor-script").map((e) => [e.kind]))(
+    "%s: the runtime kind index never imports the editor namespace",
+    (kind) => {
+      expect(generateKindIndex(kind)).not.toContain('import "../editor";');
+    },
+  );
 });
 
 describe("editor manifests derived from the declaring target", () => {
@@ -1178,20 +1182,23 @@ describe("versioned regen drift guard", () => {
     VERSIONED_MODULE_MANIFEST.map(
       (entry) => [`${entry.versionId}/${entry.namespace}`, entry] as const,
     ),
-  )("%s: committed versioned file matches a fresh pipeline run byte-for-byte", async (_label, entry) => {
-    const { contents: fresh } = generateModuleDeclaration(
-      entry,
-      targetBindingOptions(regenTargetOf(entry.versionId)),
-    );
-    const path = resolve(GENERATED, "versions", entry.versionId, entry.outFile);
-    const committed = await Bun.file(path).text();
-    if (committed !== fresh) {
-      throw new Error(
-        `versions/${entry.versionId}/${entry.outFile} is stale — run \`bun run regen\` in \`packages/types/\``,
+  )(
+    "%s: committed versioned file matches a fresh pipeline run byte-for-byte",
+    async (_label, entry) => {
+      const { contents: fresh } = generateModuleDeclaration(
+        entry,
+        targetBindingOptions(regenTargetOf(entry.versionId)),
       );
-    }
-    expect(committed).toBe(fresh);
-  });
+      const path = resolve(GENERATED, "versions", entry.versionId, entry.outFile);
+      const committed = await Bun.file(path).text();
+      if (committed !== fresh) {
+        throw new Error(
+          `versions/${entry.versionId}/${entry.outFile} is stale — run \`bun run regen\` in \`packages/types/\``,
+        );
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
 
   test.each(
     VERSIONED_MODULE_MANIFEST.map(
@@ -1204,25 +1211,26 @@ describe("versioned regen drift guard", () => {
     expect(() => transpiler.scan(content)).not.toThrow();
   });
 
-  test.each([
-    ...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId)),
-  ])("%s: committed per-version index.d.ts matches a fresh generateVersionIndex", async (versionId) => {
-    const target = loadApiTargets().find((candidate) => candidate.id === versionId);
-    if (!target) throw new Error(`no committed target for version ${versionId}`);
-    const fresh = generateVersionIndex(
-      versionId,
-      VERSIONED_MODULE_MANIFEST,
-      versionSrcAugmentationImports(target),
-    );
-    const path = resolve(GENERATED, "versions", versionId, "index.d.ts");
-    const committed = await Bun.file(path).text();
-    if (committed !== fresh) {
-      throw new Error(
-        `versions/${versionId}/index.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
+  test.each([...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))])(
+    "%s: committed per-version index.d.ts matches a fresh generateVersionIndex",
+    async (versionId) => {
+      const target = loadApiTargets().find((candidate) => candidate.id === versionId);
+      if (!target) throw new Error(`no committed target for version ${versionId}`);
+      const fresh = generateVersionIndex(
+        versionId,
+        VERSIONED_MODULE_MANIFEST,
+        versionSrcAugmentationImports(target),
       );
-    }
-    expect(committed).toBe(fresh);
-  });
+      const path = resolve(GENERATED, "versions", versionId, "index.d.ts");
+      const committed = await Bun.file(path).text();
+      if (committed !== fresh) {
+        throw new Error(
+          `versions/${versionId}/index.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
+        );
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
 });
 
 describe("versioned per-kind regen drift guard", () => {
@@ -1234,33 +1242,37 @@ describe("versioned per-kind regen drift guard", () => {
         .map((entry) => [`${target.id}/${entry.kind}`, target, entry.kind] as const),
     );
 
-  test.each(
-    versionedKindCases,
-  )("%s: committed versioned kind index matches a fresh generateKindIndex", async (_label, target, kind) => {
-    const fresh = generateKindIndex(kind, target);
-    const path = resolve(GENERATED, "versions", target.id, "kinds", `${kind}.d.ts`);
-    const committed = await Bun.file(path).text();
-    if (committed !== fresh) {
-      throw new Error(
-        `versions/${target.id}/kinds/${kind}.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
-      );
-    }
-    expect(committed).toBe(fresh);
-  });
+  test.each(versionedKindCases)(
+    "%s: committed versioned kind index matches a fresh generateKindIndex",
+    async (_label, target, kind) => {
+      const fresh = generateKindIndex(kind, target);
+      const path = resolve(GENERATED, "versions", target.id, "kinds", `${kind}.d.ts`);
+      const committed = await Bun.file(path).text();
+      if (committed !== fresh) {
+        throw new Error(
+          `versions/${target.id}/kinds/${kind}.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
+        );
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
 });
 
 describe("per-kind regen drift guard", () => {
-  test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
-  )("%s: committed generated/kinds file matches a fresh generateKindIndex", async (kind, _entry) => {
-    const fresh = generateKindIndex(kind);
-    const path = resolve(GENERATED, "kinds", `${kind}.d.ts`);
-    const committed = await Bun.file(path).text();
-    if (committed !== fresh) {
-      throw new Error(`kinds/${kind}.d.ts is stale — run \`bun run regen\` in \`packages/types/\``);
-    }
-    expect(committed).toBe(fresh);
-  });
+  test.each(KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const))(
+    "%s: committed generated/kinds file matches a fresh generateKindIndex",
+    async (kind, _entry) => {
+      const fresh = generateKindIndex(kind);
+      const path = resolve(GENERATED, "kinds", `${kind}.d.ts`);
+      const committed = await Bun.file(path).text();
+      if (committed !== fresh) {
+        throw new Error(
+          `kinds/${kind}.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
+        );
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
 });
 
 describe("per-kind factory re-export", () => {
@@ -1270,40 +1282,43 @@ describe("per-kind factory re-export", () => {
     entry.factoryFrom ?? "../../src/lifecycle";
   const ALL_FACTORIES = KIND_MODULE_MANIFEST.map((entry) => entry.factory);
 
-  test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
-  )("%s: generateKindIndex re-exports its factory exactly once, from its own module", (_kind, entry) => {
-    const fresh = generateKindIndex(entry.kind);
-    const names = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
-    const reexport = `export { ${names} } from "${factoryModule(entry)}";`;
-    expect(fresh).toContain(reexport);
-    expect(fresh.split(reexport).length - 1).toBe(1);
-    expect(fresh).not.toContain("export {};");
-  });
+  test.each(KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const))(
+    "%s: generateKindIndex re-exports its factory exactly once, from its own module",
+    (_kind, entry) => {
+      const fresh = generateKindIndex(entry.kind);
+      const names = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
+      const reexport = `export { ${names} } from "${factoryModule(entry)}";`;
+      expect(fresh).toContain(reexport);
+      expect(fresh.split(reexport).length - 1).toBe(1);
+      expect(fresh).not.toContain("export {};");
+    },
+  );
 
-  test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
-  )("%s: script-property helper types ride only the kinds that have script properties", (_kind, entry) => {
-    const fresh = generateKindIndex(entry.kind);
-    if (entry.propertyTypes === false) {
-      expect(fresh).not.toContain("ScriptProperty");
-      return;
-    }
-    expect(fresh).toContain(
-      `export { ${entry.factory} } from "${factoryModule(entry)}";\n` +
-        `export type { ScriptProperties, ScriptProperty } from "${factoryModule(entry)}";`,
-    );
-  });
+  test.each(KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const))(
+    "%s: script-property helper types ride only the kinds that have script properties",
+    (_kind, entry) => {
+      const fresh = generateKindIndex(entry.kind);
+      if (entry.propertyTypes === false) {
+        expect(fresh).not.toContain("ScriptProperty");
+        return;
+      }
+      expect(fresh).toContain(
+        `export { ${entry.factory} } from "${factoryModule(entry)}";\n` +
+          `export type { ScriptProperties, ScriptProperty } from "${factoryModule(entry)}";`,
+      );
+    },
+  );
 
-  test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
-  )("%s: generateKindIndex re-exports no other kind's factory", (_kind, entry) => {
-    const fresh = generateKindIndex(entry.kind);
-    for (const other of ALL_FACTORIES) {
-      if (other === entry.factory) continue;
-      expect(fresh).not.toContain(other);
-    }
-  });
+  test.each(KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const))(
+    "%s: generateKindIndex re-exports no other kind's factory",
+    (_kind, entry) => {
+      const fresh = generateKindIndex(entry.kind);
+      for (const other of ALL_FACTORIES) {
+        if (other === entry.factory) continue;
+        expect(fresh).not.toContain(other);
+      }
+    },
+  );
 });
 
 describe("editor VM module emit", () => {
@@ -1388,22 +1403,24 @@ describe("editor VM module emit", () => {
     expect(Object.keys(DELIBERATE_SKIP).sort()).toEqual(Object.keys(EMITTER_GAP).sort());
   });
 
-  test.each(
-    EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
-  )("%s: exactly the pinned functions are withheld from the emit", (namespace, entry) => {
-    expect(generateModuleDeclaration(entry).dropped.sort()).toEqual([
-      ...(DELIBERATE_SKIP[namespace] ?? []),
-    ]);
-  });
+  test.each(EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const))(
+    "%s: exactly the pinned functions are withheld from the emit",
+    (namespace, entry) => {
+      expect(generateModuleDeclaration(entry).dropped.sort()).toEqual([
+        ...(DELIBERATE_SKIP[namespace] ?? []),
+      ]);
+    },
+  );
 
-  test.each(
-    EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
-  )("%s: every fixture element reaches the emit except the pinned unexpressible ones", (namespace, entry) => {
-    const { contents } = generateModuleDeclaration(entry);
-    expect(unexpressedFixtureNames(entry.doc, contents)).toEqual(
-      [...(EMITTER_GAP[namespace] ?? []), ...(DELIBERATE_SKIP[namespace] ?? [])].sort(),
-    );
-  });
+  test.each(EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const))(
+    "%s: every fixture element reaches the emit except the pinned unexpressible ones",
+    (namespace, entry) => {
+      const { contents } = generateModuleDeclaration(entry);
+      expect(unexpressedFixtureNames(entry.doc, contents)).toEqual(
+        [...(EMITTER_GAP[namespace] ?? []), ...(DELIBERATE_SKIP[namespace] ?? [])].sort(),
+      );
+    },
+  );
 
   test("zip withholds its ENUM constant tables, leaving them to the hand-authored globals", () => {
     const entry = EDITOR_VM_MODULE_MANIFEST.find((e) => e.namespace === "zip");
@@ -1556,21 +1573,25 @@ describe("nil-return union absorption guard", () => {
   const absorbingUnionLines = (contents: string): string[] =>
     contents.split("\n").filter((line) => line.includes("): ") && line.includes(" | unknown"));
 
-  test.each(
-    MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
-  )("%s: current generated signatures carry no nil-absorbing ` | unknown` fragment", (_namespace, entry) => {
-    const { contents } = generateModuleDeclaration(entry);
-    expect(absorbingUnionLines(contents)).toEqual([]);
-  });
+  test.each(MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const))(
+    "%s: current generated signatures carry no nil-absorbing ` | unknown` fragment",
+    (_namespace, entry) => {
+      const { contents } = generateModuleDeclaration(entry);
+      expect(absorbingUnionLines(contents)).toEqual([]);
+    },
+  );
 
   test.each(
     VERSIONED_MODULE_MANIFEST.map(
       (entry) => [`${entry.versionId}/${entry.namespace}`, entry] as const,
     ),
-  )("%s: committed-version generated signatures carry no nil-absorbing ` | unknown` fragment", (_label, entry) => {
-    const { contents } = generateModuleDeclaration(entry);
-    expect(absorbingUnionLines(contents)).toEqual([]);
-  });
+  )(
+    "%s: committed-version generated signatures carry no nil-absorbing ` | unknown` fragment",
+    (_label, entry) => {
+      const { contents } = generateModuleDeclaration(entry);
+      expect(absorbingUnionLines(contents)).toEqual([]);
+    },
+  );
 
   test("the guard predicate leaves standalone unknown and Record<..., unknown> untouched", () => {
     expect(absorbingUnionLines("  function f(): unknown;")).toEqual([]);
