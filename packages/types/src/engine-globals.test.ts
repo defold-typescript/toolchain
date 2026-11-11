@@ -5,7 +5,9 @@ import path from "node:path";
 const ENGINE_TYPES = [
   "Hash",
   "Matrix4",
+  "NonTable",
   "Opaque",
+  "PlainTable",
   "Quaternion",
   "Url",
   "Vector",

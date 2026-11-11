@@ -6,10 +6,13 @@ import type { ApiPage } from "./api-surface";
 // `api-surface.ts`); index into `ApiModule` for the structural shape instead.
 type ApiPropertyShape = ApiModule["properties"][number];
 
-// The core global value types plus the generic `Opaque` brand, documented as
-// reference pages. Kept in lockstep with the `declare global` re-exports in
+// The core global value types plus the generic `Opaque` brand, the `NonTable`
+// brand and the `PlainTable` alias, documented as reference pages. Kept in
+// lockstep with the `declare global` re-exports in
 // `packages/types/src/engine-globals.d.ts` by `global-types-drift.test.ts`.
 const VALUE_TYPE_NAMES = [
+  "NonTable",
+  "PlainTable",
   "Vector",
   "Vector3",
   "Vector4",
@@ -34,6 +37,7 @@ const OPERATOR_METHODS: Record<string, { op: string; unary: boolean }> = {
 };
 
 const INTERFACE_RE = /export interface (\w+)[^{]*\{([\s\S]*?)\}/g;
+const TYPE_ALIAS_RE = /export type (\w+)(?:<[^>]*>)? =/g;
 
 // `comment-parser` with the tag + description tokenizers (no name/type
 // extraction, so a prose tag like `@remarks The brand…` keeps its first word)
@@ -217,20 +221,30 @@ function buildPage(name: string, members: RawMember[], jsdoc: string): ApiPage {
 }
 
 /**
- * Parse the core value-type interfaces out of a `core-types.ts` source string
- * into one `ApiPage` per type under the `global-type` category. Takes the
- * source as a string (not a file read) so it stays off the client graph,
- * matching the docs-site's node-free-client constraint. Properties become
- * `properties`; TSTL `Lua<Op>Method` members become `functions` with signatures
- * derived from the generic arguments, never hand-written.
+ * Parse the core value-type interfaces and type aliases out of a
+ * `core-types.ts` source string into one `ApiPage` per type under the
+ * `global-type` category, in source order. Takes the source as a string (not a
+ * file read) so it stays off the client graph, matching the docs-site's
+ * node-free-client constraint. Properties become `properties`; TSTL
+ * `Lua<Op>Method` members become `functions` with signatures derived from the
+ * generic arguments, never hand-written. A type alias has no members, so its
+ * page carries only its JSDoc.
  */
 export function parseGlobalTypes(source: string): ApiPage[] {
-  const pages: ApiPage[] = [];
+  const documented = (name: string) => (VALUE_TYPE_NAMES as readonly string[]).includes(name);
+  const found: { index: number; page: ApiPage }[] = [];
   for (const match of source.matchAll(INTERFACE_RE)) {
     const name = match[1] as string;
-    if (!(VALUE_TYPE_NAMES as readonly string[]).includes(name)) continue;
-    const jsdoc = precedingJsdoc(source, match.index ?? 0);
-    pages.push(buildPage(name, parseMembers(match[2] as string), jsdoc));
+    if (!documented(name)) continue;
+    const index = match.index ?? 0;
+    const jsdoc = precedingJsdoc(source, index);
+    found.push({ index, page: buildPage(name, parseMembers(match[2] as string), jsdoc) });
   }
-  return pages;
+  for (const match of source.matchAll(TYPE_ALIAS_RE)) {
+    const name = match[1] as string;
+    if (!documented(name)) continue;
+    const index = match.index ?? 0;
+    found.push({ index, page: buildPage(name, [], precedingJsdoc(source, index)) });
+  }
+  return found.sort((a, b) => a.index - b.index).map(({ page }) => page);
 }

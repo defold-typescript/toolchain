@@ -141,10 +141,17 @@ function luaTableKey(mapped: string): string {
  * assignable to it although both compile to the same Lua table. A caller-supplied
  * table whose key admits `string` (`AnyNotNil` does) also takes
  * `Record<string, V>`; a `Hash` or numeric key cannot be spelled as an object
- * literal's key, so it takes only a Lua table.
+ * literal's key, so it takes only a Lua table. With an `unknown` value the arm is
+ * `PlainTable` instead (`objectLiteralArm`), which admits an interface as well as
+ * a literal, since an interface has no implicit index signature, and still
+ * rejects engine userdata and functions.
  */
 function acceptsObjectLiteral(key: string): boolean {
   return splitTopLevel(key, "|").some((arm) => ["string", "AnyNotNil"].includes(arm.trim()));
+}
+
+export function objectLiteralArm(value: string): string {
+  return value === "unknown" ? "PlainTable" : `Record<string, ${value}>`;
 }
 
 interface Walk {
@@ -303,7 +310,7 @@ function mapToken(raw: string, walk: Walk): string {
     const table = `LuaMap<${args.join(", ")}>`;
     const [key, value] = args;
     if (args.length === 2 && acceptsObjectLiteral(key as string)) {
-      return `${table} | Record<string, ${value}>`;
+      return `${table} | ${objectLiteralArm(value as string)}`;
     }
     return table;
   }

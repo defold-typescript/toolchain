@@ -60,7 +60,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns

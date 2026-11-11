@@ -13,7 +13,16 @@ const DEFAULT_TARGET = loadApiTargets().find((target) => target.default === true
 if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
 
 const program = surfaceProgram(DEFAULT_TARGET);
-const surface = readDeclaredSurface(program, ["go", "gui", "render", "sprite", "types", "vmath"]);
+const surface = readDeclaredSurface(program, [
+  "factory",
+  "go",
+  "gui",
+  "render",
+  "sprite",
+  "sys",
+  "types",
+  "vmath",
+]);
 
 function declared(name: string): DeclaredFunction {
   const fn = surface.functions.get(name);
@@ -65,6 +74,13 @@ describe("declared kinds on the default surface", () => {
   test("a slot declared `?` accepts nil", () => {
     const found = declared("render.set_render_target").slots.find((s) => s.index === 1);
     expect(found).toMatchObject({ optional: true, acceptsNil: true });
+  });
+
+  test("a plain-table slot reads as a table, and the optional one accepts nil", () => {
+    expect(slot("sys.save", 2)).toEqual({ kinds: ["table"], optional: false });
+    expect(slot("factory.create", 4)).toEqual({ kinds: ["table"], optional: true });
+    const properties = declared("factory.create").slots.find((s) => s.index === 4);
+    expect(properties).toMatchObject({ acceptsNil: true });
   });
 
   test("a declared unknown maps to any", () => {
