@@ -91,9 +91,11 @@ The scaffold declares its `devDependencies` in `package.json`:
 * `@defold-typescript/cli` pinned to the same version so the build runs in
 lockstep with those types
 * `@defold-typescript/tstl-plugin` for the live transpile diagnostics
+* `@defold-typescript/docs` for the guide and agent docs the managed `AGENTS.md` points to
 * `@biomejs/biome` for lint and format
 * `@types/bun` for the `.vscode/` debug launcher
 * `lua-types` for the ambient Lua standard library so `math`/`string`/`table`/… resolve
+* `typescript` pinned to the exact version TypeScript-to-Lua supports
 
 `bun install` is what actually downloads these dependencies to the `node_modules` folder (it is gitignored inside the generated `.gitignore`).
 If you forget to do so, your editor reports the Defold globals as unresolved.
