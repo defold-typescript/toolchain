@@ -22,7 +22,7 @@ declare global {
    */
   namespace socket {
     type SocketSelectable = SocketMaster | SocketClient | SocketServer | SocketConnected | SocketUnconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };
-    interface SocketClient {
+    interface SocketClient extends NonTable {
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -165,7 +165,7 @@ declare global {
        */
       shutdown(mode: string): number;
     }
-    interface SocketConnected {
+    interface SocketConnected extends NonTable {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -265,7 +265,7 @@ declare global {
        */
       settimeout(value?: number): number;
     }
-    interface SocketMaster {
+    interface SocketMaster extends NonTable {
       /**
        * Binds a master object to address and port on the local host.
        *
@@ -347,7 +347,7 @@ declare global {
        */
       settimeout(value?: number, mode?: string): number;
     }
-    interface SocketServer {
+    interface SocketServer extends NonTable {
       /**
        * Waits for a remote connection on the server object and returns a client object representing that connection.
        * Calling `socket.select` with a server object in the `recvt` parameter before a call to accept does not guarantee accept will return immediately. Use the `settimeout` method or accept might block until another client shows up.
@@ -448,7 +448,7 @@ declare global {
        */
       settimeout(value?: number, mode?: string): number;
     }
-    interface SocketUnconnected {
+    interface SocketUnconnected extends NonTable {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.

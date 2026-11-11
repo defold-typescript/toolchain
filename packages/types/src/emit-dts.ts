@@ -41,6 +41,7 @@ import {
   type LualsPosition,
   mapLualsExpression,
   needsArrayParens,
+  objectLiteralArm,
   splitTopLevel,
 } from "./luals-type-expr";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
@@ -5146,7 +5147,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   }
   const handleIndent = `${INDENT}${INDENT}`;
   for (const { name, members } of handleInterfaces) {
-    lines.push(`${INDENT}${decl}interface ${name} {`);
+    lines.push(`${INDENT}${decl}interface ${name} extends NonTable {`);
     for (const { fn, text } of members) {
       for (const docLine of functionDocLines(fn.original, translations, baseNotes, handleIndent)) {
         lines.push(docLine);
@@ -7015,7 +7016,7 @@ function mapSlotUnion(
           // `LuaMap` arm so an existing `LuaMap` caller stays valid.
           const otherKeys = keyTokens.filter((token) => token !== "string");
           const key = unionFromTokens(otherKeys.length > 0 ? otherKeys : keyTokens, mapType);
-          ts = `LuaMap<${key}, ${value}> | Record<string, ${value}>`;
+          ts = `LuaMap<${key}, ${value}> | ${objectLiteralArm(value)}`;
         } else {
           ts = `LuaMap<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
         }

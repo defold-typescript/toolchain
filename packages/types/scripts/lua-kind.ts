@@ -65,7 +65,10 @@ function collectKinds(type: ts.Type, checker: ts.TypeChecker, out: Set<LuaKind>)
   if (type.isIntersection()) {
     // A branded primitive (`number & { __brand }`) is its primitive, and a
     // branded handle is its handle; only a plain object intersection is a table.
-    const members = type.types.map((member) => {
+    // An `object` member (`PlainTable`'s `object & { ... }`) only narrows to
+    // non-primitives, so the remaining members carry the kind.
+    const shaped = type.types.filter((member) => !(member.flags & ts.TypeFlags.NonPrimitive));
+    const members = shaped.map((member) => {
       const kinds = new Set<LuaKind>();
       return collectKinds(member, checker, kinds) ? kinds : undefined;
     });

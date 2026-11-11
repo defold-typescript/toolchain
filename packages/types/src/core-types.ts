@@ -1,5 +1,37 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 
+declare const NonTableBrand: unique symbol;
+/**
+ * The phantom brand of a value Lua does not hold as a plain table: engine
+ * userdata (vectors, matrices, hashes, URLs, handles) and functions.
+ *
+ * @remarks
+ * The brand is an optional `unique symbol` property that exists only in the type
+ * system and is erased at transpile. {@link PlainTable} rejects any value that
+ * carries it, which is how an engine value is told apart from a value typed by
+ * an interface.
+ */
+export interface NonTable {
+  readonly [NonTableBrand]?: true;
+}
+
+declare global {
+  interface Function {
+    readonly [NonTableBrand]?: true;
+  }
+}
+
+/**
+ * Any value Lua holds as a plain table: an object literal, a value typed by an
+ * interface or a type alias, a `LuaMap`, a `LuaTable` or an array. Engine
+ * userdata and functions carry the {@link NonTable} brand and are rejected.
+ *
+ * @remarks
+ * The `Record` arm stays because an object literal checked against the
+ * intersection alone fails the excess-property check.
+ */
+export type PlainTable = Record<string, unknown> | (object & { readonly [NonTableBrand]?: never });
+
 /**
  * A numeric vector of any size, accessed by index for reads and writes;
  * `v.length()` is its component count.
@@ -10,7 +42,7 @@
  * to the Lua length operator `#v`; reading `v.length` as a field raises, since
  * the engine accepts only integer keys.
  */
-export interface Vector {
+export interface Vector extends NonTable {
   [index: number]: number;
   length: LuaLengthMethod<number>;
 }
@@ -18,7 +50,7 @@ export interface Vector {
 /**
  * A three-component vector with `x`, `y`, and `z` components.
  */
-export interface Vector3 {
+export interface Vector3 extends NonTable {
   x: number;
   y: number;
   z: number;
@@ -38,7 +70,7 @@ export interface Vector3 {
 /**
  * A four-component vector with `x`, `y`, `z`, and `w` components.
  */
-export interface Vector4 {
+export interface Vector4 extends NonTable {
   x: number;
   y: number;
   z: number;
@@ -59,7 +91,7 @@ export interface Vector4 {
 /**
  * A rotation quaternion with `x`, `y`, `z`, and `w` components.
  */
-export interface Quaternion {
+export interface Quaternion extends NonTable {
   x: number;
   y: number;
   z: number;
@@ -70,7 +102,7 @@ export interface Quaternion {
 /**
  * A 4x4 transformation matrix.
  */
-export interface Matrix4 {
+export interface Matrix4 extends NonTable {
   m00: number;
   m01: number;
   m02: number;
@@ -125,7 +157,7 @@ export interface Matrix4 {
  * has no length, so it does not support `#` or `.length`; assign a whole new
  * array (`cb.lights = [a, b]`) to change how many slots the constant holds.
  */
-export interface ConstantArray<T> {
+export interface ConstantArray<T> extends NonTable {
   [index: number]: T;
 }
 
@@ -162,7 +194,7 @@ declare const HashSource: unique symbol;
  * `Hash<"#sprite">` stay assignable to each other in both directions. Nothing
  * that compiles without it stops compiling with it.
  */
-export interface Hash<S extends string = string> {
+export interface Hash<S extends string = string> extends NonTable {
   readonly [HashBrand]: "Hash";
   // Method syntax, and load-bearing: a method's parameters are compared
   // bivariantly, which is what keeps `Hash` and `Hash<"#sprite">` assignable in
@@ -223,7 +255,7 @@ declare const OpaqueBrand: unique symbol;
  * the shape just isn't modeled." An `Opaque` says "do not look inside; this
  * value is meaningful only to the engine."
  */
-export interface Opaque<Name extends string> {
+export interface Opaque<Name extends string> extends NonTable {
   readonly [OpaqueBrand]: Name;
 }
 
@@ -240,7 +272,7 @@ export interface Opaque<Name extends string> {
  * `window_resized` in a render script, and after `url.socket = undefined`.
  * Assigning `undefined` clears any of the three fields.
  */
-export interface Url {
+export interface Url extends NonTable {
   get socket(): Hash | undefined;
   set socket(value: Hash | string | undefined);
   get path(): Hash | undefined;
