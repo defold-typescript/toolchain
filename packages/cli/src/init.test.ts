@@ -2573,7 +2573,7 @@ describe("managed scaffold rules derived from tsconfig include", () => {
     );
   }
 
-  test("a fresh scaffold ignores component output by suffix, with no folder and no plain Lua", () => {
+  test("a fresh scaffold ignores component output by suffix and every .lua.map, but not plain Lua", () => {
     touch("game.project", "[project]\n");
 
     runInit({ cwd });
@@ -2586,11 +2586,45 @@ describe("managed scaffold rules derived from tsconfig include", () => {
       ".ts.gui_script.map",
       ".ts.render_script",
       ".ts.render_script.map",
+      ".ts.editor_script",
+      ".ts.editor_script.map",
     ]) {
       expect(lines).toContain(`**/*${suffix}`);
     }
     expect(lines.filter((line) => line.startsWith("src/"))).toEqual([]);
-    expect(lines.filter((line) => /^\*\*\/\*\.lua(\.map)?$/.test(line))).toEqual([]);
+    expect(lines).toContain("**/*.lua.map");
+    expect(lines.filter((line) => /^\*\*\/\*\.lua$/.test(line))).toEqual([]);
+  });
+
+  test("a plain re-init appends the editor-script and lua.map rules to an existing managed .gitignore", () => {
+    touch("game.project", "[project]\n");
+    // The managed lines a v0.62.0 scaffold wrote, quoted from that tag, plus one
+    // line of the user's own.
+    const seeded = [
+      "node_modules",
+      ".vscode/dmengine*",
+      "**/*.ts.script",
+      "**/*.ts.script.map",
+      "**/*.ts.gui_script",
+      "**/*.ts.gui_script.map",
+      "**/*.ts.render_script",
+      "**/*.ts.render_script.map",
+      "/build",
+      "/.internal",
+      "/.editor_settings",
+      "builtins/",
+      ".DS_Store",
+      "Thumbs.db",
+      "/lib/defold_typescript/",
+      "/dist",
+    ];
+    seed(".gitignore", `${seeded.join("\n")}\n`);
+
+    runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, ".gitignore"), "utf8")).toBe(
+      `${[...seeded, "**/*.ts.editor_script", "**/*.ts.editor_script.map", "**/*.lua.map"].join("\n")}\n`,
+    );
   });
 
   test("a re-init retires the released src-shaped rules and keeps everything else", () => {

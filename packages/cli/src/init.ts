@@ -59,7 +59,8 @@ const CONFLICTING_TS_CONFIGS = ["tsconfig.json"];
 // so they need no folder to be correct and hold for any `include`. Generated
 // `.lua` modules are deliberately absent: only the banner distinguishes them
 // from authored Lua, which a glob cannot read, and `outDir` is the lever for
-// keeping them out of the tree.
+// keeping them out of the tree. `.lua.map` is ignored everywhere: Defold never
+// reads one, and the build writes one beside every module it emits.
 const GITIGNORE_LINES = [
   "node_modules",
   // `.vscode/defold-debug.ts` downloads the Defold engine binary beside itself
@@ -71,6 +72,9 @@ const GITIGNORE_LINES = [
   "**/*.ts.gui_script.map",
   "**/*.ts.render_script",
   "**/*.ts.render_script.map",
+  "**/*.ts.editor_script",
+  "**/*.ts.editor_script.map",
+  "**/*.lua.map",
   "/build",
   "/.internal",
   "/.editor_settings",
