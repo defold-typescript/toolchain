@@ -72,7 +72,7 @@ declare global {
      * // {"persons":[{"name":"John Doe"},{"name":"Darth Vader"}]}
      * ```
      */
-    export function encode(tbl: Record<string | number, unknown>, options?: { encode_empty_table_as_object?: string }): string;
+    export function encode(tbl: PlainTable, options?: { encode_empty_table_as_object?: string }): string;
     export { _null as null };
   }
 }

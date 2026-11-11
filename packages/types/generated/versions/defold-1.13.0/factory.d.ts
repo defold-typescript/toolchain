@@ -60,7 +60,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash | undefined;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns

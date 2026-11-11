@@ -1576,7 +1576,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
     // table token. This is why lifting the constant headings would not flip the
     // decision: the downgrade is independent of the missing members.
     expect(emitted).toContain(
-      "function create(text: string, font: string, settings: Record<string | number, unknown>): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;",
+      "function create(text: string, font: string, settings: PlainTable): LuaMultiReturn<[Record<string | number, unknown>, Record<string | number, unknown>]>;",
     );
     // None of ts-defold's named structural types survives the flat parse.
     for (const type of ["Word[]", ": Settings", "TextMetrics", "Alignment", "FontsTable"]) {
@@ -2380,13 +2380,13 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     const { emitted } = await comparisonForMarkdown(generous(), "dicebag.dicebag", severed);
     // `sides` and `rollable_table` are documented `(table)`, and `table_roll`
     // returns `(any)`; ts-defold types all three concretely.
-    expect(emitted).toContain("sides: Record<string | number, unknown>");
-    expect(emitted).toContain("rollable_table: Record<string | number, unknown>");
+    expect(emitted).toContain("sides: PlainTable");
+    expect(emitted).toContain("rollable_table: PlainTable");
     // Read off the fork, not the retired ts-defold snapshot. The fork is the
     // *mapped* golden, whose only difference is `hash` -> `Hash` on the `id`
     // parameters — provably term-neutral, because `compareFidelityToTsDefold`
-    // keys `downgradedMembers` on the literal `unknown` token alone, never on a
-    // core-type spelling.
+    // keys `downgradedMembers` on the literal `unknown` and `PlainTable` tokens
+    // alone, never on a spelling such as `Hash`.
     const snapshot = readFileSync(
       fixtureFile(targetFor("dicebag.dicebag", severed).fixture),
       "utf8",

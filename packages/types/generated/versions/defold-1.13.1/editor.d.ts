@@ -56,7 +56,7 @@ declare global {
      * editor.bob(opts, "distclean", "resolve", "build");
      * ```
      */
-    function bob(options?: Record<string | number, unknown>, ...commands: string[]): void;
+    function bob(options?: PlainTable, ...commands: string[]): void;
     /**
      * Open a URL in the default browser or a registered application
      *
@@ -261,7 +261,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function array(opts: Record<string | number, unknown>): unknown;
+        export function array(opts: PlainTable): unknown;
         /**
          * boolean schema
          *
@@ -270,7 +270,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function boolean(opts?: Record<string | number, unknown>): unknown;
+        export function boolean(opts?: PlainTable): unknown;
         /**
          * enum value schema
          *
@@ -279,7 +279,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        function _enum(opts: Record<string | number, unknown>): unknown;
+        function _enum(opts: PlainTable): unknown;
         /**
          * integer schema
          *
@@ -288,7 +288,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function integer(opts?: Record<string | number, unknown>): unknown;
+        export function integer(opts?: PlainTable): unknown;
         /**
          * keyword schema
          * A keyword is a short string that is interned within the editor runtime, useful e.g. for identifiers
@@ -298,7 +298,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function keyword(opts?: Record<string | number, unknown>): unknown;
+        export function keyword(opts?: PlainTable): unknown;
         /**
          * floating-point number schema
          *
@@ -307,7 +307,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function number(opts?: Record<string | number, unknown>): unknown;
+        export function number(opts?: PlainTable): unknown;
         /**
          * heterogeneous object schema
          *
@@ -316,7 +316,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function object(opts: Record<string | number, unknown>): unknown;
+        export function object(opts: PlainTable): unknown;
         /**
          * homogeneous object schema
          *
@@ -325,7 +325,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function object_of(opts: Record<string | number, unknown>): unknown;
+        export function object_of(opts: PlainTable): unknown;
         /**
          * one of schema
          *
@@ -334,7 +334,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function one_of(opts: Record<string | number, unknown>): unknown;
+        export function one_of(opts: PlainTable): unknown;
         /**
          * password schema
          * A password is a string that is encrypted when stored in a preference file
@@ -344,7 +344,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function password(opts?: Record<string | number, unknown>): unknown;
+        export function password(opts?: PlainTable): unknown;
         /**
          * set schema
          * Set is represented as a lua table with `true` values
@@ -354,7 +354,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function set(opts: Record<string | number, unknown>): unknown;
+        export function set(opts: PlainTable): unknown;
         /**
          * string schema
          *
@@ -363,7 +363,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function string(opts?: Record<string | number, unknown>): unknown;
+        export function string(opts?: PlainTable): unknown;
         /**
          * tuple schema
          * A tuple is a fixed-length array where each item has its own defined type
@@ -373,7 +373,7 @@ declare global {
          * - `editor.prefs.SCOPE.PROJECT`: a separate preference value per project
          * @returns Prefs schema
          */
-        export function tuple(opts: Record<string | number, unknown>): unknown;
+        export function tuple(opts: PlainTable): unknown;
         export { _enum as enum };
       }
       namespace SCOPE {
@@ -421,7 +421,7 @@ declare global {
        * @param child_nodes - array of child nodes (the same as returned by `editor.get(node, property)`) in new order
        * @returns A transaction step
        */
-      function reorder(node: string | Opaque<"userdata">, property: string, child_nodes: Record<string | number, unknown>): Opaque<"transaction_step">;
+      function reorder(node: string | Opaque<"userdata">, property: string, child_nodes: PlainTable): Opaque<"transaction_step">;
       /**
        * Create a transaction step that will reset an overridden property to its default value when transacted with `editor.transact()`.
        *
@@ -464,7 +464,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function button(props: Record<string | number, unknown>): Opaque<"component">;
+      function button(props: PlainTable): Opaque<"component">;
       /**
        * Check box with a label
        *
@@ -484,7 +484,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function check_box(props: Record<string | number, unknown>): Opaque<"component">;
+      function check_box(props: PlainTable): Opaque<"component">;
       /**
        * Convert a function to a UI component.
        * The wrapped function may call any hooks functions (`editor.ui.use_*`), but on any function invocation, the hooks calls must be the same, and in the same order. This means that hooks should not be used inside loops and conditions or after a conditional return statement.
@@ -500,14 +500,14 @@ declare global {
        * @param props - Required props: `title string, message`OS dialog window title, either a string or a localization message Optional props: `header component`top part of the dialog, defaults to `editor.ui.heading({text = props.title})``content component`content of the dialog`width number`initial width of the dialog window in pixels`height number`initial height of the dialog window in pixels`resizable boolean`determines if the dialog window can be resized by the user`buttons component[]`array of `editor.ui.dialog_button(...)` components, footer of the dialog. Defaults to a single Close button`modal boolean`if set to `false`, the dialog window stays on top but does not block interaction with the editor
        * @returns UI component
        */
-      function dialog(props: Record<string | number, unknown>): Opaque<"component">;
+      function dialog(props: PlainTable): Opaque<"component">;
       /**
        * Dialog button shown in the footer of a dialog
        *
        * @param props - Required props: `text string, message`button text, either a string or a localization message Optional props: `result any`value returned by `editor.ui.show_dialog(...)` if this button is pressed`default boolean`if set, pressing `Enter` in the dialog will trigger this button`cancel boolean`if set, pressing `Escape` in the dialog will trigger this button`enabled boolean`determines if the button can be interacted with
        * @returns UI component
        */
-      function dialog_button(props: Record<string | number, unknown>): Opaque<"component">;
+      function dialog_button(props: PlainTable): Opaque<"component">;
       /**
        * Input component for selecting files from the file system
        *
@@ -523,7 +523,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function external_file_field(props: Record<string | number, unknown>): Opaque<"component">;
+      function external_file_field(props: PlainTable): Opaque<"component">;
       /**
        * Layout container that places its children in a 2D grid
        *
@@ -549,7 +549,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function grid(props: Record<string | number, unknown>): Opaque<"component">;
+      function grid(props: PlainTable): Opaque<"component">;
       /**
        * A text heading
        *
@@ -582,7 +582,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function heading(props: Record<string | number, unknown>): Opaque<"component">;
+      function heading(props: PlainTable): Opaque<"component">;
       /**
        * Layout container that places its children in a horizontal row one after another
        *
@@ -608,7 +608,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function horizontal(props: Record<string | number, unknown>): Opaque<"component">;
+      function horizontal(props: PlainTable): Opaque<"component">;
       /**
        * An icon from a predefined set
        *
@@ -628,7 +628,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function icon(props: Record<string | number, unknown>): Opaque<"component">;
+      function icon(props: PlainTable): Opaque<"component">;
       /**
        * An image
        *
@@ -644,7 +644,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function image(props: Record<string | number, unknown>): Opaque<"component">;
+      function image(props: PlainTable): Opaque<"component">;
       /**
        * Integer input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
@@ -660,7 +660,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function integer_field(props: Record<string | number, unknown>): Opaque<"component">;
+      function integer_field(props: PlainTable): Opaque<"component">;
       /**
        * Label intended for use with input components
        *
@@ -685,7 +685,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function label(props: Record<string | number, unknown>): Opaque<"component">;
+      function label(props: PlainTable): Opaque<"component">;
       /**
        * Number input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
@@ -701,7 +701,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function number_field(props: Record<string | number, unknown>): Opaque<"component">;
+      function number_field(props: PlainTable): Opaque<"component">;
       /**
        * Open a resource, either in the editor or in a third-party app
        *
@@ -732,7 +732,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function paragraph(props: Record<string | number, unknown>): Opaque<"component">;
+      function paragraph(props: PlainTable): Opaque<"component">;
       /**
        * Input component for selecting project resources
        *
@@ -748,14 +748,14 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function resource_field(props: Record<string | number, unknown>): Opaque<"component">;
+      function resource_field(props: PlainTable): Opaque<"component">;
       /**
        * Layout container that optionally shows scroll bars if child contents overflow the assigned bounds
        *
        * @param props - Required props: `content component`content component Optional props: `grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function scroll(props: Record<string | number, unknown>): Opaque<"component">;
+      function scroll(props: PlainTable): Opaque<"component">;
       /**
        * Dropdown select box with an array of options
        *
@@ -771,7 +771,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function select_box(props: Record<string | number, unknown>): Opaque<"component">;
+      function select_box(props: PlainTable): Opaque<"component">;
       /**
        * Thin line for visual content separation, by default horizontal and aligned to center
        *
@@ -789,7 +789,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function separator(props: Record<string | number, unknown>): Opaque<"component">;
+      function separator(props: PlainTable): Opaque<"component">;
       /**
        * Show a dialog and await a result
        *
@@ -803,21 +803,21 @@ declare global {
        * @param opts - `path string`initial file or directory path used by the dialog; resolved against project root if relative`title string, message`OS window title, either a string or a localization message
        * @returns either absolute directory path or nil if user canceled directory selection
        */
-      function show_external_directory_dialog(opts?: Record<string | number, unknown>): string | undefined;
+      function show_external_directory_dialog(opts?: PlainTable): string | undefined;
       /**
        * Show a modal OS file selection dialog and await a result
        *
        * @param opts - `path string`initial file or directory path used by the dialog; resolved against project root if relative`title string, message`OS window title, either a string or a localization message`filters table[]`File filters, an array of filter tables, where each filter has following keys:`description string, message`text explaining the filter, either a literal string like `"Text files (*.txt)"` or a localization message`extensions string[]`array of file extension patterns, e.g. `"*.txt"`, `"*.*"` or `"game.project"`
        * @returns either absolute file path or nil if user canceled file selection
        */
-      function show_external_file_dialog(opts?: Record<string | number, unknown>): string | undefined;
+      function show_external_file_dialog(opts?: PlainTable): string | undefined;
       /**
        * Show a modal resource selection dialog and await a result
        *
        * @param opts - `extensions string[]`if specified, restricts selectable resources in the dialog to specified file extensions; e.g. `{"collection", "go"}``selection string`either `"single"` or `"multiple"`, defaults to `"single"``title string, message`dialog title, either a string or a localization message, defaults to `localization.message("dialog.select-resource.title")`
        * @returns |nil] if user made no selection, returns `nil`. Otherwise, if selection mode is `"single"`, returns selected resource path; otherwise returns a non-empty array of selected resource paths.
        */
-      function show_resource_dialog(opts?: Record<string | number, unknown>): unknown;
+      function show_resource_dialog(opts?: PlainTable): unknown;
       /**
        * String input component based on a text field, reports changes on commit (`Enter` or focus loss)
        *
@@ -833,21 +833,21 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function string_field(props: Record<string | number, unknown>): Opaque<"component">;
+      function string_field(props: PlainTable): Opaque<"component">;
       /**
        * Tab used in the `tabs` prop of `editor.ui.tabs(...)`
        *
        * @param props - Required props: `text string, message`tab header text, either a string or a localization message Optional props: `content component`tab content component`icon component`tab header icon component`enabled boolean`determines if the tab can be selected
        * @returns UI component
        */
-      function tab(props: Record<string | number, unknown>): Opaque<"component">;
+      function tab(props: PlainTable): Opaque<"component">;
       /**
        * Layout container that shows one selected tab content at a time
        *
        * @param props - Optional props: `tabs component[]`array of `editor.ui.tab(...)` components`grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function tabs(props: Record<string | number, unknown>): Opaque<"component">;
+      function tabs(props: PlainTable): Opaque<"component">;
       /**
        * A hook that caches the result of a computation between re-renders.
        * See `editor.ui.component` for hooks caveats and rules. If any of the arguments to `use_memo` change during a component refresh (checked with `==`), the value will be recomputed.
@@ -927,7 +927,7 @@ declare global {
        * - `editor.ui.ALIGNMENT.BOTTOM_RIGHT``grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
        * @returns UI component
        */
-      function vertical(props: Record<string | number, unknown>): Opaque<"component">;
+      function vertical(props: PlainTable): Opaque<"component">;
       namespace ALIGNMENT {
         /**
          * `"bottom"`
