@@ -15,11 +15,13 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **`tsc` types `onMessage`** and [socket](/api/socket) aliases.
 > - **Scaffolds add the docs package** ([init](./init.md)).
+> - **`.gitignore` covers editor scripts and `.lua.map`** ([init](./init.md)).
 
 ### Fixed
 
 - **`onMessage` and the [socket](/api/socket) type aliases such as `socket.TCPOptions` type-checked in `build` but not under `tsc` or in the editor:** on every Defold target a project's `tsc` reported `Cannot find name 'onMessage'` and found no `TCPOptions` in the `socket` namespace. Both now resolve in `tsc` and the editor as they do in `build` ([Routing many messages](./messages.md#routing-many-messages-with-onmessage)).
 - **The docs paths in a scaffolded project's managed `AGENTS.md` were missing under Bun's isolated installs:** the scaffold now lists `@defold-typescript/docs` in its dev dependencies, pinned to the CLI's version, and [upgrade](./upgrade.md) adds it to an existing project.
+- **The managed `.gitignore` let generated `.ts.editor_script` files and `.lua.map` files outside component output into version control:** it now ignores both, and [init](./init.md) or [upgrade](./upgrade.md) adds the rules to an existing project.
 
 ## v0.62.0
 
