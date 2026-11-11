@@ -736,6 +736,42 @@ describe("committed API surfaces — render.ClearBufferKey and render.RenderTarg
   }
 });
 
+const PLAIN_TABLE_SLOTS_PROOF = resolve(VERSIONS_DIR, "plain-table-slots-proof.ts");
+
+describe("committed API surfaces — a table parameter takes an interface-typed value", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} accepts an interface value in every table slot and rejects non-tables`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "plain-table-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [PLAIN_TABLE_SLOTS_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — a table slot (sys.save, sys.serialize, json.encode, ` +
+              `factory.create or collectionfactory.create) rejected an interface value, or ` +
+              `accepted a value that is not a table:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 // The compile wall above cannot see a missing `render_target` skip: the authored
 // wide arm repeats the generated signature, its table typed through
 // `render.RenderTargetParams` as the slot the generator withholds, so an

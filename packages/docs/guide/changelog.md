@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **`bun test` runs `hsm` and `ecs`** from a plain import ([State machines](./state-machines.md#test-a-machine-with-bun)).
 > - **`tsc` types `onMessage`** and [socket](/api/socket) aliases.
-> - **Interface values pass as tables** to `sys.save` and other any-table slots.
+> - **Interface values pass as tables** to `sys.save` and every `PlainTable` slot on all targets.
 > - **Clean scaffolds:** docs paths, `.gitignore` and `biome check` ([init](./init.md)).
 
 ### Added
@@ -25,7 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **`onMessage` and the [socket](/api/socket) type aliases such as `socket.TCPOptions` type-checked in `build` but not under `tsc` or in the editor:** on every Defold target a project's `tsc` reported `Cannot find name 'onMessage'` and found no `TCPOptions` in the `socket` namespace. Both now resolve in `tsc` and the editor as they do in `build` ([Routing many messages](./messages.md#routing-many-messages-with-onmessage)).
-- **`sys.save`, `sys.serialize`, the `properties` of `factory.create`, the `value` of `editor.tx.add` and library parameters typed as a table of any value rejected a value typed by an interface:** only an object literal or a `type` alias passed. These slots now take a `PlainTable`, which accepts an interface value too, while engine values such as `Vector3`, `Hash` and `Url`, and functions, stay rejected.
+- **`sys.save`, `sys.serialize`, `json.encode`, the `properties` of `factory.create` and `collectionfactory.create`, the `value` of `editor.tx.add`, editor and native extension option tables, and library parameters typed as a table of any value rejected a value typed by an interface.** On every Defold target these slots now take a `PlainTable`, which accepts an interface value as well as an object literal or a `type` alias, while engine values such as `Vector3`, `Hash` and `Url`, functions, and Lua userdata such as file handles and threads are rejected.
 - **A scaffolded project fell short of a clean setup in three places; [init](./init.md) writes the fixes and [upgrade](./upgrade.md) adds them to an existing project:**
   - **Docs paths:** the managed `AGENTS.md` pointed at docs missing under Bun's isolated installs, so the scaffold now lists `@defold-typescript/docs` in its dev dependencies, pinned to the CLI's version.
   - **`.gitignore`:** generated `.ts.editor_script` files and `.lua.map` files outside component output reached version control; the managed rules now ignore both.

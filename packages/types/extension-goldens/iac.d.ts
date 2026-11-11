@@ -29,5 +29,5 @@ declare module "iac" {
    *   end
    * ```
    */
-  function set_listener(payload: Record<string | number, unknown>, type: number): void;
+  function set_listener(payload: PlainTable, type: number): void;
 }

@@ -52,3 +52,15 @@ _ptTakesTable(() => 1);
 _ptTakesTable(_ptDeclaredFunction);
 // @ts-expect-error a number is not a table
 _ptTakesTable(42);
+
+declare const _ptThread: LuaThread;
+declare const _ptUserdata: LuaUserdata;
+
+// @ts-expect-error a Lua file handle is not a table
+_ptTakesTable(io.stdout);
+// @ts-expect-error a LuaThread is not a table
+_ptTakesTable(_ptThread);
+// @ts-expect-error a LuaUserdata is not a table
+_ptTakesTable(_ptUserdata);
+// @ts-expect-error a coroutine is not a table
+_ptTakesTable(coroutine.create(() => {}));

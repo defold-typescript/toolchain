@@ -28,7 +28,7 @@ declare global {
      * @param vars - optional table with variables to be substituted in the localized string that uses ICU Message Format syntax; keys must be strings; values must be either `nil`, `boolean`, `number`, `string`, or another `message` instance
      * @returns a userdata value that, when stringified with `tostring()`, will produce a localized text according to the currently selected language in the editor
      */
-    function message(key: string, vars?: Record<string | number, unknown>): Opaque<"message">;
+    function message(key: string, vars?: PlainTable): Opaque<"message">;
     /**
      * Create a message pattern that renders a list with the "or" conjunction (for example: a, b, or c) once it is stringified
      *
