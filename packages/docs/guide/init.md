@@ -79,9 +79,12 @@ refresh rewrites only `description` and `run` inside each managed
 the scaffold stops shipping is removed with whatever you added to it.
 
 The file rules the scaffold manages read your layout off `tsconfig.json`
-`include`[^src-root] rather than assuming `src/`. Generated component output is
-ignored by its `.ts.` suffix, which no hand-authored Defold path has, so it needs
-no folder at all; `biome.json` lints exactly the patterns you compile; and
+`include`[^src-root] rather than assuming `src/`. Generated component output
+(`.ts.script`, `.ts.gui_script`, `.ts.render_script` and `.ts.editor_script`, with
+their `.map` files) is ignored by its `.ts.` suffix, which no hand-authored Defold
+path has, so it needs no folder at all; every `.lua.map` is ignored anywhere in the
+project, since Defold never reads one; `biome.json` lints exactly the patterns you
+compile; and
 `Lua.workspace.ignoreDir` claims one of your source roots only when nothing under
 it is hand-authored Lua, reporting the file it found when it skips. A generated
 `.lua` module is therefore tracked like any other file — set
