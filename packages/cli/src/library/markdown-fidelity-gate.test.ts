@@ -316,13 +316,14 @@ function describeLibraryDecisions(record: LibraryRecord): void {
   describe(`${library} per-module fidelity decisions at tag ${ref}`, () => {
     const noMarkdown = decisions.filter((d) => d.reason === "no-markdown");
     if (noMarkdown.length > 0) {
-      test.each(
-        noMarkdown,
-      )(`${record.prefix}$module ships no upstream .md, so it has no snapshot to parse`, (decision) => {
-        expect(
-          existsSync(join(LANES, "fixtures/markdown", `${record.prefix}${decision.module}.md`)),
-        ).toBe(false);
-      });
+      test.each(noMarkdown)(
+        `${record.prefix}$module ships no upstream .md, so it has no snapshot to parse`,
+        (decision) => {
+          expect(
+            existsSync(join(LANES, "fixtures/markdown", `${record.prefix}${decision.module}.md`)),
+          ).toBe(false);
+        },
+      );
     }
 
     // Both classes are proven the same way — the front-end refuses the snapshot.
@@ -332,14 +333,15 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       (d) => d.reason === "no-signature-section" || d.reason === "doc-dialect",
     );
     if (signatureless.length > 0) {
-      test.each(
-        signatureless,
-      )(`${record.prefix}$module is refused by the markdown parser ($reason)`, (decision) => {
-        const moduleId = `${record.prefix}${decision.module}`;
-        expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
-          /signature/,
-        );
-      });
+      test.each(signatureless)(
+        `${record.prefix}$module is refused by the markdown parser ($reason)`,
+        (decision) => {
+          const moduleId = `${record.prefix}${decision.module}`;
+          expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
+            /signature/,
+          );
+        },
+      );
     }
 
     // A third refusal class, proven the same way but by a different message: the
@@ -348,14 +350,15 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     // `/signature/` matcher above would not match it.
     const sharedDocument = decisions.filter((d) => d.reason === "shared-document");
     if (sharedDocument.length > 0) {
-      test.each(
-        sharedDocument,
-      )(`${record.prefix}$module is refused because one document covers several modules`, (decision) => {
-        const moduleId = `${record.prefix}${decision.module}`;
-        expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
-          /non-uniform module prefix/,
-        );
-      });
+      test.each(sharedDocument)(
+        `${record.prefix}$module is refused because one document covers several modules`,
+        (decision) => {
+          const moduleId = `${record.prefix}${decision.module}`;
+          expect(() => parseMarkdownApi(fixtureText(record, decision), moduleId)).toThrow(
+            /non-uniform module prefix/,
+          );
+        },
+      );
     }
   });
 
@@ -1950,31 +1953,37 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
   // set only reinforces a verdict already `no-go`. Every other term is the one
   // recorded before the severance, and the verdict still rests on `create`'s
   // `table` return rather than on the constants.
-  test.each([
-    "fps",
-    "mem",
-  ])("a receiver-filtered metrics.%s still lands no-go on create's table return", async (module) => {
-    const { doc, decision, missingMembers, signatureLossMembers, downgradedMembers, addedMembers } =
-      await receiverComparison(module);
+  test.each(["fps", "mem"])(
+    "a receiver-filtered metrics.%s still lands no-go on create's table return",
+    async (module) => {
+      const {
+        doc,
+        decision,
+        missingMembers,
+        signatureLossMembers,
+        downgradedMembers,
+        addedMembers,
+      } = await receiverComparison(module);
 
-    expect(doc.elements.map((e) => e.name.split(".").pop()).sort()).toEqual(
-      ["create", "draw", module, "update"].sort(),
-    );
+      expect(doc.elements.map((e) => e.name.split(".").pop()).sort()).toEqual(
+        ["create", "draw", module, "update"].sort(),
+      );
 
-    expect(decision).toBe("no-go");
-    expect(missingMembers).toEqual(["COLOR", "FORMAT", "POSITION"]);
-    expect(signatureLossMembers).toEqual([]);
-    expect(downgradedMembers).toEqual(["create"]);
-    expect(addedMembers).toEqual([]);
-  });
+      expect(decision).toBe("no-go");
+      expect(missingMembers).toEqual(["COLOR", "FORMAT", "POSITION"]);
+      expect(signatureLossMembers).toEqual([]);
+      expect(downgradedMembers).toEqual(["create"]);
+      expect(addedMembers).toEqual([]);
+    },
+  );
 
-  test.each([
-    "fps",
-    "mem",
-  ])("metrics.%s loses every optional create parameter — the term that would have hidden a false go", async (module) => {
-    const { optionalityLossMembers } = await receiverComparison(module);
-    expect(optionalityLossMembers).toContain("create");
-  });
+  test.each(["fps", "mem"])(
+    "metrics.%s loses every optional create parameter — the term that would have hidden a false go",
+    async (module) => {
+      const { optionalityLossMembers } = await receiverComparison(module);
+      expect(optionalityLossMembers).toContain("create");
+    },
+  );
 
   // The snapshot this reads is the authored fork the severance moved the verdict
   // onto, so the surface is the corrected one: the factory, the three
@@ -1984,12 +1993,15 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
   test.each([
     ["fps", ["COLOR", "FORMAT", "POSITION", "create", "draw", "fps", "update"]],
     ["mem", ["COLOR", "FORMAT", "POSITION", "create", "draw", "mem", "update"]],
-  ])("the severed surface of metrics.%s is the factory plus the corrected members", (module, members) => {
-    const fixture = targetFor(`metrics.${module}`, severedFor(METRICS, module as string)).fixture;
-    expect(tsDefoldMembers(readFileSync(fixtureFile(fixture), "utf8"))).toEqual(
-      members as string[],
-    );
-  });
+  ])(
+    "the severed surface of metrics.%s is the factory plus the corrected members",
+    (module, members) => {
+      const fixture = targetFor(`metrics.${module}`, severedFor(METRICS, module as string)).fixture;
+      expect(tsDefoldMembers(readFileSync(fixtureFile(fixture), "utf8"))).toEqual(
+        members as string[],
+      );
+    },
+  );
 });
 
 // Re-measured against the authored fork once rendy severed. The fork is the

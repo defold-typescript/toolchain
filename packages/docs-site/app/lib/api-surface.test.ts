@@ -3630,26 +3630,28 @@ describe("rendered /api pages keep every symbol heading outside a code fence", (
     })),
   ];
 
-  test.each(
-    surfaces.map((surface) => [surface.label, surface] as const),
-  )("%s: no symbol heading is swallowed by a fence", (_label, surface) => {
-    const offenders: string[] = [];
-    for (const page of surface.pages) {
-      for (const heading of fenceScan(apiModuleMarkdown(page, page.translations)).trapped) {
-        offenders.push(`${page.route}: ${heading}`);
+  test.each(surfaces.map((surface) => [surface.label, surface] as const))(
+    "%s: no symbol heading is swallowed by a fence",
+    (_label, surface) => {
+      const offenders: string[] = [];
+      for (const page of surface.pages) {
+        for (const heading of fenceScan(apiModuleMarkdown(page, page.translations)).trapped) {
+          offenders.push(`${page.route}: ${heading}`);
+        }
       }
-    }
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 
-  test.each(
-    surfaces.map((surface) => [surface.label, surface] as const),
-  )("%s: no page render ends with a fence still open", (_label, surface) => {
-    const offenders = surface.pages
-      .filter((page) => fenceScan(apiModuleMarkdown(page, page.translations)).endsOpen)
-      .map((page) => page.route);
-    expect(offenders).toEqual([]);
-  });
+  test.each(surfaces.map((surface) => [surface.label, surface] as const))(
+    "%s: no page render ends with a fence still open",
+    (_label, surface) => {
+      const offenders = surface.pages
+        .filter((page) => fenceScan(apiModuleMarkdown(page, page.translations)).endsOpen)
+        .map((page) => page.route);
+      expect(offenders).toEqual([]);
+    },
+  );
 });
 
 describe("rendered /api pages keep every list marker beside its value", () => {
@@ -3676,17 +3678,18 @@ describe("rendered /api pages keep every list marker beside its value", () => {
     })),
   ];
 
-  test.each(
-    surfaces.map((surface) => [surface.label, surface] as const),
-  )("%s: no rendered list marker is left without a value", (_label, surface) => {
-    const offenders: string[] = [];
-    for (const page of surface.pages) {
-      for (const line of strandedMarkers(apiModuleMarkdown(page, page.translations))) {
-        offenders.push(`${page.route}:${line}`);
+  test.each(surfaces.map((surface) => [surface.label, surface] as const))(
+    "%s: no rendered list marker is left without a value",
+    (_label, surface) => {
+      const offenders: string[] = [];
+      for (const page of surface.pages) {
+        for (const line of strandedMarkers(apiModuleMarkdown(page, page.translations))) {
+          offenders.push(`${page.route}:${line}`);
+        }
       }
-    }
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 });
 
 describe("rendered /api pages print characters, not entity source, inside code", () => {
@@ -3720,17 +3723,18 @@ describe("rendered /api pages print characters, not entity source, inside code",
     })),
   ];
 
-  test.each(
-    surfaces.map((surface) => [surface.label, surface] as const),
-  )("%s: no code span or fence holds an undecoded HTML entity", (_label, surface) => {
-    const offenders: string[] = [];
-    for (const page of surface.pages) {
-      for (const code of entityCode(apiModuleMarkdown(page, page.translations))) {
-        offenders.push(`${page.route}: ${code}`);
+  test.each(surfaces.map((surface) => [surface.label, surface] as const))(
+    "%s: no code span or fence holds an undecoded HTML entity",
+    (_label, surface) => {
+      const offenders: string[] = [];
+      for (const page of surface.pages) {
+        for (const code of entityCode(apiModuleMarkdown(page, page.translations))) {
+          offenders.push(`${page.route}: ${code}`);
+        }
       }
-    }
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 });
 
 describe("overload grouping (committed artifacts)", () => {

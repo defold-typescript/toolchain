@@ -142,14 +142,15 @@ describe("mergeForkDocs", () => {
     expect(merged.upstreamDocs).toEqual(["FORMAT"]);
   });
 
-  test.each(
-    LINE_ENDINGS,
-  )("a member the fork documents and pins to upstream's block prints the fork's text without the pin, on %s lines", (_, ending) => {
-    const merged = merge(ending(pushFork(pinOf(PUSH_LUA))), PUSH_LUA);
-    expect(merged.source).toBe(ending(pushFork()));
-    expect(merged.upstreamDocs).toEqual([]);
-    expect(merged.notices).toEqual([]);
-  });
+  test.each(LINE_ENDINGS)(
+    "a member the fork documents and pins to upstream's block prints the fork's text without the pin, on %s lines",
+    (_, ending) => {
+      const merged = merge(ending(pushFork(pinOf(PUSH_LUA))), PUSH_LUA);
+      expect(merged.source).toBe(ending(pushFork()));
+      expect(merged.upstreamDocs).toEqual([]);
+      expect(merged.notices).toEqual([]);
+    },
+  );
 
   test("a tag-only comment gains the summary as its opening lines, still one block", () => {
     const fork = [
@@ -812,21 +813,24 @@ describe("mergeForkDocs", () => {
           line,
         ]),
       ),
-    )("an @upstreamDoc line %s throws on %s lines, naming the module and member", (_, __, ending, line) => {
-      const fork = [
-        "declare module 'tally.tally' {",
-        "\t/**",
-        "\t * Queue handlers for the next flush.",
-        line,
-        "\t */",
-        "\texport function push(...args: unknown[]): void;",
-        "}",
-        "",
-      ].join("\n");
-      expect(() => mergeForkDocs(ending(fork), upstreamOf(PUSH_LUA))).toThrow(
-        /^tally\.tally: push: @upstreamDoc /,
-      );
-    });
+    )(
+      "an @upstreamDoc line %s throws on %s lines, naming the module and member",
+      (_, __, ending, line) => {
+        const fork = [
+          "declare module 'tally.tally' {",
+          "\t/**",
+          "\t * Queue handlers for the next flush.",
+          line,
+          "\t */",
+          "\texport function push(...args: unknown[]): void;",
+          "}",
+          "",
+        ].join("\n");
+        expect(() => mergeForkDocs(ending(fork), upstreamOf(PUSH_LUA))).toThrow(
+          /^tally\.tally: push: @upstreamDoc /,
+        );
+      },
+    );
 
     test("an @upstreamDoc line on anything but a module function or constant throws", () => {
       const fork = [

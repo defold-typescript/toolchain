@@ -20,16 +20,18 @@ const socket = (names: readonly string[]): ModuleManifestEntry => ({
 });
 
 const names = (entry: ModuleManifestEntry | undefined): string[] =>
-  ((entry?.doc as { elements: { name: string }[] }).elements ?? []).map((e) => e.name).sort();
+  ((entry?.doc as { elements: { name: string }[] } | undefined)?.elements ?? [])
+    .map((e) => e.name)
+    .sort();
 
 describe("restoreSharedHandleMethods", () => {
   test("restores a method the doc omits from a handle, cloned from the one that documents it", () => {
     const [restored] = restoreSharedHandleMethods([socket(["client:getstats"])]);
     expect(names(restored)).toContain("master:getstats");
     expect(names(restored)).toContain("server:getstats");
-    const clone = (restored?.doc as { elements: ReturnType<typeof method>[] }).elements.find(
-      (e) => e.name === "master:getstats",
-    );
+    const clone = (
+      restored?.doc as { elements: ReturnType<typeof method>[] } | undefined
+    )?.elements.find((e) => e.name === "master:getstats");
     expect(clone?.returnvalues).toEqual(method("client:getstats").returnvalues);
   });
 

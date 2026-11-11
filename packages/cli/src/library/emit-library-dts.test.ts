@@ -1063,17 +1063,18 @@ test("module constants emit as documented export consts after the module object'
   expect(missingDeclarations(model, out)).toEqual([]);
 });
 
-test.each(
-  EMIT_TARGETS,
-)("emit drops no public modeled surface for the fixture %s model", (_namespace, target) => {
-  const model = buildTargetModel(FIXTURE_DATA_DIR, target);
-  const out = emitLibraryDeclarations(model, {
-    moduleId: target.moduleId,
-    typeRenames: target.typeRenames,
-    externalTypes: target.externalTypes,
-  });
-  expect(missingDeclarations(model, out)).toEqual([]);
-});
+test.each(EMIT_TARGETS)(
+  "emit drops no public modeled surface for the fixture %s model",
+  (_namespace, target) => {
+    const model = buildTargetModel(FIXTURE_DATA_DIR, target);
+    const out = emitLibraryDeclarations(model, {
+      moduleId: target.moduleId,
+      typeRenames: target.typeRenames,
+      externalTypes: target.externalTypes,
+    });
+    expect(missingDeclarations(model, out)).toEqual([]);
+  },
+);
 
 const externalModel: LibraryModel = {
   interfaces: [

@@ -114,13 +114,14 @@ function inputFixture(mod: string): string {
 }
 
 describe("defold-input module docs at the pinned 4.7.1 snapshot", () => {
-  test.each(
-    SIGNATURELESS,
-  )("in.%s carries no signature section and loud-fails rather than emitting an empty namespace", (mod) => {
-    const parse = () => parseMarkdownApi(inputFixture(mod), `in.${mod}`);
-    expect(parse).toThrow(new RegExp(`in\\.${mod}`));
-    expect(parse).toThrow(/signature/);
-  });
+  test.each(SIGNATURELESS)(
+    "in.%s carries no signature section and loud-fails rather than emitting an empty namespace",
+    (mod) => {
+      const parse = () => parseMarkdownApi(inputFixture(mod), `in.${mod}`);
+      expect(parse).toThrow(new RegExp(`in\\.${mod}`));
+      expect(parse).toThrow(/signature/);
+    },
+  );
 
   test("in.cursor lifts the one documented function", () => {
     const doc = parseMarkdownApi(inputFixture("cursor"), "in.cursor");
@@ -231,18 +232,18 @@ describe("parseMarkdownApi accepts an optional `function` declaration keyword", 
     "",
   ];
 
-  test.each([
-    ["##"],
-    ["###"],
-  ])("a %s heading with the keyword yields the same element as the bare form", (marker) => {
-    const signature = "rendy.set(camera_id, property)";
-    const keyword = parseMarkdownApi([`${marker} function ${signature}`, ...body].join("\n"));
-    const bare = parseMarkdownApi([`${marker} ${signature}`, ...body].join("\n"));
-    const set = element(keyword, "rendy.set");
-    expect(set).toEqual(element(bare, "rendy.set") as MarkdownElement);
-    expect(set?.parameters.map((p) => p.name)).toEqual(["camera_id", "property"]);
-    expect(keyword.info.namespace).toBe("rendy");
-  });
+  test.each([["##"], ["###"]])(
+    "a %s heading with the keyword yields the same element as the bare form",
+    (marker) => {
+      const signature = "rendy.set(camera_id, property)";
+      const keyword = parseMarkdownApi([`${marker} function ${signature}`, ...body].join("\n"));
+      const bare = parseMarkdownApi([`${marker} ${signature}`, ...body].join("\n"));
+      const set = element(keyword, "rendy.set");
+      expect(set).toEqual(element(bare, "rendy.set") as MarkdownElement);
+      expect(set?.parameters.map((p) => p.name)).toEqual(["camera_id", "property"]);
+      expect(keyword.info.namespace).toBe("rendy");
+    },
+  );
 
   test("a keyword-prefixed section still ends at the next header", () => {
     // rendy writes 9 of its 11 headings with the keyword; before the widening the

@@ -392,65 +392,66 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "vmath.euler_to_quat": 2,
 };
 
-describe.each(
-  NAMESPACES.map((spec) => [spec.namespace, spec] as const),
-)("%s overloads signature parity", (namespace, spec) => {
-  const rendered = renderOverloadSignatures(spec);
-  const descriptions = renderOverloadDescriptions(spec);
-  const gates = renderOverloadGates(spec);
-  const store = loadSignatureFile(spec.storePath);
+describe.each(NAMESPACES.map((spec) => [spec.namespace, spec] as const))(
+  "%s overloads signature parity",
+  (namespace, spec) => {
+    const rendered = renderOverloadSignatures(spec);
+    const descriptions = renderOverloadDescriptions(spec);
+    const gates = renderOverloadGates(spec);
+    const store = loadSignatureFile(spec.storePath);
 
-  test(`signatures/${namespace}.json carries exactly the override-covered ${namespace} FQNs`, () => {
-    expect(Object.keys(store).sort()).toEqual([...spec.fqns].sort());
-  });
-
-  for (const fqn of spec.fqns) {
-    test(`${fqn} JSON signatures equal the rendered ${namespace} declarations`, () => {
-      expect(store[fqn]?.signatures).toEqual(rendered[fqn] ?? []);
+    test(`signatures/${namespace}.json carries exactly the override-covered ${namespace} FQNs`, () => {
+      expect(Object.keys(store).sort()).toEqual([...spec.fqns].sort());
     });
 
-    test(`${fqn} JSON docs equal the rendered ${namespace} JSDoc descriptions`, () => {
-      expect(store[fqn]?.docs).toEqual(descriptions[fqn] ?? []);
-    });
-
-    test(`${fqn} JSON since equals, arm by arm, the import gate of the file declaring it`, () => {
-      const expected = gates[fqn] ?? [];
-      expect(store[fqn]?.since ?? expected.map(() => null)).toEqual(expected);
-    });
-
-    const expectedCount = OVERLOAD_COUNTS[fqn];
-    if (expectedCount !== undefined) {
-      test(`${fqn} renders ${expectedCount} declared overloads`, () => {
-        expect(rendered[fqn]).toHaveLength(expectedCount);
-        expect(store[fqn]?.signatures).toHaveLength(expectedCount);
+    for (const fqn of spec.fqns) {
+      test(`${fqn} JSON signatures equal the rendered ${namespace} declarations`, () => {
+        expect(store[fqn]?.signatures).toEqual(rendered[fqn] ?? []);
       });
+
+      test(`${fqn} JSON docs equal the rendered ${namespace} JSDoc descriptions`, () => {
+        expect(store[fqn]?.docs).toEqual(descriptions[fqn] ?? []);
+      });
+
+      test(`${fqn} JSON since equals, arm by arm, the import gate of the file declaring it`, () => {
+        const expected = gates[fqn] ?? [];
+        expect(store[fqn]?.since ?? expected.map(() => null)).toEqual(expected);
+      });
+
+      const expectedCount = OVERLOAD_COUNTS[fqn];
+      if (expectedCount !== undefined) {
+        test(`${fqn} renders ${expectedCount} declared overloads`, () => {
+          expect(rendered[fqn]).toHaveLength(expectedCount);
+          expect(store[fqn]?.signatures).toHaveLength(expectedCount);
+        });
+      }
     }
-  }
 
-  test("no rendered signature spans more than one line", () => {
-    for (const forms of Object.values(rendered)) {
-      for (const form of forms) expect(form).not.toContain("\n");
-    }
-  });
+    test("no rendered signature spans more than one line", () => {
+      for (const forms of Object.values(rendered)) {
+        for (const form of forms) expect(form).not.toContain("\n");
+      }
+    });
 
-  test("reflowing a declaration across lines renders byte-identical signatures", () => {
-    const reflowed = editDeclarations(spec, spec.reflow);
-    expect(reflowed).not.toEqual(readDeclarations(spec));
-    expect(renderOverloadSignatures(spec, reflowed)).toEqual(rendered);
-  });
+    test("reflowing a declaration across lines renders byte-identical signatures", () => {
+      const reflowed = editDeclarations(spec, spec.reflow);
+      expect(reflowed).not.toEqual(readDeclarations(spec));
+      expect(renderOverloadSignatures(spec, reflowed)).toEqual(rendered);
+    });
 
-  test("drift simulation: an edited .d.ts signature no longer matches the committed JSON", () => {
-    const drifted = renderOverloadSignatures(spec, editDeclarations(spec, spec.driftSignature));
-    expect(drifted[spec.driftSignature.fqn]).not.toEqual(
-      store[spec.driftSignature.fqn]?.signatures,
-    );
-  });
+    test("drift simulation: an edited .d.ts signature no longer matches the committed JSON", () => {
+      const drifted = renderOverloadSignatures(spec, editDeclarations(spec, spec.driftSignature));
+      expect(drifted[spec.driftSignature.fqn]).not.toEqual(
+        store[spec.driftSignature.fqn]?.signatures,
+      );
+    });
 
-  test("drift simulation: an edited .d.ts JSDoc description no longer matches the committed JSON", () => {
-    const drifted = renderOverloadDescriptions(spec, editDeclarations(spec, spec.driftDoc));
-    expect(drifted[spec.driftDoc.fqn]).not.toEqual(store[spec.driftDoc.fqn]?.docs);
-  });
-});
+    test("drift simulation: an edited .d.ts JSDoc description no longer matches the committed JSON", () => {
+      const drifted = renderOverloadDescriptions(spec, editDeclarations(spec, spec.driftDoc));
+      expect(drifted[spec.driftDoc.fqn]).not.toEqual(store[spec.driftDoc.fqn]?.docs);
+    });
+  },
+);
 
 const goSpec = NAMESPACES.find((spec) => spec.namespace === "go") as OverloadNamespace;
 const msgSpec = NAMESPACES.find((spec) => spec.namespace === "msg") as OverloadNamespace;

@@ -144,6 +144,7 @@ describe("allPageHeadings", () => {
   });
 });
 
+// biome-ignore lint/correctness/usePlaywrightValidDescribeCallback: bun:test awaits an async describe before collecting its tests.
 describe("pageHeadings over rendered /api pages (Combined surface, committed artifacts)", async () => {
   const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(
     combinedNamespaceToApiPage,

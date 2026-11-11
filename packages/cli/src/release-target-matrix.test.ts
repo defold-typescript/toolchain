@@ -415,40 +415,41 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     return { dir, ctx: fakeContext(dir) };
   }
 
-  test.each([
-    ...RELEASE_TARGET_MATRIX,
-  ])("each command consumes the target through its own observable surface for %o", async (spec) => {
-    cwd = mkdtempSync(path.join(os.tmpdir(), "matrix-"));
-    try {
-      const records = [];
-      for (const command of MATRIX_COMMANDS) {
-        const { ctx } = withProject(spec.version);
-        records.push(await runMatrixCommand(command, spec.version, ctx));
-      }
-      for (const r of records) {
-        expect(r.ok).toBe(true);
-        if (r.command === "watch") {
-          // `opened` is not decoration: a factory that is never constructed
-          // reports the same `closed: false` as one that is never closed.
-          expect(r.watcher).toEqual({ opened: true, closed: true });
-          // Exactly the requested release's surface reached the project, and no
-          // other release's.
-          expect(r.materializedSurfaces).toEqual([spec.surfaceId]);
-          continue;
+  test.each([...RELEASE_TARGET_MATRIX])(
+    "each command consumes the target through its own observable surface for %o",
+    async (spec) => {
+      cwd = mkdtempSync(path.join(os.tmpdir(), "matrix-"));
+      try {
+        const records = [];
+        for (const command of MATRIX_COMMANDS) {
+          const { ctx } = withProject(spec.version);
+          records.push(await runMatrixCommand(command, spec.version, ctx));
         }
-        expect(r.version).toBe(spec.version);
-        // The bob subcommands report a resolved archive SHA where the other
-        // three report a surface; each is asserted only where it is emitted, so
-        // a command that drops its own field reds instead of being filled in.
-        expect(r.apiSurface).toBe(isShaBearing(r.command) ? null : spec.surfaceId);
-        // The injected fetch keys its answer off the version production passed
-        // it, so agreement proves the requested target reached the fetch.
-        expect(r.sha).toBe(isShaBearing(r.command) ? `sha-${spec.version}` : null);
+        for (const r of records) {
+          expect(r.ok).toBe(true);
+          if (r.command === "watch") {
+            // `opened` is not decoration: a factory that is never constructed
+            // reports the same `closed: false` as one that is never closed.
+            expect(r.watcher).toEqual({ opened: true, closed: true });
+            // Exactly the requested release's surface reached the project, and no
+            // other release's.
+            expect(r.materializedSurfaces).toEqual([spec.surfaceId]);
+            continue;
+          }
+          expect(r.version).toBe(spec.version);
+          // The bob subcommands report a resolved archive SHA where the other
+          // three report a surface; each is asserted only where it is emitted, so
+          // a command that drops its own field reds instead of being filled in.
+          expect(r.apiSurface).toBe(isShaBearing(r.command) ? null : spec.surfaceId);
+          // The injected fetch keys its answer off the version production passed
+          // it, so agreement proves the requested target reached the fetch.
+          expect(r.sha).toBe(isShaBearing(r.command) ? `sha-${spec.version}` : null);
+        }
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
       }
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  });
+    },
+  );
 
   test("cross-version compile proof: shared code compiles on every supported release; 1.13-only code fails on the oldest", () => {
     // Deterministic, fully offline cross-version proof. Each surface is reached

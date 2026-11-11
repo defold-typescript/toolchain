@@ -474,21 +474,22 @@ describe("runResolve", () => {
         ["a traversal commit", JSON.stringify({ version: 1, libraryData: "../../x" })],
       ];
 
-      test.each(
-        INVALID,
-      )("%s fails naming the file, with no request and no write", async (_, bad) => {
-        const cwd = dependentProject();
-        writeFileSync(join(cwd, PROJECT_LOCK_FILE), bad);
-        const { download, requests } = countingDownload();
+      test.each(INVALID)(
+        "%s fails naming the file, with no request and no write",
+        async (_, bad) => {
+          const cwd = dependentProject();
+          writeFileSync(join(cwd, PROJECT_LOCK_FILE), bad);
+          const { download, requests } = countingDownload();
 
-        const result = await runResolve({ cwd, cacheDir: tmp(), download, freeze });
+          const result = await runResolve({ cwd, cacheDir: tmp(), download, freeze });
 
-        expect(result.ok).toBe(false);
-        expect(result.error).toContain(PROJECT_LOCK_FILE);
-        expect(requests).toEqual([]);
-        expect(lockBytes(cwd)).toBe(bad);
-        expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
-      });
+          expect(result.ok).toBe(false);
+          expect(result.error).toContain(PROJECT_LOCK_FILE);
+          expect(requests).toEqual([]);
+          expect(lockBytes(cwd)).toBe(bad);
+          expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+        },
+      );
 
       test("it fails a project with no dependencies too, pruning nothing", async () => {
         const cwd = tmp();
@@ -703,24 +704,25 @@ describe("runResolve", () => {
       ],
     ];
 
-    test.each(
-      refusals,
-    )("%s fails, naming the URL and bob resolve, with no request", async (_, manifest, seed) => {
-      const { cwd, lib } = folderProject([LIB_URL], manifest);
-      seed(lib);
-      writePins(cwd, { [LIB_URL]: pinOf(COMMIT) });
-      const before = lockBytes(cwd);
-      const { download, requests } = requestLog();
+    test.each(refusals)(
+      "%s fails, naming the URL and bob resolve, with no request",
+      async (_, manifest, seed) => {
+        const { cwd, lib } = folderProject([LIB_URL], manifest);
+        seed(lib);
+        writePins(cwd, { [LIB_URL]: pinOf(COMMIT) });
+        const before = lockBytes(cwd);
+        const { download, requests } = requestLog();
 
-      const result = await frozen(cwd, download);
+        const result = await frozen(cwd, download);
 
-      expect(result.ok).toBe(false);
-      expect(result.error).toContain(LIB_URL);
-      expect(result.error).toContain("bob resolve");
-      expect(requests).toEqual([]);
-      expect(lockBytes(cwd)).toBe(before);
-      expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
-    });
+        expect(result.ok).toBe(false);
+        expect(result.error).toContain(LIB_URL);
+        expect(result.error).toContain("bob resolve");
+        expect(requests).toEqual([]);
+        expect(lockBytes(cwd)).toBe(before);
+        expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+      },
+    );
 
     test("one refused dependency stops the run before another one writes", async () => {
       const { cwd, lib } = folderProject(

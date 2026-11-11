@@ -556,7 +556,7 @@ describe("runSetupDebug", () => {
       const configs = JSON.parse(launchText).configurations as Array<Record<string, unknown>>;
       const luaLocal = configs.find((c) => c.type === "lua-local");
       expect(luaLocal).toBeDefined();
-      expect((luaLocal?.program as Record<string, unknown>).command).toBe("bun");
+      expect((luaLocal?.program as Record<string, unknown> | undefined)?.command).toBe("bun");
 
       const launcherText = readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8");
       for (const text of [launchText, launcherText]) {

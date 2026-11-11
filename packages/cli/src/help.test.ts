@@ -238,14 +238,15 @@ describe("--no-update-check help listing", () => {
   const HONORING = ["build", "watch", "run", "bob", "upgrade"];
   const NOT_HONORING = ["resolve", "set-target"];
 
-  test.each(
-    HONORING,
-  )("%s help lists --no-update-check with the upstream-release meaning", (cmd: string) => {
-    const text = renderHelp(cmd);
+  test.each(HONORING)(
+    "%s help lists --no-update-check with the upstream-release meaning",
+    (cmd: string) => {
+      const text = renderHelp(cmd);
 
-    expect(text).toContain("--no-update-check");
-    expect(text).toContain("Defold release");
-  });
+      expect(text).toContain("--no-update-check");
+      expect(text).toContain("Defold release");
+    },
+  );
 
   test.each(HONORING)("%s JSON flags carry --no-update-check", (cmd: string) => {
     const parsed = JSON.parse(renderHelpJson(cmd));

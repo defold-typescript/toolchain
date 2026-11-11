@@ -11,15 +11,15 @@ describe("watchTapFocus", () => {
     expect(tapFocus.focusFromTap()).toBe(false);
   });
 
-  test.each([
-    "touch",
-    "pen",
-  ])("a %s pointerdown marks the next focus as tap-raised", (pointerType) => {
-    const target = new EventTarget();
-    const tapFocus = watchTapFocus(target);
-    pointerDown(target, pointerType);
-    expect(tapFocus.focusFromTap()).toBe(true);
-  });
+  test.each(["touch", "pen"])(
+    "a %s pointerdown marks the next focus as tap-raised",
+    (pointerType) => {
+      const target = new EventTarget();
+      const tapFocus = watchTapFocus(target);
+      pointerDown(target, pointerType);
+      expect(tapFocus.focusFromTap()).toBe(true);
+    },
+  );
 
   test("a keydown after a tap clears the mark", () => {
     const target = new EventTarget();

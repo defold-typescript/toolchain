@@ -25,6 +25,8 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
   authoredLuaUnder,
   BIOME_JSON_CONTENT,
+  BIOME_SCHEMA,
+  BIOME_VERSION,
   biomeIncludesFromInclude,
   LUA_TYPES_SPEC,
   resolveStarterTarget,
@@ -224,7 +226,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/cli": TYPES_SPEC,
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
       "@defold-typescript/docs": TYPES_SPEC,
-      "@biomejs/biome": "^2.5.0",
+      "@biomejs/biome": BIOME_VERSION,
       "@types/bun": "latest",
       "lua-types": LUA_TYPES_SPEC,
       typescript: TYPESCRIPT_SPEC,
@@ -1360,6 +1362,120 @@ describe("runInit (biome scaffold)", () => {
 
     expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(jsonc);
     expect(result?.written).not.toContain("biome.json");
+  });
+});
+
+describe("runInit --force brings a released biome scaffold forward", () => {
+  // `BIOME_JSON_CONTENT` as v0.62.0 wrote it (`git show v0.62.0:packages/cli/src/init.ts`).
+  const RELEASED_INCLUDES = [
+    "src/**/*.ts",
+    "!**/dist",
+    "!**/node_modules",
+    "!**/*.ts.script",
+    "!**/*.ts.gui_script",
+    "!**/*.ts.render_script",
+    "!.defold-types/**",
+  ];
+
+  function releasedBiomeJson(schemaVersion: string, extraIncludes: string[] = []): unknown {
+    return {
+      $schema: `https://biomejs.dev/schemas/${schemaVersion}/schema.json`,
+      files: { includes: [...RELEASED_INCLUDES, ...extraIncludes] },
+      formatter: { enabled: true, indentStyle: "space", indentWidth: 2, lineWidth: 100 },
+      linter: {
+        enabled: true,
+        rules: {
+          preset: "recommended",
+          suspicious: { noDoubleEquals: "off" },
+          style: { useImportType: "error", useNodejsImportProtocol: "error" },
+          correctness: { noUnusedImports: "error", noUnusedVariables: "warn" },
+        },
+      },
+      javascript: {
+        formatter: {
+          quoteStyle: "double",
+          semicolons: "always",
+          trailingCommas: "all",
+          arrowParentheses: "always",
+        },
+      },
+    };
+  }
+
+  function seed(biome: unknown, biomeDep: string): void {
+    touch("game.project", "[project]\n");
+    touch("biome.json", `${JSON.stringify(biome, null, 2)}\n`);
+    touch(
+      "package.json",
+      `${JSON.stringify(
+        { name: "user-project", version: "1.2.3", devDependencies: { "@biomejs/biome": biomeDep } },
+        null,
+        2,
+      )}\n`,
+    );
+  }
+
+  function readBack(): {
+    biome: { $schema: string; files: { includes: string[] } };
+    devDeps: Record<string, string>;
+  } {
+    return {
+      biome: JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")),
+      devDeps: JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")).devDependencies,
+    };
+  }
+
+  // Released 2.4.15 scaffolds also carry `recommended`, whose migration already
+  // rewrites the schema; grafting 2.4.15 onto the preset shape is the case where
+  // a user migrated that key by hand.
+  for (const [schemaVersion, biomeDep] of [
+    ["2.5.1", "^2.5.0"],
+    ["2.4.15", "^2.2.0"],
+  ] as const) {
+    test(`schema ${schemaVersion} and ${biomeDep} move to the current Biome, keeping a user include`, () => {
+      seed(releasedBiomeJson(schemaVersion, ["custom/**/*.ts"]), biomeDep);
+
+      const result = runInit({ cwd, force: true });
+
+      const { biome, devDeps } = readBack();
+      expect(biome.$schema).toBe(BIOME_SCHEMA);
+      expect(biome.files.includes).toEqual([
+        "src/**/*.ts",
+        "!**/dist",
+        "!**/node_modules",
+        "!**/*.ts.script",
+        "!**/*.ts.gui_script",
+        "!**/*.ts.render_script",
+        "!.defold-types",
+        "custom/**/*.ts",
+      ]);
+      expect(devDeps["@biomejs/biome"]).toBe(BIOME_VERSION);
+      expect(result.written).toContain("biome.json");
+
+      const again = runInit({ cwd, force: true });
+      expect(again.written).not.toContain("biome.json");
+    });
+  }
+
+  test("a user's own Biome pin and schema stay under --force", () => {
+    seed(releasedBiomeJson("2.3.0"), "^2.0.0");
+
+    runInit({ cwd, force: true });
+
+    const { biome, devDeps } = readBack();
+    expect(biome.$schema).toBe("https://biomejs.dev/schemas/2.3.0/schema.json");
+    expect(devDeps["@biomejs/biome"]).toBe("^2.0.0");
+  });
+
+  test("without --force a released biome.json and pin stay untouched", () => {
+    seed(releasedBiomeJson("2.5.1"), "^2.5.0");
+    const before = readFileSync(path.join(cwd, "biome.json"), "utf8");
+
+    const result = runInit({ cwd });
+
+    expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(before);
+    expect(result.written).not.toContain("biome.json");
+    expect(readBack().devDeps["@biomejs/biome"]).toBe("^2.5.0");
   });
 });
 
@@ -2766,7 +2882,8 @@ describe("managed scaffold rules derived from tsconfig include", () => {
   test("biomeIncludesFromInclude covers what the compiler reads, never empty", () => {
     expect(biomeIncludesFromInclude(["**/*.ts"])).toContain("**/*.ts");
     expect(biomeIncludesFromInclude(["game/entry.ts"])).toContain("game/entry.ts");
-    expect(biomeIncludesFromInclude(["game/**/*.ts"])).toContain("!.defold-types/**");
+    expect(biomeIncludesFromInclude(["game/**/*.ts"])).toContain("!.defold-types");
+    expect(biomeIncludesFromInclude(["game/**/*.ts"])).not.toContain("!.defold-types/**");
     for (const include of [["**/*.ts"], ["game/entry.ts"]]) {
       expect(sourceRootsFromInclude(include)).toEqual([]);
       expect(biomeIncludesFromInclude(include).length).toBeGreaterThan(0);
