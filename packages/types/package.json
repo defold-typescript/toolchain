@@ -46,28 +46,36 @@
       "types": "./src/timers.d.ts"
     },
     "./hsm": {
-      "types": "./hsm/index.d.ts"
+      "types": "./hsm/index.d.ts",
+      "bun": "./hsm/runtime/index.ts"
     },
     "./hsm/async": {
-      "types": "./hsm/async.d.ts"
+      "types": "./hsm/async.d.ts",
+      "bun": "./hsm/runtime/async.ts"
     },
     "./hsm/builder": {
-      "types": "./hsm/builder.d.ts"
+      "types": "./hsm/builder.d.ts",
+      "bun": "./hsm/runtime/builder.ts"
     },
     "./hsm/debug": {
-      "types": "./hsm/debug.d.ts"
+      "types": "./hsm/debug.d.ts",
+      "bun": "./hsm/runtime/debug.ts"
     },
     "./hsm/defold": {
-      "types": "./hsm/defold.d.ts"
+      "types": "./hsm/defold.d.ts",
+      "bun": "./hsm/runtime/defold.ts"
     },
     "./ecs": {
-      "types": "./ecs/index.d.ts"
+      "types": "./ecs/index.d.ts",
+      "bun": "./ecs/runtime/index.ts"
     },
     "./ecs/debug": {
-      "types": "./ecs/debug.d.ts"
+      "types": "./ecs/debug.d.ts",
+      "bun": "./ecs/runtime/debug.ts"
     },
     "./ecs/hsm": {
-      "types": "./ecs/hsm.d.ts"
+      "types": "./ecs/hsm.d.ts",
+      "bun": "./ecs/runtime/hsm.ts"
     },
     "./cli-runtime": {
       "types": "./scripts/cli-runtime.ts",

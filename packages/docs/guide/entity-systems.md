@@ -426,6 +426,40 @@ In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect`
 
 To watch a world without the game, run `bunx @defold-typescript/cli view swarm_debug.ts`: its [Worlds tab](./view.md#worlds) lists each system with its entities and timings, frame by frame.
 
+## Test a world with Bun
+
+`@defold-typescript/types/ecs` and its sub-modules also run under Bun, so systems and a world can be tested with `bun test`, with no Defold engine and no mock of the import. Keep test files out of `src/`: `build` compiles every `.ts` file there to Lua, and `bun:test` has no Lua module. A test imports the systems from their module under `src/`, or defines them itself:
+
+```ts title="test/movement.test.ts"
+import { expect, test } from "bun:test";
+import { addEntity, processingSystem, requireAll, world } from "@defold-typescript/types/ecs";
+
+interface Body {
+  name: string;
+  speed?: number;
+  x: number;
+}
+
+const movement = processingSystem<Body>()(requireAll("speed"), {
+  process(entity, dt) {
+    entity.x += (entity.speed ?? 0) * dt;
+  },
+});
+
+test("only an entity with a speed moves", () => {
+  const w = world<Body>(movement);
+  const ball = addEntity(w, { name: "ball", speed: 2, x: 0 });
+  const wall = addEntity(w, { name: "wall", x: 0 });
+
+  w.update(0.5);
+
+  expect(ball.x).toBe(1);
+  expect(wall.x).toBe(0);
+});
+```
+
+The systems, the world and `ecs/hsm` need nothing from the engine. `ecs/debug`'s `inspect` calls `sys.get_engine_info`, and its `draw` calls `go.get_world_position`, `vmath.vector` and `msg.post`, which a test defines on `globalThis` before it uses them.
+
 ## Hot reload
 
 Hot reload lets you edit a system while the game runs and see the change without restarting. Give the factory a key, a name for this system, as in `processingSystem<Mover>("move")`.
