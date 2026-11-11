@@ -48,11 +48,13 @@ import "../../../src/msg-overloads";
 import "../../../src/message-guard";
 import "../../../src/window-event-guard";
 import "../../../src/physics-event-guard";
+import "../../../src/message-dispatch";
 import "../../../src/scene-addresses";
 import "../../../src/go-overloads";
 import "../../../src/component-properties";
 import "../../../src/render-overloads";
 import "../../../src/gui-overloads";
+import "../../../src/socket-types";
 import "../../../src/vmath-overloads";
 import "../../../src/sys-overloads";
 
