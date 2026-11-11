@@ -470,6 +470,10 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     const sharedSource = [
       'go.set_position(vmath.vector3(1, 2, 3), "#go");',
       'msg.post("#other", "hello", {});',
+      "const dispatch = onMessage({ contact_point_response(self, message) { pprint(message.other_group); } });",
+      "void dispatch;",
+      'const option: socket.TCPOptions = "keepalive";',
+      "void option;",
     ].join("\n");
 
     // A 1.13-only snippet exercising the reverified areas; every symbol is absent

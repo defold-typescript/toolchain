@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.62.1
+
+> Summary:
+>
+> - **`tsc` types `onMessage`** and the [socket](/api/socket) aliases.
+
+### Fixed
+
+- **`onMessage` and the [socket](/api/socket) type aliases such as `socket.TCPOptions` type-checked in `build` but not under `tsc` or in the editor:** on every Defold target a project's `tsc` reported `Cannot find name 'onMessage'` and found no `TCPOptions` in the `socket` namespace. Both now resolve in `tsc` and the editor as they do in `build` ([Routing many messages](./messages.md#routing-many-messages-with-onmessage)).
+
 ## v0.62.0
 
 > Summary:
