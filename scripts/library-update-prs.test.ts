@@ -89,12 +89,12 @@ function ownFiles(entry: UpdateEntry, dataFolder: string): string[] {
 describe("mayAutoMerge", () => {
   const generated = [`${DATA}/alpha/reviewed.json`, `${DATA}/alpha/source/alpha.lua`];
 
-  test.each([
-    "kept",
-    "added",
-  ] as const)("a %s change inside reviewed.json and source/ may merge", (change) => {
-    expect(mayAutoMerge(regenerated("alpha", change), generated, DATA)).toBe(true);
-  });
+  test.each(["kept", "added"] as const)(
+    "a %s change inside reviewed.json and source/ may merge",
+    (change) => {
+      expect(mayAutoMerge(regenerated("alpha", change), generated, DATA)).toBe(true);
+    },
+  );
 
   test("a changed change may not merge", () => {
     expect(mayAutoMerge(regenerated("alpha", "changed"), generated, DATA)).toBe(false);
@@ -432,18 +432,18 @@ describe("main", () => {
     expect(order("disable-auto", "push")).toEqual(["disable-auto", "push"]);
   });
 
-  test.each([
-    "list",
-    "disable-auto",
-  ])("a failed %s leaves an auto-merging PR's branch where it was", (step) => {
-    regenerate("beta");
-    openPull("beta", { autoMerging: true });
-    failing.add(step);
-    expect(() => main(report([regenerated("beta", "changed")]), { cwd: repo, run })).toThrow(
-      `${step} refused`,
-    );
-    expect(remoteHead("library-update/beta")).toBe(seed);
-  });
+  test.each(["list", "disable-auto"])(
+    "a failed %s leaves an auto-merging PR's branch where it was",
+    (step) => {
+      regenerate("beta");
+      openPull("beta", { autoMerging: true });
+      failing.add(step);
+      expect(() => main(report([regenerated("beta", "changed")]), { cwd: repo, run })).toThrow(
+        `${step} refused`,
+      );
+      expect(remoteHead("library-update/beta")).toBe(seed);
+    },
+  );
 
   test("an auto-merging PR whose change may merge gets auto-merge back for the pushed commit", () => {
     regenerate("alpha");

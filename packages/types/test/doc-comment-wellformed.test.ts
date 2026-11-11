@@ -24,71 +24,75 @@ function collectDts(dir: string): string[] {
 }
 
 describe("generated JSDoc well-formedness", () => {
-  test.each(
-    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
-  )("%s: every line inside a /** */ block begins with *", async (_label, path) => {
-    const content = await Bun.file(path).text();
-    const offending = offGridLines(content);
-    if (offending.length > 0) {
-      const sample = offending
-        .slice(0, 5)
-        .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
-        .join("\n");
-      throw new Error(
-        `${offending.length} JSDoc continuation line(s) off-grid — run \`bun run regen\`:\n${sample}`,
-      );
-    }
-    expect(offending).toEqual([]);
-  });
+  test.each(collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const))(
+    "%s: every line inside a /** */ block begins with *",
+    async (_label, path) => {
+      const content = await Bun.file(path).text();
+      const offending = offGridLines(content);
+      if (offending.length > 0) {
+        const sample = offending
+          .slice(0, 5)
+          .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
+          .join("\n");
+        throw new Error(
+          `${offending.length} JSDoc continuation line(s) off-grid — run \`bun run regen\`:\n${sample}`,
+        );
+      }
+      expect(offending).toEqual([]);
+    },
+  );
 
-  test.each(
-    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
-  )("%s: every /** */ block closes every fence it opens", async (_label, path) => {
-    const content = await Bun.file(path).text();
-    const offending = unbalancedFenceBlocks(content);
-    if (offending.length > 0) {
-      const sample = offending
-        .slice(0, 5)
-        .map((o) => `  block at line ${o.line}: ${o.markers} fence marker(s)`)
-        .join("\n");
-      throw new Error(
-        `${offending.length} JSDoc block(s) leave a fence open — run \`bun run regen\`:\n${sample}`,
-      );
-    }
-    expect(offending).toEqual([]);
-  });
+  test.each(collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const))(
+    "%s: every /** */ block closes every fence it opens",
+    async (_label, path) => {
+      const content = await Bun.file(path).text();
+      const offending = unbalancedFenceBlocks(content);
+      if (offending.length > 0) {
+        const sample = offending
+          .slice(0, 5)
+          .map((o) => `  block at line ${o.line}: ${o.markers} fence marker(s)`)
+          .join("\n");
+        throw new Error(
+          `${offending.length} JSDoc block(s) leave a fence open — run \`bun run regen\`:\n${sample}`,
+        );
+      }
+      expect(offending).toEqual([]);
+    },
+  );
 
-  test.each(
-    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
-  )("%s: no /** */ line holds a list marker without its value", async (_label, path) => {
-    const content = await Bun.file(path).text();
-    const offending = bareListMarkerLines(content);
-    if (offending.length > 0) {
-      const sample = offending
-        .slice(0, 5)
-        .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
-        .join("\n");
-      throw new Error(
-        `${offending.length} JSDoc list marker(s) left without a value — run \`bun run regen\`:\n${sample}`,
-      );
-    }
-    expect(offending).toEqual([]);
-  });
+  test.each(collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const))(
+    "%s: no /** */ line holds a list marker without its value",
+    async (_label, path) => {
+      const content = await Bun.file(path).text();
+      const offending = bareListMarkerLines(content);
+      if (offending.length > 0) {
+        const sample = offending
+          .slice(0, 5)
+          .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
+          .join("\n");
+        throw new Error(
+          `${offending.length} JSDoc list marker(s) left without a value — run \`bun run regen\`:\n${sample}`,
+        );
+      }
+      expect(offending).toEqual([]);
+    },
+  );
 
-  test.each(
-    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
-  )("%s: no /** */ line holds an undecoded HTML entity", async (_label, path) => {
-    const content = await Bun.file(path).text();
-    const offending = htmlEntityLines(content);
-    if (offending.length > 0) {
-      const sample = offending
-        .slice(0, 5)
-        .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
-        .join("\n");
-      throw new Error(
-        `${offending.length} JSDoc line(s) hold an undecoded HTML entity — run \`bun run regen\`:\n${sample}`,
-      );
-    }
-    expect(offending).toEqual([]);
-  });
+  test.each(collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const))(
+    "%s: no /** */ line holds an undecoded HTML entity",
+    async (_label, path) => {
+      const content = await Bun.file(path).text();
+      const offending = htmlEntityLines(content);
+      if (offending.length > 0) {
+        const sample = offending
+          .slice(0, 5)
+          .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
+          .join("\n");
+        throw new Error(
+          `${offending.length} JSDoc line(s) hold an undecoded HTML entity — run \`bun run regen\`:\n${sample}`,
+        );
+      }
+      expect(offending).toEqual([]);
+    },
+  );
 });

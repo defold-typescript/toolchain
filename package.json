@@ -39,7 +39,7 @@
     "changelog:commits": "bun scripts/changelog-commits.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.1",
+    "@biomejs/biome": "2.6.6",
     "@types/bun": "latest",
     "lefthook": "^2.1.10",
     "typescript": "6.0.2",

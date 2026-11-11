@@ -19,6 +19,7 @@ export const CONTRIBUTED_ENTRY_KIND = "string" as ts.ScriptElementKind;
 // broken on the label.
 function keyAboveAll(baseEntries: readonly ts.CompletionEntry[]): string {
   return `${baseEntries.reduce(
+    // biome-ignore lint/complexity/useMathMinMax: `sortText` is a string, which `Math.max` would turn into NaN.
     (greatest, base) => (base.sortText > greatest ? base.sortText : greatest),
     "zz",
   )}0`;

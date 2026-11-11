@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runInit } from "./init";
@@ -118,16 +126,46 @@ describe("scaffolded project is clean out of the box", () => {
     }
   });
 
-  test("biome check passes on the scaffolded source surface", () => {
+  test("biome check passes on the whole scaffold, its own biome.json included", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-biome-"));
     try {
       runInit({ cwd });
 
-      const { code, output } = run("biome", ["check", "src"], cwd);
+      const { code, output } = run("biome", ["check", "--error-on-warnings", "."], cwd);
       if (code !== 0) {
         throw new Error(`biome reported violations on the scaffold:\n${output}`);
       }
       expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the scaffold's Biome schema and pin match the Biome this repo runs", () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-biome-pin-"));
+    try {
+      runInit({ cwd });
+
+      const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+        $schema: string;
+      };
+      const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+        devDependencies: Record<string, string>;
+      };
+      const installed = (
+        JSON.parse(
+          readFileSync(
+            path.join(REPO_ROOT, "node_modules", "@biomejs", "biome", "package.json"),
+            "utf8",
+          ),
+        ) as { version: string }
+      ).version;
+
+      const schemaVersion = /\/schemas\/([^/]+)\/schema\.json$/.exec(biome.$schema)?.[1];
+      const pin = pkg.devDependencies["@biomejs/biome"];
+      expect(pin).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(schemaVersion).toBe(pin);
+      expect(pin).toBe(installed);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

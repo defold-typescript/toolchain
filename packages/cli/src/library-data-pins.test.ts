@@ -517,22 +517,26 @@ describe("a pinned library with a stale or unreachable main", () => {
     expect(warning).toContain(MAIN_URL);
   });
 
-  test.each(
-    MAINS,
-  )("an unreadable commit gives no data and moves nothing: %s", async (_l, cache) => {
-    const pinned = pinsAt(TWO, { "github.com/owner/monarch": TWO, "github.com/owner/druid": ONE });
+  test.each(MAINS)(
+    "an unreadable commit gives no data and moves nothing: %s",
+    async (_l, cache) => {
+      const pinned = pinsAt(TWO, {
+        "github.com/owner/monarch": TWO,
+        "github.com/owner/druid": ONE,
+      });
 
-    const { dir, pins, notices, warning } = await select(serving(null, AT_TWO).download, {
-      cacheDir: await cache(),
-      urls: [MONARCH, DRUID],
-      pins: pinned,
-    });
+      const { dir, pins, notices, warning } = await select(serving(null, AT_TWO).download, {
+        cacheDir: await cache(),
+        urls: [MONARCH, DRUID],
+        pins: pinned,
+      });
 
-    expect(dir).toBeNull();
-    expect(pins).toEqual(pinned);
-    expect(notices).toEqual([]);
-    expect(warning).toContain(ONE);
-  });
+      expect(dir).toBeNull();
+      expect(pins).toEqual(pinned);
+      expect(notices).toEqual([]);
+      expect(warning).toContain(ONE);
+    },
+  );
 
   test("an unreadable shared pin gives no data and moves nothing", async () => {
     const pinned = pinsAt(ONE, { "github.com/owner/monarch": TWO });

@@ -305,7 +305,7 @@ function parentPath(path: string): string {
   return path.slice(0, Math.max(0, path.lastIndexOf("/")));
 }
 
-function describe(path: string): string {
+function stateLabel(path: string): string {
   return path === "" ? "(machine)" : path;
 }
 
@@ -599,8 +599,9 @@ function wrapAlways(s: Session, rule: AlwaysRule, path: string, index: number): 
     // The machine takes the first rule that passes at once, so the line of a yes leads the exits.
     when: (ctx, machine) => {
       const passed = when === undefined || when(ctx, machine);
-      if (passed) emit(s, "event", `${describe(path)}: always chose "${rule.to}"`);
-      else emit(s, "when", `${describe(path)}: when "${s.demo.notes?.[chip] ?? "check"}" said no`);
+      if (passed) emit(s, "event", `${stateLabel(path)}: always chose "${rule.to}"`);
+      else
+        emit(s, "when", `${stateLabel(path)}: when "${s.demo.notes?.[chip] ?? "check"}" said no`);
       return passed;
     },
     run: [
@@ -629,7 +630,7 @@ function wrapDelay(s: Session, entry: Timed, path: string, key: TimerKey): Delay
   return (ctx) => {
     const seconds = delay(ctx);
     s.delays.set(entry.chip, seconds);
-    emit(s, "note", `${describe(path)}: ${key} delay read: ${seconds} s`);
+    emit(s, "note", `${stateLabel(path)}: ${key} delay read: ${seconds} s`);
     return seconds;
   };
 }
@@ -660,7 +661,7 @@ function wrapTimed<T extends object>(
 function wrapEvery(s: Session, entry: Timed, declared: readonly Run[], path: string): Run[] {
   return [
     () => {
-      emit(s, "timer", `${describe(path)}: every ${stayDelay(s, entry)} s ran`);
+      emit(s, "timer", `${stateLabel(path)}: every ${stayDelay(s, entry)} s ran`);
       fire(s, entry.chip);
       emit(s, "action", `run: ${runNote(s, entry.chip)}`);
     },
@@ -684,7 +685,7 @@ function wrapAfter(s: Session, entry: Timed, path: string): AfterTimer {
   const wrapped: Mutable<AfterTimer> = {
     ...rule,
     when: (ctx, machine) => {
-      const timer = `${describe(path)}: ${stayDelay(s, entry)} s timer`;
+      const timer = `${stateLabel(path)}: ${stayDelay(s, entry)} s timer`;
       if (when === undefined || when(ctx, machine)) {
         // The machine takes a timer that passes at once, so its line and chip lead the exits.
         s.held.delete(chip);
@@ -721,7 +722,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
   if (when !== undefined) {
     wrapped.when = (ctx, event, machine) => {
       const passed = when(ctx, specEvent(s, event), machine);
-      if (!passed) emit(s, "when", `${describe(path)}: when "${note ?? "check"}" said no`);
+      if (!passed) emit(s, "when", `${stateLabel(path)}: when "${note ?? "check"}" said no`);
       return passed;
     };
   }
@@ -731,7 +732,7 @@ function wrapRule(s: Session, rule: Rule, path: string, type: string, index: num
       s.pending.delete(event);
       fire(s, chip);
       if (rule.to === undefined) {
-        emit(s, "note", `${describe(path)}: rule has no to, so nothing exits or enters`);
+        emit(s, "note", `${stateLabel(path)}: rule has no to, so nothing exits or enters`);
       }
       if (run.length > 0) emit(s, "action", `run: ${runNote(s, chip)}`);
     },
@@ -778,7 +779,7 @@ function wrapState(s: Session, config: State, path: string): State {
     wrapped.update = (ctx, dt, m) => {
       const target = update(ctx, dt, proxyOf(s, m));
       if (typeof target === "string") {
-        emit(s, "event", `${describe(path)}: update returned "${target}"`);
+        emit(s, "event", `${stateLabel(path)}: update returned "${target}"`);
         fire(s, updateChip(path));
       }
       return target;
@@ -810,7 +811,7 @@ function wrapState(s: Session, config: State, path: string): State {
     // The library runs every hook of a drop before its listeners, so the first hook to run names the event.
     wrapped.unhandled = (ctx, event, m) => {
       nameDrop(s, event);
-      emit(s, "action", `${describe(path)}: unhandled hook: ${note}`);
+      emit(s, "action", `${stateLabel(path)}: unhandled hook: ${note}`);
       unhandled(ctx, specEvent(s, event), proxyOf(s, m));
     };
   }

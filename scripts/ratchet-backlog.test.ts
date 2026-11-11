@@ -464,16 +464,19 @@ describe("asset-portal-candidates — untracked portal entries as backlog", () =
   test.each([
     ["no entries array", { source: { syncedAt: PORTAL_SYNCED_AT } }],
     ["no source.syncedAt", { source: {}, entries: [] }],
-  ])("a manifest with %s throws naming the file rather than reading as drained", (_label, portal) => {
-    const root = tempRoot(...atTarget, portal);
-    try {
-      expect(() => collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toThrow(
-        "asset-portal.json: expected an asset-portal manifest",
-      );
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
+  ])(
+    "a manifest with %s throws naming the file rather than reading as drained",
+    (_label, portal) => {
+      const root = tempRoot(...atTarget, portal);
+      try {
+        expect(() => collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toThrow(
+          "asset-portal.json: expected an asset-portal manifest",
+        );
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    },
+  );
 });
 
 describe("pinSlots — the pin manifest's own collector", () => {

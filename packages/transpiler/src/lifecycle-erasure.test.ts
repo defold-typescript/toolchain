@@ -887,16 +887,19 @@ describe("properties members", () => {
   test.each([
     ["undefined", "undefined", "a has no value"],
     ["a string holding NUL", '"a\\0b"', "a contains a NUL character"],
-  ])("a default that is not a property value (%s) fails the build on the default", (_label, value, cause) => {
-    const source = scriptWith("", "speed: 1", `a: ${value}`);
-    const result = transpileProject({ files: { "main.ts": source } });
-    expect(result.diagnostics).toHaveLength(1);
-    const [diagnostic] = result.diagnostics;
-    expect(diagnostic?.line).toBe(lineOf(source, "    a: "));
-    expect(diagnostic?.category).toBeUndefined();
-    expect(diagnostic?.message).toContain("could not be computed at build time");
-    expect(diagnostic?.message).toContain(cause);
-  });
+  ])(
+    "a default that is not a property value (%s) fails the build on the default",
+    (_label, value, cause) => {
+      const source = scriptWith("", "speed: 1", `a: ${value}`);
+      const result = transpileProject({ files: { "main.ts": source } });
+      expect(result.diagnostics).toHaveLength(1);
+      const [diagnostic] = result.diagnostics;
+      expect(diagnostic?.line).toBe(lineOf(source, "    a: "));
+      expect(diagnostic?.category).toBeUndefined();
+      expect(diagnostic?.message).toContain("could not be computed at build time");
+      expect(diagnostic?.message).toContain(cause);
+    },
+  );
 
   test("every default form Defold's build reads registers, infinity as 1e999", () => {
     const source = scriptWith(
@@ -1317,17 +1320,19 @@ describe("resource property markers", () => {
     expect(result.diagnostics[0]?.message).toContain("resource.material");
   });
 
-  test.each([
-    'resource["material"]',
-    'resource[("material" as const)]',
-  ])("a computed reference %s to a marker fails the build", (reference) => {
-    const source = [IMPORT, "", `const f = ${reference};`, "", "defineScript({});", ""].join("\n");
-    const result = transpileProject({ files: { "main.ts": source } });
-    expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const f"));
-    expect(result.diagnostics[0]?.category).toBeUndefined();
-    expect(result.diagnostics[0]?.message).toContain("resource.material");
-  });
+  test.each(['resource["material"]', 'resource[("material" as const)]'])(
+    "a computed reference %s to a marker fails the build",
+    (reference) => {
+      const source = [IMPORT, "", `const f = ${reference};`, "", "defineScript({});", ""].join(
+        "\n",
+      );
+      const result = transpileProject({ files: { "main.ts": source } });
+      expect(result.diagnostics).toHaveLength(1);
+      expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const f"));
+      expect(result.diagnostics[0]?.category).toBeUndefined();
+      expect(result.diagnostics[0]?.message).toContain("resource.material");
+    },
+  );
 
   test("a computed marker call inside a hook reports once", () => {
     const source = [

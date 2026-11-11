@@ -111,16 +111,17 @@ describe("portalCoverage — lane join", () => {
     portal: (repo) => registries({ portal: [{ repo }] }),
   } satisfies Record<CoverageLane, (repo: string) => CoverageRegistries>;
 
-  test.each(
-    Object.keys(PINNED_ONLY_BY) as CoverageLane[],
-  )("a repo only the %s lane pins is tracked under it and is no candidate", (lane) => {
-    const [widget] = coverageOf(
-      [entry({ id: "widget" })],
-      PINNED_ONLY_BY[lane]("https://github.com/acme/widget"),
-    );
-    expect(widget?.lanes).toEqual([lane]);
-    expect(widget?.candidate).toBe(false);
-  });
+  test.each(Object.keys(PINNED_ONLY_BY) as CoverageLane[])(
+    "a repo only the %s lane pins is tracked under it and is no candidate",
+    (lane) => {
+      const [widget] = coverageOf(
+        [entry({ id: "widget" })],
+        PINNED_ONLY_BY[lane]("https://github.com/acme/widget"),
+      );
+      expect(widget?.lanes).toEqual([lane]);
+      expect(widget?.candidate).toBe(false);
+    },
+  );
 
   test("a repo two lanes pin reports both, as defold-orthographic does", () => {
     const repo = "https://github.com/britzl/defold-orthographic";
@@ -290,15 +291,13 @@ describe("portalCoverage — verdicts", () => {
 });
 
 describe("portalCoverage — candidacy", () => {
-  test.each([
-    "script-api",
-    "native-untyped",
-    "pure-lua-annotated",
-    "pure-lua",
-  ] as const)("an untracked %s entry pushed exactly 730 days before the sync is a candidate", (kind) => {
-    const [coverage] = coverageOf([entry({ id: "x", kind, pushedAt: daysBeforeSync(730) })]);
-    expect(coverage?.candidate).toBe(true);
-  });
+  test.each(["script-api", "native-untyped", "pure-lua-annotated", "pure-lua"] as const)(
+    "an untracked %s entry pushed exactly 730 days before the sync is a candidate",
+    (kind) => {
+      const [coverage] = coverageOf([entry({ id: "x", kind, pushedAt: daysBeforeSync(730) })]);
+      expect(coverage?.candidate).toBe(true);
+    },
+  );
 
   test("an entry pushed 731 days before the sync is not a candidate", () => {
     const [coverage] = coverageOf([entry({ id: "x", pushedAt: daysBeforeSync(731) })]);
@@ -313,14 +312,13 @@ describe("portalCoverage — candidacy", () => {
     expect(coverage.map((c) => c.candidate)).toEqual([false, false]);
   });
 
-  test.each([
-    "no-lua-api",
-    "not-a-dependency",
-    "no-source",
-  ] as const)("a %s entry is never a candidate", (kind) => {
-    const [coverage] = coverageOf([entry({ id: "x", kind })]);
-    expect(coverage?.candidate).toBe(false);
-  });
+  test.each(["no-lua-api", "not-a-dependency", "no-source"] as const)(
+    "a %s entry is never a candidate",
+    (kind) => {
+      const [coverage] = coverageOf([entry({ id: "x", kind })]);
+      expect(coverage?.candidate).toBe(false);
+    },
+  );
 });
 
 describe("coverageReport", () => {
