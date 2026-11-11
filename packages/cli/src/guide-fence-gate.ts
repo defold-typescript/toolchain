@@ -7,7 +7,8 @@
  * a gate to hold them to the exports of the library source. A tutorial's `ts step` fences build
  * one project per lesson, and the last one is held to the surface the library's entry points ship.
  */
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type TranspileProjectResult, transpileProject } from "@defold-typescript/transpiler";
@@ -48,7 +49,26 @@ export interface Fence {
 
 // A fence title names a file relative to `src/`: a `src/` title claims to quote
 // a docs/examples file (guide-source-parity.test.ts), and these fences quote none.
-export const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*\.ts$/;
+// A `.test.ts` title names a Bun test file instead, relative to the project root.
+export const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*(?:\.test)?\.ts$/;
+
+/**
+ * Whether the fence written at `rel` is a Bun test file. It type-checks with `bun:test` in scope
+ * and is never compiled to Lua: `build` would compile it only from under `src/`, where a test
+ * does not belong.
+ */
+export function isBunTestFence(rel: string): boolean {
+  return rel.endsWith(".test.ts");
+}
+
+// `bun:test` is an ambient module of `bun-types`, which `@types/bun` depends on. Only that one
+// file joins a fence program: the rest of `bun-types` declares Node globals no game has.
+function bunTestDeclarations(): string {
+  const typesBun = createRequire(path.join(REPO_ROOT, "package.json")).resolve(
+    "@types/bun/package.json",
+  );
+  return createRequire(realpathSync(typesBun)).resolve("bun-types/test.d.ts");
+}
 
 // The info string's second token, as the docs site reads `original`: Shiki and
 // the language badge take only the first, so the fence still renders as `ts`.
@@ -239,10 +259,12 @@ export function describeDiagnostic(d: ts.Diagnostic): string {
 
 /** Diagnostics per project file (`src/`-relative), plus global ones under `""`. */
 export function typeCheck(project: FenceProject): Map<string, string[]> {
+  const sourceRels = [...project.sources.keys()];
   const roots = [
     path.join(project.src, "env.d.ts"),
+    ...(sourceRels.some(isBunTestFence) ? [bunTestDeclarations()] : []),
     ...[...project.declarations.keys()].map((rel) => path.join(project.src, rel)),
-    ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
+    ...sourceRels.map((rel) => path.join(project.src, rel)),
   ];
   const program = ts.createProgram(roots, compilerOptions(project.src));
   const byFile = new Map<string, string[]>();
@@ -279,7 +301,9 @@ export function failingFences(
 export function transpileFenceProject(project: FenceProject): TranspileProjectResult {
   const files: Record<string, string> = {};
   for (const [rel, text] of project.declarations) files[rel] = text;
-  for (const [rel, text] of project.sources) files[rel] = text;
+  for (const [rel, text] of project.sources) {
+    if (!isBunTestFence(rel)) files[rel] = text;
+  }
   return transpileProject({ files });
 }
 
