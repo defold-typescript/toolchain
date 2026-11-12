@@ -13,8 +13,8 @@ import { scanFilesSync } from "./scan";
 const COMPONENT_OUTPUT_RE = /\.ts\.(script|gui_script|render_script)(\.map)?$/;
 
 // Vendored trees never hold this project's outputs. `build` is deliberately
-// absent: an `outDir` of `build`/`build/lua` is common, so skipping it would
-// blind the scan to the very directory the outputs live in.
+// absent: the skip matches a folder name at any depth, so listing `build` would
+// hide outputs in a nested folder such as `src/build/`.
 const SCAN_SKIP_SEGMENTS = new Set(["node_modules", ".defold-types", ".git"]);
 
 function isScanSkipped(rel: string): boolean {

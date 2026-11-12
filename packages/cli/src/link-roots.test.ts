@@ -1,20 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { skipWithoutGitFreeTemp } from "./git-free-temp.test-support";
 import { readLinkRoots } from "./link-roots";
 import { linkDir } from "./symlink.test-support";
-
-// The no-repository case reads every folder up to the filesystem root, so it
-// can only hold where the temp folder itself is outside any checkout.
-function hasGitAbove(dir: string): boolean {
-  for (let current = dir; ; current = path.dirname(current)) {
-    if (existsSync(path.join(current, ".git"))) return true;
-    if (path.dirname(current) === current) return false;
-  }
-}
-
-const tempOutsideRepository = !hasGitAbove(realpathSync.native(os.tmpdir()));
 
 let tmp: string;
 
@@ -53,7 +43,7 @@ describe("readLinkRoots", () => {
     expect(readLinkRoots(proj)).toEqual([path.join(tmp, "outer", "worktree")]);
   });
 
-  test.skipIf(!tempOutsideRepository)("with no .git anywhere the root is the project", () => {
+  test.skipIf(skipWithoutGitFreeTemp)("with no .git anywhere the root is the project", () => {
     const proj = folder("game");
     expect(readLinkRoots(proj)).toEqual([proj]);
   });

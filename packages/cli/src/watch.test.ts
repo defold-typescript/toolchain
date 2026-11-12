@@ -285,7 +285,7 @@ describe("runWatch", () => {
     for (let i = 0; i < 5; i++) factory.trigger("change", "src/main.ts");
     await handle.waitForIdle();
 
-    expect(countMatches(out(), /wrote 1 files/g)).toBe(2);
+    expect(countMatches(out(), /wrote \d+ files/g)).toBe(2);
 
     handle.stop();
     await handle.done;
@@ -1425,6 +1425,50 @@ describe("runWatch hot reload", () => {
 
     expect(editor.posts.length - afterStartup).toBe(1);
     expect(editor.posts[editor.posts.length - 1]).toBe("hot-reload");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a re-save with identical bytes rebuilds, lists nothing and posts no reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    const rebuildEvents = () =>
+      out()
+        .trimEnd()
+        .split("\n")
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .filter((event) => event.event === "rebuild");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeProjectFile("src/main.ts", scriptSource(1));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(rebuildEvents()).toHaveLength(1);
+    expect(rebuildEvents()[0]?.changed).toEqual(["src/main.ts"]);
+    expect(rebuildEvents()[0]?.written).toEqual([]);
+    expect(editor.posts.length).toBe(afterStartup);
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.slice(afterStartup)).toEqual(["hot-reload"]);
 
     handle.stop();
     await handle.done;
@@ -3067,6 +3111,12 @@ describe("runWatch editor discovery while unattached", () => {
         .trimEnd()
         .split("\n")
         .map((line) => JSON.parse(line) as unknown);
+
+    // Both compared sessions then find every output current, so their startup
+    // events agree.
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    runBuild({ cwd });
 
     const absentStreams = captureStreams();
     const absent = makeEditor(null);
@@ -4736,7 +4786,7 @@ describe("runWatch with symlinked source folders", () => {
     writeFileSync(
       path.join(proj, "tsconfig.json"),
       JSON.stringify({
-        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
         include: ["src/**/*.ts"],
       }),
     );
@@ -4782,10 +4832,8 @@ describe("runWatch with symlinked source folders", () => {
     await handle.waitForIdle();
 
     expect(failureOutput(err())).toBe("");
-    expect(readFileSync(path.join(proj, "build", "core", "save.lua"), "utf8")).toContain(
-      "return 2",
-    );
-    expect(out().slice(afterStartup)).toMatch(/wrote \d+ files: .*build\/core\/save\.lua/);
+    expect(readFileSync(path.join(proj, "out", "core", "save.lua"), "utf8")).toContain("return 2");
+    expect(out().slice(afterStartup)).toMatch(/wrote \d+ files: .*out\/core\/save\.lua/);
 
     handle.stop();
     await handle.done;
@@ -4895,7 +4943,7 @@ describe("runWatch with symlinked source folders", () => {
     writeFileSync(
       path.join(proj, "tsconfig.json"),
       JSON.stringify({
-        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
         include: ["src/a/one.ts", "src/b/two.ts"],
       }),
     );
@@ -4913,10 +4961,10 @@ describe("runWatch with symlinked source folders", () => {
     await handle.waitForIdle();
 
     // An exact include pattern roots its output at its own folder, so each
-    // file lands directly under `build/` whichever link it came through.
+    // file lands directly under `out/` whichever link it came through.
     expect(failureOutput(err())).toBe("");
-    expect(readFileSync(path.join(proj, "build", "one.lua"), "utf8")).toContain("one = 2");
-    expect(readFileSync(path.join(proj, "build", "two.lua"), "utf8")).toContain("two = 2");
+    expect(readFileSync(path.join(proj, "out", "one.lua"), "utf8")).toContain("one = 2");
+    expect(readFileSync(path.join(proj, "out", "two.lua"), "utf8")).toContain("two = 2");
 
     handle.stop();
     await handle.done;
@@ -4950,7 +4998,7 @@ describe("runWatch with symlinked source folders", () => {
     await handle.waitForIdle();
 
     expect(failureOutput(err())).toBe("");
-    expect(readFileSync(path.join(proj, "build", "moved", "core", "save.lua"), "utf8")).toContain(
+    expect(readFileSync(path.join(proj, "out", "moved", "core", "save.lua"), "utf8")).toContain(
       "return 2",
     );
 

@@ -36,7 +36,7 @@ import { scanOrphanOutputs } from "./orphan-scan";
 import { scaffoldResolvedProject } from "./resolved-project-fixture";
 import { linkDir } from "./symlink.test-support";
 
-const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+const OUTDIR_CONFIG: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
 
 let cwd: string;
 let other: string;
@@ -246,11 +246,11 @@ describe("createBuildSession", () => {
   });
 
   test("adding an ecs value import to a watched source writes the ecs module", () => {
-    const config: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+    const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
     writeIn(
       cwd,
       "tsconfig.json",
-      JSON.stringify({ compilerOptions: { outDir: "build/lua" }, include: ["src/**/*.ts"] }),
+      JSON.stringify({ compilerOptions: { outDir: "out/lua" }, include: ["src/**/*.ts"] }),
     );
     writeIn(cwd, "src/entities.ts", "export const entities = 1;\n");
 
@@ -283,11 +283,11 @@ describe("createBuildSession", () => {
   });
 
   test("hsm outputs stay current across rebuilds and are never read as orphans", () => {
-    const config: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+    const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
     writeIn(
       cwd,
       "tsconfig.json",
-      JSON.stringify({ compilerOptions: { outDir: "build/lua" }, include: ["src/**/*.ts"] }),
+      JSON.stringify({ compilerOptions: { outDir: "out/lua" }, include: ["src/**/*.ts"] }),
     );
     const machine = (target: string) =>
       [
@@ -422,7 +422,7 @@ describe("createBuildSession", () => {
     writeIn(cwd, "src/main.ts", 'const x: number = "oops";\n');
     expect(() => session.applyEvents(["src/main.ts"], [])).toThrow(/defold-typescript build/);
 
-    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);
+    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT.replace("vector3(0, 0, 0)", "vector3(1, 0, 0)"));
     const result = session.applyEvents(["src/main.ts"], []);
     expect(result.written).toEqual(["src/main.ts.script"]);
   });
@@ -597,7 +597,7 @@ describe("createBuildSession", () => {
           target: "ES2022",
           module: "ESNext",
           strict: true,
-          outDir: "build/lua",
+          outDir: "out/lua",
         },
         include: ["src/**/*.ts"],
       },
@@ -615,16 +615,16 @@ describe("createBuildSession", () => {
       writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
 
       const session = createBuildSession({ cwd });
-      expect(session.buildAll().written).toContain("build/lua/importer.ts.script");
+      expect(session.buildAll().written).toContain("out/lua/importer.ts.script");
 
       writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
       const rebuilt = session.applyEvents(["src/importer.ts"], []);
 
       const targetRel = computeOutputRel("src/shared.ts", OUTDIR_CONFIG, "module");
-      expect(rebuilt.written).toContain("build/lua/importer.ts.script");
+      expect(rebuilt.written).toContain("out/lua/importer.ts.script");
       expect(existsSync(path.join(cwd, targetRel))).toBe(true);
 
-      const importer = readFileSync(path.join(cwd, "build/lua/importer.ts.script"), "utf8");
+      const importer = readFileSync(path.join(cwd, "out/lua/importer.ts.script"), "utf8");
       expect(importer).toContain(`require("${requirePathForRel(targetRel)}")`);
       expect(importer).not.toContain('require("src.shared")');
     });
@@ -758,6 +758,7 @@ describe("createBuildSession", () => {
 
       const session = createBuildSession({ cwd });
       expect(session.buildAll().written).toContain("src/door.ts.script");
+      const scriptLua = readFileSync(path.join(cwd, "src/door.ts.script"), "utf8");
 
       writeIn(cwd, "src/door.ts", UNSPLITTABLE);
       let thrown: unknown;
@@ -773,8 +774,11 @@ describe("createBuildSession", () => {
       expect(entries[0]?.file).toBe("src/door.ts");
       expect(entries[0]?.message).toContain("count");
 
+      // The failed rebuild wrote nothing, so the reverted source's output is
+      // already on disk and the clean rebuild has nothing to change.
       writeIn(cwd, "src/door.ts", SPLITTABLE);
-      expect(session.applyEvents(["src/door.ts"], []).written).toContain("src/door.ts.script");
+      expect(session.applyEvents(["src/door.ts"], []).written).toEqual([]);
+      expect(readFileSync(path.join(cwd, "src/door.ts.script"), "utf8")).toBe(scriptLua);
     });
   });
 });
@@ -891,7 +895,7 @@ describe("createBuildSession — the incremental claim inventory", () => {
   // of them can reach the other's file.
   const SHARED_TSCONFIG = JSON.stringify(
     {
-      compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+      compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
       include: ["src/**/*.ts", "vendor/**/*.ts"],
     },
     null,
@@ -916,13 +920,13 @@ describe("createBuildSession — the incremental claim inventory", () => {
     scaffoldTwoRoots();
 
     const session = createBuildSession({ cwd });
-    expect(session.buildAll().written).toEqual(["build/shared.lua", "build/shared.ts.script"]);
-    const vendorLua = readFileSync(path.join(cwd, "build/shared.lua"), "utf8");
+    expect(session.buildAll().written).toEqual(["out/shared.lua", "out/shared.ts.script"]);
+    const vendorLua = readFileSync(path.join(cwd, "out/shared.lua"), "utf8");
 
     writeIn(cwd, "src/shared.ts", "export const VALUE = 99;\n");
 
-    expect(() => session.applyEvents(["src/shared.ts"], [])).toThrow(/build\/shared\.lua/);
-    expect(readFileSync(path.join(cwd, "build/shared.lua"), "utf8")).toBe(vendorLua);
+    expect(() => session.applyEvents(["src/shared.ts"], [])).toThrow(/out\/shared\.lua/);
+    expect(readFileSync(path.join(cwd, "out/shared.lua"), "utf8")).toBe(vendorLua);
   });
 
   test("the rebuild's failure names both sources", () => {
@@ -948,13 +952,17 @@ describe("createBuildSession — the incremental claim inventory", () => {
 
     const utilLua = readFileSync(path.join(cwd, "src/util.lua"), "utf8");
     const utilMtime = statSync(path.join(cwd, "src/util.lua")).mtimeMs;
+    const doorScript = readFileSync(path.join(cwd, "src/door.ts.script"), "utf8");
 
     writeIn(cwd, "src/door.ts", EXPORTING_SCRIPT.replace("= 3;", "= 7;"));
     const rebuilt = session.applyEvents(["src/door.ts"], []);
 
     // Claiming over the whole program must not widen what the rebuild writes:
     // `src/util.lua` is claimed but not rewritten, and stays out of `written`.
-    expect(rebuilt.written).toEqual(["src/door.lua", "src/door.ts.script"]);
+    // The new value lands in the companion; the script that requires it is
+    // re-emitted byte for byte, so it is not listed either.
+    expect(rebuilt.written).toEqual(["src/door.lua"]);
+    expect(readFileSync(path.join(cwd, "src/door.ts.script"), "utf8")).toBe(doorScript);
     expect(readFileSync(path.join(cwd, "src/util.lua"), "utf8")).toBe(utilLua);
     expect(statSync(path.join(cwd, "src/util.lua")).mtimeMs).toBe(utilMtime);
   });
@@ -1006,7 +1014,7 @@ describe("BuildSession.isOwnOutput", () => {
       cwd,
       "tsconfig.json",
       JSON.stringify({
-        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build/lua" },
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out/lua" },
         include: ["src/**/*.ts"],
       }),
     );
@@ -1142,11 +1150,11 @@ describe("createBuildSession with symlinked source folders", () => {
   }
 
   test("buildAll compiles a linked folder under outDir at its link path", () => {
-    const proj = linkedProject({ outDir: "build" });
+    const proj = linkedProject({ outDir: "out" });
     const result = createBuildSession({ cwd: proj }).buildAll();
-    expect(result.written).toContain("build/core/save.lua");
-    expect(readFileSync(path.join(proj, "build", "main.lua"), "utf8")).toContain(
-      'require("build.core.save")',
+    expect(result.written).toContain("out/core/save.lua");
+    expect(readFileSync(path.join(proj, "out", "main.lua"), "utf8")).toContain(
+      'require("out.core.save")',
     );
   });
 

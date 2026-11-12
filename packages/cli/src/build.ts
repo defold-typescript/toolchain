@@ -272,38 +272,46 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       config,
       companionRel === undefined ? [outputRel] : [outputRel, companionRel],
     );
-    writeScriptFile(
-      cwd,
-      outputRel,
-      lua,
-      retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
-    );
-    written.push(outputRel);
+    if (
+      writeScriptFile(
+        cwd,
+        outputRel,
+        lua,
+        retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
+      )
+    ) {
+      written.push(outputRel);
+    }
     if (companionRel !== undefined && companion !== undefined) {
       // No map: the companion is assembled from statements the script no longer
       // holds, so a map would point a debugger at a chunk that does not exist.
-      writeScriptFile(cwd, companionRel, companion, undefined);
-      written.push(companionRel);
+      if (writeScriptFile(cwd, companionRel, companion, undefined)) {
+        written.push(companionRel);
+      }
     }
   }
 
   if (lualib !== undefined) {
     const bundleRel = lualibBundleRel(config);
-    writeScriptFile(cwd, bundleRel, lualib, undefined);
-    written.push(bundleRel);
+    if (writeScriptFile(cwd, bundleRel, lualib, undefined)) {
+      written.push(bundleRel);
+    }
   }
 
   if (timersRuntime !== undefined) {
     const runtimeRel = timersModuleRel(config);
-    writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
-    written.push(runtimeRel);
+    if (writeScriptFile(cwd, runtimeRel, timersRuntime, undefined)) {
+      written.push(runtimeRel);
+    }
   }
   // Each map points at the library `.ts` the module was compiled from, so a
   // debugger steps through the library's TypeScript.
   for (const [requireName, lua] of Object.entries(libraryLua)) {
     const moduleRel = libraryRels[requireName];
     const module = bundledModuleOfRequire(requireName);
-    if (moduleRel !== undefined && module !== undefined) {
+    if (
+      moduleRel !== undefined &&
+      module !== undefined &&
       writeScriptFile(
         cwd,
         moduleRel,
@@ -314,7 +322,8 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
           result.librarySourceMaps?.[requireName],
           requireLibrarySourceDir(module.library),
         ),
-      );
+      )
+    ) {
       written.push(moduleRel);
     }
   }

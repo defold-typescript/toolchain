@@ -18,7 +18,7 @@ const TSCONFIG = JSON.stringify(
 );
 
 const OUTDIR_TSCONFIG = JSON.stringify(
-  { compilerOptions: { outDir: "build/lua", strict: true }, include: ["src/**/*.ts"] },
+  { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
   null,
   2,
 );
@@ -100,19 +100,19 @@ describe("mapConsoleLine", () => {
     writeProjectFile(
       "tsconfig.json",
       JSON.stringify(
-        { compilerOptions: { outDir: "build/lua", strict: true }, include: ["src/**/*.ts"] },
+        { compilerOptions: { outDir: "out/lua", strict: true }, include: ["src/**/*.ts"] },
         null,
         2,
       ),
     );
     writeProjectFile("src/game/hero.ts", markerSource(0));
     const result = runBuild({ cwd });
-    expect(result.written).toEqual(["build/lua/game/hero.ts.script"]);
-    const chunkLine = markerChunkLine("build/lua/game/hero.ts.script");
+    expect(result.written).toEqual(["out/lua/game/hero.ts.script"]);
+    const chunkLine = markerChunkLine("out/lua/game/hero.ts.script");
 
     const [location] = consoleLineLocations(
       cwd,
-      `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`,
+      `ERROR:SCRIPT: /out/lua/game/hero.ts.script:${chunkLine}: boom`,
     );
 
     expect(location?.file).toBe("src/game/hero.ts");
@@ -159,12 +159,12 @@ describe("mapConsoleLine", () => {
     writeProjectFile("tsconfig.json", OUTDIR_TSCONFIG);
     writeProjectFile("src/game/hero.ts", markerSource(0));
     const built = createBuildSession({ cwd }).buildAll();
-    expect(built.written).toContain("build/lua/game/hero.ts.script");
-    const chunkLine = markerChunkLine("build/lua/game/hero.ts.script");
+    expect(built.written).toContain("out/lua/game/hero.ts.script");
+    const chunkLine = markerChunkLine("out/lua/game/hero.ts.script");
 
     const [location] = consoleLineLocations(
       cwd,
-      `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`,
+      `ERROR:SCRIPT: /out/lua/game/hero.ts.script:${chunkLine}: boom`,
     );
 
     expect(location?.file).toBe("src/game/hero.ts");
@@ -179,13 +179,13 @@ describe("mapConsoleLine", () => {
     writeProjectFile("src/game/hero.ts", markerSource(0));
     const session = createBuildSession({ cwd });
     session.buildAll();
-    const chunkLine = markerChunkLine("build/lua/game/hero.ts.script");
-    const raw = `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`;
+    const chunkLine = markerChunkLine("out/lua/game/hero.ts.script");
+    const raw = `ERROR:SCRIPT: /out/lua/game/hero.ts.script:${chunkLine}: boom`;
     const before = consoleLineLocations(cwd, raw)[0];
 
     writeProjectFile("src/game/hero.ts", markerSource(2));
     session.applyEvents(["src/game/hero.ts"], []);
-    expect(markerChunkLine("build/lua/game/hero.ts.script")).toBe(chunkLine);
+    expect(markerChunkLine("out/lua/game/hero.ts.script")).toBe(chunkLine);
     const after = consoleLineLocations(cwd, raw)[0];
 
     expect(before?.line).toBeDefined();

@@ -1,6 +1,6 @@
 import { fetchChannelInfo } from "../packages/cli/src/defold-target.ts";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "../packages/cli/src/defold-version.ts";
-import { compareSemver } from "../packages/cli/src/upgrade.ts";
+import { compareSemver } from "../packages/cli/src/semver.ts";
 import { classifyTransition, type ReleaseTransition } from "./release-model.ts";
 
 // Checks the upstream stable channel for a release the pinned surface has not

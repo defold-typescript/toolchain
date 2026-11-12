@@ -999,8 +999,8 @@ describe("runSetupDebug target selection is include-bound", () => {
   test("a boot-path component under outDir resolves back to its source", async () => {
     const cwd = tempProject();
     try {
-      writeBootCollection(cwd, [{ id: "player", component: "/build/lua/main.ts.script" }]);
-      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeBootCollection(cwd, [{ id: "player", component: "/out/lua/main.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "out/lua" });
       writeSource(cwd, "game/main.ts", FACTORY_SCRIPT);
       writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
       const result = await runSetupDebug({
@@ -1011,7 +1011,7 @@ describe("runSetupDebug target selection is include-bound", () => {
       });
       expect(result.ok).toBe(true);
       expect(result.addedTo).toBe("game/main.ts");
-      expect(result.bootPath?.[result.bootPath.length - 1]).toBe("/build/lua/main.ts.script");
+      expect(result.bootPath?.[result.bootPath.length - 1]).toBe("/out/lua/main.ts.script");
       expect(readFileSync(path.join(cwd, "game", "main.ts"), "utf8")).toContain(BLOCK_BEGIN);
       expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
     } finally {
@@ -1066,8 +1066,8 @@ describe("runSetupDebug target selection is include-bound", () => {
   test("a boot component no configured source builds fails instead of picking a decoy", async () => {
     const cwd = tempProject();
     try {
-      writeBootCollection(cwd, [{ id: "logic", component: "/build/lua/excluded.ts.script" }]);
-      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeBootCollection(cwd, [{ id: "logic", component: "/out/lua/excluded.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "out/lua" });
       writeSource(cwd, "tools/excluded.ts", FACTORY_SCRIPT);
       writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
       const beforeExcluded = readFileSync(path.join(cwd, "tools", "excluded.ts"), "utf8");
@@ -1076,7 +1076,7 @@ describe("runSetupDebug target selection is include-bound", () => {
       const result = await runSetupDebug({ cwd });
       expect(result.ok).toBe(false);
       expect(result.addedTo).toBeUndefined();
-      expect(result.error).toContain("/build/lua/excluded.ts.script");
+      expect(result.error).toContain("/out/lua/excluded.ts.script");
       expect(result.error).toContain("game/**/*.ts");
       expect(readFileSync(path.join(cwd, "tools", "excluded.ts"), "utf8")).toBe(beforeExcluded);
       expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).toBe(beforeDecoy);
@@ -1091,15 +1091,15 @@ describe("runSetupDebug target selection is include-bound", () => {
   test("a boot component whose source is absent entirely fails the same way", async () => {
     const cwd = tempProject();
     try {
-      writeBootCollection(cwd, [{ id: "logic", component: "/build/lua/gone.ts.script" }]);
-      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeBootCollection(cwd, [{ id: "logic", component: "/out/lua/gone.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "out/lua" });
       writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
       const beforeDecoy = readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8");
       const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
       const result = await runSetupDebug({ cwd });
       expect(result.ok).toBe(false);
       expect(result.addedTo).toBeUndefined();
-      expect(result.error).toContain("/build/lua/gone.ts.script");
+      expect(result.error).toContain("/out/lua/gone.ts.script");
       expect(result.error).toContain("game/**/*.ts");
       expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).toBe(beforeDecoy);
       expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
@@ -1135,7 +1135,7 @@ describe("runSetupDebug target selection is include-bound", () => {
     const cwd = tempProject();
     try {
       writeBootCollection(cwd, [
-        { id: "player", component: "/build/lua/excluded.ts.script" },
+        { id: "player", component: "/out/lua/excluded.ts.script" },
         { id: "hud", component: "/game/hud.ts.script" },
       ]);
       writeTsconfig(cwd, { include: ["game/**/*.ts"] });

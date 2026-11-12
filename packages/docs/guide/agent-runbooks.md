@@ -24,7 +24,8 @@ when given `--json`. The envelope is always one of two shapes:
 ```
 
 The agent branches on `ok`: on `true`, read `written` for the paths the command
-created or updated; on `false`, read `error` for the failure reason. Some verbs
+created or updated, leaving out a file that already held the same bytes; on
+`false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 

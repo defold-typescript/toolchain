@@ -63,10 +63,11 @@ import {
   sceneObjectsForBuild,
   scriptWorldsForBuild,
 } from "./scene-types-command";
+import { compareSemver } from "./semver";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { colorEnabled, severityLine } from "./terminal-style";
-import { compareSemver, runUpgrade, type UpgradeIo } from "./upgrade";
+import { runUpgrade, type UpgradeIo } from "./upgrade";
 import {
   readUpstreamCache,
   refreshUpstreamCache,
@@ -1328,6 +1329,7 @@ function dispatchCommand(
     if (command === "build") {
       return (async (): Promise<number> => {
         const { runBuild } = await import("./build");
+        const { formatBuildLine } = await import("./build-output");
         const {
           ensureMaterializedReference,
           materializeApiSurface,
@@ -1475,9 +1477,7 @@ function dispatchCommand(
               }),
             );
           } else {
-            io.stdout.write(
-              `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
-            );
+            io.stdout.write(formatBuildLine(written));
             for (const notice of notices) {
               io.stderr.write(`defold-typescript build: ${notice}\n`);
             }
