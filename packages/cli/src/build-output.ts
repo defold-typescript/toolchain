@@ -317,8 +317,7 @@ export function pruneLegacyRuntimeOutputs(
     return;
   }
   if (entries.length === 0) {
-    assertContained(cwd, hsmRel);
-    rmdirSync(hsmAbs);
+    rmdirSync(assertContained(cwd, hsmRel));
   }
 }
 
