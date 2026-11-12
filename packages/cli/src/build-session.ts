@@ -394,9 +394,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         written.push(moduleRel);
       }
     }
-    throwIfFailures(failures);
+    written.sort();
+    throwIfFailures(failures, written);
     return {
-      written: written.sort(),
+      written,
       warnings: [],
       unreachableAddresses: [],
       crossWorldAddresses: [],
