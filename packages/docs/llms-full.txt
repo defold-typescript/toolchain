@@ -1988,7 +1988,7 @@ Inside `init`, `self` is **only** the property values — reading a field that i
 
 Hovering `defineScript`, `defineGuiScript`, or `defineRenderScript` in the editor now shows the factory's purpose, the hooks each kind accepts (render scripts take only `init`, `update`, `on_message` and `on_reload`), and a TypeScript example. Hovering an individual callback inside the hook table — `init`, `update`, `fixed_update`, `late_update`, `on_message`, `on_input`, `final`, `on_reload` — now shows that hook's Defold description and parameter docs as well. Hovering an `action` or `touch` field inside `on_input` — `action.value`, `action.pressed`, `touch.tap_count`, and the rest — shows that field's Defold description.
 
-At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. When `init` takes a `self` parameter the builder receives the engine `self` (so a property read resolves to the real table), and the parameter keeps your name even if it is not literally `self`. The hooks you write stay in terms of a typed `self`.
+At runtime Defold owns `self` (a userdata-backed table) and a script can populate but not replace it, so the transpiler can't emit a returning `init` verbatim. It wraps the body in a builder and merges the returned table onto the engine `self`; a `nil`/stateless return merges nothing. When `init` takes a `self` parameter the builder receives the engine `self` (so a property read resolves to the real table), and the parameter keeps your name even if it is not literally `self`. The hooks you write stay in terms of a typed `self`. A hook parameter must be a plain name, since it takes the engine argument at its position: a destructured, defaulted or rest parameter fails the build, so destructure or default it inside the body.
 
 `defineScript` and `defineGuiScript` both type `on_input` as `(self, action_id, action) => boolean | void`.
 
@@ -2337,9 +2337,9 @@ export default defineScript<Self>({
 
 `self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key whose handler leaves `message` unannotated is a compile error, just like `isMessage`; annotating it declares a [script-local message](#ways-to-type-your-messages).
 
-Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
+Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(____self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output. `____self` is the name TypeScript-to-Lua gives `self`, and each handler parameter takes the engine argument at its position under whatever name you give it; a parameter past `sender` is `undefined`.
 
-A key lowers when it has one name known at compile time: an identifier, a quoted or numeric literal, or a computed literal constant such as `[WAVE]` with `const WAVE = "spawn_wave"`. A numeric key uses its string form, so `1e3` handles and is sent as `"1000"`. Write each handler inline. A key of any other form (`[someString]`, a symbol), a shorthand `{ onHit }`, a handler passed by reference, a spread, or a non-literal argument such as `onMessage(handlers)` fails the build with an error at that spot.
+A key lowers when it has one name known at compile time: an identifier, a quoted or numeric literal, or a computed literal constant such as `[WAVE]` with `const WAVE = "spawn_wave"`. A numeric key uses its string form, so `1e3` handles and is sent as `"1000"`. Write each handler inline. A key of any other form (`[someString]`, a symbol), a shorthand `{ onHit }`, a handler passed by reference, a spread, a non-literal argument such as `onMessage(handlers)`, or a destructured, defaulted or rest parameter fails the build with an error at that spot.
 
 ##### Which handler forms build
 
@@ -2353,6 +2353,7 @@ export default defineScript<Self>({
     1e3(self, message: { id: number }) {},        // handles "1000"
     onHit,                                        // build error: shorthand
     hit: onHit,                                   // build error: handler by reference
+    set_parent(self, { parent_id }) {},           // build error: destructured parameter
   }),
 });
 ```
