@@ -127,7 +127,7 @@ function makeFactory(): ControllableFactory {
       project.onEvent({ kind, path: relPath });
     },
     triggerAt(root, kind, relPath) {
-      const target = [...watchers].reverse().find((w) => w.root === root && !w.closed);
+      const target = watchers.findLast((w) => w.root === root && !w.closed);
       if (!target) throw new Error(`no open watcher on ${root}`);
       target.onEvent({ kind, path: relPath });
     },
