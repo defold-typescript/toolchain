@@ -1,0 +1,10 @@
+{
+  // Code here runs on Bun or Node and never compiles to Lua. ES2023 is the newest
+  // lib the oldest supported runtime has (the editor plugin's Node 20.19);
+  // ES2024 needs Node 22. Lua-bound code keeps tsconfig.json's lib, which the
+  // transpiler's LUA_COMPILE_LIB pins.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023"]
+  }
+}

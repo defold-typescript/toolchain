@@ -8,6 +8,7 @@ import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-em
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { AMBIENT_FILES, EDITOR_AMBIENT_FILES, isEditorSideSource } from "./kind-surfaces";
 import { createLifecycleErasure, type LifecycleErasure } from "./lifecycle-erasure";
+import { LUA_COMPILE_LIB } from "./lua-compile-lib";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { nativeGlobalModulesPlugin } from "./native-global-modules";
@@ -45,10 +46,9 @@ function compilerOptions(
   return {
     luaTarget: tstl.LuaTarget.Lua51,
     sourceMap: true,
-    // Already-resolved CompilerOptions, so the value is the lib file name, not the
-    // tsconfig spelling "ES2022". Drops the default `lib.dom`, whose `declare var
-    // window` shadows Defold's `window` namespace.
-    lib: ["lib.es2022.d.ts"],
+    // The one Lua-compile lib, shared with the library compile; the Lua-bound
+    // tsconfigs resolve to it too, so `tsc` there accepts what this accepts.
+    lib: [...LUA_COMPILE_LIB],
     // Don't cross-check the seeded ambient .d.ts surface against itself; only user
     // files matter (mirrors the library compile and the editor's skipLibCheck).
     skipLibCheck: true,
