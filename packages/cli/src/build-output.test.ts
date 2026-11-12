@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
+  globSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -38,6 +39,7 @@ import {
   toPosix,
   writeScriptFile,
 } from "./build-output";
+import { INCLUDE_PARITY_FILES, INCLUDE_PARITY_PATTERNS } from "./include-parity.test-support";
 
 describe("readBuildConfig runtime-dir", () => {
   let cwd: string;
@@ -185,6 +187,34 @@ describe("isFileIncluded", () => {
 
   test("a backslash path is normalized before matching", () => {
     expect(isFileIncluded("src\\game\\hero.ts", ["src/**/*.ts"])).toBe(true);
+  });
+
+  test("a pattern starting with ./ matches the project-relative path", () => {
+    expect(isFileIncluded("src/game/hero.ts", ["./src/**/*.ts"])).toBe(true);
+  });
+
+  describe("on a real tree", () => {
+    let cwd: string;
+    const files = ["src/main.ts", ...INCLUDE_PARITY_FILES.map((rel) => `src/real/${rel}`)];
+
+    beforeEach(() => {
+      cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-include-parity-"));
+      for (const rel of files) {
+        mkdirSync(path.dirname(path.join(cwd, rel)), { recursive: true });
+        writeFileSync(path.join(cwd, rel), "export {};\n");
+      }
+    });
+
+    afterEach(() => {
+      rmSync(cwd, { recursive: true, force: true });
+    });
+
+    test.each(INCLUDE_PARITY_PATTERNS)("%s includes exactly what globSync discovers", (pattern) => {
+      const discovered = new Set(globSync(pattern, { cwd }).map((rel) => toPosix(rel)));
+      expect(files.filter((rel) => isFileIncluded(rel, [pattern]))).toEqual(
+        files.filter((rel) => discovered.has(rel)),
+      );
+    });
   });
 });
 

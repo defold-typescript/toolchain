@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { INCLUDE_PARITY_FILES, INCLUDE_PARITY_PATTERNS } from "./include-parity.test-support";
 import { LinkEscapeError } from "./link-roots";
 import { discoverSources, normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
@@ -166,6 +167,56 @@ describe("scanFilesSync through symbolic links", () => {
       "src/sub/b.ts",
     ]);
   });
+
+  test("a link no include pattern can reach is neither followed nor checked", () => {
+    link(path.join("..", "..", "..", "elsewhere"), "src/assets");
+    expect(scanFilesSync(proj, "src/*.ts")).toEqual(["src/main.ts"]);
+  });
+
+  test("a link under a real folder no include pattern can reach is neither followed nor checked", () => {
+    link(path.join("..", "..", "..", "..", "elsewhere"), "src/art/assets");
+    expect(scanFilesSync(proj, "src/*.ts")).toEqual(["src/main.ts"]);
+  });
+
+  // The brace case puts the link below the brace folder: `globSync` expands
+  // `{art,ui}` to a literal segment and would reach a link there itself.
+  test.each([
+    ["src/*/*.ts", "src/assets"],
+    ["src/**/[fs]*.ts", "src/assets"],
+    ["src/{art,ui}/**/*.ts", "src/art/assets"],
+  ])(
+    "%s reaches the link %s leading outside the repository and throws, naming it",
+    (pattern, at) => {
+      const up = at.split("/").map(() => "..");
+      link(path.join(...up, "..", "elsewhere"), at);
+      expect(() => scanFilesSync(proj, pattern)).toThrow(LinkEscapeError);
+      expect(() => scanFilesSync(proj, pattern)).toThrow(`${at} is a symbolic link to`);
+    },
+  );
+
+  test.each(INCLUDE_PARITY_PATTERNS)(
+    "%s matches through a folder link as in an identical real folder",
+    (pattern) => {
+      const target = path.join(repo, "factory-core", "src");
+      rmSync(target, { recursive: true });
+      for (const folder of [path.join(proj, "src", "real"), target]) {
+        for (const rel of INCLUDE_PARITY_FILES) {
+          mkdirSync(path.dirname(path.join(folder, rel)), { recursive: true });
+          writeFileSync(path.join(folder, rel), "export {};\n");
+        }
+      }
+      link("../../factory-core/src", "src/core");
+      const namesUnder = (rels: readonly string[], folder: string): string[] =>
+        rels
+          .map(normalizeScannedPath)
+          .filter((rel) => rel.startsWith(`${folder}/`))
+          .map((rel) => rel.slice(folder.length + 1))
+          .sort();
+      const real = namesUnder(globSync(pattern, { cwd: proj }), "src/real");
+      expect(real).not.toEqual([]);
+      expect(namesUnder(scanFilesSync(proj, pattern), "src/core")).toEqual(real);
+    },
+  );
 });
 
 describe("discoverSources", () => {
