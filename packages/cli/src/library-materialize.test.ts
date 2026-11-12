@@ -601,6 +601,24 @@ describe("materializeVendoredLibraries writes only inside the project", () => {
   });
 
   test.skipIf(!canLinkFiles)(
+    "a library declaration link leading outside is refused and its target kept",
+    () => {
+      const proj = path.join(cwd, "proj");
+      const outside = path.join(cwd, "outside");
+      const surface = path.join(proj, ".defold-types", librariesDirName(readCliVersion()));
+      mkdirSync(surface, { recursive: true });
+      mkdirSync(outside);
+      writeFileSync(path.join(outside, "x.d.ts"), "keep\n");
+      linkFile("../../../outside/x.d.ts", path.join(surface, "dicebag.dicebag.d.ts"));
+
+      expect(() =>
+        materializeVendoredLibraries({ cwd: proj, printed: [printed("dicebag.dicebag")] }),
+      ).toThrow("dicebag.dicebag.d.ts");
+      expect(readFileSync(path.join(outside, "x.d.ts"), "utf8")).toBe("keep\n");
+    },
+  );
+
+  test.skipIf(!canLinkFiles)(
     "ensureLibraryTypesReference refuses to rewrite a tsconfig.json link",
     () => {
       const outside = path.join(cwd, "outside");
