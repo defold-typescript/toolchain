@@ -127,6 +127,8 @@ print(`packed at ${http.server.url}`);
 
 These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, and the `http`, `json`, `zlib` and `pprint` a game script sees are the *engine's*, with different signatures — which is why the two surfaces never share a `tsconfig`.
 
+`build` and `watch` keep the same split. A source that imports `@defold-typescript/types/editor-script` (a type-only import counts), and every helper it imports, is checked against the editor surface; every other source is checked against the runtime one. So `zip.pack` in a game script fails the build as it fails `tsc`, `go.get_position` in an editor script fails it too, and a helper that both an editor script and a game script import must type-check against both.
+
 ## Dialogs and preferences
 
 `editor.ui.*` and `editor.prefs.*` live under `editor`, not as globals of their own, so the table above does not change — they arrive with the rest of `editor.*`. Every `editor.ui.*` builder returns the same nominal `component` handle, and `editor.ui.show_dialog` is the only thing that consumes one: `show_dialog` rejects anything that is not a component handle, but the types draw no line between a dialog and a button, do not check assembly order, and — as below — do not look inside `props`. The editor VM decides those three at runtime:

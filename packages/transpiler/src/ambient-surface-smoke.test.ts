@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
-import { AMBIENT_FILES, transpile } from "./transpile";
+import { AMBIENT_FILES, EDITOR_AMBIENT_FILES } from "./kind-surfaces";
+import { transpile } from "./transpile";
 
 const TYPES_PKG_ROOT = path.dirname(
   createRequire(import.meta.url).resolve("@defold-typescript/types/package.json"),
@@ -32,17 +33,18 @@ describe("ambient surface smoke", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  // Structural guard against seed drift: index.d.ts pulls in every `src/*.d.ts`
-  // augmentation, so the transpiler's ambient surface must too. Without this a
+  // Structural guard against seed drift: index.d.ts and the editor-script kind
+  // index between them pull in every `src/*.d.ts` augmentation and generated
+  // namespace, so the transpiler's two ambient surfaces must too. Without this a
   // newly-added augmentation type-checks in the editor yet silently drops out of
   // the transpiler — exactly how vmath's overloads regressed.
   test("every generated and src augmentation is seeded", () => {
-    const expected = ["generated", "src"].flatMap((dir) =>
+    const expected = ["generated", "generated/editor-vm", "src"].flatMap((dir) =>
       readdirSync(path.join(TYPES_PKG_ROOT, dir))
         .filter((entry) => entry.endsWith(".d.ts"))
         .map((entry) => `node_modules/@defold-typescript/types/${dir}/${entry}`),
     );
-    const seeded = new Set(Object.keys(AMBIENT_FILES));
+    const seeded = new Set([...Object.keys(AMBIENT_FILES), ...Object.keys(EDITOR_AMBIENT_FILES)]);
     const missing = expected.filter((key) => !seeded.has(key));
     expect(missing).toEqual([]);
   });
@@ -58,7 +60,7 @@ describe("ambient surface smoke", () => {
       .filter(([, target]) => target?.types?.startsWith("./generated/kinds/") === true)
       .map(([key]) => key.replace(/^\.\//, ""));
     expect(kinds.length).toBeGreaterThan(0);
-    const seeded = new Set(Object.keys(AMBIENT_FILES));
+    const seeded = new Set([...Object.keys(AMBIENT_FILES), ...Object.keys(EDITOR_AMBIENT_FILES)]);
     const missing = kinds.filter(
       (kind) => !seeded.has(`node_modules/@defold-typescript/types/${kind}.d.ts`),
     );

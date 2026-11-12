@@ -5,7 +5,7 @@ import * as path from "node:path";
 // Both emit-config sites must pin LuaTarget.Lua51 to match Defold's LuaJIT/5.1
 // runtime. They are independent inline literals, so guard them against drifting
 // apart (mirrors the noImplicitSelf two-site pattern).
-const sites = ["transpile.ts", "session.ts"];
+const sites = ["project-output.ts", "session.ts"];
 
 describe("Lua target", () => {
   for (const site of sites) {
