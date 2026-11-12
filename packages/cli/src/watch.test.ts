@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -34,6 +35,7 @@ import {
   SCENE_ADDRESSES_DECLARATION,
   scriptWorldsForBuild,
 } from "./scene-types-command";
+import { canLinkFiles, linkFile } from "./symlink.test-support";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -4655,4 +4657,39 @@ describe("runWatch cross-world address reporting", () => {
     expect(err()).toContain('the world "mylevel"');
     expect(err()).toContain("src/main.ts");
   });
+});
+
+describe("runWatch writes only inside the project", () => {
+  test.skipIf(!canLinkFiles)(
+    "an incremental build refuses a link that appeared at an output path",
+    async () => {
+      const outside = realpathSync(
+        mkdtempSync(path.join(os.tmpdir(), "defold-typescript-outside-")),
+      );
+      try {
+        writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+        writeProjectFile("src/main.ts", "export const main = 1;\n");
+        const { stdout, stderr, err } = captureStreams();
+        const factory = makeFactory();
+
+        const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+        await handle.waitForIdle();
+        expect(failureOutput(err())).toBe("");
+
+        rmSync(path.join(cwd, "src/main.lua"));
+        linkFile(path.join(outside, "new.txt"), path.join(cwd, "src/main.lua"));
+        writeProjectFile("src/main.ts", "export const main = 2;\n");
+        factory.trigger("change", "src/main.ts");
+        await handle.waitForIdle();
+
+        expect(failureOutput(err())).toContain("src/main.lua");
+        expect(existsSync(path.join(outside, "new.txt"))).toBe(false);
+
+        handle.stop();
+        await handle.done;
+      } finally {
+        rmSync(outside, { recursive: true, force: true });
+      }
+    },
+  );
 });
