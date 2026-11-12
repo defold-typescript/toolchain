@@ -435,6 +435,55 @@ describe("script-linked component addresses", () => {
     ).toEqual([]);
   });
 
+  // The same layout under an `outDir` build rejects: the declaration would link
+  // nothing, so the command fails instead of writing one.
+  function writeRejectedOutDirProject(outDir: string, defignore: string | undefined): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { outDir }, include: ["src/**/*.ts"] }),
+    );
+    if (defignore !== undefined) write(".defignore", defignore);
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+    write("main/main.collection", 'instances {\n  id: "logic"\n  prototype: "/main/logic.go"\n}\n');
+    write(
+      "main/logic.go",
+      `components {\n  id: "wave"\n  component: "/${outDir}/wave.ts.script"\n}\n`,
+    );
+    write(
+      "src/wave.ts",
+      "declare function defineScript<T>(handlers: T): T;\n" +
+        'declare const handlers: { readonly __script: "wave" };\n' +
+        "export default defineScript({ on_message: handlers });\n",
+    );
+  }
+
+  test.each([
+    { outDir: "build", defignore: undefined },
+    { outDir: "generated/lua", defignore: "/generated\n" },
+  ])(
+    "an outDir build rejects ($outDir) fails and writes no declaration",
+    async ({ outDir, defignore }) => {
+      writeRejectedOutDirProject(outDir, defignore);
+
+      const { code, err } = await run("scene-types");
+
+      expect(code).toBe(1);
+      expect(err).toContain('"compilerOptions"."outDir"');
+      expect(err).toContain(JSON.stringify(outDir));
+      expect(existsSync(path.join(cwd, DECLARATION_REL))).toBe(false);
+    },
+  );
+
+  test("--json reports a rejected outDir as the envelope's error", async () => {
+    writeRejectedOutDirProject("build", undefined);
+
+    const { code, json } = await run("scene-types", "--json");
+
+    expect(code).toBe(1);
+    expect((json() as { error?: string }).error).toContain('"compilerOptions"."outDir" is "build"');
+    expect(existsSync(path.join(cwd, DECLARATION_REL))).toBe(false);
+  });
+
   // A game object naming `/src/<name>.ts.script`, whose source is written as given.
   async function linkedAddressOf(name: string, source: string): Promise<readonly string[]> {
     write("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));

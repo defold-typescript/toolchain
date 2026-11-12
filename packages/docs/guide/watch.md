@@ -125,6 +125,8 @@ Four things are worth knowing about how it behaves:
   only a setup failure such as an unreadable `tsconfig.json` ends the run. The
   running game stays on the last code that actually built, rather than being
   pushed the previous emit's Lua and making the change look like it did nothing.
+  The outputs a failed rebuild did write, for its sources without errors, are
+  reloaded with the next successful rebuild, even one that writes nothing new.
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
   opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it

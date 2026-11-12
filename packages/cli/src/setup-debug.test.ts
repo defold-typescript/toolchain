@@ -3,8 +3,10 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -383,6 +385,42 @@ function writeBaseProject(cwd: string): void {
   writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
   mkdirSync(path.join(cwd, "src"), { recursive: true });
 }
+
+// Every file under `dir` with its contents, to show a run wrote nothing there.
+function snapshotTree(dir: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const name of readdirSync(dir, { recursive: true }) as string[]) {
+    const abs = path.join(dir, name);
+    if (!statSync(abs).isDirectory()) out[name.replace(/\\/g, "/")] = readFileSync(abs, "utf8");
+  }
+  return out;
+}
+
+describe("runSetupDebug refuses a build setting build rejects", () => {
+  test.each([
+    { outDir: "build", defignore: undefined, reason: "build/" },
+    { outDir: "generated/lua", defignore: "/generated\n", reason: ".defignore lists /generated" },
+  ])("outDir $outDir fails and writes nothing", async ({ outDir, defignore, reason }) => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeSource(cwd, "src/player.ts", FACTORY_SCRIPT);
+      writeTsconfig(cwd, { outDir });
+      if (defignore !== undefined) writeFileSync(path.join(cwd, ".defignore"), defignore);
+      const before = snapshotTree(cwd);
+
+      const result = await runSetupDebug({ cwd, script: "src/player.ts" });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain('"compilerOptions"."outDir"');
+      expect(result.error).toContain(JSON.stringify(outDir));
+      expect(result.error).toContain(reason);
+      expect(snapshotTree(cwd)).toEqual(before);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("runSetupDebug", () => {
   test("writes the ambient .d.ts, the managed block, and game.project", async () => {

@@ -21,7 +21,12 @@ import {
   type SceneObjectPathIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
-import { type BuildConfig, detectSourceOutputKind, readBuildConfig, toPosix } from "./build-output";
+import {
+  detectSourceOutputKind,
+  readBuildConfig,
+  readBuildConfigIfPresent,
+  toPosix,
+} from "./build-output";
 import {
   assertContained,
   removeContained,
@@ -157,16 +162,6 @@ function writeIfChanged(cwd: string, target: string, contents: string): boolean 
   return true;
 }
 
-// A project that has not been initialised has no program to link addresses to,
-// and `scene-types` must still write the declaration for it.
-function tryReadBuildConfig(cwd: string): BuildConfig | undefined {
-  try {
-    return readBuildConfig(cwd);
-  } catch {
-    return undefined;
-  }
-}
-
 /**
  * The script resource each program source compiles to, mapped to that source's
  * import specifier relative to the generated declaration.
@@ -180,7 +175,10 @@ function tryReadBuildConfig(cwd: string): BuildConfig | undefined {
  */
 export function scriptModulesOf(cwd: string): Map<string, string> {
   const modules = new Map<string, string>();
-  const config = tryReadBuildConfig(cwd);
+  // A project that has not been initialised has no program to link addresses
+  // to, and `scene-types` must still write the declaration for it. A setting
+  // `build` rejects throws instead: the declaration would link nothing.
+  const config = readBuildConfigIfPresent(cwd);
   if (config === undefined) return modules;
   const declarationDir = path.posix.dirname(SCENE_ADDRESSES_DECLARATION);
   for (const pattern of config.include) {
@@ -206,6 +204,9 @@ export function scriptModulesOf(cwd: string): Map<string, string> {
  * in `@defold-typescript/types` stay widened.
  */
 export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
+  // First, so a rejected build setting stops the command before the scene walk
+  // and the write.
+  const scriptModules = scriptModulesOf(opts.cwd);
   const host = fsSceneReadHost();
   const { documents, unreadable } = readSceneDocuments(host, opts.cwd);
   // The proxy and factory documents are read as their own walk rather than
@@ -237,7 +238,7 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
   const wrote = writeIfChanged(
     opts.cwd,
     SCENE_ADDRESSES_DECLARATION,
-    buildSceneAddressDeclaration(documents, roles, scriptModulesOf(opts.cwd)),
+    buildSceneAddressDeclaration(documents, roles, scriptModules),
   );
   return {
     declaration: SCENE_ADDRESSES_DECLARATION,
