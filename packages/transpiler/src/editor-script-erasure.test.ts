@@ -58,6 +58,8 @@ const GUIDE_COMMAND_SNIPPET = [
 ].join("\n");
 
 const DIRECT_EDITOR_COMMAND = [
+  '/// <reference types="@defold-typescript/types/editor-script" />',
+  "",
   "editor.command({",
   '  label: "Git History",',
   '  locations: ["Assets"],',

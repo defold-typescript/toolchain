@@ -6,7 +6,8 @@ import { lauxlib, lua, lualib } from "lua-wasm-bindings/dist/lua.51";
 import * as ts from "typescript";
 import { isFactoryOnlyImport, RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
 import { requirePathForRel } from "./output-paths";
-import { type TranspileProjectResult, transpile, transpileProject } from "./transpile";
+import type { TranspileProjectResult } from "./project-output";
+import { transpile, transpileProject } from "./transpile";
 
 describe("lifecycle erasure", () => {
   test("erases a void defineScript to flat top-level chunk functions", () => {

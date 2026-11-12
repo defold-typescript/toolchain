@@ -71,6 +71,8 @@ export {
   stripIncludeBase,
 } from "./output-paths";
 export { getProgramDiagnostics } from "./program-diagnostics";
+export type { TranspileDiagnostic, TranspileProjectResult } from "./project-output";
+export { compileLibraryModules, compileLibrarySourceMaps } from "./project-output";
 export {
   isDefignoredPath,
   parseDefignore,
@@ -118,18 +120,8 @@ export { createTranspileSession } from "./session";
 export type { TextScriptPropertyFinding } from "./text-script-property";
 export { findTextScriptProperties } from "./text-script-property";
 export { TIMERS_REQUIRE_NAME } from "./timers-runtime";
-export type {
-  TranspileDiagnostic,
-  TranspileProjectInput,
-  TranspileProjectResult,
-  TranspileResult,
-} from "./transpile";
-export {
-  compileLibraryModules,
-  compileLibrarySourceMaps,
-  transpile,
-  transpileProject,
-} from "./transpile";
+export type { TranspileProjectInput, TranspileResult } from "./transpile";
+export { transpile, transpileProject } from "./transpile";
 export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,

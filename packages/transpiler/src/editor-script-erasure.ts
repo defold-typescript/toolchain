@@ -14,10 +14,11 @@ const EDITOR_FACTORY_NAMES: ReadonlySet<string> = new Set([
   EDITOR_SCRIPT_FACTORY_NAME,
   EDITOR_COMMAND_FACTORY_NAME,
 ]);
+export const EDITOR_SCRIPT_SPECIFIER = `${EDITOR_FACTORY_MODULE}/editor-script`;
 // The walled per-kind subpath is the only editor entrypoint: the bare main entry
 // exports no editor factory, and the other kinds' subpaths export their own
 // factories, never these.
-const EDITOR_FACTORY_SPECIFIERS = new Set([`${EDITOR_FACTORY_MODULE}/editor-script`]);
+const EDITOR_FACTORY_SPECIFIERS = new Set([EDITOR_SCRIPT_SPECIFIER]);
 
 function resolveEditorFactoryExport(
   callee: ts.Expression,

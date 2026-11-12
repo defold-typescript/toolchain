@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
 import { GLOBAL_TABLE_REQUIRE_MARKER } from "./native-global-modules";
-import { collectOutputs, transpileProject } from "./transpile";
+import { collectOutputs } from "./project-output";
+import { transpileProject } from "./transpile";
 
 const PIXELS_DTS = [
   "/**",

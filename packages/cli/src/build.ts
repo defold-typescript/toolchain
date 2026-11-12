@@ -134,11 +134,10 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   throwOnWallImportViolations(cwd, files);
 
   // A session rather than `transpileProject`: the one-shot entry never surfaces
-  // a `ts.Program`, and the reachability check needs one. Its compiler options
-  // are kept in lockstep with `transpileProject`'s, which
-  // `session.test.ts`'s output-equivalence cases are what hold. The declarations
-  // `resolve` installed join the program only: `sources` never names them, so
-  // nothing below checks or writes them.
+  // a `ts.Program`, and the reachability check needs one. `transpileProject` is a
+  // one-shot session, so both check a source against the same surface. The
+  // declarations `resolve` installed join the program only: `sources` never
+  // names them, so nothing below checks or writes them.
   const session = createTranspileSession();
   const result = session.update({ ...files, ...collectResolvedDeclarations(cwd) });
   const failures = collectFailures(result.diagnostics);

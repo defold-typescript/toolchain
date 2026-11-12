@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type * as ts from "typescript";
-import { collectOutputs, transpile, transpileProject } from "./transpile";
+import { collectOutputs } from "./project-output";
+import { transpile, transpileProject } from "./transpile";
 
 describe("transpile", () => {
   test("returns Lua text for a trivial export const", () => {
