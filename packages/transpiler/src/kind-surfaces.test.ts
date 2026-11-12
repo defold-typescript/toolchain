@@ -49,6 +49,16 @@ const NODE_PATH_HELPER = [
   "",
 ].join("\n");
 
+const GO_CALLING_HELPER = [
+  "export function nodePath(node: string): unknown {",
+  "  go.get_position();",
+  "  return node;",
+  "}",
+  "",
+].join("\n");
+
+const NAMESPACE_BARREL = 'export * as helpers from "./node_path";\n';
+
 describe("per-side check surfaces", () => {
   test("a game script cannot reach the editor-only API", () => {
     const result = transpileProject({
@@ -129,6 +139,52 @@ describe("per-side check surfaces", () => {
     expect(errorsOn(result, "node_path.ts")).toEqual(["Cannot find name 'editor'."]);
     expect(errorsOn(result, "tools.ts")).toEqual([]);
     expect(errorsOn(result, "main.ts")).toEqual([]);
+  });
+
+  test("a helper an editor script reaches through a namespace re-export is checked on the editor side", () => {
+    const result = transpileProject({
+      files: {
+        "node_path.ts": NODE_PATH_HELPER,
+        "barrel.ts": NAMESPACE_BARREL,
+        "tools.ts": editorScript(
+          ['import { helpers } from "./barrel";'],
+          'print(helpers.nodePath("/a"));',
+        ),
+      },
+    });
+
+    expect(errorsOn(result, "node_path.ts")).toEqual([]);
+    expect(errorsOn(result, "barrel.ts")).toEqual([]);
+    expect(errorsOn(result, "tools.ts")).toEqual([]);
+    expect(result.lua["node_path.ts"]).toBeDefined();
+    expect(result.lua["barrel.ts"]).toBeDefined();
+  });
+
+  test("a helper an editor script reaches through a namespace re-export reports its editor-side errors", () => {
+    const result = transpileProject({
+      files: {
+        "node_path.ts": GO_CALLING_HELPER,
+        "barrel.ts": NAMESPACE_BARREL,
+        "tools.ts": editorScript(
+          ['import { helpers } from "./barrel";'],
+          'print(helpers.nodePath("/a"));',
+        ),
+      },
+    });
+
+    expect(errorsOn(result, "node_path.ts")).toEqual(["Cannot find name 'go'."]);
+    expect(errorsOn(result, "tools.ts")).toEqual([]);
+  });
+
+  test("a helper an editor script reaches through an import type nested in a declaration is checked on the editor side", () => {
+    const result = transpileProject({
+      files: {
+        "node_path.ts": GO_CALLING_HELPER,
+        "tools.ts": editorScript(['type Helpers = typeof import("./node_path");']),
+      },
+    });
+
+    expect(errorsOn(result, "node_path.ts")).toEqual(["Cannot find name 'go'."]);
   });
 
   test("a type-only import of the editor-script subpath makes a source editor-side", () => {
