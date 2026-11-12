@@ -4,11 +4,11 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
+import { AMBIENT_FILES } from "./kind-surfaces";
 import { buildSceneCollectionRoles } from "./scene-collection-roles";
 import { buildSceneComponentIndex, type SceneComponentIndex } from "./scene-component-index";
 import { buildSceneObjectPathIndex, type SceneObjectPathIndex } from "./scene-object-path-index";
 import { createTranspileSession } from "./session";
-import { AMBIENT_FILES } from "./transpile";
 import { checkUrlFragmentReachability } from "./url-fragment-reachability";
 
 // The committed classification table, exactly as `@defold-typescript/types`

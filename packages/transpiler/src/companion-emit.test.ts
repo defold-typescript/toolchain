@@ -5,8 +5,8 @@ import { DEBUG_MANAGED_BLOCK } from "./debug-bootstrap";
 import { findEmittedRequires } from "./emitted-requires";
 import { scanEmittedRequires } from "./lua-require-scan";
 import { requirePathForRel } from "./output-paths";
+import type { TranspileProjectResult } from "./project-output";
 import { createTranspileSession } from "./session";
-import type { TranspileProjectResult } from "./transpile";
 
 const FACTORY_IMPORT = 'import { defineScript } from "@defold-typescript/types";';
 

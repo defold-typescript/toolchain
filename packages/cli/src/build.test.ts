@@ -993,6 +993,48 @@ describe("runBuild", () => {
     expect(lua.indexOf("return {")).toBeLessThan(lua.indexOf(GENERATED_BANNER));
   });
 
+  test("checks an editor script against the editor surface and a game script against the runtime's", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/tools.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        '    print(image.load_file("a.png"));',
+        "    return [];",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    );
+    writeFile(
+      "src/main.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        "export default defineScript({",
+        "  init() {",
+        '    zip.pack("out.zip", ["a.txt"]);',
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    );
+
+    let caught: Error | undefined;
+    try {
+      runBuild({ cwd });
+    } catch (err) {
+      caught = err as Error;
+    }
+    expect(caught).toBeDefined();
+    const located = (caught?.message ?? "")
+      .split("\n")
+      .filter((l) => /src\/(main|tools)\.ts:\d+:\d+:/.test(l));
+    expect(located).toHaveLength(1);
+    expect(located[0]).toMatch(/src\/main\.ts:4:\d+:.*Cannot find name 'zip'/);
+  });
+
   test("prunes a stale .ts.editor_script when its source switches to a runtime factory", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/tools.ts.editor_script", `return {}\n${GENERATED_BANNER}\n`);
