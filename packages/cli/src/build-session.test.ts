@@ -427,6 +427,51 @@ describe("createBuildSession", () => {
     expect(result.written).toEqual(["src/main.ts.script"]);
   });
 
+  const SRC_BUILD_TSCONFIG = JSON.stringify({
+    compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "src/build" },
+    include: ["src/**/*.ts"],
+  });
+
+  function failedFiles(run: () => unknown): string[] {
+    try {
+      run();
+    } catch (error) {
+      expect(error).toBeInstanceOf(BuildFailureError);
+      return (error as BuildFailureError).entries.map((entry) => entry.file);
+    }
+    throw new Error("the build succeeded");
+  }
+
+  test("a source inside outDir fails every rebuild until it leaves", () => {
+    writeIn(cwd, "tsconfig.json", SRC_BUILD_TSCONFIG);
+    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    writeIn(cwd, "src/build/extra.ts", MAIN_NO_IMPORT);
+    expect(failedFiles(() => session.applyEvents(["src/build/extra.ts"], []))).toEqual([
+      "src/build/extra.ts",
+    ]);
+
+    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT.replace("vector3(0, 0, 0)", "vector3(1, 0, 0)"));
+    expect(failedFiles(() => session.applyEvents(["src/main.ts"], []))).toEqual([
+      "src/build/extra.ts",
+    ]);
+
+    rmSync(path.join(cwd, "src/build/extra.ts"));
+    expect(() => session.applyEvents([], ["src/build/extra.ts"])).not.toThrow();
+  });
+
+  test("buildAll fails naming a source already inside outDir", () => {
+    writeIn(cwd, "tsconfig.json", SRC_BUILD_TSCONFIG);
+    writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);
+    writeIn(cwd, "src/build/extra.ts", MAIN_NO_IMPORT);
+
+    expect(failedFiles(() => createBuildSession({ cwd }).buildAll())).toEqual([
+      "src/build/extra.ts",
+    ]);
+  });
+
   test("buildAll prunes a stale module output when a source is now a render-script (watch-startup repro)", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/main.ts", "export const a = 1;\n");

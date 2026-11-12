@@ -17,11 +17,11 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`build` and `tsc` agree** on `onMessage`, [socket](/api/socket) aliases and the API and libraries an editor or game script may use ([Editor scripts](./editor-scripts.md#the-editor-vms-own-libraries)).
 > - **Interface values pass as tables** to `sys.save` and every `PlainTable` slot on all targets.
 > - **Clean scaffolds that `upgrade` keeps current:** docs paths, `.gitignore` and Biome ([init](./init.md)).
-> - **Symbolic links and `outDir`:** `build` and `watch` compile a linked folder an `include` pattern reaches inside the repository or a `link-roots` folder, `build`, `watch` and `resolve` refuse to write through a link or outside the project, and an `outDir` Defold never loads fails `build`, `watch`, `setup-debug` and `scene-types` ([Linked source folders](./build.md#linked-source-folders)).
+> - **Symbolic links and `outDir`:** `build` and `watch` compile a linked folder an `include` pattern reaches inside the repository or a `link-roots` folder, `build`, `watch` and `resolve` refuse to write through a link or outside the project, and an `outDir` Defold never loads, or a source inside `outDir`, fails `build` and `watch` ([Linked source folders](./build.md#linked-source-folders)).
 
 ### Breaking
 
-- **An `outDir` Defold never loads is rejected.** A `tsconfig.json` `outDir` that is absolute, climbs out with `..`, or is or sits inside a root `build`, `builtins`, `.internal` or `.git` folder or a folder `.defignore` lists makes `build`, `watch`, `setup-debug` and `scene-types` fail with a message naming the setting and write nothing; move it to a folder such as `out` ([Build](./build.md#what-it-does)).
+- **An `outDir` Defold never loads is rejected, and a source inside `outDir` fails.** A `tsconfig.json` `outDir` that is absolute, climbs out with `..`, or is or sits inside a root `build`, `builtins`, `.internal` or `.git` folder or a folder `.defignore` lists, in any letter case, makes `build`, `watch`, `setup-debug` and `scene-types` fail with a message naming the setting and write nothing; move it to a folder such as `out`. A source inside `outDir`, which `tsc` never type-checks, fails `build` and `watch` until you move it out ([Build](./build.md#what-it-does)).
 - **A source under a linked folder needs an `outDir`, and a link leading out of the repository needs `link-roots`.** A project with no `outDir` whose `include` folder, or a folder under it, is a symbolic link fails the build, naming the link, and so does a link that `include` reaches whose target is outside the repository (the project itself when no `.git` sits at or above it) and every `link-roots` folder ([Linked source folders](./build.md#linked-source-folders)).
 
 ### Added

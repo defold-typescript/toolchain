@@ -19,15 +19,23 @@ export function readDefignoreLines(cwd: string): string[] {
 /**
  * What hides the project-relative POSIX path `rel` from the Defold editor: the
  * reserved first folder (`"build"`) or the `.defignore` line (`"/generated"`)
- * that covers it, or undefined when the editor loads it.
+ * that covers it, or undefined when the editor loads it. With `foldCase`, a
+ * folder matches in any letter case, as on macOS and Windows, and the result
+ * keeps the reserved folder's or the line's own spelling.
  */
 export function editorHiddenFolder(
   rel: string,
   defignoreLines: readonly string[],
+  foldCase = false,
 ): string | undefined {
   const first = rel.split("/")[0] ?? "";
-  if (NON_RESOURCE_ROOTS.includes(first)) return first;
-  return defignoreLines.find((line) => isDefignoredPath(rel, [line]));
+  const root = foldCase
+    ? NON_RESOURCE_ROOTS.find((name) => name === first.toLowerCase())
+    : NON_RESOURCE_ROOTS.find((name) => name === first);
+  if (root !== undefined) return root;
+  if (!foldCase) return defignoreLines.find((line) => isDefignoredPath(rel, [line]));
+  const folded = rel.toLowerCase();
+  return defignoreLines.find((line) => isDefignoredPath(folded, [line.toLowerCase()]));
 }
 
 export function isNonResourcePath(rel: string, defignoreLines: readonly string[]): boolean {
