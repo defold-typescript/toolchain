@@ -14,8 +14,9 @@
 // one `typeRoots: [".defold-types"]`. The CLI `resolve` verb that orchestrates
 // resolve -> write -> reference stays the next slice.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import { ensureContainedDir, removeContained, writeContainedFile } from "./contained-fs";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import { formatJsonLikeBiome } from "./format-json";
 import { normalizeSourceId } from "./library-match";
@@ -145,7 +146,7 @@ export function materializeExtensionDeclarations(
   // superseded it. Mirrors `materializeVendoredLibraries`, whose empty case
   // already does this.
   if (namespaces.length === 0 && shippedFolders.length === 0) {
-    rmSync(absDir, { recursive: true, force: true });
+    removeContained(cwd, relDir, { recursive: true });
     return { materializedDir: null, namespaces: [], sharedNamespaces: [] };
   }
 
@@ -159,27 +160,28 @@ export function materializeExtensionDeclarations(
   }
   const stems = [...files.keys()].sort();
 
-  mkdirSync(absDir, { recursive: true });
+  const surfaceFile = (rel: string): string => path.posix.join(relDir, rel);
+  ensureContainedDir(cwd, relDir);
 
   const wanted = new Set(stems.map((stem) => `${stem}.d.ts`));
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
-      rmSync(path.join(absDir, existing));
+      removeContained(cwd, surfaceFile(existing));
     }
   }
 
   for (const stem of stems) {
-    writeFileSync(path.join(absDir, `${stem}.d.ts`), files.get(stem) ?? "");
+    writeContainedFile(cwd, surfaceFile(`${stem}.d.ts`), files.get(stem) ?? "");
   }
 
   const shippedImports: string[] = [];
-  rmSync(path.join(absDir, SHIPPED_DIR), { recursive: true, force: true });
+  removeContained(cwd, surfaceFile(SHIPPED_DIR), { recursive: true });
   for (const { folder, bundle } of shippedFolders) {
-    const folderDir = path.join(absDir, SHIPPED_DIR, folder);
-    mkdirSync(folderDir, { recursive: true });
+    const folderRel = path.posix.join(SHIPPED_DIR, folder);
+    ensureContainedDir(cwd, surfaceFile(folderRel));
     for (const { entry, contents } of bundle.shipped) {
       const basename = path.posix.basename(entry);
-      writeFileSync(path.join(folderDir, basename), contents);
+      writeContainedFile(cwd, surfaceFile(path.posix.join(folderRel, basename)), contents);
       shippedImports.push(`./${SHIPPED_DIR}/${folder}/${path.posix.basename(basename, ".d.ts")}`);
     }
   }
@@ -187,10 +189,11 @@ export function materializeExtensionDeclarations(
   const imports = [...stems.map((stem) => `./${stem}`), ...shippedImports]
     .map((specifier) => `import "${specifier}";`)
     .join("\n");
-  writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
+  writeContainedFile(cwd, surfaceFile("index.d.ts"), `${imports}\n\nexport {};\n`);
 
-  writeFileSync(
-    path.join(absDir, "package.json"),
+  writeContainedFile(
+    cwd,
+    surfaceFile("package.json"),
     `${formatJsonLikeBiome({
       name: "@defold-typescript/materialized-extensions",
       types: "index.d.ts",
@@ -218,7 +221,7 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
     const kept = types.filter((entry) => entry !== EXTENSIONS_DIR);
     if (kept.length !== types.length) {
       tsconfig.compilerOptions = { ...current, types: kept };
-      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
     }
     return;
   }
@@ -247,7 +250,7 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
         typeRoots.push(MATERIALIZED_ROOT);
       }
       tsconfig.compilerOptions = { ...current, typeRoots, types };
-      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
     }
   }
 

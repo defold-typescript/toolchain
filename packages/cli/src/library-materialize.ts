@@ -8,9 +8,10 @@
 // they land byte-for-byte with no import rewriting.
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { readCliVersion } from "./cli-version";
+import { ensureContainedDir, removeContained, writeContainedFile } from "./contained-fs";
 import { formatJsonLikeBiome } from "./format-json";
 import {
   ensureGitignoreLine,
@@ -156,7 +157,7 @@ export function materializeVendoredLibraries(
   // reconcile-to-zero: nothing printed means the declared set no longer wants
   // any library surface, so remove a previously-materialized one.
   if (modules.length === 0) {
-    rmSync(absDir, { recursive: true, force: true });
+    removeContained(cwd, relDir, { recursive: true });
     return { materializedDir: null, modules: [] };
   }
 
@@ -165,30 +166,32 @@ export function materializeVendoredLibraries(
     return { materializedDir: relDir, modules };
   }
 
-  mkdirSync(absDir, { recursive: true });
+  const surfaceFile = (rel: string): string => path.posix.join(relDir, rel);
+  ensureContainedDir(cwd, relDir);
   // Retract the stamp for the duration of the rewrite: re-materializing the same
   // `(module set, cliVersion)` lands in a directory whose existing stamp already
   // matches, so writing it last is not enough on its own.
-  rmSync(path.join(absDir, "package.json"), { force: true });
+  removeContained(cwd, surfaceFile("package.json"));
 
   const wanted = new Set(modules.map((module) => `${module}.d.ts`));
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== LIBRARY_ENTRYPOINT && !wanted.has(existing)) {
-      rmSync(path.join(absDir, existing));
+      removeContained(cwd, surfaceFile(existing));
     }
   }
 
   for (const { module, contents } of printed) {
-    writeFileSync(path.join(absDir, `${module}.d.ts`), contents);
+    writeContainedFile(cwd, surfaceFile(`${module}.d.ts`), contents);
   }
 
-  writeFileSync(path.join(absDir, LIBRARY_ENTRYPOINT), libraryEntrypoint(modules));
+  writeContainedFile(cwd, surfaceFile(LIBRARY_ENTRYPOINT), libraryEntrypoint(modules));
 
   // Last write of the function: the stamp only ever vouches for a surface whose
   // every other file has already landed. `modules` and `digest` record the
   // dependency axis the directory name cannot carry.
-  writeFileSync(
-    path.join(absDir, "package.json"),
+  writeContainedFile(
+    cwd,
+    surfaceFile("package.json"),
     `${formatJsonLikeBiome({
       name: "@defold-typescript/materialized-libraries",
       version: cliVersion,
@@ -216,7 +219,7 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
     const kept = types.filter((entry) => !isLibrariesEntry(entry));
     if (kept.length !== types.length) {
       tsconfig.compilerOptions = { ...current, types: kept };
-      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
     }
     return;
   }
@@ -250,7 +253,7 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
         typeRoots.push(MATERIALIZED_ROOT);
       }
       tsconfig.compilerOptions = { ...current, typeRoots, types: kept };
-      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
     }
   }
 
