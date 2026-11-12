@@ -825,7 +825,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (stopped) return;
     if (!e.path) return;
     const key = toPosix(e.path);
-    if (e.kind === "rename" && isLinkChange(key)) syncLinkWatchers();
+    if (e.kind === "rename" && mayMoveLink(key)) syncLinkWatchers();
     // Defold's Fetch Libraries rewrites its manifest once the archives it
     // lists are in place, which changes what `resolve` reads as surely as a
     // `game.project` edit does.
@@ -857,15 +857,27 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   // A recursive watch on the project misses edits inside a linked folder on
   // some hosts, so each followed folder link's real target gets a watcher of
-  // its own, keyed by that target, whose events re-enter as link paths.
-  const linkWatchers = new Map<string, { readonly linkRel: string; readonly watcher: Watcher }>();
+  // its own, keyed by that target, whose events re-enter once per link path
+  // that reaches it.
+  const linkWatchers = new Map<
+    string,
+    { readonly linkRels: readonly string[]; readonly watcher: Watcher }
+  >();
 
-  function isLinkChange(key: string): boolean {
-    for (const { linkRel } of linkWatchers.values()) {
-      if (linkRel === key) return true;
+  // A link moves when it is renamed itself or when a folder above it is, and
+  // a watcher reports a folder move by one side only when it crosses the
+  // watched tree's edge, so both the old side (an ancestor of a followed link)
+  // and the new side (a folder now on disk) count. A renamed file never does,
+  // which keeps atomic saves from walking for links.
+  function mayMoveLink(key: string): boolean {
+    for (const { linkRels } of linkWatchers.values()) {
+      for (const linkRel of linkRels) {
+        if (linkRel === key || linkRel.startsWith(`${key}/`)) return true;
+      }
     }
     try {
-      return lstatSync(path.join(cwd, key)).isSymbolicLink();
+      const stat = lstatSync(path.join(cwd, key));
+      return stat.isSymbolicLink() || stat.isDirectory();
     } catch {
       return false;
     }
@@ -881,28 +893,35 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // here; a build reports both, so the watchers stay as they were.
       return;
     }
-    const relByTarget = new Map<string, string>();
+    const relsByTarget = new Map<string, string[]>();
     for (const [linkRel, target] of links) {
-      if (!relByTarget.has(target)) relByTarget.set(target, linkRel);
+      const rels = relsByTarget.get(target);
+      if (rels) rels.push(linkRel);
+      else relsByTarget.set(target, [linkRel]);
     }
+    // Sorted because the scan follows readdir order, which differs by host.
+    for (const rels of relsByTarget.values()) rels.sort();
     for (const [target, entry] of linkWatchers) {
-      if (relByTarget.get(target) !== entry.linkRel) {
+      const rels = relsByTarget.get(target);
+      if (!rels || rels.join("\n") !== entry.linkRels.join("\n")) {
         entry.watcher.close();
         linkWatchers.delete(target);
       }
     }
-    for (const [target, linkRel] of relByTarget) {
+    for (const [target, linkRels] of relsByTarget) {
       if (linkWatchers.has(target)) continue;
       let linkWatcher: Watcher;
       try {
         linkWatcher = factory(target, (e) => {
-          if (e.path) onEvent({ kind: e.kind, path: `${linkRel}/${toPosix(e.path)}` });
+          if (!e.path) return;
+          const rel = toPosix(e.path);
+          for (const linkRel of linkRels) onEvent({ kind: e.kind, path: `${linkRel}/${rel}` });
         });
       } catch {
         // The target went away after the scan; the next sync sees that.
         continue;
       }
-      linkWatchers.set(target, { linkRel, watcher: linkWatcher });
+      linkWatchers.set(target, { linkRels, watcher: linkWatcher });
     }
   }
 
