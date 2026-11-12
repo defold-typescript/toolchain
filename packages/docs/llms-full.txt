@@ -7996,8 +7996,8 @@ These fail the build, before anything is written:
   land in the link's target. Set `compilerOptions.outDir` in `tsconfig.json` so
   linked sources compile under it.
 
-`watch` compiles linked sources when it starts. It does not watch a link's
-target, so restart it after editing a file there.
+`watch` follows edits inside linked folders, rebuilding at the link's path and
+hot-reloading as it does for any other source.
 
 #### Flags
 
