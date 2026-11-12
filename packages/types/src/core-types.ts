@@ -25,6 +25,8 @@ declare global {
   }
 }
 
+type NotSymbol = string | number | boolean | object | null | undefined;
+
 /**
  * Any value Lua holds as a plain table: an object literal, a value typed by an
  * interface or a type alias, a `LuaMap`, a `LuaTable` or an array. Engine
@@ -34,12 +36,13 @@ declare global {
  * @remarks
  * The `Record` arm stays because an object literal checked against the
  * intersection alone fails the excess-property check. `LuaThread` and
- * `LuaUserdata` cannot take the brand, so both arms reject them by their
- * `__internal__` member; a table with an `__internal__` field is rejected too.
+ * `LuaUserdata` cannot take the brand, so both arms reject a symbol-typed
+ * `__internal__` member, the one lua-types gives them; a table whose
+ * `__internal__` holds any other value passes.
  */
 export type PlainTable =
-  | (Record<string, unknown> & { readonly __internal__?: never })
-  | (object & { readonly [NonTableBrand]?: never; readonly __internal__?: never });
+  | (Record<string, unknown> & { readonly __internal__?: NotSymbol })
+  | (object & { readonly [NonTableBrand]?: never; readonly __internal__?: NotSymbol });
 
 /**
  * A numeric vector of any size, accessed by index for reads and writes;
