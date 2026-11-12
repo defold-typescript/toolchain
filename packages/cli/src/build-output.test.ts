@@ -28,6 +28,7 @@ import {
   libraryModuleRel,
   lualibBundleRel,
   outputRelsForSource,
+  parseBuildConfig,
   pruneAlternativeOutputs,
   readBuildConfig,
   retargetLibrarySourceMap,
@@ -122,6 +123,15 @@ describe("readBuildConfig runtime-dir", () => {
     const message = (thrown as Error).message;
     expect(message).toContain('"defold-typescript"."runtime-dir"');
     expect(message).toContain(JSON.stringify(value));
+  });
+});
+
+describe("a backslash in outDir", () => {
+  test("separates folders in every output and runtime path", () => {
+    const config = parseBuildConfig(JSON.stringify({ compilerOptions: { outDir: "build\\lua" } }));
+
+    expect(computeOutputRel("src/main.ts", config, "module")).toBe("build/lua/main.lua");
+    expect(lualibBundleRel(config)).toBe("build/lua/lib/defold_typescript/lualib_bundle.lua");
   });
 });
 

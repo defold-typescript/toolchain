@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -3056,6 +3057,27 @@ describe("runBuild writes only inside the project", () => {
 
     expect(existsSync(path.join(proj, "real-build/main.lua"))).toBe(true);
   });
+
+  // Windows reads the backslash as a separator, so no link can carry that name there.
+  test.skipIf(process.platform === "win32")(
+    "a backslash in outDir separates folders, so a link named with it is never written through",
+    () => {
+      writeProjectFile("tsconfig.json", tsconfigWithOutDir("build\\output"));
+      writeProjectFile("src/main.ts", "export const ks = Object.keys({ a: 1 });\n");
+      linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+
+      runBuild({ cwd: proj });
+
+      expect(existsSync(path.join(proj, "build/output/main.lua"))).toBe(true);
+      expect(
+        existsSync(path.join(proj, "build/output/lib/defold_typescript/lualib_bundle.lua")),
+      ).toBe(true);
+      const build = lstatSync(path.join(proj, "build"));
+      expect(build.isDirectory()).toBe(true);
+      expect(build.isSymbolicLink()).toBe(false);
+      expect(readdirSync(outside)).toEqual([]);
+    },
+  );
 
   test("an outDir that climbs out of the project is rejected", () => {
     writeProjectFile("tsconfig.json", tsconfigWithOutDir("../escape"));
