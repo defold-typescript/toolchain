@@ -147,6 +147,38 @@ describe("createBuildSession", () => {
     );
   });
 
+  test("an editor script sees resolved Lua libraries and never a native extension, in full and incremental builds", () => {
+    const editorScript = (importLine: string, printLine: string): string =>
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        importLine,
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        `    ${printLine}`,
+        "    return [];",
+        "  },",
+        "});",
+        "",
+      ].join("\n");
+    scaffoldResolvedProject(cwd);
+    writeIn(
+      cwd,
+      "src/tools.ts",
+      editorScript(
+        'import * as checkpoint from "checkpoint.checkpoint";',
+        "print(checkpoint.project_save_path);",
+      ),
+    );
+    const session = createBuildSession({ cwd });
+
+    expect(session.buildAll().written).toContain("src/tools.ts.editor_script");
+
+    writeIn(cwd, "src/tools.ts", editorScript('import * as png from "png";', "print(png.RGBA);"));
+    expect(() => session.applyEvents(["src/tools.ts"], [])).toThrow(
+      /src\/tools\.ts.*Cannot find module 'png'/,
+    );
+  });
+
   test("applyEvents re-reads and rewrites only the changed file", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/util.ts", UTIL);
