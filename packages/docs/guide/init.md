@@ -93,10 +93,12 @@ it is hand-authored Lua, reporting the file it found when it skips. A generated
 `init` retires the older `src`-shaped rules from a project that still carries the
 complete set, leaving every entry you added in place. `init --force` likewise
 updates a Biome schema URL, a Biome dependency range and the `.defold-types`
-ignore that an earlier scaffold wrote, and keeps a Biome version or schema you
-chose. The one exception is a
-`biome.json` you have hand-edited to hold comments: it cannot be rewritten
-without destroying them, so it is reported and left for you to update.
+ignore that an earlier scaffold wrote. An exact Biome pin older than the CLI's,
+with a `biome.json` schema naming the same version, moves to the CLI's Biome
+together with that schema; any other Biome version or schema stays as you chose
+it. The one exception is a `biome.json` you have hand-edited to hold comments: it
+cannot be rewritten without destroying them, so it is reported and left for you
+to update, and its Biome pin stays with it.
 
 The starter follows the same configuration. `init` derives one starter path from
 `include` and `compilerOptions.outDir`: the seeded `main.ts` lands under the

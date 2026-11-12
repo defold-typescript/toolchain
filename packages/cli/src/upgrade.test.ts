@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { GENERATED_BANNER } from "./build-output";
 import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
-import { runInit } from "./init";
+import { runInit, SCAFFOLD_DEV_DEPS } from "./init";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
   compareSemver,
@@ -537,6 +537,20 @@ describe("runUpgrade", () => {
       rmSync(capturedCwd, { recursive: true, force: true });
       rmSync(inheritedCwd, { recursive: true, force: true });
     }
+  });
+
+  test("the in-process path gives a project every managed dev dependency it lacks", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      JSON.stringify({ devDependencies: { "@defold-typescript/cli": "^1.1.0" } }),
+    );
+
+    await runUpgrade({ cwd, running: "1.3.0", io: upgradeIo({ latest: "1.3.0" }).io });
+
+    const upgraded = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+      devDependencies: Record<string, string>;
+    };
+    expect(upgraded.devDependencies).toEqual(SCAFFOLD_DEV_DEPS);
   });
 
   test("a failed hand-off reports no written files, spawns no install, and keeps its output", async () => {
