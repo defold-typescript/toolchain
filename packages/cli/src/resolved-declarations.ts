@@ -35,21 +35,31 @@ function referencedDeclaration(target: string): string | undefined {
   return existsSync(withExtension) ? withExtension : undefined;
 }
 
+export interface ResolvedDeclarations {
+  /** Every declaration, keyed by project-relative POSIX path. */
+  readonly files: Readonly<Record<string, string>>;
+  /**
+   * The keys reached from the `extensions` entry. A native extension never
+   * loads in the editor VM, so an editor script must not see its namespace.
+   */
+  readonly runtimeOnly: ReadonlySet<string>;
+}
+
 /**
  * The declarations behind the `extensions` and current `libraries@<version>`
- * `types` entries `resolve` writes, keyed by project-relative POSIX path. The
- * build loads them as declaration-only inputs because its program is made of the
- * seeded engine files and `include`, never `types`. Every other entry is left
- * out: the engine `surfaceId` surface duplicates the seeded engine files, and a
- * `node_modules` directive is not something `resolve` installed.
+ * `types` entries `resolve` writes. The build loads them as declaration-only
+ * inputs because its program is made of the seeded engine files and `include`,
+ * never `types`. Every other entry is left out: the engine `surfaceId` surface
+ * duplicates the seeded engine files, and a `node_modules` directive is not
+ * something `resolve` installed.
  */
 export function collectResolvedDeclarations(
   cwd: string,
   cliVersion: string = readCliVersion(),
-): Record<string, string> {
+): ResolvedDeclarations {
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (!existsSync(tsconfigPath)) {
-    return {};
+    return { files: {}, runtimeOnly: new Set() };
   }
   const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
     compilerOptions?: { types?: unknown; typeRoots?: unknown };
@@ -66,7 +76,8 @@ export function collectResolvedDeclarations(
     ...(typeRoots === undefined ? {} : { typeRoots }),
   };
 
-  const pending: string[] = [];
+  const files = new Map<string, string>();
+  const runtimeOnly = new Set<string>();
   for (const entry of entries) {
     const { resolvedTypeReferenceDirective } = ts.resolveTypeReferenceDirective(
       entry,
@@ -74,14 +85,28 @@ export function collectResolvedDeclarations(
       typeOptions,
       ts.sys,
     );
-    if (resolvedTypeReferenceDirective?.resolvedFileName !== undefined) {
-      pending.push(resolvedTypeReferenceDirective.resolvedFileName);
+    const entryFile = resolvedTypeReferenceDirective?.resolvedFileName;
+    if (entryFile === undefined) {
+      continue;
+    }
+    for (const [rel, text] of collectClosure(cwd, entryFile)) {
+      files.set(rel, text);
+      if (entry === EXTENSIONS_ENTRY) {
+        runtimeOnly.add(rel);
+      }
     }
   }
+  return {
+    files: Object.fromEntries([...files].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))),
+    runtimeOnly,
+  };
+}
 
-  // The entry file alone misses everything it reaches by relative path: the
-  // per-namespace files and the `shipped/` sets the barrel imports.
+// The entry file alone misses everything it reaches by relative path: the
+// per-namespace files and the `shipped/` sets the barrel imports.
+function collectClosure(cwd: string, entryFile: string): Map<string, string> {
   const files = new Map<string, string>();
+  const pending = [entryFile];
   for (let file = pending.pop(); file !== undefined; file = pending.pop()) {
     const rel = toPosix(path.relative(cwd, file));
     if (files.has(rel)) {
@@ -106,5 +131,5 @@ export function collectResolvedDeclarations(
       }
     }
   }
-  return Object.fromEntries([...files].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  return files;
 }

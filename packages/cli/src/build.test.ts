@@ -216,7 +216,62 @@ describe("runBuild (a project holding only what resolve writes)", () => {
 
     expect(runBuild({ cwd }).written).toEqual(["src/main.ts.script"]);
   });
+
+  test("builds an editor script that imports a resolved Lua library", () => {
+    scaffoldResolvedProject(cwd);
+    writeFile(
+      "src/tools.ts",
+      resolvedEditorScript(
+        'import * as checkpoint from "checkpoint.checkpoint";',
+        "print(checkpoint.project_save_path);",
+      ),
+    );
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/tools.ts.editor_script");
+    expect(result.written).toContain("src/main.ts.script");
+  });
+
+  test("rejects an editor script that imports a native extension, on that script", () => {
+    scaffoldResolvedProject(cwd);
+    writeFile(
+      "src/tools.ts",
+      resolvedEditorScript('import * as png from "png";', "print(png.RGBA);"),
+    );
+
+    const located = locatedBuildErrors();
+
+    expect(located).toHaveLength(1);
+    expect(located[0]).toMatch(/src\/tools\.ts:\d+:\d+:.*Cannot find module 'png'/);
+  });
 });
+
+function resolvedEditorScript(importLine: string, printLine: string): string {
+  return [
+    'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+    importLine,
+    "export default defineEditorScript({",
+    "  get_commands: () => {",
+    `    ${printLine}`,
+    "    return [];",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+}
+
+// The `src/<file>.ts:<line>:<col>:` lines of the error `runBuild` throws.
+function locatedBuildErrors(): string[] {
+  let caught: Error | undefined;
+  try {
+    runBuild({ cwd });
+  } catch (err) {
+    caught = err as Error;
+  }
+  expect(caught).toBeDefined();
+  return (caught?.message ?? "").split("\n").filter((l) => /src\/\w+\.ts:\d+:\d+:/.test(l));
+}
 
 describe("runBuild", () => {
   test("transpiles a single lifecycle source to a Defold script component", () => {
@@ -1033,6 +1088,29 @@ describe("runBuild", () => {
       .filter((l) => /src\/(main|tools)\.ts:\d+:\d+:/.test(l));
     expect(located).toHaveLength(1);
     expect(located[0]).toMatch(/src\/main\.ts:4:\d+:.*Cannot find name 'zip'/);
+  });
+
+  test("reports an editor script's runtime-only call on the editor script", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/tools.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        "    go.get_position();",
+        "    return [];",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    );
+    writeFile("src/main.ts", MAIN_SCRIPT);
+
+    const located = locatedBuildErrors();
+
+    expect(located).toHaveLength(1);
+    expect(located[0]).toMatch(/src\/tools\.ts:4:\d+:.*Cannot find name 'go'/);
   });
 
   test("prunes a stale .ts.editor_script when its source switches to a runtime factory", () => {
