@@ -110,8 +110,24 @@ export function readBuildConfig(cwd: string): BuildConfig {
       `defold-typescript build: no tsconfig.json at ${cwd}; run 'defold-typescript init' first.`,
     );
   }
+  return validatedBuildConfig(cwd, parseBuildConfig(raw));
+}
 
-  const config = parseBuildConfig(raw);
+/**
+ * The build config, or undefined when `tsconfig.json` cannot be read or parsed.
+ * A setting `readBuildConfig` rejects still throws its error.
+ */
+export function readBuildConfigIfPresent(cwd: string): BuildConfig | undefined {
+  let config: TsconfigBuildConfig;
+  try {
+    config = parseBuildConfig(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
+  } catch {
+    return undefined;
+  }
+  return validatedBuildConfig(cwd, config);
+}
+
+function validatedBuildConfig(cwd: string, config: TsconfigBuildConfig): BuildConfig {
   if (config.outDir !== undefined && escapesProject(config.outDir)) {
     throw new Error(
       `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(config.outDir)}; it must be a folder inside the project, with no leading slash, no drive and no "..", because the build writes only inside the project folder.`,
@@ -349,7 +365,8 @@ export interface FailureEntry {
 
 // A build failure carrying one structured entry per diagnostic (position kept),
 // so callers can surface located `file:line:column` rows instead of parsing the
-// combined message string.
+// combined message string. `written` lists the outputs the failed build still
+// wrote for its sources without errors, so `watch` can reload them later.
 export class BuildFailureError extends Error {
   readonly entries: ReadonlyArray<{
     readonly file: string;
@@ -357,6 +374,7 @@ export class BuildFailureError extends Error {
     readonly line?: number;
     readonly column?: number;
   }>;
+  readonly written: readonly string[];
 
   constructor(
     message: string,
@@ -366,10 +384,12 @@ export class BuildFailureError extends Error {
       readonly line?: number;
       readonly column?: number;
     }>,
+    written: readonly string[] = [],
   ) {
     super(message);
     this.name = "BuildFailureError";
     this.entries = entries;
+    this.written = written;
   }
 }
 
@@ -399,7 +419,10 @@ export function collectFailures(
   return failures;
 }
 
-export function throwIfFailures(failures: ReadonlyMap<string, FailureEntry[]>): void {
+export function throwIfFailures(
+  failures: ReadonlyMap<string, FailureEntry[]>,
+  written: readonly string[] = [],
+): void {
   if (failures.size === 0) {
     return;
   }
@@ -416,6 +439,7 @@ export function throwIfFailures(failures: ReadonlyMap<string, FailureEntry[]>): 
   throw new BuildFailureError(
     `defold-typescript build: ${failures.size} file(s) failed:\n${formatted}`,
     entries,
+    written,
   );
 }
 
