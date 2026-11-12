@@ -3252,4 +3252,21 @@ describe("runBuild with symlinked source folders", () => {
     runBuild({ cwd: proj });
     expect(existsSync(path.join(proj, "build", "far", "far.lua"))).toBe(true);
   });
+
+  test("a link leading outside the repository that no include pattern reaches does not fail the build", () => {
+    const tsconfigPath = path.join(proj, "tsconfig.json");
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8"));
+    writeFileSync(tsconfigPath, JSON.stringify({ ...tsconfig, include: ["src/*.ts"] }));
+    writeFileSync(path.join(proj, "src", "main.ts"), "export const ready = 1;\n");
+    mkdirSync(path.join(tmp, "elsewhere"), { recursive: true });
+    writeFileSync(path.join(tmp, "elsewhere", "far.ts"), "export const far = 3;\n");
+    linkDir(path.join("..", "..", "..", "elsewhere"), path.join(proj, "src", "assets"));
+
+    runBuild({ cwd: proj });
+
+    expect(existsSync(path.join(proj, "build", "main.lua"))).toBe(true);
+    expect(
+      readdirSync(path.join(proj, "build")).filter((name) => name === "assets" || name === "core"),
+    ).toEqual([]);
+  });
 });
