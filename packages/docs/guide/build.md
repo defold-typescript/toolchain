@@ -83,7 +83,11 @@ as usual.
 The build writes only inside the project folder. Before writing anything, it
 refuses an output or source-map path that is a symbolic link, and any path a
 folder link leads outside the project, and the failure names the path, the link
-and where the link points. A folder link that stays inside the project is
+and where the link points. The same rule covers the declarations the build
+keeps in `.defold-types/` and its edits to `.gitignore` and `tsconfig.json`: a
+`.defold-types` folder link leading outside the project fails the build, and a
+`.gitignore` or `tsconfig.json` that is a link fails it only when the build must
+change that file. A folder link that stays inside the project is
 followed. `outDir` must be a folder inside the project: an absolute path, or one
 that climbs out with `..`, fails the build. A backslash in `outDir` separates
 folders on every OS, so `"build\\lua"` and `"build/lua"` name the same folder.

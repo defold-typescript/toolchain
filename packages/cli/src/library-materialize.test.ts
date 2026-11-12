@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -12,12 +13,14 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { readCliVersion } from "./cli-version";
+import { ContainedPathError } from "./contained-fs";
 import {
   ensureLibraryTypesReference,
   librariesDirName,
   materializeVendoredLibraries,
 } from "./library-materialize";
 import { ensureMaterializedReference, surfaceDirName } from "./materialize";
+import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
 
 // The materialized surface directory carries the generating toolchain version;
 // these tests defend other behavior, so they derive the name from production
@@ -581,4 +584,37 @@ describe("ensureLibraryTypesReference across a toolchain upgrade", () => {
 
     expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(before);
   });
+});
+
+describe("materializeVendoredLibraries writes only inside the project", () => {
+  test("a .defold-types folder link leading outside is refused and writes nothing there", () => {
+    const proj = path.join(cwd, "proj");
+    const outside = path.join(cwd, "outside");
+    mkdirSync(proj);
+    mkdirSync(outside);
+    linkDir(path.join("..", "outside"), path.join(proj, ".defold-types"));
+
+    expect(() =>
+      materializeVendoredLibraries({ cwd: proj, printed: [printed("dicebag.dicebag")] }),
+    ).toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test.skipIf(!canLinkFiles)(
+    "ensureLibraryTypesReference refuses to rewrite a tsconfig.json link",
+    () => {
+      const outside = path.join(cwd, "outside");
+      const proj = path.join(cwd, "proj");
+      mkdirSync(proj);
+      mkdirSync(outside);
+      const original = `${JSON.stringify({ compilerOptions: {} }, null, 2)}\n`;
+      writeFileSync(path.join(outside, "tsconfig.json"), original);
+      linkFile("../outside/tsconfig.json", path.join(proj, "tsconfig.json"));
+
+      expect(() =>
+        ensureLibraryTypesReference(proj, `.defold-types/${librariesDirName(readCliVersion())}`),
+      ).toThrow("tsconfig.json");
+      expect(readFileSync(path.join(outside, "tsconfig.json"), "utf8")).toBe(original);
+    },
+  );
 });

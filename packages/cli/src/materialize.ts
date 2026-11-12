@@ -1,12 +1,4 @@
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   loadApiTargetsRegistry,
@@ -15,6 +7,12 @@ import {
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
 import { readCliVersion } from "./cli-version";
+import {
+  ContainedPathError,
+  ensureContainedDir,
+  removeContained,
+  writeContainedFile,
+} from "./contained-fs";
 import type { DefoldChannel } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
 
@@ -91,8 +89,8 @@ export function surfaceStampStatus(surfaceDir: string): SurfaceStampStatus {
 // same `(target, cliVersion)` lands in a directory whose existing stamp already
 // equals the new one, so moving the write to the end is not enough on its own:
 // the previous run's stamp would vouch for the whole rewrite.
-function clearSurfaceStamp(absDir: string): void {
-  rmSync(path.join(absDir, "package.json"), { force: true });
+function clearSurfaceStamp(cwd: string, relDir: string): void {
+  removeContained(cwd, path.posix.join(relDir, "package.json"));
 }
 
 // Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
@@ -190,8 +188,8 @@ export interface MaterializeApiSurfaceResult {
   readonly active: string | null;
 }
 
-function writeJson(filePath: string, value: unknown): void {
-  writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
+function writeJson(cwd: string, rel: string, value: unknown): void {
+  writeContainedFile(cwd, rel, `${formatJsonLikeBiome(value)}\n`);
 }
 
 function listDts(dir: string): string[] {
@@ -249,17 +247,20 @@ function reexportableSubpaths(typesRoot: string | null): string[] {
 // that imports them. Rewritten from scratch each run; removed outright when the
 // installed package does not publish the facade, so the remap has no dangling
 // target and never a partial entrypoint.
-export function writePinnedRootEntrypoint(absDir: string, typesRoot: string | null): void {
-  const rootDir = path.join(absDir, PINNED_ROOT_DIR);
+export function writePinnedRootEntrypoint(
+  cwd: string,
+  relDir: string,
+  typesRoot: string | null,
+): void {
+  const rootRel = path.posix.join(relDir, PINNED_ROOT_DIR);
   const subpaths = reexportableSubpaths(typesRoot);
   // Without the facade an older installed package would yield a partial
   // entrypoint. Write nothing instead and let `pinnedRootPaths` omit the bare
   // specifier: the pin degrades to unbound, which beats a subset.
   if (!subpaths.includes(FACADE_SUBPATH)) {
-    rmSync(rootDir, { recursive: true, force: true });
+    removeContained(cwd, rootRel, { recursive: true });
     return;
   }
-  mkdirSync(rootDir, { recursive: true });
   // The remaining subpaths are mostly redundant re-exports of the same
   // declarations, but `timers` is not in the facade, and keeping the loop
   // spares the emitter a hand-maintained exclusion list.
@@ -272,7 +273,7 @@ export function writePinnedRootEntrypoint(absDir: string, typesRoot: string | nu
       .map((subpath) => `export * from "${TYPES_PACKAGE}/${subpath}";`),
     "",
   ].join("\n");
-  writeFileSync(path.join(rootDir, "index.d.ts"), body);
+  writeContainedFile(cwd, path.posix.join(rootRel, "index.d.ts"), body);
 }
 
 // The `paths` substitutions that bind the package specifier — and every subpath
@@ -501,8 +502,9 @@ export function materializeApiSurface(
   const dirName = surfaceDirName(surfaceId, cliVersion);
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
-  mkdirSync(absDir, { recursive: true });
-  clearSurfaceStamp(absDir);
+  const surfaceFile = (rel: string): string => path.posix.join(relDir, rel);
+  ensureContainedDir(cwd, relDir);
+  clearSurfaceStamp(cwd, relDir);
 
   const sources = listDts(sourceGeneratedDir).filter((file) => file !== "index.d.ts");
 
@@ -626,7 +628,7 @@ export function materializeApiSurface(
 
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
-      rmSync(path.join(absDir, existing));
+      removeContained(cwd, surfaceFile(existing));
     }
   }
 
@@ -634,20 +636,25 @@ export function materializeApiSurface(
     const declaration = rewriteCoreTypesImport(
       readFileSync(path.join(sourceGeneratedDir, file), "utf8"),
     );
-    writeFileSync(path.join(absDir, file), declaration);
+    writeContainedFile(cwd, surfaceFile(file), declaration);
   }
   if (includeCoreTypes) {
-    writeFileSync(path.join(absDir, "core-types.d.ts"), CORE_TYPES_REEXPORT);
+    writeContainedFile(cwd, surfaceFile("core-types.d.ts"), CORE_TYPES_REEXPORT);
   }
   if (includeEngineGlobals) {
-    writeFileSync(path.join(absDir, "engine-globals.d.ts"), readFileSync(engineGlobalsSrc, "utf8"));
+    writeContainedFile(
+      cwd,
+      surfaceFile("engine-globals.d.ts"),
+      readFileSync(engineGlobalsSrc, "utf8"),
+    );
   }
   for (const file of overloads) {
-    writeFileSync(path.join(absDir, file), readFileSync(path.join(srcDir, file), "utf8"));
+    writeContainedFile(cwd, surfaceFile(file), readFileSync(path.join(srcDir, file), "utf8"));
   }
   for (const name of carriedSiblings) {
-    writeFileSync(
-      path.join(absDir, `${name}.d.ts`),
+    writeContainedFile(
+      cwd,
+      surfaceFile(`${name}.d.ts`),
       rewriteCoreTypesImport(readFileSync(path.join(currentGeneratedDir, `${name}.d.ts`), "utf8")),
     );
   }
@@ -666,25 +673,25 @@ export function materializeApiSurface(
   // consumer proofs, one per writer, are what keep the paths in step.
   const stdlibReferences =
     '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
-  writeFileSync(path.join(absDir, "index.d.ts"), `${stdlibReferences}${imports}\n\nexport {};\n`);
+  writeContainedFile(
+    cwd,
+    surfaceFile("index.d.ts"),
+    `${stdlibReferences}${imports}\n\nexport {};\n`,
+  );
 
-  writePinnedRootEntrypoint(absDir, typesRoot);
+  writePinnedRootEntrypoint(cwd, relDir, typesRoot);
 
   // The surface directory is reused across builds, so the editor carry-over is
   // rewritten from scratch every run: a target that stopped declaring an editor
   // document must lose its `kinds/` too, or `resolveActivePinnedSurface` keeps
   // recognising the surface as pinned against a stale mirror.
-  rmSync(path.join(absDir, "kinds"), { recursive: true, force: true });
-  rmSync(path.join(absDir, "editor-vm"), { recursive: true, force: true });
+  removeContained(cwd, surfaceFile("kinds"), { recursive: true });
+  removeContained(cwd, surfaceFile("editor-vm"), { recursive: true });
   if (editorPlan !== null) {
     for (const [rel, contents] of editorPlan.files) {
-      const target = path.join(absDir, ...rel.split("/"));
-      mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, contents);
+      writeContainedFile(cwd, surfaceFile(rel), contents);
     }
-    const kindsDir = path.join(absDir, "kinds");
-    mkdirSync(kindsDir, { recursive: true });
-    writeFileSync(path.join(kindsDir, "editor-script.d.ts"), editorPlan.kindIndex);
+    writeContainedFile(cwd, surfaceFile("kinds/editor-script.d.ts"), editorPlan.kindIndex);
   }
 
   // `name` keeps the bare surface id: a second `@` is not a legal npm name. The
@@ -692,7 +699,7 @@ export function materializeApiSurface(
   // reads back to tell a surface apart from a directory merely named like one.
   // Last write of the function: the stamp only ever vouches for a surface whose
   // every other file has already landed.
-  writeJson(path.join(absDir, "package.json"), {
+  writeJson(cwd, surfaceFile("package.json"), {
     name: `@defold-typescript/materialized-${surfaceId}`,
     version: cliVersion,
     types: "index.d.ts",
@@ -704,7 +711,7 @@ export function materializeApiSurface(
 export function ensureGitignoreLine(cwd: string, line: string): void {
   const gitignorePath = path.join(cwd, ".gitignore");
   if (!existsSync(gitignorePath)) {
-    writeFileSync(gitignorePath, `${line}\n`);
+    writeContainedFile(cwd, ".gitignore", `${line}\n`);
     return;
   }
   const existing = readFileSync(gitignorePath, "utf8");
@@ -713,7 +720,7 @@ export function ensureGitignoreLine(cwd: string, line: string): void {
     return;
   }
   const prefix = existing.endsWith("\n") || existing === "" ? "" : "\n";
-  writeFileSync(gitignorePath, `${existing}${prefix}${line}\n`);
+  writeContainedFile(cwd, ".gitignore", `${existing}${prefix}${line}\n`);
 }
 
 export function ensureMaterializedReference(cwd: string, materializedDir: string | null): void {
@@ -756,7 +763,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
           options.paths = desiredPaths;
         }
         tsconfig.compilerOptions = options;
-        writeJson(tsconfigPath, tsconfig);
+        writeJson(cwd, "tsconfig.json", tsconfig);
       }
       return;
     }
@@ -795,7 +802,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
         options.paths = desiredPaths;
       }
       tsconfig.compilerOptions = options;
-      writeJson(tsconfigPath, tsconfig);
+      writeJson(cwd, "tsconfig.json", tsconfig);
     }
   }
 
@@ -838,14 +845,13 @@ interface KindManifestEntry {
 }
 
 interface MaterializeVersionedSurfaceModule {
-  readonly materializeVersionedSurface: (
+  readonly buildVersionedSurfaceFiles: (
     target: unknown,
     opts: {
-      destDir: string;
       resolveOpts?: RefDocResolveOptions;
       excludeModules?: readonly string[];
     },
-  ) => Promise<void>;
+  ) => Promise<readonly { readonly path: string; readonly contents: string }[]>;
   readonly renderMaterializedKindIndex: (opts: {
     kind: string;
     universalModules: readonly string[];
@@ -890,9 +896,10 @@ export interface MaterializeRefDocSurfaceOptions {
 // a path as a URL and never strips types under `node_modules`; the import stays
 // dynamic so the current build path avoids its fixture-reading side effects.
 // `root` is still resolved for the hand-authored files copied beside the output.
-// The generator makes the faux package self-contained on its own — brand imports
-// resolve from the surface root and the `src/*` augmentations ride along — so
-// this writer adds only the per-kind subpaths and the package metadata.
+// The generator returns the faux package's files, self-contained on their own —
+// brand imports resolve from the surface root and the `src/*` augmentations ride
+// along — and this writer puts each one in place through `contained-fs`, then
+// adds only the per-kind subpaths and the package metadata.
 export async function materializeRefDocSurface(
   opts: MaterializeRefDocSurfaceOptions,
 ): Promise<MaterializeApiSurfaceResult> {
@@ -911,15 +918,16 @@ export async function materializeRefDocSurface(
   const dirName = surfaceDirName(surfaceId, cliVersion);
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
+  const surfaceFile = (rel: string): string => path.posix.join(relDir, rel);
   try {
-    clearSurfaceStamp(absDir);
+    clearSurfaceStamp(cwd, relDir);
     const mod = (await import(
       "@defold-typescript/types/cli-runtime"
     )) as MaterializeVersionedSurfaceModule;
-    await mod.materializeVersionedSurface(target, {
-      destDir: absDir,
-      ...(resolveOpts ? { resolveOpts } : {}),
-    });
+    const files = await mod.buildVersionedSurfaceFiles(target, resolveOpts ? { resolveOpts } : {});
+    for (const file of files) {
+      writeContainedFile(cwd, surfaceFile(file.path), file.contents);
+    }
 
     // The editor documents the target declared, plain namespace first so the
     // kind index reads the way the committed one does. They sit beside the
@@ -932,7 +940,11 @@ export async function materializeRefDocSurface(
     ].map((m) => m.outFile.replace(/\.d\.ts$/, ""));
     if (editorModules.length > 0) {
       for (const base of EDITOR_HAND_AUTHORED) {
-        copyFileSync(path.join(root, "src", `${base}.d.ts`), path.join(absDir, `${base}.d.ts`));
+        writeContainedFile(
+          cwd,
+          surfaceFile(`${base}.d.ts`),
+          readFileSync(path.join(root, "src", `${base}.d.ts`), "utf8"),
+        );
       }
     }
     const editorOwned = new Set([...editorModules, ...EDITOR_HAND_AUTHORED]);
@@ -955,8 +967,6 @@ export async function materializeRefDocSurface(
       (base) => !RESTRICTED_NAMESPACES.has(base) && !Object.hasOwn(restrictedAugmentations, base),
     );
     const kinds = mod.targetKindManifest(target);
-    const kindsDir = path.join(absDir, "kinds");
-    mkdirSync(kindsDir, { recursive: true });
     for (const entry of kinds) {
       const restrictedModule =
         entry.restricted && surfaceModules.includes(entry.restricted) ? entry.restricted : null;
@@ -969,8 +979,9 @@ export async function materializeRefDocSurface(
         freeDir !== null && existsSync(freeDir)
           ? listDts(freeDir).map((file) => file.replace(/\.d\.ts$/, ""))
           : undefined;
-      writeFileSync(
-        path.join(kindsDir, `${entry.kind}.d.ts`),
+      writeContainedFile(
+        cwd,
+        surfaceFile(`kinds/${entry.kind}.d.ts`),
         mod.renderMaterializedKindIndex({
           kind: entry.kind,
           universalModules,
@@ -998,14 +1009,19 @@ export async function materializeRefDocSurface(
       "./core-types": { types: "./core-types.d.ts" },
     };
 
-    writePinnedRootEntrypoint(absDir, root);
+    writePinnedRootEntrypoint(cwd, relDir, root);
 
     // Stamped last, as in `materializeApiSurface`. The `catch` below already
     // removes the whole directory on an in-process throw, so the ordering here
     // is what a SIGKILL between the two writes sees.
-    writeJson(pkgPath, pkg);
-  } catch {
-    rmSync(absDir, { recursive: true, force: true });
+    writeJson(cwd, surfaceFile("package.json"), pkg);
+  } catch (err) {
+    removeContained(cwd, relDir, { recursive: true });
+    // A refused path is the project's to fix, not a surface the target lacks:
+    // falling back to the default surface would hide it behind a warning.
+    if (err instanceof ContainedPathError) {
+      throw err;
+    }
     return { materializedDir: null, active: null };
   }
   return { materializedDir: relDir, active: surfaceId };

@@ -15,8 +15,10 @@ import { BUNDLED_LIBRARIES, bundledModules } from "@defold-typescript/transpiler
 import { loadApiTargetsRegistry } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
 import { readCliVersion } from "./cli-version";
+import { ContainedPathError } from "./contained-fs";
 import { ensureExtensionTypesReference } from "./extension-materialize";
 import {
+  ensureGitignoreLine,
   ensureMaterializedReference,
   materializeApiSurface,
   materializeRefDocSurface,
@@ -30,6 +32,7 @@ import {
   multiKindRefDocResolveOpts,
   multiKindRefDocTarget,
 } from "./ref-doc-test-fixture";
+import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
 
 // The materialized surface directory carries the generating toolchain version;
 // these tests defend other behavior, so they derive the name from production
@@ -1217,6 +1220,88 @@ describe("materializeRefDocSurface consumer proof", () => {
   });
 });
 
+describe("materialized writes stay inside the project", () => {
+  let proj: string;
+  let outside: string;
+
+  beforeEach(() => {
+    proj = path.join(cwd, "proj");
+    outside = path.join(cwd, "outside");
+    mkdirSync(proj);
+    mkdirSync(outside);
+  });
+
+  function linkSurfaceRootOutside(): void {
+    linkDir(path.join("..", "outside"), path.join(proj, ".defold-types"));
+  }
+
+  test("materializeApiSurface refuses a .defold-types link leading outside", () => {
+    seedSource(["label", "sprite"]);
+    linkSurfaceRootOutside();
+
+    expect(() =>
+      materializeApiSurface({ cwd: proj, surface: CURRENT, sourceGeneratedDir: sourceDir }),
+    ).toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test("materializeRefDocSurface refuses a .defold-types link leading outside", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+    linkSurfaceRootOutside();
+
+    const run = materializeRefDocSurface({
+      cwd: proj,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+
+    await expect(run).rejects.toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test.skipIf(!canLinkFiles)(
+    "ensureMaterializedReference refuses to rewrite a tsconfig.json link",
+    () => {
+      const original = `${JSON.stringify({ compilerOptions: {} }, null, 2)}\n`;
+      writeFileSync(path.join(outside, "tsconfig.json"), original);
+      linkFile("../outside/tsconfig.json", path.join(proj, "tsconfig.json"));
+
+      expect(() =>
+        ensureMaterializedReference(proj, `.defold-types/${surfaceDir("defold-1.12.4")}`),
+      ).toThrow("tsconfig.json");
+      expect(readFileSync(path.join(outside, "tsconfig.json"), "utf8")).toBe(original);
+    },
+  );
+
+  test.skipIf(!canLinkFiles)(
+    "ensureMaterializedReference leaves a tsconfig.json link alone when nothing changes",
+    () => {
+      const materializedDir = `.defold-types/${surfaceDir("defold-1.12.4")}`;
+      writeFileSync(path.join(proj, "tsconfig.json"), "{}\n");
+      writeFileSync(path.join(proj, ".gitignore"), ".defold-types/\n");
+      ensureMaterializedReference(proj, materializedDir);
+      const settled = readFileSync(path.join(proj, "tsconfig.json"), "utf8");
+      writeFileSync(path.join(outside, "tsconfig.json"), settled);
+      rmSync(path.join(proj, "tsconfig.json"));
+      linkFile("../outside/tsconfig.json", path.join(proj, "tsconfig.json"));
+
+      ensureMaterializedReference(proj, materializedDir);
+
+      expect(readFileSync(path.join(outside, "tsconfig.json"), "utf8")).toBe(settled);
+    },
+  );
+
+  test.skipIf(!canLinkFiles)("ensureGitignoreLine refuses to append to a .gitignore link", () => {
+    writeFileSync(path.join(outside, "ignore.txt"), "keep\n");
+    linkFile("../outside/ignore.txt", path.join(proj, ".gitignore"));
+
+    expect(() => ensureGitignoreLine(proj, ".defold-types/")).toThrow(".gitignore");
+    expect(readFileSync(path.join(outside, "ignore.txt"), "utf8")).toBe("keep\n");
+  });
+});
+
 describe("pinned root paths", () => {
   const PKG_ROOT = path.resolve(import.meta.dir, "..", "..", "types");
   const MANAGED = "@defold-typescript/types";
@@ -1482,7 +1567,7 @@ describe("pinned root paths", () => {
     mkdirSync(path.join(surfaceDirPath, "root"), { recursive: true });
     writeFileSync(path.join(surfaceDirPath, "root", "index.d.ts"), "export {};\n");
 
-    writePinnedRootEntrypoint(surfaceDirPath, typesRoot);
+    writePinnedRootEntrypoint(cwd, "surface", typesRoot);
 
     expect(existsSync(path.join(surfaceDirPath, "root"))).toBe(false);
   });
