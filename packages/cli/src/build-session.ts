@@ -130,7 +130,12 @@ export interface BuildSession {
 export function createBuildSession(opts: CreateBuildSessionOptions): BuildSession {
   const { cwd } = opts;
   const config: BuildConfig = readBuildConfig(cwd);
-  const session: TranspileSession = createTranspileSession();
+  // Replaced on every full rebuild, before the session reads it. `applyEvents`
+  // never re-reads the resolved declarations, so it keeps the last marks.
+  let runtimeOnly: ReadonlySet<string> = new Set();
+  const session: TranspileSession = createTranspileSession({
+    isRuntimeOnly: (name) => runtimeOnly.has(name),
+  });
 
   // The whole program's source text, carried across rebuilds. `applyEvents`
   // holds only the changed files, and the require check gets a false negative
@@ -405,7 +410,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
 
     // Declaration-only, as `runBuild` loads them: `sourceTexts` never holds them.
-    const result = session.update({ ...files, ...collectResolvedDeclarations(cwd) });
+    const resolved = collectResolvedDeclarations(cwd);
+    runtimeOnly = resolved.runtimeOnly;
+    const result = session.update({ ...files, ...resolved.files });
     sourceTexts.clear();
     for (const rel of sources) {
       sourceTexts.set(rel, files[rel] ?? "");

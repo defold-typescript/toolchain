@@ -138,8 +138,11 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   // one-shot session, so both check a source against the same surface. The
   // declarations `resolve` installed join the program only: `sources` never
   // names them, so nothing below checks or writes them.
-  const session = createTranspileSession();
-  const result = session.update({ ...files, ...collectResolvedDeclarations(cwd) });
+  const resolved = collectResolvedDeclarations(cwd);
+  const session = createTranspileSession({
+    isRuntimeOnly: (name) => resolved.runtimeOnly.has(name),
+  });
+  const result = session.update({ ...files, ...resolved.files });
   const failures = collectFailures(result.diagnostics);
 
   const outputBySource: Record<string, string> = {};

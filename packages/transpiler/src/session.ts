@@ -127,7 +127,17 @@ interface Side {
   forget(fileName: string): void;
 }
 
-export function createTranspileSession(): TranspileSession {
+export interface TranspileSessionOptions {
+  /**
+   * Whether a declaration file describes code only the game runtime loads, such
+   * as a native extension's namespace. Such a file stays off the editor side.
+   * Called with the forward-slash form of the name.
+   */
+  readonly isRuntimeOnly?: (fileName: string) => boolean;
+}
+
+export function createTranspileSession(options: TranspileSessionOptions = {}): TranspileSession {
+  const isRuntimeOnly = options.isRuntimeOnly ?? (() => false);
   const userFiles = new Map<string, string>();
   const libCache = new Map<string, ts.SourceFile>();
 
@@ -237,10 +247,43 @@ export function createTranspileSession(): TranspileSession {
     return { files: collector.files, reported, companions: companionEmit.companions };
   }
 
-  // The editor side goes first: which helpers it reaches is known only from its
-  // program, and every user file it reaches leaves the runtime side's roots. A
-  // runtime source that imports one of them pulls it back in, so a helper both
-  // sides import is checked against both surfaces.
+  // The user files the editor-side sources reach through their own imports. The
+  // editor program also holds every shared declaration and whatever that
+  // imports, but a helper a declaration imports for a type is the runtime side's.
+  function editorReach(
+    roots: ReadonlySet<string>,
+    userKeys: ReadonlySet<string>,
+    options: ts.CompilerOptions,
+  ): Set<string> {
+    const reached = new Set<string>();
+    const pending = [...roots];
+    for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
+      if (reached.has(name)) {
+        continue;
+      }
+      reached.add(name);
+      const { importedFiles } = ts.preProcessFile(userFiles.get(name) ?? "", true, false);
+      for (const { fileName } of importedFiles) {
+        const { resolvedModule } = ts.resolveModuleName(fileName, name, options, editor.host);
+        const target =
+          resolvedModule === undefined
+            ? undefined
+            : normalizeSlashes(resolvedModule.resolvedFileName);
+        if (target !== undefined && userKeys.has(target)) {
+          pending.push(target);
+        }
+      }
+    }
+    return reached;
+  }
+
+  // The editor side goes first: which helpers it reaches is known only from the
+  // editor-side sources' imports, and every user file they reach leaves the
+  // runtime side's roots. A runtime source that imports one of them pulls it
+  // back in, so a helper both sides import is checked against both surfaces. A
+  // declaration file describes code both VMs can load, so both sides take it as
+  // a root, except one that is editor-side on its own or that `isRuntimeOnly`
+  // marks. The editor side reports only on what it reaches.
   function update(changes: Readonly<Record<string, string | null>>): TranspileProjectResult {
     for (const [name, value] of Object.entries(changes)) {
       const normalized = normalizeSlashes(name);
@@ -254,24 +297,27 @@ export function createTranspileSession(): TranspileSession {
     }
 
     const userKeys = new Set(userFiles.keys());
-    const editorRoots = [...userFiles]
-      .filter(([, text]) => isEditorSideSource(text))
-      .map(([name]) => name);
+    const editorSide = new Set(
+      [...userFiles].filter(([, text]) => isEditorSideSource(text)).map(([name]) => name),
+    );
+    const isSharedDeclaration = (name: string): boolean =>
+      name.endsWith(".d.ts") && !editorSide.has(name);
 
-    const editorReached = new Set<string>();
+    let editorReached = new Set<string>();
     let editorEmit: SideEmit | undefined;
-    if (editorRoots.length > 0) {
+    if (editorSide.size > 0) {
+      const editorRoots = [...userKeys].filter(
+        (name) => editorSide.has(name) || (isSharedDeclaration(name) && !isRuntimeOnly(name)),
+      );
       editorEmit = emitSide(editor, editorRoots, userKeys);
-      for (const sourceFile of editor.program?.getSourceFiles() ?? []) {
-        if (userKeys.has(sourceFile.fileName)) {
-          editorReached.add(sourceFile.fileName);
-        }
-      }
+      editorReached = editorReach(editorSide, userKeys, editor.program?.getCompilerOptions() ?? {});
     } else {
       editor.program = undefined;
     }
 
-    const runtimeRoots = [...userKeys].filter((name) => !editorReached.has(name));
+    const runtimeRoots = [...userKeys].filter(
+      (name) => !editorReached.has(name) || isSharedDeclaration(name),
+    );
     let runtimeEmit: SideEmit | undefined;
     if (runtimeRoots.length > 0) {
       runtimeEmit = emitSide(runtime, runtimeRoots, userKeys);
@@ -294,11 +340,12 @@ export function createTranspileSession(): TranspileSession {
       ...(editorEmit?.companions ?? []),
       ...(runtimeEmit?.companions ?? []),
     ]);
+    const editorReported = (editorEmit?.reported ?? []).filter(
+      ({ file }) =>
+        file === undefined || !userKeys.has(file.fileName) || editorReached.has(file.fileName),
+    );
     const diagnostics = [
-      ...ts.sortAndDeduplicateDiagnostics([
-        ...(editorEmit?.reported ?? []),
-        ...(runtimeEmit?.reported ?? []),
-      ]),
+      ...ts.sortAndDeduplicateDiagnostics([...editorReported, ...(runtimeEmit?.reported ?? [])]),
     ];
     return collectOutputs(files, diagnostics, userKeys, companions);
   }

@@ -37,7 +37,7 @@ describe("collectResolvedDeclarations", () => {
   test("returns the extensions closure and the libraries surface, read from disk", () => {
     scaffoldResolvedProject(cwd);
 
-    const files = collectResolvedDeclarations(cwd);
+    const { files } = collectResolvedDeclarations(cwd);
 
     expect(Object.keys(files).sort()).toEqual(resolvedFiles());
     for (const [rel, text] of Object.entries(files)) {
@@ -45,25 +45,35 @@ describe("collectResolvedDeclarations", () => {
     }
   });
 
+  test("marks the extensions closure runtime-only and the libraries surface shared", () => {
+    scaffoldResolvedProject(cwd);
+
+    const { runtimeOnly } = collectResolvedDeclarations(cwd);
+
+    expect([...runtimeOnly].sort()).toEqual(
+      resolvedFiles().filter((rel) => rel.startsWith(".defold-types/extensions/")),
+    );
+  });
+
   test("returns nothing once resolve has dropped both types entries", () => {
     scaffoldResolvedProject(cwd);
     ensureExtensionTypesReference(cwd, null);
     ensureLibraryTypesReference(cwd, null);
 
-    expect(collectResolvedDeclarations(cwd)).toEqual({});
+    expect(collectResolvedDeclarations(cwd).files).toEqual({});
   });
 
   test("returns nothing when the entries name a .defold-types that is not there", () => {
     scaffoldResolvedProject(cwd);
     rmSync(path.join(cwd, ".defold-types"), { recursive: true, force: true });
 
-    expect(collectResolvedDeclarations(cwd)).toEqual({});
+    expect(collectResolvedDeclarations(cwd).files).toEqual({});
   });
 
   test("returns nothing for a tsconfig with no compilerOptions", () => {
     writeFileSync(path.join(cwd, "tsconfig.json"), '{ "include": ["src/**/*.ts"] }\n');
 
-    expect(collectResolvedDeclarations(cwd)).toEqual({});
+    expect(collectResolvedDeclarations(cwd).files).toEqual({});
   });
 
   test("skips the engine surface entry", () => {
@@ -71,7 +81,7 @@ describe("collectResolvedDeclarations", () => {
     installEngineSurface(cwd);
     expect(readTypes()).toHaveLength(3);
 
-    expect(Object.keys(collectResolvedDeclarations(cwd)).sort()).toEqual(resolvedFiles());
+    expect(Object.keys(collectResolvedDeclarations(cwd).files).sort()).toEqual(resolvedFiles());
   });
 
   test("skips a type directive that resolves into node_modules", () => {
@@ -82,7 +92,7 @@ describe("collectResolvedDeclarations", () => {
     writeFileSync(path.join(typesPackage, "index.d.ts"), "export {};\n");
     expect(readTypes()).toContain("@defold-typescript/types");
 
-    expect(Object.keys(collectResolvedDeclarations(cwd)).sort()).toEqual(resolvedFiles());
+    expect(Object.keys(collectResolvedDeclarations(cwd).files).sort()).toEqual(resolvedFiles());
   });
 });
 

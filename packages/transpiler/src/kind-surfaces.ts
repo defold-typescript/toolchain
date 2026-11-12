@@ -110,6 +110,24 @@ function collectTypesClosure(entry: string): Record<string, string> {
   return { ...files, ...collectLuaTypesClosure(luaEntries) };
 }
 
+// The generated declarations of each bundled library, at the paths the package
+// `exports` map names, so the build types user code against the same `.d.ts`
+// tsserver reads. A library's own `.ts` compiles separately, in
+// `compileLibraryModules`.
+function bundledLibraryDeclarations(): Record<string, string> {
+  const files: Record<string, string> = {};
+  for (const { id } of BUNDLED_LIBRARIES) {
+    for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, id))) {
+      if (entry.endsWith(".d.ts")) {
+        files[`node_modules/@defold-typescript/types/${id}/${entry}`] = readAmbient(
+          `${id}/${entry}`,
+        );
+      }
+    }
+  }
+  return files;
+}
+
 function buildAmbientFiles(): Record<string, string> {
   const files: Record<string, string> = {
     [LANGUAGE_EXTENSIONS_KEY]: readLanguageExtensions(),
@@ -162,19 +180,7 @@ function buildAmbientFiles(): Record<string, string> {
     "node_modules/@defold-typescript/types/render-script.d.ts":
       'export { defineRenderScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
   };
-  // The generated declarations of each bundled library, at the paths the
-  // package `exports` map names, so the build types user code against the same
-  // `.d.ts` tsserver reads. A library's own `.ts` compiles separately, in
-  // `compileLibraryModules`.
-  for (const { id } of BUNDLED_LIBRARIES) {
-    for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, id))) {
-      if (entry.endsWith(".d.ts")) {
-        files[`node_modules/@defold-typescript/types/${id}/${entry}`] = readAmbient(
-          `${id}/${entry}`,
-        );
-      }
-    }
-  }
+  Object.assign(files, bundledLibraryDeclarations());
   // Seed the Lua 5.1 standard library (math/os/string/table/coroutine + base
   // globals) so user code can call e.g. `math.randomseed(os.time())`.
   Object.assign(files, collectLuaTypesClosure(LUA_TYPES_ENTRY_FILES));
@@ -208,11 +214,14 @@ const EDITOR_KIND_CLOSURE = collectTypesClosure(EDITOR_KIND_INDEX);
 
 /**
  * The declarations an editor-side source is checked against: the closure of the
- * editor-script kind index, and the editor-script subpath.
+ * editor-script kind index, the editor-script subpath, and the bundled
+ * libraries' declarations, which are module-scoped, so they widen nothing for a
+ * source that does not import them.
  */
 export const EDITOR_AMBIENT_FILES: Readonly<Record<string, string>> = {
   [LANGUAGE_EXTENSIONS_KEY]: readLanguageExtensions(),
   ...EDITOR_KIND_CLOSURE,
+  ...bundledLibraryDeclarations(),
   "node_modules/@defold-typescript/types/editor-script.d.ts": [
     'export { defineEditorCommand, defineEditorScript } from "./src/editor.js";',
     'export type { EditorCommand, EditorCommandQuery, EditorNode, EditorScriptModule } from "./src/editor.js";',
