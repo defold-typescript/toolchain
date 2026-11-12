@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`onMessage` handlers and hooks bind every parameter at runtime**, and a defaulted one fails the build ([Which handler forms build](./messages.md#which-handler-forms-build)).
+> - **`onMessage` handlers and hooks bind every parameter and module-level name at runtime**, and a defaulted one fails the build ([Which handler forms build](./messages.md#which-handler-forms-build)).
 
 ### Breaking
 
@@ -21,7 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **`onMessage` handlers and lifecycle hooks built clean but read the wrong value or an undefined global when Defold ran them:** a handler reading `self`, a parameter TypeScript-to-Lua renames such as `type`, handler parameters named after another engine argument such as `(message, msg)`, and an optional parameter past the engine's arguments on a handler or a returning `init`. Each parameter now holds the engine argument at its position, or `undefined` past them, and a destructured or rest parameter, which emitted broken Lua, fails the build at that parameter ([Routing many messages](./messages.md#routing-many-messages-with-onmessage), [Reading properties in `init`](./script-lifecycle.md#reading-properties-in-init)).
+- **`onMessage` handlers and lifecycle hooks built clean but read the wrong value or an undefined global when Defold ran them:** a handler reading its `self` parameter or a module-level `message`, `sender` or `message_id`, a parameter TypeScript-to-Lua renames such as `type`, handler parameters named after another engine argument such as `(message, msg)`, and an optional parameter past the engine's arguments on a handler or a returning `init`. A handler now reads every module-level name it uses and each parameter holds the engine argument at its position, or `undefined` past them, while a destructured or rest parameter, which emitted broken Lua, fails the build at that parameter ([Routing many messages](./messages.md#routing-many-messages-with-onmessage), [Reading properties in `init`](./script-lifecycle.md#reading-properties-in-init)).
 
 ## v0.63.0
 

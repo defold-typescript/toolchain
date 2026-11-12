@@ -1065,7 +1065,8 @@ function eraseFactoryCall(
     if (fn === undefined) {
       // A hook whose initializer is a recognized `onMessage({...})` call: let it
       // route through the message-dispatch lowering, which yields the flat
-      // `function(____self, message_id, message, sender)` chunk, then bind it.
+      // `function(____engine_self, ____engine_message_id, ____engine_message,
+      // ____engine_sender)` chunk, then bind it.
       const dispatch = dispatcherInitializer(property, context.checker);
       if (dispatch !== undefined) {
         statements.push(

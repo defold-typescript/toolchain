@@ -23,10 +23,14 @@ const DISPATCH_MODULE = "@defold-typescript/types";
 const DISPATCH_NAME = "onMessage";
 
 // The engine calls `on_message(self, message_id, message, sender)`; a handler's
-// own params (in order) alias onto these three value-bearing names. The engine
-// `self` takes `____self`, the name TypeScript-to-Lua emits for a `self` the
-// handler body reads.
-const HANDLER_PARAM_TARGETS = ["____self", "message", "sender"] as const;
+// own params (in order) alias onto the three value-bearing arguments. Each takes
+// a name TypeScript-to-Lua never gives a temp or a renamed identifier, so a
+// header parameter never shadows a name the handler body captures.
+const ENGINE_SELF = "____engine_self";
+const ENGINE_MESSAGE_ID = "____engine_message_id";
+const ENGINE_MESSAGE = "____engine_message";
+const ENGINE_SENDER = "____engine_sender";
+const HANDLER_PARAM_TARGETS = [ENGINE_SELF, ENGINE_MESSAGE, ENGINE_SENDER] as const;
 
 export function resolvesToDispatchExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
   let symbol = checker.getSymbolAtLocation(callee);
@@ -130,20 +134,17 @@ function isThisParameter(param: ts.ParameterDeclaration): boolean {
   );
 }
 
-// One multiple assignment, so every engine name is read before any alias can
-// shadow it; a parameter past `sender` is bound to nil.
+// One multiple assignment binds every declared parameter to the engine argument
+// at its position; no parameter's Lua name equals an engine name, so each one is
+// aliased. A parameter past `sender` is bound to nil.
 function aliasStatements(fn: HandlerFunction, context: TransformationContext): Statement[] {
   const lefts: Identifier[] = [];
   const rights: Expression[] = [];
   fn.parameters
     .filter((param) => !isThisParameter(param))
     .forEach((param, index) => {
-      const local = context.transformExpression(param.name as ts.Identifier) as Identifier;
       const engineName = HANDLER_PARAM_TARGETS[index];
-      if (local.text === engineName) {
-        return;
-      }
-      lefts.push(local);
+      lefts.push(context.transformExpression(param.name as ts.Identifier) as Identifier);
       rights.push(engineName === undefined ? createNilLiteral() : createIdentifier(engineName));
     });
   return lefts.length === 0 ? [] : [createVariableDeclarationStatement(lefts, rights)];
@@ -192,7 +193,7 @@ export const messageDispatchLoweringPlugin: Plugin = {
             continue;
           }
           const condition = createBinaryExpression(
-            createIdentifier("message_id"),
+            createIdentifier(ENGINE_MESSAGE_ID),
             createCallExpression(createIdentifier("hash"), [createStringLiteral(name)]),
             SyntaxKind.EqualityOperator,
           );
@@ -200,11 +201,11 @@ export const messageDispatchLoweringPlugin: Plugin = {
           chain = createIfStatement(condition, createBlock(body), chain);
         }
         const params: Identifier[] = [
-          createIdentifier("____self"),
-          createIdentifier("message_id"),
-          createIdentifier("message"),
-          createIdentifier("sender"),
-        ];
+          ENGINE_SELF,
+          ENGINE_MESSAGE_ID,
+          ENGINE_MESSAGE,
+          ENGINE_SENDER,
+        ].map((name) => createIdentifier(name));
         return createFunctionExpression(
           createBlock(chain === undefined ? [] : [chain]),
           params,
