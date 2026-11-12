@@ -25,6 +25,7 @@ import { mergeMiseToml } from "./mise-scaffold";
 import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
+import { compareSemver } from "./upgrade";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
 import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -141,7 +142,7 @@ const GITATTRIBUTES_LINES = [
 
 // One version feeds both the schema URL and the exact dev-dependency pin, so the
 // Biome a project installs always reads the schema the scaffold wrote.
-export const BIOME_VERSION = "2.6.6";
+export const BIOME_VERSION = "2.6.7";
 export const BIOME_SCHEMA = `https://biomejs.dev/schemas/${BIOME_VERSION}/schema.json`;
 const DEFOLD_TYPES_IGNORE = "!.defold-types";
 
@@ -152,7 +153,9 @@ const DEFOLD_TYPES_IGNORE = "!.defold-types";
 //
 // The Biome entries are single values every earlier scaffold wrote verbatim, so
 // each one is brought forward on its own: a schema URL, a dev-dependency range
-// and the folder negation Biome 2.2+ reports.
+// and the folder negation Biome 2.2+ reports. Scaffolds that pin Biome exactly
+// need no entry here: `readScaffoldBiomePair` recognizes an exact pin plus the
+// schema naming the same older version, and both move together.
 export const RETIRED_MANAGED_ENTRIES = {
   gitignore: [
     "src/**/*.ts.script",
@@ -589,7 +592,11 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
 // concrete published version. A
 // concrete user-chosen pin is left alone unless `force` is set, the explicit
 // opt-in to refresh the managed pins (and only those) to the CLI's version.
-function repairManagedDevDeps(devDeps: Record<string, string>, force = false): void {
+function repairManagedDevDeps(
+  devDeps: Record<string, string>,
+  force = false,
+  biomePair = false,
+): void {
   delete devDeps["@defold-typescript/transpiler"];
   for (const name of [
     "@defold-typescript/types",
@@ -608,12 +615,43 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
   if (force || devDeps.typescript?.startsWith("workspace:")) {
     devDeps.typescript = TYPESCRIPT_SPEC;
   }
-  // Biome is repinned only from a range an earlier scaffold wrote; any other
-  // value is the user's own choice.
+  // Biome is repinned only from a value an earlier scaffold wrote: a listed
+  // released range, or an exact pin whose schema names the same older version
+  // (`biomePair`), which moves together with that schema. Any other value is the
+  // user's own choice.
   const biome = devDeps["@biomejs/biome"];
-  if (force && biome !== undefined && isOneOf(biome, RETIRED_MANAGED_ENTRIES.biomeDevDeps)) {
+  if (
+    force &&
+    biome !== undefined &&
+    (biomePair || isOneOf(biome, RETIRED_MANAGED_ENTRIES.biomeDevDeps))
+  ) {
     devDeps["@biomejs/biome"] = BIOME_VERSION;
   }
+}
+
+// Whether `package.json` pins Biome to an exact version older than this CLI's and
+// `biome.json` names that same version's schema — the pair an exact-pin scaffold
+// wrote. A missing or unparsable file, a range, a newer pin or a schema naming
+// another version is the user's own setup.
+function readScaffoldBiomePair(cwd: string): boolean {
+  let pin: unknown;
+  let schema: unknown;
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as PackageJson;
+    const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
+      $schema?: unknown;
+    };
+    pin = pkg.devDependencies?.["@biomejs/biome"];
+    schema = biome.$schema;
+  } catch {
+    return false;
+  }
+  return (
+    typeof pin === "string" &&
+    /^\d+\.\d+\.\d+$/.test(pin) &&
+    schema === `https://biomejs.dev/schemas/${pin}/schema.json` &&
+    compareSemver(pin, BIOME_VERSION) < 0
+  );
 }
 
 function isOneOf(value: string, released: readonly string[]): boolean {
@@ -740,11 +778,12 @@ function migrateBiomeIncludes(raw: string, include: readonly string[]): string |
 }
 
 // Bring forward the Biome values an earlier scaffold wrote verbatim: its schema
-// URL becomes `BIOME_SCHEMA`, and its `"!.defold-types/**"` becomes the folder
+// URL becomes `BIOME_SCHEMA` (a listed released URL, or the one `biomePair`
+// matched to an exact pin), and its `"!.defold-types/**"` becomes the folder
 // form Biome 2.2+ expects. A schema or include of the user's own stays. Returns
 // the re-serialized JSON, or `null` when neither is present or the file does not
 // parse as JSON.
-function migrateBiomeReleasedForms(raw: string): string | null {
+function migrateBiomeReleasedForms(raw: string, biomePair = false): string | null {
   let value: unknown;
   try {
     value = JSON.parse(raw);
@@ -755,7 +794,7 @@ function migrateBiomeReleasedForms(raw: string): string | null {
   let changed = false;
   if (
     typeof root.$schema === "string" &&
-    isOneOf(root.$schema, RETIRED_MANAGED_ENTRIES.biomeSchemas)
+    (biomePair || isOneOf(root.$schema, RETIRED_MANAGED_ENTRIES.biomeSchemas))
   ) {
     root.$schema = BIOME_SCHEMA;
     changed = true;
@@ -779,6 +818,7 @@ function writeBiome(
   warnings: string[],
   include: readonly string[],
   force = false,
+  biomePair = false,
 ): void {
   const biomePath = path.join(cwd, "biome.json");
   if (existsSync(biomePath)) {
@@ -791,7 +831,7 @@ function writeBiome(
     // runs on the previous one's output rather than instead of it.
     const withPreset = migrateBiomeRecommended(raw);
     const withIncludes = migrateBiomeIncludes(withPreset ?? raw, include) ?? withPreset;
-    const migrated = migrateBiomeReleasedForms(withIncludes ?? raw) ?? withIncludes;
+    const migrated = migrateBiomeReleasedForms(withIncludes ?? raw, biomePair) ?? withIncludes;
     if (migrated !== null) {
       writeFileSync(biomePath, migrated);
       written.push("biome.json");
@@ -1144,6 +1184,10 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     status: existing === undefined ? "written" : "merged",
   });
 
+  // Decided once, before `package.json` is rewritten below: by the time
+  // `writeBiome` runs, the pin would already name the new version and the pair
+  // would no longer match.
+  const biomePair = force && readScaffoldBiomePair(cwd);
   const pkgPath = path.join(cwd, "package.json");
   if (existsSync(pkgPath)) {
     const existing = JSON.parse(readFileSync(pkgPath, "utf8")) as PackageJson;
@@ -1153,7 +1197,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
         devDeps[name] = version;
       }
     }
-    repairManagedDevDeps(devDeps, force);
+    repairManagedDevDeps(devDeps, force, biomePair);
     existing.devDependencies = devDeps;
     const repair = repairDefoldNamespace(
       existing["defold-typescript"],
@@ -1183,7 +1227,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
   writeDefignore(cwd);
   written.push(".defignore");
 
-  writeBiome(cwd, written, warnings, include, force);
+  writeBiome(cwd, written, warnings, include, force, biomePair);
   writeMiseTasks(cwd, written);
 
   writeVscodeExtensions(cwd, written);

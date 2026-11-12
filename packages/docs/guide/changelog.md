@@ -16,7 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`bun test` runs `hsm` and `ecs`** from a plain import ([State machines](./state-machines.md#test-a-machine-with-bun)).
 > - **`tsc` types `onMessage`** and [socket](/api/socket) aliases.
 > - **Interface values pass as tables** to `sys.save` and every `PlainTable` slot on all targets.
-> - **Clean scaffolds:** docs paths, `.gitignore` and `biome check` ([init](./init.md)).
+> - **Clean scaffolds that `upgrade` keeps current:** docs paths, `.gitignore` and Biome ([init](./init.md)).
 
 ### Added
 
@@ -29,7 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **A scaffolded project fell short of a clean setup in three places; [init](./init.md) writes the fixes and [upgrade](./upgrade.md) adds them to an existing project:**
   - **Docs paths:** the managed `AGENTS.md` pointed at docs missing under Bun's isolated installs, so the scaffold now lists `@defold-typescript/docs` in its dev dependencies, pinned to the CLI's version.
   - **`.gitignore`:** generated `.ts.editor_script` files and `.lua.map` files outside component output reached version control; the managed rules now ignore both.
-  - **`biome check`:** a new project reported a schema-version notice and a `useBiomeIgnoreFolder` warning. The scaffold now pins Biome exactly to 2.6.6, the version its `biome.json` schema names, and ignores `.defold-types` the way Biome 2.2+ expects, while `upgrade` keeps a Biome version or schema you chose.
+  - **`biome check`:** a new project reported a schema-version notice and a `useBiomeIgnoreFolder` warning. The scaffold now pins Biome exactly to 2.6.7, the version its `biome.json` schema names, and ignores `.defold-types` the way Biome 2.2+ expects; `upgrade` moves an older exact pin together with the schema naming it, and keeps any other Biome version or schema you chose.
 
 ## v0.62.0
 
