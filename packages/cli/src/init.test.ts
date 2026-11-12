@@ -1467,6 +1467,69 @@ describe("runInit --force brings a released biome scaffold forward", () => {
     expect(devDeps["@biomejs/biome"]).toBe("^2.0.0");
   });
 
+  // 2.6.0 sits in neither retired list and below every later `BIOME_VERSION`, so
+  // only the exact-pin-and-matching-schema rule can move it.
+  test("an older exact pin and the schema naming it move to the current Biome together", () => {
+    seed(releasedBiomeJson("2.6.0"), "2.6.0");
+
+    runInit({ cwd, force: true });
+
+    const { biome, devDeps } = readBack();
+    expect(biome.$schema).toBe(BIOME_SCHEMA);
+    expect(devDeps["@biomejs/biome"]).toBe(BIOME_VERSION);
+
+    const again = runInit({ cwd, force: true });
+    expect(again.written).not.toContain("biome.json");
+  });
+
+  test("a newer, mismatched or commented exact pair stays under --force", () => {
+    const newer = `${Number(BIOME_VERSION.split(".")[0]) + 1}.0.0`;
+    const cases: { label: string; pin: string; biomeRaw: string }[] = [
+      {
+        label: "newer pair",
+        pin: newer,
+        biomeRaw: `${JSON.stringify(releasedBiomeJson(newer), null, 2)}\n`,
+      },
+      {
+        label: "mismatched pair",
+        pin: "2.6.0",
+        biomeRaw: `${JSON.stringify(releasedBiomeJson("2.5.2"), null, 2)}\n`,
+      },
+      {
+        label: "commented biome.json",
+        pin: "2.6.0",
+        biomeRaw: `// the user's note\n${JSON.stringify(releasedBiomeJson("2.6.0"), null, 2)}\n`,
+      },
+    ];
+
+    for (const { label, pin, biomeRaw } of cases) {
+      rmSync(cwd, { recursive: true, force: true });
+      cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-"));
+      touch("game.project", "[project]\n");
+      touch("biome.json", biomeRaw);
+      touch(
+        "package.json",
+        `${JSON.stringify({ name: "user-project", devDependencies: { "@biomejs/biome": pin } })}\n`,
+      );
+      const schemaBefore = biomeRaw.startsWith("//")
+        ? undefined
+        : (JSON.parse(biomeRaw) as { $schema: string }).$schema;
+
+      runInit({ cwd, force: true });
+
+      const raw = readFileSync(path.join(cwd, "biome.json"), "utf8");
+      if (schemaBefore === undefined) {
+        expect(raw, label).toBe(biomeRaw);
+      } else {
+        expect((JSON.parse(raw) as { $schema: string }).$schema, label).toBe(schemaBefore);
+      }
+      const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+        devDependencies: Record<string, string>;
+      };
+      expect(pkg.devDependencies["@biomejs/biome"], label).toBe(pin);
+    }
+  });
+
   test("without --force a released biome.json and pin stay untouched", () => {
     seed(releasedBiomeJson("2.5.1"), "^2.5.0");
     const before = readFileSync(path.join(cwd, "biome.json"), "utf8");
