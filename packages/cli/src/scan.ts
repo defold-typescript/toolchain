@@ -43,22 +43,44 @@ function realpathOrUndefined(abs: string): string | undefined {
 const GLOB_METACHARACTER_RE = /[*?[\]{}]/;
 
 interface LinkGuard {
-  /** The real target of the link at `rel`, or undefined when it dangles; throws when it escapes. */
+  /**
+   * The real target of the link at `rel`, or undefined when it dangles; throws
+   * when it escapes, unless the guard skips escaping links.
+   */
   follow(rel: string): string | undefined;
   /** Checks every link among the existing components of `rel`; true when there is one. */
   checkPath(rel: string): boolean;
+  /** Records a folder link the walk enters. */
+  enter(rel: string, real: string): void;
 }
 
-function createLinkGuard(cwd: string, roots: readonly string[]): LinkGuard {
+interface LinkGuardOptions {
+  /** Treat a link leading outside every root as a dangling one instead of throwing. */
+  readonly skipEscaping?: boolean;
+  readonly onFolderLink?: (rel: string, real: string) => void;
+}
+
+function createLinkGuard(
+  cwd: string,
+  roots: readonly string[],
+  options: LinkGuardOptions = {},
+): LinkGuard {
   const linkByPrefix = new Map<string, boolean>();
 
   function follow(rel: string): string | undefined {
     const abs = path.join(cwd, rel);
     const real = realpathOrUndefined(abs);
     if (real !== undefined && !isUnderLinkRoot(roots, real)) {
+      if (options.skipEscaping) {
+        return undefined;
+      }
       throw new LinkEscapeError(linkEscapeMessage(cwd, roots, rel, readlinkSync(abs)));
     }
     return real;
+  }
+
+  function enter(rel: string, real: string): void {
+    options.onFolderLink?.(rel, real);
   }
 
   function checkPath(rel: string): boolean {
@@ -75,7 +97,10 @@ function createLinkGuard(cwd: string, roots: readonly string[]): LinkGuard {
         isLink = stat.isSymbolicLink();
         linkByPrefix.set(prefix, isLink);
         if (isLink) {
-          follow(prefix);
+          const real = follow(prefix);
+          if (real !== undefined && statOrUndefined(real, true)?.isDirectory()) {
+            enter(prefix, real);
+          }
         }
       }
       sawLink ||= isLink;
@@ -83,7 +108,7 @@ function createLinkGuard(cwd: string, roots: readonly string[]): LinkGuard {
     return sawLink;
   }
 
-  return { follow, checkPath };
+  return { follow, checkPath, enter };
 }
 
 /**
@@ -124,6 +149,7 @@ function filesThroughLinks(
           if (glob.mayContain(rel)) {
             const real = guard.follow(rel);
             if (real !== undefined && !chain.has(real)) {
+              guard.enter(rel, real);
               walk(rel, true, new Set(chain).add(real));
             }
           }
@@ -219,4 +245,28 @@ export function discoverSources(cwd: string, include: readonly string[]): string
     relByReal.set(real, source);
   }
   return sources;
+}
+
+/**
+ * The folder links discovery follows for `include`, link path -> real target,
+ * so `watch` can observe what a recursive watch on the project misses. A link
+ * leading outside every link root is left out rather than reported: it is
+ * never compiled, so there is nothing to watch, and a build reports it.
+ */
+export function followedFolderLinks(cwd: string, include: readonly string[]): Map<string, string> {
+  const links = new Map<string, string>();
+  const guard = createLinkGuard(cwd, readLinkRoots(cwd), {
+    skipEscaping: true,
+    onFolderLink: (rel, real) => links.set(rel, real),
+  });
+  for (const pattern of include) {
+    const rel = normalizeScannedPath(pattern);
+    if (!GLOB_METACHARACTER_RE.test(rel)) {
+      guard.checkPath(rel);
+      continue;
+    }
+    const glob = compileIncludeGlob(rel);
+    filesThroughLinks(cwd, glob.walkBase, guard.checkPath(glob.walkBase), glob, guard);
+  }
+  return links;
 }
