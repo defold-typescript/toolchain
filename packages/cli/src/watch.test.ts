@@ -1502,6 +1502,58 @@ describe("runWatch hot reload", () => {
     await handle.done;
   });
 
+  test("a rebuild after a failed batch reloads what the failed batch wrote", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/a.ts", scriptSource(1));
+    writeProjectFile("src/b.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    const rebuildEvents = () =>
+      out()
+        .trimEnd()
+        .split("\n")
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .filter((event) => event.event === "rebuild");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeProjectFile("src/a.ts", scriptSource(2));
+    writeProjectFile("src/b.ts", 'const x: number = "oops";\n');
+    factory.trigger("change", "src/a.ts");
+    factory.trigger("change", "src/b.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.slice(afterStartup)).toEqual([]);
+    expect(readFileSync(path.join(cwd, "src/a.ts.script"), "utf8")).toContain("vector3(2");
+
+    writeProjectFile("src/b.ts", scriptSource(1));
+    factory.trigger("change", "src/b.ts");
+    await handle.waitForIdle();
+
+    expect(rebuildEvents().at(-1)?.written).toEqual([]);
+    expect(editor.posts.slice(afterStartup)).toEqual(["hot-reload"]);
+
+    writeProjectFile("src/b.ts", scriptSource(1));
+    factory.trigger("change", "src/b.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.slice(afterStartup)).toEqual(["hot-reload"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("a rebuild that succeeds but writes no files posts no reload", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));

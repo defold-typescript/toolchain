@@ -12,7 +12,7 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   isFileIncluded,
-  readBuildConfig,
+  readBuildConfigIfPresent,
 } from "./build-output";
 import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
 import { LLDEBUGGER_MODULE, LLDEBUGGER_URL } from "./lldebugger";
@@ -226,13 +226,10 @@ type ProjectScanner = (cwd: string, pattern: string) => string[];
 // `setup-debug`'s only hard precondition is `game.project`, and most projects it
 // wires have never run `init`, so a missing or unparseable `tsconfig.json` is
 // the `src/`-rooted default rather than the hard failure `readBuildConfig`
-// raises for the build.
+// raises for the build. A setting `readBuildConfig` rejects is still an error:
+// the default layout would point the debugger at outputs the build never writes.
 export function resolveSetupDebugConfig(cwd: string): BuildConfig {
-  try {
-    return readBuildConfig(cwd);
-  } catch {
-    return { outDir: undefined, include: DEFAULT_INCLUDE };
-  }
+  return readBuildConfigIfPresent(cwd) ?? { outDir: undefined, include: DEFAULT_INCLUDE };
 }
 
 interface IncludedSource {
@@ -471,7 +468,14 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
     );
   }
 
-  const config = opts.config ?? resolveSetupDebugConfig(cwd);
+  // A rejected setting is a failure result, not a throw: `dispatch` awaits this
+  // with no catch.
+  let config: BuildConfig;
+  try {
+    config = opts.config ?? resolveSetupDebugConfig(cwd);
+  } catch (err) {
+    return failure(err instanceof Error ? err.message : String(err));
+  }
   const sources = includedProductionSources(cwd, config, opts.scanFiles);
 
   const resolved = await resolveTargetScript(opts, config, sources);

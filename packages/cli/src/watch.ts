@@ -378,6 +378,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   const pendingReload = new Set<EditorReloadCommand>();
+  // Outputs a failed rebuild still wrote. They wait for the next successful
+  // rebuild, which reloads them even when it writes nothing itself.
+  const unreloaded = new Set<string>();
   // Whether the queued `hot-reload` stands in for a compile: its verdict is the
   // same one, so a compile follows only when the reload returned none.
   let reloadCompileWish = false;
@@ -804,9 +807,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // Inside the success branch on purpose: reloading after a failed build
       // would push the previous emit's Lua into the running game, and compiling
       // after one would judge that same stale Lua.
-      if (!scheduleReload(written)) requestCompile();
+      const toReload = [...new Set([...unreloaded, ...written])];
+      unreloaded.clear();
+      if (!scheduleReload(toReload)) requestCompile();
     } catch (err) {
       outputCurrent = false;
+      if (err instanceof BuildFailureError) {
+        for (const rel of err.written) unreloaded.add(rel);
+      }
       reportFailure(err, "rebuild");
     }
     if (!opts.json) stdout.write(BUILD_FINISHED_LINE);

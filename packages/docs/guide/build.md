@@ -92,7 +92,9 @@ followed. `outDir` must be a folder inside the project: an absolute path, or one
 that climbs out with `..`, fails the build. It must also be a folder Defold
 loads: an `outDir` that is, or sits inside, `build`, `builtins`, `.internal` or
 `.git` at the project root, or a folder `.defignore` lists, fails the build,
-because the Defold editor never loads files there. A backslash in `outDir`
+because the Defold editor never loads files there. `setup-debug` and
+`scene-types` refuse the same `outDir` and write nothing, while a project with
+no `tsconfig.json` still runs both on the `src/` default. A backslash in `outDir`
 separates folders on every OS, so `"out\\lua"` and `"out/lua"` name the same
 folder.
 
