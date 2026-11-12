@@ -106,8 +106,8 @@ first `include` pattern that admits it, the generated `main/main.collection`
 names the component [`build`](./build.md) emits for that file, and greenfield
 detection looks for the same pair rather than a `src` literal. A project whose
 `include` is `["game/**/*.ts"]` therefore gets `game/main.ts` and a collection
-pointing at `/game/main.ts.script`, and adding `"outDir": "build"` moves that
-component path to `/build/main.ts.script` in step with the compiled output. A
+pointing at `/game/main.ts.script`, and adding `"outDir": "out"` moves that
+component path to `/out/main.ts.script` in step with the compiled output. A
 tool-added `exclude` entry for that starter is pruned on every re-run, while an
 entry naming a root you have since moved off is left alone as yours. When no
 configured pattern reaches a writable `main.ts` inside the project — an exact

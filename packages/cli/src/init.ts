@@ -25,7 +25,7 @@ import { mergeMiseToml } from "./mise-scaffold";
 import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
-import { compareSemver } from "./upgrade";
+import { compareSemver } from "./semver";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
 import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";

@@ -7,6 +7,7 @@ import {
 } from "@defold-typescript/transpiler";
 import {
   BuildFailureError,
+  formatBuildLine,
   isFileIncluded,
   isTranspilerSource,
   readBuildConfig,
@@ -203,10 +204,6 @@ export const recursiveWatcherFactory: WatcherFactory = (root, onEvent) => {
   });
   return { close: () => w.close() };
 };
-
-function formatBuildLine(written: readonly string[]): string {
-  return `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`;
-}
 
 // Cycle sentinels the VS Code background problemMatcher keys off to clear stale
 // problems and re-anchor them per rebuild (see vscode-tasks.ts).

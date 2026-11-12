@@ -89,8 +89,12 @@ keeps in `.defold-types/` and its edits to `.gitignore` and `tsconfig.json`: a
 `.gitignore` or `tsconfig.json` that is a link fails it only when the build must
 change that file. A folder link that stays inside the project is
 followed. `outDir` must be a folder inside the project: an absolute path, or one
-that climbs out with `..`, fails the build. A backslash in `outDir` separates
-folders on every OS, so `"build\\lua"` and `"build/lua"` name the same folder.
+that climbs out with `..`, fails the build. It must also be a folder Defold
+loads: an `outDir` that is, or sits inside, `build`, `builtins`, `.internal` or
+`.git` at the project root, or a folder `.defignore` lists, fails the build,
+because the Defold editor never loads files there. A backslash in `outDir`
+separates folders on every OS, so `"out\\lua"` and `"out/lua"` name the same
+folder.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
@@ -260,12 +264,12 @@ repo/
   .git/
   factory-core/src/save.ts
   game/
-    tsconfig.json        "outDir": "build"
+    tsconfig.json        "outDir": "out"
     src/main.ts          import { save } from "./core/save";
     src/core  ->  ../../factory-core/src
 ```
 
-`src/core/save.ts` compiles to `build/core/save.lua`, `require("build.core.save")`
+`src/core/save.ts` compiles to `out/core/save.lua`, `require("out.core.save")`
 loads it, and its source map points at `src/core/save.ts`. No output names the
 link's target and nothing is written into it, so two projects that link one
 folder each compile their own copy. Discovery never follows a link inside

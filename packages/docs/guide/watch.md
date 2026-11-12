@@ -107,9 +107,11 @@ project. To see them in the terminal as well, run with
 
 ## Hot reload
 
-`--hot-reload` pushes each successful rebuild into the game running under the
+`--hot-reload` pushes each successful rebuild that changes a file into the game
+running under the
 [Defold editor](./defold-editor.md#hot-reload-while-it-runs), so you stop
-pressing **Build** after every edit:
+pressing **Build** after every edit. A rebuild whose outputs already hold the
+same bytes, such as a re-save with no edit, posts no reload:
 
 ```sh
 bunx @defold-typescript/cli watch --hot-reload
@@ -197,7 +199,7 @@ status you can branch on.
 ## Flags
 
 - `--hot-reload` — push a reload to the running game after every successful
-  rebuild (see [Hot reload](#hot-reload)).
+  rebuild that changes a file (see [Hot reload](#hot-reload)).
 - `--editor-compile` — compile in the attached Defold 1.13.2+ editor after
   every successful rebuild and every project file change, and print its errors
   (see [Compile in the editor](#compile-in-the-editor)).
