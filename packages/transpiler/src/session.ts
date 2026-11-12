@@ -113,6 +113,7 @@ function createOutputCollector(): { writeFile: ts.WriteFileCallback; files: Coll
 }
 
 interface SideEmit {
+  readonly program: ts.Program;
   readonly files: readonly CollectorFile[];
   readonly reported: readonly ts.Diagnostic[];
   readonly companions: ReadonlyMap<string, string>;
@@ -134,6 +135,44 @@ export interface TranspileSessionOptions {
    * Called with the forward-slash form of the name.
    */
   readonly isRuntimeOnly?: (fileName: string) => boolean;
+}
+
+// Every module a file names, at any depth: `import` and `export ... from`
+// declarations (namespace re-exports included), `import x = require(...)`,
+// dynamic `import()`, and `import("...")` types.
+function moduleSpecifiers(sourceFile: ts.SourceFile): string[] {
+  const specifiers: string[] = [];
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+      node.moduleSpecifier !== undefined &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      specifiers.push(node.moduleSpecifier.text);
+    } else if (
+      ts.isImportEqualsDeclaration(node) &&
+      ts.isExternalModuleReference(node.moduleReference) &&
+      ts.isStringLiteral(node.moduleReference.expression)
+    ) {
+      specifiers.push(node.moduleReference.expression.text);
+    } else if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] !== undefined &&
+      ts.isStringLiteralLike(node.arguments[0])
+    ) {
+      specifiers.push(node.arguments[0].text);
+    } else if (
+      ts.isImportTypeNode(node) &&
+      ts.isLiteralTypeNode(node.argument) &&
+      ts.isStringLiteral(node.argument.literal)
+    ) {
+      specifiers.push(node.argument.literal.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return specifiers;
 }
 
 export function createTranspileSession(options: TranspileSessionOptions = {}): TranspileSession {
@@ -244,17 +283,19 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
       new tstl.Transpiler().emit({ program, writeFile: collector.writeFile });
     }
 
-    return { files: collector.files, reported, companions: companionEmit.companions };
+    return { program, files: collector.files, reported, companions: companionEmit.companions };
   }
 
-  // The user files the editor-side sources reach through their own imports. The
-  // editor program also holds every shared declaration and whatever that
-  // imports, but a helper a declaration imports for a type is the runtime side's.
+  // The user files the editor-side sources reach through their own imports and
+  // re-exports. The editor program also holds every shared declaration and
+  // whatever that imports, but a helper a declaration imports for a type is the
+  // runtime side's.
   function editorReach(
     roots: ReadonlySet<string>,
     userKeys: ReadonlySet<string>,
-    options: ts.CompilerOptions,
+    program: ts.Program,
   ): Set<string> {
+    const options = program.getCompilerOptions();
     const reached = new Set<string>();
     const pending = [...roots];
     for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
@@ -262,9 +303,10 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
         continue;
       }
       reached.add(name);
-      const { importedFiles } = ts.preProcessFile(userFiles.get(name) ?? "", true, false);
-      for (const { fileName } of importedFiles) {
-        const { resolvedModule } = ts.resolveModuleName(fileName, name, options, editor.host);
+      const sourceFile = program.getSourceFile(name);
+      const specifiers = sourceFile === undefined ? [] : moduleSpecifiers(sourceFile);
+      for (const specifier of specifiers) {
+        const { resolvedModule } = ts.resolveModuleName(specifier, name, options, editor.host);
         const target =
           resolvedModule === undefined
             ? undefined
@@ -310,7 +352,7 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
         (name) => editorSide.has(name) || (isSharedDeclaration(name) && !isRuntimeOnly(name)),
       );
       editorEmit = emitSide(editor, editorRoots, userKeys);
-      editorReached = editorReach(editorSide, userKeys, editor.program?.getCompilerOptions() ?? {});
+      editorReached = editorReach(editorSide, userKeys, editorEmit.program);
     } else {
       editor.program = undefined;
     }
