@@ -24,6 +24,7 @@
     "dist",
     "src",
     "!src/**/*.test.ts",
+    "!src/**/*.test-support.ts",
     "!src/**/__snapshots__"
   ],
   "publishConfig": {
