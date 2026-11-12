@@ -3122,3 +3122,134 @@ describe("runBuild writes only inside the project", () => {
     },
   );
 });
+
+describe("runBuild with symlinked source folders", () => {
+  let tmp: string;
+  let repo: string;
+  let proj: string;
+
+  const SAVE = "export function save(): number {\n  return 1;\n}\n";
+  const UTIL = "export const depth = 2;\n";
+  const MAIN_MODULE = 'import { save } from "./core/save";\nexport const saved = save();\n';
+
+  beforeEach(() => {
+    tmp = realpathSync.native(mkdtempSync(path.join(os.tmpdir(), "defold-typescript-linked-")));
+    repo = path.join(tmp, "repo");
+    mkdirSync(path.join(repo, ".git"), { recursive: true });
+    mkdirSync(path.join(repo, "factory-core", "src", "deep"), { recursive: true });
+    writeFileSync(path.join(repo, "factory-core", "src", "save.ts"), SAVE);
+    writeFileSync(path.join(repo, "factory-core", "src", "deep", "util.ts"), UTIL);
+    proj = scaffoldLinkedProject("game", { outDir: "build" });
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function scaffoldLinkedProject(name: string, compilerOptions: Record<string, string>): string {
+    const root = path.join(repo, name);
+    mkdirSync(path.join(root, "src"), { recursive: true });
+    writeFileSync(
+      path.join(root, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, ...compilerOptions },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    writeFileSync(path.join(root, "src", "main.ts"), MAIN_MODULE);
+    linkDir("../../factory-core/src", path.join(root, "src", "core"));
+    return root;
+  }
+
+  function listing(dir: string): string[] {
+    return readdirSync(dir, { recursive: true })
+      .map((entry) => String(entry).split(path.sep).join("/"))
+      .sort();
+  }
+
+  function outputsUnder(dir: string): string[] {
+    return listing(dir).filter((rel) => rel.endsWith(".lua") || rel.endsWith(".map"));
+  }
+
+  test("a linked folder builds under outDir at its link path", () => {
+    runBuild({ cwd: proj });
+
+    expect(existsSync(path.join(proj, "build", "core", "save.lua"))).toBe(true);
+    expect(existsSync(path.join(proj, "build", "core", "deep", "util.lua"))).toBe(true);
+    expect(readFileSync(path.join(proj, "build", "main.lua"), "utf8")).toContain(
+      'require("build.core.save")',
+    );
+  });
+
+  test("maps and requires derive from the link path, never the target's", () => {
+    runBuild({ cwd: proj });
+
+    const map = JSON.parse(readFileSync(path.join(proj, "build", "core", "save.lua.map"), "utf8"));
+    expect(map.sourceRoot).toBe("../../src/core");
+    for (const rel of outputsUnder(path.join(proj, "build"))) {
+      expect(readFileSync(path.join(proj, "build", rel), "utf8")).not.toContain("factory-core");
+    }
+  });
+
+  test("the link's target folder is left unchanged", () => {
+    const before = listing(path.join(repo, "factory-core"));
+    runBuild({ cwd: proj });
+    expect(listing(path.join(repo, "factory-core"))).toEqual(before);
+  });
+
+  test("two projects linking one folder each write only under their own outDir", () => {
+    const tool = scaffoldLinkedProject("tool", { outDir: "build" });
+    const before = listing(path.join(repo, "factory-core"));
+
+    const gameBuild = runBuild({ cwd: proj });
+    const toolBuild = runBuild({ cwd: tool });
+
+    for (const [root, result] of [
+      [proj, gameBuild],
+      [tool, toolBuild],
+    ] as const) {
+      expect(result.written).toContain("build/core/save.lua");
+      expect(result.written.every((rel) => rel.startsWith("build/"))).toBe(true);
+      expect(existsSync(path.join(root, "build", "core", "save.lua"))).toBe(true);
+    }
+    expect(listing(path.join(repo, "factory-core"))).toEqual(before);
+  });
+
+  test("without outDir a linked source fails the build, naming the link and outDir, and writes nothing", () => {
+    rmSync(proj, { recursive: true, force: true });
+    const alongside = scaffoldLinkedProject("game", {});
+    const before = listing(repo);
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd: alongside });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const message = (failure as Error).message;
+    expect(message).toContain(
+      `src/core is a symbolic link to ${readlinkSync(path.join(alongside, "src", "core"))}`,
+    );
+    expect(message).toContain('"compilerOptions"."outDir"');
+    expect(listing(repo)).toEqual(before);
+  });
+
+  test("a link leading outside the repository fails until link-roots lists its folder", () => {
+    mkdirSync(path.join(tmp, "shared"), { recursive: true });
+    writeFileSync(path.join(tmp, "shared", "far.ts"), "export const far = 3;\n");
+    linkDir(path.join("..", "..", "..", "shared"), path.join(proj, "src", "far"));
+
+    expect(() => runBuild({ cwd: proj })).toThrow(
+      `src/far is a symbolic link to ${readlinkSync(path.join(proj, "src", "far"))}, which leads outside the repository (..).`,
+    );
+
+    writeFileSync(
+      path.join(proj, "package.json"),
+      JSON.stringify({ name: "game", "defold-typescript": { "link-roots": ["../../shared"] } }),
+    );
+    runBuild({ cwd: proj });
+    expect(existsSync(path.join(proj, "build", "far", "far.lua"))).toBe(true);
+  });
+});

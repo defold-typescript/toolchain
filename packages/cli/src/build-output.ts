@@ -17,6 +17,7 @@ import {
 import {
   assertContained,
   escapesProject,
+  firstLinkOnPath,
   removeContained,
   writeContainedFile,
 } from "./contained-fs";
@@ -416,6 +417,42 @@ export function throwIfFailures(failures: ReadonlyMap<string, FailureEntry[]>): 
     .join("\n");
   throw new BuildFailureError(
     `defold-typescript build: ${failures.size} file(s) failed:\n${formatted}`,
+    entries,
+  );
+}
+
+/**
+ * Refuses an alongside build holding a source under a linked folder: its output
+ * would land in the link's target, which other projects may link as well. A
+ * file link is not refused, since its output is written in the project's own
+ * folder.
+ */
+export function throwOnLinkedAlongsideSources(
+  cwd: string,
+  sources: readonly string[],
+  config: BuildConfig,
+): void {
+  const { outDir } = config;
+  if (outDir !== undefined && outDir !== "" && outDir !== ".") {
+    return;
+  }
+  const textByLink = new Map<string, string>();
+  for (const rel of sources) {
+    const link = firstLinkOnPath(cwd, path.posix.dirname(rel));
+    if (link !== undefined && !textByLink.has(link.linkRel)) {
+      textByLink.set(link.linkRel, link.text);
+    }
+  }
+  if (textByLink.size === 0) {
+    return;
+  }
+  const entries = [...textByLink].map(([file, text]) => ({
+    file,
+    message: `${file} is a symbolic link to ${text}; output cannot be written next to its sources. Set "compilerOptions"."outDir" in tsconfig.json so they compile under it.`,
+  }));
+  const formatted = entries.map(({ file, message }) => `  ${file}: ${message}`).join("\n");
+  throw new BuildFailureError(
+    `defold-typescript build: ${entries.length} linked source folder(s) need an outDir:\n${formatted}`,
     entries,
   );
 }
