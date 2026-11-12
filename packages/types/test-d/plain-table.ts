@@ -64,3 +64,26 @@ _ptTakesTable(_ptThread);
 _ptTakesTable(_ptUserdata);
 // @ts-expect-error a coroutine is not a table
 _ptTakesTable(coroutine.create(() => {}));
+
+interface PlainTableInternalField {
+  __internal__: string;
+  level: number;
+}
+interface PlainTableOptionalInternalField {
+  __internal__?: string;
+  level: number;
+}
+interface PlainTableSymbolInternalField {
+  __internal__: symbol;
+}
+declare const _ptInternalField: PlainTableInternalField;
+declare const _ptOptionalInternalField: PlainTableOptionalInternalField;
+declare const _ptSymbolInternalField: PlainTableSymbolInternalField;
+
+_ptTakesTable(_ptInternalField);
+_ptTakesTable(_ptOptionalInternalField);
+_ptTakesTable({ __internal__: 1, level: 2 });
+_ptTakesTable({ __internal__: undefined });
+
+// @ts-expect-error a symbol-typed __internal__ marks a lua-types alias, not a table
+_ptTakesTable(_ptSymbolInternalField);
