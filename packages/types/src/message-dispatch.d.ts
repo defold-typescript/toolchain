@@ -8,7 +8,7 @@ declare global {
   // script-local id declared by its annotated `message`. It returns
   // an `on_message` handler so it reads as `on_message: onMessage<Self>({ ... })`;
   // `self` threads via the explicit type argument, mirroring `defineScript<Self>`.
-  // The transpiler lowers the call to a flat `message_id == hash("...")`
+  // The transpiler lowers the call to a flat `____engine_message_id == hash("...")`
   // if/elseif chain (message-dispatch-lowering.ts), keeping this package free of
   // runtime Lua.
   /**
@@ -17,7 +17,7 @@ declare global {
    * payload already narrowed, and returns the `on_message` handler that routes to
    * them. Reads as `on_message: onMessage<Self>({ ... })`; `self` threads via the
    * explicit type argument, mirroring `defineScript<Self>`. The transpiler lowers
-   * it to a flat `if/elseif message_id == hash("...")` chain.
+   * it to a flat `if/elseif ____engine_message_id == hash("...")` chain.
    *
    * A key outside the catalogs declares a script-local message when its handler
    * annotates `message`; the returned dispatcher carries those ids so
