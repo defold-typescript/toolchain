@@ -23,6 +23,7 @@ import {
   type LifecycleErasure,
   type PendingProperties,
 } from "./lifecycle-erasure";
+import { LUA_COMPILE_LIB } from "./lua-compile-lib";
 import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -241,10 +242,9 @@ function transpileVirtual(
     {
       luaTarget: tstl.LuaTarget.Lua51,
       sourceMap: true,
-      // Already-resolved CompilerOptions, so the value is the lib file name, not
-      // the tsconfig spelling "ES2022". Drops the default `lib.dom`, whose
-      // `declare var window` shadows Defold's `window` namespace.
-      lib: ["lib.es2022.d.ts"],
+      // The one Lua-compile lib, shared with the session compile; the Lua-bound
+      // tsconfigs resolve to it too, so `tsc` there accepts what this accepts.
+      lib: [...LUA_COMPILE_LIB],
       // Don't cross-check the seeded ambient .d.ts surface against itself; we only
       // care about diagnostics on user files (mirrors the editor's skipLibCheck).
       skipLibCheck: true,
