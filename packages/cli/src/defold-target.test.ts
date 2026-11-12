@@ -98,6 +98,12 @@ describe("diagnoseDefoldNamespace", () => {
     ).toEqual([]);
   });
 
+  test("link-roots is recognized and produces no diagnostics", () => {
+    expect(
+      diagnoseDefoldNamespace({ "defold-typescript": { "link-roots": ["../shared"] } }),
+    ).toEqual([]);
+  });
+
   test("the legacy defold-version key is named and points at defold-target", () => {
     const diagnostics = diagnoseDefoldNamespace({
       "defold-typescript": { "defold-version": "1.12.4" },

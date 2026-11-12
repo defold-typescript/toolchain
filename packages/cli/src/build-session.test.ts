@@ -4,6 +4,8 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readlinkSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -32,6 +34,7 @@ import {
 import { createBuildSession } from "./build-session";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { scaffoldResolvedProject } from "./resolved-project-fixture";
+import { linkDir } from "./symlink.test-support";
 
 const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
 
@@ -1105,5 +1108,55 @@ describe("BuildSession.isOwnOutput", () => {
     expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
     expect(existsSync(path.join(cwd, "defold_typescript_hsm"))).toBe(false);
     expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm/index.lua"))).toBe(true);
+  });
+});
+
+describe("createBuildSession with symlinked source folders", () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = realpathSync.native(
+      mkdtempSync(path.join(os.tmpdir(), "defold-typescript-session-linked-")),
+    );
+    mkdirSync(path.join(tmp, "repo", ".git"), { recursive: true });
+    writeIn(tmp, "repo/factory-core/src/save.ts", "export const saved = 1;\n");
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function linkedProject(compilerOptions: Record<string, string>): string {
+    const proj = path.join(tmp, "repo", "game");
+    writeIn(
+      proj,
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, ...compilerOptions },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    writeIn(proj, "src/main.ts", 'import { saved } from "./core/save";\nexport const s = saved;\n');
+    linkDir("../../factory-core/src", path.join(proj, "src", "core"));
+    return proj;
+  }
+
+  test("buildAll compiles a linked folder under outDir at its link path", () => {
+    const proj = linkedProject({ outDir: "build" });
+    const result = createBuildSession({ cwd: proj }).buildAll();
+    expect(result.written).toContain("build/core/save.lua");
+    expect(readFileSync(path.join(proj, "build", "main.lua"), "utf8")).toContain(
+      'require("build.core.save")',
+    );
+  });
+
+  test("buildAll without outDir refuses a linked source, naming the link and outDir", () => {
+    const proj = linkedProject({});
+    const build = () => createBuildSession({ cwd: proj }).buildAll();
+    expect(build).toThrow(BuildFailureError);
+    expect(build).toThrow(
+      `src/core is a symbolic link to ${readlinkSync(path.join(proj, "src", "core"))}; output cannot be written next to its sources.`,
+    );
+    expect(existsSync(path.join(tmp, "repo", "factory-core", "src", "save.lua"))).toBe(false);
   });
 });

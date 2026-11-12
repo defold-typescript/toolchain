@@ -248,6 +248,59 @@ the old names (`require("lualib_bundle")`, `require("defold_typescript_timers")`
 `require("defold_typescript_hsm.<module>")`) must switch to the new paths, such
 as `require("lib.defold_typescript.lualib_bundle")`.
 
+## Linked source folders
+
+`build` and [`watch`](./watch.md) follow a symbolic link that an `include`
+pattern reaches, to a folder or to a file, and compile what it leads to as if it
+sat at the link's path. A project that shares code through a linked folder
+builds like any other:
+
+```text
+repo/
+  .git/
+  factory-core/src/save.ts
+  game/
+    tsconfig.json        "outDir": "build"
+    src/main.ts          import { save } from "./core/save";
+    src/core  ->  ../../factory-core/src
+```
+
+`src/core/save.ts` compiles to `build/core/save.lua`, `require("build.core.save")`
+loads it, and its source map points at `src/core/save.ts`. No output names the
+link's target and nothing is written into it, so two projects that link one
+folder each compile their own copy. Discovery never follows a link inside
+`node_modules` or inside a folder whose name starts with a dot.
+
+A link is followed only when its real target is inside the repository: the
+nearest folder at or above the project that holds `.git`, a folder in a plain
+checkout and a file in a worktree or submodule, or the project itself when there
+is none. To reach a folder outside it, list that folder in `package.json`,
+relative to the project:
+
+```json
+{
+  "defold-typescript": {
+    "link-roots": ["../../shared"]
+  }
+}
+```
+
+Each entry must name an existing folder. A value that is not a list, an empty
+entry or a missing folder fails the build, naming the setting.
+
+These fail the build, before anything is written:
+
+- A link whose target is outside the repository and every `link-roots` folder.
+  The message names the link, what it points at, and `link-roots`.
+- One file reached under two paths, such as a link back into a folder `include`
+  already covers, or a link that loops. The message names both paths.
+- A source under a linked folder in a project with no `outDir`: its output would
+  land in the link's target. Set `compilerOptions.outDir` in `tsconfig.json` so
+  linked sources compile under it.
+
+`watch` compiles linked sources when it starts. It does not watch a link's
+target, so restart it after editing a file there.
+
 ## Flags
 
 - `--editor-compile` — after the Lua is written, ask the attached Defold 1.13.2+

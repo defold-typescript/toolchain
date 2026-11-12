@@ -28,8 +28,8 @@ import {
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
   throwIfFailures,
+  throwOnLinkedAlongsideSources,
   timersModuleRel,
-  toPosix,
   writeScriptFile,
 } from "./build-output";
 import { findCompanionExports, throwOnCompanionViolations } from "./companion-violations";
@@ -50,7 +50,7 @@ import {
   throwOnUnresolvedRequires,
 } from "./require-resolution";
 import { collectResolvedDeclarations } from "./resolved-declarations";
-import { scanFilesSync } from "./scan";
+import { discoverSources } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { mergeTextPropertyFailures } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -393,13 +393,8 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   }
 
   function buildAll(): BuildResult {
-    const seen = new Set<string>();
-    for (const pattern of config.include) {
-      for (const match of scanFilesSync(cwd, pattern)) {
-        seen.add(toPosix(match));
-      }
-    }
-    const sources = [...seen].sort();
+    const sources = discoverSources(cwd, config.include);
+    throwOnLinkedAlongsideSources(cwd, sources, config);
     if (sources.length === 0) {
       return { written: [], warnings: [], unreachableAddresses: [], crossWorldAddresses: [] };
     }
