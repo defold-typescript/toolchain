@@ -91,9 +91,9 @@ export default defineScript<Self>({
 
 `self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key whose handler leaves `message` unannotated is a compile error, just like `isMessage`; annotating it declares a [script-local message](#ways-to-type-your-messages).
 
-Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
+Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(____self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output. `____self` is the name TypeScript-to-Lua gives `self`, and each handler parameter takes the engine argument at its position under whatever name you give it; a parameter past `sender` is `undefined`.
 
-A key lowers when it has one name known at compile time: an identifier, a quoted or numeric literal, or a computed literal constant such as `[WAVE]` with `const WAVE = "spawn_wave"`. A numeric key uses its string form, so `1e3` handles and is sent as `"1000"`. Write each handler inline. A key of any other form (`[someString]`, a symbol), a shorthand `{ onHit }`, a handler passed by reference, a spread, or a non-literal argument such as `onMessage(handlers)` fails the build with an error at that spot.
+A key lowers when it has one name known at compile time: an identifier, a quoted or numeric literal, or a computed literal constant such as `[WAVE]` with `const WAVE = "spawn_wave"`. A numeric key uses its string form, so `1e3` handles and is sent as `"1000"`. Write each handler inline. A key of any other form (`[someString]`, a symbol), a shorthand `{ onHit }`, a handler passed by reference, a spread, a non-literal argument such as `onMessage(handlers)`, or a destructured, defaulted or rest parameter fails the build with an error at that spot.
 
 ### Which handler forms build
 
@@ -107,6 +107,7 @@ export default defineScript<Self>({
     1e3(self, message: { id: number }) {},        // handles "1000"
     onHit,                                        // build error: shorthand
     hit: onHit,                                   // build error: handler by reference
+    set_parent(self, { parent_id }) {},           // build error: destructured parameter
   }),
 });
 ```
