@@ -11,6 +11,7 @@ import {
   type TranspileSession,
 } from "@defold-typescript/transpiler";
 import {
+  addSourcesInsideOutDir,
   type BuildConfig,
   builtinRuntimeRels,
   collectFailures,
@@ -212,6 +213,9 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     pruneAlternatives = false,
   ): BuildResult {
     const failures = collectFailures(result.diagnostics);
+    // Every held source, not only `keys`: a source left inside `outDir` fails
+    // each rebuild until it moves.
+    addSourcesInsideOutDir(failures, sourceTexts.keys(), config);
     const companionBySource = companionOutputRels(result, config);
     const scriptSources = scriptKindSources();
     const outputs = plannedOutputBySource();

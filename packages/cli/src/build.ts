@@ -9,6 +9,7 @@ import {
   type SceneObjectComponents,
 } from "@defold-typescript/transpiler";
 import {
+  addSourcesInsideOutDir,
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
@@ -139,6 +140,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   });
   const result = session.update({ ...files, ...resolved.files });
   const failures = collectFailures(result.diagnostics);
+  addSourcesInsideOutDir(failures, sources, config);
 
   const outputBySource: Record<string, string> = {};
   const scriptSources: string[] = [];
