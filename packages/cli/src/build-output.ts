@@ -87,16 +87,24 @@ export function readRuntimeDir(cwd: string): string | undefined {
 }
 
 // Checked on the first folder only: `src/build` is an ordinary resource folder.
+// Letter case folds, because macOS and Windows write `Build` into `build/`.
 function throwIfEditorHidden(outDir: string, defignoreLines: readonly string[]): void {
-  const hidden = editorHiddenFolder(path.posix.normalize(outDir), defignoreLines);
+  const normalized = path.posix.normalize(outDir);
+  const hidden = editorHiddenFolder(normalized, defignoreLines, true);
   if (hidden === undefined) {
     return;
   }
   const reason = hidden.startsWith("/")
     ? `.defignore lists ${hidden}, so Defold never loads files under it`
     : `the Defold editor keeps ${hidden}/ for itself and never loads files under it`;
+  const hiddenFolder = hidden.replace(/^\//, "");
+  const spelled = normalized.split("/").slice(0, hiddenFolder.split("/").length).join("/");
+  const caseNote =
+    spelled === hiddenFolder
+      ? ""
+      : `; macOS and Windows treat ${JSON.stringify(spelled)} and ${JSON.stringify(hiddenFolder)} as the same folder`;
   throw new Error(
-    `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(outDir)}; ${reason}. Pick another folder, such as "out".`,
+    `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(outDir)}; ${reason}${caseNote}. Pick another folder, such as "out".`,
   );
 }
 
@@ -417,6 +425,41 @@ export function collectFailures(
     }
   }
   return failures;
+}
+
+/**
+ * Fails each source inside `outDir`: `tsc` leaves that folder out of the
+ * program, so the editor never type-checks it. Case folds, so one project
+ * fails the same way on every OS.
+ */
+export function addSourcesInsideOutDir(
+  failures: Map<string, FailureEntry[]>,
+  sources: Iterable<string>,
+  config: BuildConfig,
+): void {
+  const { outDir } = config;
+  if (outDir === undefined || outDir === "" || outDir === ".") {
+    return;
+  }
+  const folder = path.posix.normalize(outDir).replace(/\/$/, "");
+  if (folder === "" || folder === ".") {
+    return;
+  }
+  const prefix = `${folder.toLowerCase()}/`;
+  for (const rel of sources) {
+    if (!rel.toLowerCase().startsWith(prefix)) {
+      continue;
+    }
+    const entry: FailureEntry = {
+      message: `${rel} is inside tsconfig.json "compilerOptions"."outDir" (${JSON.stringify(outDir)}), which tsc and the editor leave out of the program, so it is never type-checked; move it out of that folder.`,
+    };
+    const list = failures.get(rel);
+    if (list) {
+      list.push(entry);
+    } else {
+      failures.set(rel, [entry]);
+    }
+  }
 }
 
 export function throwIfFailures(

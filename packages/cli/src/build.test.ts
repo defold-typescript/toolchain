@@ -3153,6 +3153,9 @@ describe("runBuild writes only inside the project", () => {
     "builtins",
     ".internal/out",
     ".git/out",
+    "Build",
+    "BUILTINS/lua",
+    ".Git/out",
   ])("an outDir of %p, in a folder the Defold editor keeps for itself, is rejected", (outDir) => {
     writeProjectFile("tsconfig.json", tsconfigWithOutDir(outDir));
     writeProjectFile("src/main.ts", MAIN_SCRIPT);
@@ -3170,23 +3173,57 @@ describe("runBuild writes only inside the project", () => {
     expect(luaOutputsUnder(proj)).toEqual([]);
   });
 
-  test("an outDir inside a folder .defignore lists is rejected, naming the line", () => {
-    writeProjectFile("tsconfig.json", tsconfigWithOutDir("generated/lua"));
-    writeProjectFile("src/main.ts", MAIN_SCRIPT);
-    writeProjectFile(".defignore", "/generated\n");
+  test.each(["generated/lua", "Generated/lua"])(
+    "an outDir of %p inside a folder .defignore lists is rejected, naming the line",
+    (outDir) => {
+      writeProjectFile("tsconfig.json", tsconfigWithOutDir(outDir));
+      writeProjectFile("src/main.ts", MAIN_SCRIPT);
+      writeProjectFile(".defignore", "/generated\n");
 
-    let message = "";
-    try {
-      runBuild({ cwd: proj });
-    } catch (err) {
-      message = (err as Error).message;
-    }
+      let message = "";
+      try {
+        runBuild({ cwd: proj });
+      } catch (err) {
+        message = (err as Error).message;
+      }
 
-    expect(message).toContain('"compilerOptions"."outDir"');
-    expect(message).toContain(".defignore");
-    expect(message).toContain("/generated");
-    expect(luaOutputsUnder(proj)).toEqual([]);
-  });
+      expect(message).toContain('"compilerOptions"."outDir"');
+      expect(message).toContain(".defignore");
+      expect(message).toContain("/generated");
+      expect(luaOutputsUnder(proj)).toEqual([]);
+    },
+  );
+
+  test.each([
+    { outDir: "Build", note: 'macOS and Windows treat "Build" and "build" as the same folder' },
+    {
+      outDir: "Generated/lua",
+      note: 'macOS and Windows treat "Generated" and "generated" as the same folder',
+    },
+    { outDir: "build", note: undefined },
+    { outDir: "generated/lua", note: undefined },
+  ])(
+    "an outDir of $outDir says when it matches a hidden folder only in letter case",
+    ({ outDir, note }) => {
+      writeProjectFile("tsconfig.json", tsconfigWithOutDir(outDir));
+      writeProjectFile("src/main.ts", MAIN_SCRIPT);
+      writeProjectFile(".defignore", "/generated\n");
+
+      let message = "";
+      try {
+        runBuild({ cwd: proj });
+      } catch (err) {
+        message = (err as Error).message;
+      }
+
+      if (note === undefined) {
+        expect(message).toContain('"compilerOptions"."outDir"');
+        expect(message).not.toContain("as the same folder");
+      } else {
+        expect(message).toContain(note);
+      }
+    },
+  );
 
   test("the same outDir builds when no .defignore lists its folder", () => {
     writeProjectFile("tsconfig.json", tsconfigWithOutDir("generated/lua"));
@@ -3200,6 +3237,34 @@ describe("runBuild writes only inside the project", () => {
     writeProjectFile("src/main.ts", MAIN_SCRIPT);
 
     expect(runBuild({ cwd: proj }).written).toContain("src/build/main.ts.script");
+  });
+
+  test.each(["src/build/extra.ts", "src/Build/extra.ts"])(
+    "a source at %p, inside outDir, fails the build as a failed file",
+    (inside) => {
+      writeProjectFile("tsconfig.json", tsconfigWithOutDir("src/build"));
+      writeProjectFile("src/main.ts", MAIN_SCRIPT);
+      writeProjectFile(inside, MAIN_SCRIPT);
+
+      const failure = buildFailure();
+
+      expect(failure.entries.map((entry) => entry.file)).toEqual([inside]);
+      expect(failure.entries[0]?.message).toContain('"compilerOptions"."outDir"');
+      expect(failure.entries[0]?.message).toContain('"src/build"');
+      expect(existsSync(path.join(proj, "src/build/main.ts.script"))).toBe(true);
+      expect(existsSync(path.join(proj, "src/build/build/extra.ts.script"))).toBe(false);
+      expect(existsSync(path.join(proj, "src/build/Build/extra.ts.script"))).toBe(false);
+    },
+  );
+
+  test("an outDir of the project root holds no source inside it", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("."));
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+    writeProjectFile("src/extra.ts", MAIN_SCRIPT);
+
+    expect(runBuild({ cwd: proj }).written).toEqual(
+      expect.arrayContaining(["src/main.ts.script", "src/extra.ts.script"]),
+    );
   });
 
   test("a .defold-types folder link leading outside fails the build and writes nothing there", async () => {
