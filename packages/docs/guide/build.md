@@ -271,6 +271,10 @@ link's target and nothing is written into it, so two projects that link one
 folder each compile their own copy. Discovery never follows a link inside
 `node_modules` or inside a folder whose name starts with a dot.
 
+A pattern reaches a link only when it can match a path beneath it, so
+`src/*.ts` never looks inside `src/assets`. Through a link, a pattern matches as
+it does in a real folder, `[...]` classes and `{a,b}` lists included.
+
 A link is followed only when its real target is inside the repository: the
 nearest folder at or above the project that holds `.git`, a folder in a plain
 checkout and a file in a worktree or submodule, or the project itself when there

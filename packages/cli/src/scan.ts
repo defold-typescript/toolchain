@@ -9,8 +9,7 @@ import {
   statSync,
 } from "node:fs";
 import * as path from "node:path";
-import { stripIncludeBase } from "@defold-typescript/transpiler";
-import { isFileIncluded } from "./build-output";
+import { compileIncludeGlob, type IncludeGlob } from "./include-glob";
 import { isUnderLinkRoot, LinkEscapeError, linkEscapeMessage, readLinkRoots } from "./link-roots";
 
 export function normalizeScannedPath(rel: string): string {
@@ -97,7 +96,7 @@ function filesThroughLinks(
   cwd: string,
   baseRel: string,
   baseIsLinked: boolean,
-  included: (rel: string) => boolean,
+  glob: IncludeGlob,
   guard: LinkGuard,
 ): string[] {
   const found: string[] = [];
@@ -122,19 +121,23 @@ function filesThroughLinks(
       if (isLink) {
         const target = statOrUndefined(path.join(cwd, rel), true);
         if (target?.isDirectory()) {
-          const real = guard.follow(rel);
-          if (real !== undefined && !chain.has(real)) {
-            walk(rel, true, new Set(chain).add(real));
+          if (glob.mayContain(rel)) {
+            const real = guard.follow(rel);
+            if (real !== undefined && !chain.has(real)) {
+              walk(rel, true, new Set(chain).add(real));
+            }
           }
-        } else if (target?.isFile() && included(rel)) {
+        } else if (target?.isFile() && glob.matches(rel)) {
           guard.follow(rel);
           if (viaLink) {
             found.push(rel);
           }
         }
       } else if (entry.isDirectory()) {
-        walk(rel, viaLink, chain);
-      } else if (viaLink && entry.isFile() && included(rel)) {
+        if (glob.mayContain(rel)) {
+          walk(rel, viaLink, chain);
+        }
+      } else if (viaLink && entry.isFile() && glob.matches(rel)) {
         found.push(rel);
       }
     }
@@ -172,26 +175,21 @@ export function scanFilesSync(
   const matches = globSync(pattern, { cwd })
     .map(normalizeScannedPath)
     .filter((match) => isFileAt(cwd, match));
-  const relPattern = rel.replace(/^(\.\/)+/, "");
-  const baseRel = stripIncludeBase(relPattern).replace(/\/$/, "");
-  const baseIsLinked = guard.checkPath(baseRel);
+  const glob = compileIncludeGlob(rel);
+  const baseIsLinked = guard.checkPath(glob.walkBase);
   for (const match of matches) {
     guard.checkPath(match);
   }
   const seen = new Set(matches);
-  const linked = filesThroughLinks(
-    cwd,
-    baseRel,
-    baseIsLinked,
-    (candidate) => isFileIncluded(candidate, [relPattern]),
-    guard,
-  ).filter((candidate) => {
-    if (seen.has(candidate)) {
-      return false;
-    }
-    seen.add(candidate);
-    return true;
-  });
+  const linked = filesThroughLinks(cwd, glob.walkBase, baseIsLinked, glob, guard).filter(
+    (candidate) => {
+      if (seen.has(candidate)) {
+        return false;
+      }
+      seen.add(candidate);
+      return true;
+    },
+  );
   return [...matches, ...linked];
 }
 

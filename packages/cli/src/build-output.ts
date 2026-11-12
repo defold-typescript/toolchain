@@ -21,6 +21,7 @@ import {
   removeContained,
   writeContainedFile,
 } from "./contained-fs";
+import { compileIncludeGlob } from "./include-glob";
 
 export type { SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
@@ -105,38 +106,11 @@ export function readBuildConfig(cwd: string): BuildConfig {
   return { ...config, ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
 }
 
-function globToRegex(pattern: string): RegExp {
-  let out = "";
-  for (let i = 0; i < pattern.length; i++) {
-    const c = pattern[i];
-    if (c === "*") {
-      if (pattern[i + 1] === "*") {
-        i++;
-        // `**/` spans any number of segments (including none); a bare `**`
-        // spans the rest of the path.
-        if (pattern[i + 1] === "/") {
-          i++;
-          out += "(?:[^/]+/)*";
-        } else {
-          out += ".*";
-        }
-      } else {
-        out += "[^/]*";
-      }
-    } else if (c === "?") {
-      out += "[^/]";
-    } else {
-      out += (c as string).replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    }
-  }
-  return new RegExp(`^${out}$`);
-}
-
 export function isFileIncluded(rel: string, include: readonly string[]): boolean {
   // Watch events can carry either separator regardless of host OS, so normalize
   // both before matching the posix-shaped include globs.
   const posix = rel.replace(/\\/g, "/");
-  return include.some((pattern) => globToRegex(pattern).test(posix));
+  return include.some((pattern) => compileIncludeGlob(pattern).matches(posix));
 }
 
 // Excluding parens from the type-argument body keeps a later call expression on

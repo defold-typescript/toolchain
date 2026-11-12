@@ -55,8 +55,7 @@ export function readLualsTargets(dataDir: string): LualsTarget[] {
 }
 
 /**
- * Compile a glob to an anchored RegExp — mirrors `globToRegex` in
- * `../build-output.ts`. A `**` path segment spans
+ * Compile a glob to an anchored RegExp. A `**` path segment spans
  * any number of segments, a bare `**` spans the rest, `*` a non-slash run, `?`
  * one non-slash.
  */
