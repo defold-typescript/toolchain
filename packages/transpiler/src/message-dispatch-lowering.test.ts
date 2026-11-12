@@ -24,15 +24,16 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("contact_point_response") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.distance)
           end
       end
       return ____exports
       "
     `);
-    expect(result.lua).toContain('if message_id == hash("contact_point_response") then');
+    expect(result.lua).toContain('if ____engine_message_id == hash("contact_point_response") then');
     expect(result.lua).not.toContain("onMessage");
     expect(result.lua).not.toContain("require(");
   });
@@ -60,10 +61,12 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("contact_point_response") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.distance)
-          elseif message_id == hash("set_parent") then
+          elseif ____engine_message_id == hash("set_parent") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(0)
           end
       end
@@ -103,10 +106,12 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("contact_point_response") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.distance)
-          elseif message_id == hash("spawn_wave") then
+          elseif ____engine_message_id == hash("spawn_wave") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.count)
           end
       end
@@ -147,10 +152,12 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("42") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("42") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.count)
-          elseif message_id == hash("set_parent") then
+          elseif ____engine_message_id == hash("set_parent") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(0)
           end
       end
@@ -187,12 +194,15 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("42") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("42") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.count)
-          elseif message_id == hash("1000") then
+          elseif ____engine_message_id == hash("1000") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.n)
-          elseif message_id == hash("set_parent") then
+          elseif ____engine_message_id == hash("set_parent") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(0)
           end
       end
@@ -227,10 +237,12 @@ describe("message dispatch lowering", () => {
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
       local WAVE = "spawn_wave"
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("spawn_wave") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("spawn_wave") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.count)
-          elseif message_id == hash("contact_point_response") then
+          elseif ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.distance)
           end
       end
@@ -353,10 +365,12 @@ describe("message dispatch lowering", () => {
     expect(result.lua).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("spawn_wave") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("spawn_wave") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.count)
-          elseif message_id == hash("contact_point_response") then
+          elseif ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               handle(message.distance)
           end
       end
@@ -382,7 +396,7 @@ describe("message dispatch lowering", () => {
     ].join("\n");
     const result = transpile(source);
     expect(result.diagnostics).toEqual([]);
-    expect(result.lua).toContain("local msg = message");
+    expect(result.lua).toContain("local ____self, msg = ____engine_self, ____engine_message");
     expect(result.lua).toContain("handle(msg.distance)");
     expect(result.lua).not.toContain("onMessage");
   });
@@ -514,12 +528,47 @@ describe("the emitted on_message runs in Lua 5.1", () => {
     expect(runCallback(result, REL, "on_message", CONTACT)).toEqual(["0"]);
   });
 
-  test("the header takes the engine `self` under the name the handler body reads", () => {
+  test.each([
+    ["const self = { hp: 7 };", "String(self.hp)", "String(inst.hp)", ["7", "3"]],
+    [
+      "const message = { distance: 9 };",
+      "String(message.distance)",
+      "String(m.distance)",
+      ["9", "2"],
+    ],
+    ['const sender = "outer";', "sender", "String(from)", ["outer", "main:/go#script"]],
+    ['const message_id = "outer";', "message_id", "String(inst.hp)", ["outer", "3"]],
+  ] as const)(
+    "a handler reads the module-level name beside its own parameters: %s",
+    (outer, outerRead, paramRead, records) => {
+      const result = emit([
+        outer,
+        "",
+        ...dispatch([
+          "contact_point_response(inst, m, from) {",
+          `  record(${outerRead});`,
+          `  record(${paramRead});`,
+          "},",
+        ]),
+      ]);
+      expect(
+        runCallback(
+          result,
+          REL,
+          "on_message",
+          'on_message({ hp = 3 }, "contact_point_response", { distance = 2 }, "main:/go#script")',
+        ),
+      ).toEqual([...records]);
+    },
+  );
+
+  test("the header binds the engine arguments under names no handler body reads", () => {
     expect(scriptChunk(emit(SELF_AND_MESSAGE), REL)).toMatchInlineSnapshot(`
       "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
       local ____exports = {}
-      function on_message(____self, message_id, message, sender)
-          if message_id == hash("contact_point_response") then
+      function on_message(____engine_self, ____engine_message_id, ____engine_message, ____engine_sender)
+          if ____engine_message_id == hash("contact_point_response") then
+              local ____self, message = ____engine_self, ____engine_message
               record(tostring(____self.hp))
               record(tostring(message.distance))
           end
