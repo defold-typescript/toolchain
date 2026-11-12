@@ -17,6 +17,11 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`build` and `tsc` agree** on `onMessage`, [socket](/api/socket) aliases and the API and libraries an editor or game script may use ([Editor scripts](./editor-scripts.md#the-editor-vms-own-libraries)).
 > - **Interface values pass as tables** to `sys.save` and every `PlainTable` slot on all targets.
 > - **Clean scaffolds that `upgrade` keeps current:** docs paths, `.gitignore` and Biome ([init](./init.md)).
+> - **`build` and `watch` write only inside the project:** a link at an output path, or an `outDir` outside it, fails the build ([Build](./build.md#what-it-does)).
+
+### Breaking
+
+- **An `outDir` outside the project folder fails the build.** A `tsconfig.json` `outDir` that is absolute, or that climbs out with `..`, is rejected with a message naming the setting; point it at a folder inside the project ([Build](./build.md#what-it-does)).
 
 ### Added
 
@@ -24,6 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **`build` and `watch` wrote through a symbolic link** at an output, source-map or [runtime folder](./build.md#the-runtime-folder) path, or through a folder link leading out of the project, so a cloned repository could make a build create or overwrite files anywhere you can write. The build now fails before writing anything and names the path, the link and where the link points ([Build](./build.md#what-it-does)).
 - **`onMessage` and the [socket](/api/socket) type aliases such as `socket.TCPOptions` type-checked in `build` but not under `tsc` or in the editor:** on every Defold target a project's `tsc` reported `Cannot find name 'onMessage'` and found no `TCPOptions` in the `socket` namespace. Both now resolve in `tsc` and the editor as they do in `build` ([Routing many messages](./messages.md#routing-many-messages-with-onmessage)).
 - **`build` and `watch` checked every source against the editor and runtime surfaces merged,** so a game script calling `zip.pack` or `editor.command` built clean while an editor script calling `image.load_file` or `http.server.response` failed. Each side is now checked as `tsc` checks it: an editor script and every helper it imports, directly or through a re-export, against the editor surface plus the bundled `hsm` and `ecs` libraries, your own `.d.ts` files and the Lua libraries [resolve](./resolve.md) installs, but no native extension, and every other source against the runtime one ([Editor scripts](./editor-scripts.md#the-editor-vms-own-libraries)).
 - **`sys.save`, `sys.serialize`, `json.encode`, the `properties` of `factory.create` and `collectionfactory.create`, the `value` of `editor.tx.add`, editor and native extension option tables, and library parameters typed as a table of any value rejected a value typed by an interface.** On every Defold target these slots now take a `PlainTable`, which accepts an interface value as well as an object literal or a `type` alias, while engine values such as `Vector3`, `Hash` and `Url`, functions, and Lua userdata such as file handles and threads are rejected.

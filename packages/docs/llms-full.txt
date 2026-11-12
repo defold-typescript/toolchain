@@ -7774,6 +7774,13 @@ must be renamed; so must a source of your own that compiles to one of those
 paths. A file an earlier build wrote carries the generated banner and is replaced
 as usual.
 
+The build writes only inside the project folder. Before writing anything, it
+refuses an output or source-map path that is a symbolic link, and any path a
+folder link leads outside the project, and the failure names the path, the link
+and where the link points. A folder link that stays inside the project is
+followed. `outDir` must be a folder inside the project: an absolute path, or one
+that climbs out with `..`, fails the build.
+
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
 one-shot command, so nothing is streamed and nothing is posted to the editor

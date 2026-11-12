@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
+import { lstatSync, readdirSync, readFileSync, rmdirSync } from "node:fs";
 import * as path from "node:path";
 import {
   BUNDLED_LIBRARIES,
@@ -14,6 +14,12 @@ import {
   type TranspileDiagnostic,
   type BuildConfig as TsconfigBuildConfig,
 } from "@defold-typescript/transpiler";
+import {
+  assertContained,
+  escapesProject,
+  removeContained,
+  writeContainedFile,
+} from "./contained-fs";
 
 export type { SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
@@ -88,8 +94,14 @@ export function readBuildConfig(cwd: string): BuildConfig {
     );
   }
 
+  const config = parseBuildConfig(raw);
+  if (config.outDir !== undefined && escapesProject(config.outDir)) {
+    throw new Error(
+      `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(config.outDir)}; it must be a folder inside the project, with no leading slash, no drive and no "..", because the build writes only inside the project folder.`,
+    );
+  }
   const runtimeDir = readRuntimeDir(cwd);
-  return { ...parseBuildConfig(raw), ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
+  return { ...config, ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
 }
 
 function globToRegex(pattern: string): RegExp {
@@ -286,17 +298,27 @@ export function pruneLegacyRuntimeOutputs(
     if (live.has(rel) || !hasGeneratedBanner(cwd, rel)) {
       continue;
     }
-    rmSync(path.join(cwd, rel), { force: true });
-    rmSync(path.join(cwd, `${rel}.map`), { force: true });
+    removeContained(cwd, rel);
+    removeContained(cwd, `${rel}.map`);
   }
   const { outDir } = config;
-  const hsmDir = path.join(cwd, outDir ?? "", HSM_LIBRARY.requireRoot);
+  const hsmRel = path.posix.join(outDir ?? "", HSM_LIBRARY.requireRoot);
+  const hsmAbs = path.join(cwd, hsmRel);
+  let entries: string[];
   try {
-    if (readdirSync(hsmDir).length === 0) {
-      rmdirSync(hsmDir);
+    // Only a real folder: earlier builds never made a link there, so a link is
+    // someone else's and stays.
+    if (!lstatSync(hsmAbs).isDirectory()) {
+      return;
     }
+    entries = readdirSync(hsmAbs);
   } catch {
     // No old hsm folder: nothing to remove.
+    return;
+  }
+  if (entries.length === 0) {
+    assertContained(cwd, hsmRel);
+    rmdirSync(hsmAbs);
   }
 }
 
@@ -316,7 +338,7 @@ export function pruneAlternativeOutputs(
   const live = new Set(keep.flatMap((keepRel) => [keepRel, `${keepRel}.map`]));
   for (const outputRel of outputRelsForSource(rel, config)) {
     if (!live.has(outputRel)) {
-      rmSync(path.join(cwd, outputRel), { force: true });
+      removeContained(cwd, outputRel);
     }
   }
 }
@@ -457,38 +479,24 @@ function withSourceRoot(map: string, sourceRoot: string): string {
   return JSON.stringify({ ...(parsed as Record<string, unknown>), sourceRoot });
 }
 
-// An output's modification time moves only with its content: the debug
-// launcher reads a compiled copy older than its output as a stale engine build.
-// A direct write rather than a temp-file rename, which would briefly put a
-// `.tmp` file in the game's resource folders.
-function writeIfChanged(abs: string, text: string): void {
-  let current: string | undefined;
-  try {
-    current = readFileSync(abs, "utf8");
-  } catch {
-    current = undefined;
-  }
-  if (current !== text) {
-    writeFileSync(abs, text);
-  }
-}
-
 export function writeScriptFile(
   cwd: string,
   scriptRel: string,
   lua: string,
   map: string | undefined,
 ): void {
-  const scriptAbs = path.join(cwd, scriptRel);
-  mkdirSync(path.dirname(scriptAbs), { recursive: true });
   if (map) {
     const mapBasename = `${path.posix.basename(scriptRel)}.map`;
-    writeIfChanged(`${scriptAbs}.map`, map);
+    writeContainedFile(cwd, `${scriptRel}.map`, map);
     // The sourceMappingURL directive must stay the file's last line: the Local
     // Lua Debugger only honors it at end-of-file (its matcher anchors `%s*$`),
     // so the banner is appended before it, not after.
-    writeIfChanged(scriptAbs, `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`);
+    writeContainedFile(
+      cwd,
+      scriptRel,
+      `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`,
+    );
   } else {
-    writeIfChanged(scriptAbs, `${lua}\n${GENERATED_BANNER}\n`);
+    writeContainedFile(cwd, scriptRel, `${lua}\n${GENERATED_BANNER}\n`);
   }
 }
