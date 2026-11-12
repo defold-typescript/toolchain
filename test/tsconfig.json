@@ -3,7 +3,7 @@
   // standard `tsconfig.json` name so editors auto-discover it; allowImporting
   // TsExtensions matches the bun-style .ts imports these tests use (e.g. the
   // scripts they exercise). Wired into the root `typecheck` script.
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig.node.json",
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true
