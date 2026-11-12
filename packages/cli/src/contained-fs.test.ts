@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as ts from "typescript";
 import {
   ContainedPathError,
   containmentProblem,
@@ -215,19 +216,34 @@ describe("project writers reach the filesystem only through contained-fs", () =>
   ]);
 
   test.each(WRITERS)("%s imports no node:fs write call", (file) => {
-    const source = readFileSync(path.join(import.meta.dir, file), "utf8");
+    const source = ts.createSourceFile(
+      file,
+      readFileSync(path.join(import.meta.dir, file), "utf8"),
+      ts.ScriptTarget.Latest,
+    );
     const imported: string[] = [];
-    for (const match of source.matchAll(/^import\s+([\s\S]*?)\s+from\s+"(?:node:)?fs";/gm)) {
-      const clause = match[1] as string;
-      expect(clause).toStartWith("{");
-      for (const specifier of clause.replace(/[{}]/g, "").split(",")) {
-        const name = specifier
-          .trim()
-          .replace(/^type\s+/, "")
-          .split(/\s+as\s+/)[0];
-        if (name) imported.push(name);
+    let usesContainedFs = false;
+    for (const statement of source.statements) {
+      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
+        continue;
+      }
+      const clause = statement.importClause;
+      const specifier = statement.moduleSpecifier.text;
+      if (specifier === "./contained-fs" && clause !== undefined && !clause.isTypeOnly) {
+        usesContainedFs = true;
+      }
+      if ((specifier !== "fs" && specifier !== "node:fs") || clause === undefined) continue;
+      if (clause.isTypeOnly) continue;
+      expect(clause.name?.text).toBeUndefined();
+      const bindings = clause.namedBindings;
+      if (bindings === undefined) continue;
+      expect(ts.isNamedImports(bindings)).toBe(true);
+      if (!ts.isNamedImports(bindings)) continue;
+      for (const element of bindings.elements) {
+        if (!element.isTypeOnly) imported.push((element.propertyName ?? element.name).text);
       }
     }
+    expect(usesContainedFs).toBe(true);
     expect(imported.filter((name) => WRITE_CALLS.has(name))).toEqual([]);
   });
 });
