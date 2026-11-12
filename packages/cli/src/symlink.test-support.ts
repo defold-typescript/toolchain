@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmdirSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 
@@ -14,6 +14,15 @@ export function linkDir(target: string, at: string): void {
     symlinkSync(path.resolve(path.dirname(at), target), at, "junction");
   } else {
     symlinkSync(target, at, "dir");
+  }
+}
+
+/** Removes a folder link made by `linkDir`, leaving its target alone; a junction is removed as a folder. */
+export function unlinkDir(at: string): void {
+  if (process.platform === "win32") {
+    rmdirSync(at);
+  } else {
+    unlinkSync(at);
   }
 }
 
