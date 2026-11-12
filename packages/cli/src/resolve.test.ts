@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   utimesSync,
@@ -19,6 +20,7 @@ import * as ts from "typescript";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
+import { ContainedPathError } from "./contained-fs";
 import { classifyDependencyUrl, type DependencyUrlKind } from "./dependency-url";
 import { runExportTypes } from "./export-types";
 import {
@@ -52,6 +54,7 @@ import {
   unknownUpdateNames,
 } from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import { linkDir } from "./symlink.test-support";
 
 // The materialized library surface carries the generating toolchain version;
 // these tests defend other behavior, so they derive the name from production.
@@ -175,6 +178,35 @@ describe("runResolve", () => {
         pinStatus: "unpinned",
       },
     ]);
+  });
+
+  test("a .defold-types folder link leading outside fails the run and writes nothing there", async () => {
+    const base = realpathSync(tmp());
+    const cwd = join(base, "proj");
+    const outside = join(base, "outside");
+    mkdirSync(cwd);
+    mkdirSync(outside);
+    linkDir(join("..", "outside"), join(cwd, ".defold-types"));
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const run = runResolve({
+      libraryDataDir: null,
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+
+    await expect(run).rejects.toThrow(ContainedPathError);
+    await expect(run).rejects.toThrow(".defold-types");
+    expect(readdirSync(outside)).toEqual([]);
   });
 
   test("an asset-only dependency writes no type surface and reports assetOnly", async () => {

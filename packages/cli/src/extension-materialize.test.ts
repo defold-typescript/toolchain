@@ -1,15 +1,25 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { wrapAsAmbientGlobal, wrapAsGlobalTableModule } from "@defold-typescript/types";
 import * as ts from "typescript";
+import { ContainedPathError } from "./contained-fs";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import type { EmittedExtension } from "./extension-emit";
 import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
 } from "./extension-materialize";
+import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
 
 let cwd: string;
 
@@ -721,4 +731,40 @@ describe("ensureExtensionTypesReference", () => {
     expect(gitignore).toContain(".defold-types/");
     expect(gitignore).toContain("src/**/*.lua");
   });
+});
+
+describe("materializeExtensionDeclarations writes only inside the project", () => {
+  test("a .defold-types folder link leading outside is refused and writes nothing there", () => {
+    const proj = path.join(cwd, "proj");
+    const outside = path.join(cwd, "outside");
+    mkdirSync(proj);
+    mkdirSync(outside);
+    linkDir(path.join("..", "outside"), path.join(proj, ".defold-types"));
+
+    expect(() =>
+      materializeExtensionDeclarations({
+        cwd: proj,
+        bundles: [bundle([decl("ext", "declare namespace ext {}\n")])],
+      }),
+    ).toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test.skipIf(!canLinkFiles)(
+    "ensureExtensionTypesReference refuses to rewrite a tsconfig.json link",
+    () => {
+      const proj = path.join(cwd, "proj");
+      const outside = path.join(cwd, "outside");
+      mkdirSync(proj);
+      mkdirSync(outside);
+      const original = `${JSON.stringify({ compilerOptions: {} }, null, 2)}\n`;
+      writeFileSync(path.join(outside, "tsconfig.json"), original);
+      linkFile("../outside/tsconfig.json", path.join(proj, "tsconfig.json"));
+
+      expect(() => ensureExtensionTypesReference(proj, ".defold-types/extensions")).toThrow(
+        "tsconfig.json",
+      );
+      expect(readFileSync(path.join(outside, "tsconfig.json"), "utf8")).toBe(original);
+    },
+  );
 });

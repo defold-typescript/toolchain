@@ -5,6 +5,7 @@ import {
   readFileSync,
   readlinkSync,
   realpathSync,
+  renameSync,
   rmSync,
   type Stats,
   writeFileSync,
@@ -197,4 +198,15 @@ export function removeContained(
   opts: Omit<RmOptions, "force"> = {},
 ): void {
   rmSync(assertContained(root, target), { force: true, ...opts });
+}
+
+/** Create the folder `target` under `root` and its parents, once the path is contained. */
+export function ensureContainedDir(root: string, target: string): void {
+  mkdirSync(assertContained(root, target), { recursive: true });
+}
+
+/** Move `from` to `to`, both under `root`, once both paths are contained. */
+export function renameContained(root: string, from: string, to: string): void {
+  const fromAbs = assertContained(root, from);
+  renameSync(fromAbs, assertContained(root, to));
 }

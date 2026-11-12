@@ -7777,7 +7777,11 @@ as usual.
 The build writes only inside the project folder. Before writing anything, it
 refuses an output or source-map path that is a symbolic link, and any path a
 folder link leads outside the project, and the failure names the path, the link
-and where the link points. A folder link that stays inside the project is
+and where the link points. The same rule covers the declarations the build
+keeps in `.defold-types/` and its edits to `.gitignore` and `tsconfig.json`: a
+`.defold-types` folder link leading outside the project fails the build, and a
+`.gitignore` or `tsconfig.json` that is a link fails it only when the build must
+change that file. A folder link that stays inside the project is
 followed. `outDir` must be a folder inside the project: an absolute path, or one
 that climbs out with `..`, fails the build. A backslash in `outDir` separates
 folders on every OS, so `"build\\lua"` and `"build/lua"` name the same folder.
@@ -8631,7 +8635,10 @@ because a module cannot add members to the engine's global: it adds its
 members to that namespace and leaves the engine's type aliases, such as
 `gui.Playback`, to the engine surface.
 
-`.defold-types/` is generated output and is gitignored. Re-run `resolve` whenever
+`.defold-types/` is generated output and is gitignored. `resolve` writes it, and
+edits `.gitignore` and `tsconfig.json`, under the same
+[link rule as `build`](./build.md#what-it-does): a `.defold-types` folder link
+leading outside the project fails the run and names the link. Re-run `resolve` whenever
 you change `[dependencies]`; each surface reconciles to exactly what is declared
 now, so removing a dependency prunes its generated types and drops the tsconfig
 entry — nothing stale is left behind.

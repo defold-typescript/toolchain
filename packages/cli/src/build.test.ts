@@ -3086,4 +3086,39 @@ describe("runBuild writes only inside the project", () => {
     expect(() => runBuild({ cwd: proj })).toThrow('"compilerOptions"."outDir"');
     expect(existsSync(path.join(tmp, "escape"))).toBe(false);
   });
+
+  test("a .defold-types folder link leading outside fails the build and writes nothing there", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+    linkDir(path.join("..", "outside"), path.join(proj, ".defold-types"));
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", proj], io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+
+    expect(code).not.toBe(0);
+    expect(err()).toContain(".defold-types");
+    expect(err()).toContain(linkText(".defold-types"));
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test.skipIf(!canLinkFiles)(
+    "a .gitignore link leading outside fails the build and leaves its target as it was",
+    async () => {
+      writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+      writeProjectFile("src/main.ts", MAIN_SCRIPT);
+      writeFileSync(path.join(outside, "ignore.txt"), "keep\n");
+      linkFile("../outside/ignore.txt", path.join(proj, ".gitignore"));
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["build", proj], io, {
+        editorClient: makeBuildEditor(null).client,
+      });
+
+      expect(code).not.toBe(0);
+      expect(err()).toContain(".gitignore");
+      expect(readFileSync(path.join(outside, "ignore.txt"), "utf8")).toBe("keep\n");
+    },
+  );
 });

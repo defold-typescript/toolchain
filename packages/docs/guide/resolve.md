@@ -107,7 +107,10 @@ because a module cannot add members to the engine's global: it adds its
 members to that namespace and leaves the engine's type aliases, such as
 `gui.Playback`, to the engine surface.
 
-`.defold-types/` is generated output and is gitignored. Re-run `resolve` whenever
+`.defold-types/` is generated output and is gitignored. `resolve` writes it, and
+edits `.gitignore` and `tsconfig.json`, under the same
+[link rule as `build`](./build.md#what-it-does): a `.defold-types` folder link
+leading outside the project fails the run and names the link. Re-run `resolve` whenever
 you change `[dependencies]`; each surface reconciles to exactly what is declared
 now, so removing a dependency prunes its generated types and drops the tsconfig
 entry — nothing stale is left behind.

@@ -9,9 +9,10 @@
 // and cannot double-load a library scene. These are resources, not types, so
 // nothing points tsconfig at them.
 
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import * as path from "node:path";
 import { isContainedResourcePath } from "@defold-typescript/transpiler";
+import { ensureContainedDir, removeContained, writeContainedFile } from "./contained-fs";
 import { extensionArchiveKey } from "./extension-archive";
 import { formatJsonLikeBiome } from "./format-json";
 import { MATERIALIZED_ROOT } from "./materialize";
@@ -89,36 +90,33 @@ export function materializeLibrarySceneSources(
   // An empty dependency set reconciles the surface to zero rather than leaving a
   // stale library declaring ids for good.
   if (resolved.length === 0) {
-    if (existsSync(absDir)) {
-      rmSync(absDir, { recursive: true, force: true });
-    }
+    removeContained(cwd, relDir, { recursive: true });
     return { materializedDir: null, counts };
   }
 
-  mkdirSync(absDir, { recursive: true });
+  ensureContainedDir(cwd, relDir);
 
   const wanted = new Set(
     resolved.filter((entry) => entry.sources.length > 0).map((entry) => entry.key),
   );
   for (const existing of readdirSync(absDir)) {
     if (existing !== MANIFEST_FILE && !wanted.has(existing)) {
-      rmSync(path.join(absDir, existing), { recursive: true, force: true });
+      removeContained(cwd, path.posix.join(relDir, existing), { recursive: true });
     }
   }
 
   for (const { key, sources } of resolved) {
     if (sources.length === 0) continue;
-    const keyDir = path.join(absDir, key);
-    rmSync(keyDir, { recursive: true, force: true });
+    const keyRel = path.posix.join(relDir, key);
+    removeContained(cwd, keyRel, { recursive: true });
     for (const { path: rel, text } of sources) {
-      const target = path.join(keyDir, ...rel.split("/"));
-      mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, text);
+      writeContainedFile(cwd, path.posix.join(keyRel, rel), text);
     }
   }
 
-  writeFileSync(
-    path.join(absDir, MANIFEST_FILE),
+  writeContainedFile(
+    cwd,
+    path.posix.join(relDir, MANIFEST_FILE),
     `${formatJsonLikeBiome({
       dependencies: resolved.map(({ key, url }) => ({ key, url })),
     })}\n`,

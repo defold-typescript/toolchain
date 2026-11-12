@@ -3,7 +3,9 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -12,6 +14,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
 import * as ts from "typescript";
+import { ContainedPathError } from "./contained-fs";
 import { dispatch } from "./dispatch";
 import { MATERIALIZED_ROOT } from "./materialize";
 import {
@@ -23,6 +26,7 @@ import {
   scriptModulesOf,
   scriptWorldsForBuild,
 } from "./scene-types-command";
+import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
 import {
   scaffoldUnresolvedDependency,
   scaffoldUnresolvedDependencyManifest,
@@ -678,5 +682,43 @@ describe("createIncompleteReporter", () => {
     report([]);
 
     expect(report(["first"])).toEqual(["first"]);
+  });
+});
+
+describe("runSceneTypes writes only inside the project", () => {
+  let tmp: string;
+  let proj: string;
+  let outside: string;
+
+  beforeEach(() => {
+    tmp = realpathSync(mkdtempSync(path.join(os.tmpdir(), "defold-typescript-contained-scene-")));
+    proj = path.join(tmp, "proj");
+    outside = path.join(tmp, "outside");
+    mkdirSync(path.join(proj, MATERIALIZED_ROOT), { recursive: true });
+    mkdirSync(outside, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  test.skipIf(!canLinkFiles)(
+    "a link at the declaration path is refused and its target left as it was",
+    () => {
+      writeFileSync(path.join(outside, "x.d.ts"), "keep\n");
+      linkFile("../../outside/x.d.ts", path.join(proj, DECLARATION_REL));
+
+      expect(() => runSceneTypes({ cwd: proj })).toThrow(ContainedPathError);
+      expect(() => runSceneTypes({ cwd: proj })).toThrow(DECLARATION_REL);
+      expect(readFileSync(path.join(outside, "x.d.ts"), "utf8")).toBe("keep\n");
+    },
+  );
+
+  test("a .defold-types folder link leading outside is refused and writes nothing there", () => {
+    rmSync(path.join(proj, MATERIALIZED_ROOT), { recursive: true });
+    linkDir(path.join("..", "outside"), path.join(proj, MATERIALIZED_ROOT));
+
+    expect(() => runSceneTypes({ cwd: proj })).toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
   });
 });
