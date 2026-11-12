@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -4881,6 +4882,84 @@ describe("runWatch with symlinked source folders", () => {
     await handle.waitForIdle();
 
     expect(out().slice(afterStartup)).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an edit inside a folder two links reach rebuilds its output at every link path", async () => {
+    writeFileSync(path.join(target, "one.ts"), "export const one = 1;\n");
+    writeFileSync(path.join(target, "two.ts"), "export const two = 1;\n");
+    linkDir("../../factory-core/src", path.join(proj, "src", "a"));
+    linkDir("../../factory-core/src", path.join(proj, "src", "b"));
+    writeFileSync(
+      path.join(proj, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+        include: ["src/a/one.ts", "src/b/two.ts"],
+      }),
+    );
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+    expect(openOn(factory, target)).toHaveLength(1);
+
+    writeFileSync(path.join(target, "one.ts"), "export const one = 2;\n");
+    writeFileSync(path.join(target, "two.ts"), "export const two = 2;\n");
+    factory.triggerAt(target, "change", "one.ts");
+    factory.triggerAt(target, "change", "two.ts");
+    await handle.waitForIdle();
+
+    // An exact include pattern roots its output at its own folder, so each
+    // file lands directly under `build/` whichever link it came through.
+    expect(failureOutput(err())).toBe("");
+    expect(readFileSync(path.join(proj, "build", "one.lua"), "utf8")).toContain("one = 2");
+    expect(readFileSync(path.join(proj, "build", "two.lua"), "utf8")).toContain("two = 2");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("renaming the folder that holds a link moves its target watcher to the new link path", async () => {
+    unlinkDir(path.join(proj, "src", "core"));
+    writeFileSync(path.join(proj, "src", "main.ts"), "export const main = 1;\n");
+    mkdirSync(path.join(proj, "src", "pack"));
+    linkDir("../../../factory-core/src", path.join(proj, "src", "pack", "core"));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+    const first = openOn(factory, target);
+    expect(first).toHaveLength(1);
+
+    // A real watcher reports both sides of a move inside the project but only
+    // one side of a move across its edge, so each rename here delivers one side.
+    renameSync(path.join(proj, "src", "pack"), path.join(proj, "src", "moved"));
+    factory.trigger("rename", "src/pack");
+    await handle.waitForIdle();
+
+    expect(first[0]?.closed).toBe(true);
+    const second = openOn(factory, target);
+    expect(second).toHaveLength(1);
+
+    writeFileSync(path.join(target, "save.ts"), saveSource(2));
+    factory.triggerAt(target, "change", "save.ts");
+    await handle.waitForIdle();
+
+    expect(failureOutput(err())).toBe("");
+    expect(readFileSync(path.join(proj, "build", "moved", "core", "save.lua"), "utf8")).toContain(
+      "return 2",
+    );
+
+    renameSync(path.join(proj, "src", "moved"), path.join(proj, "src", "pack"));
+    factory.trigger("rename", "src/pack");
+    await handle.waitForIdle();
+
+    expect(second[0]?.closed).toBe(true);
+    expect(openOn(factory, target)).toHaveLength(1);
 
     handle.stop();
     await handle.done;
