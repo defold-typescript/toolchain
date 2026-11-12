@@ -1545,7 +1545,7 @@ import { clamp } from "./vendor/pure-pkg";
 The scaffold configures no `outDir`, so generated Lua lands next to its source: that emits `src/vendor/pure-pkg.lua`, beside the `src/main.ts.script` your entry point compiles to. Three things to know:
 
 - The scaffold's `include` is `["src/**/*.ts"]`. Vendored source must sit under an include base or it is never compiled at all.
-- The output path strips the **longest matching** include base, but **only when `compilerOptions.outDir` names a directory other than `"."`** — an absent `outDir`, `""`, and `"."` all mean alongside output, where the tree mirrors the source tree exactly and nothing is stripped. With an `outDir` of `"build"` and `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `build/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output either way.
+- The output path strips the **longest matching** include base, but **only when `compilerOptions.outDir` names a directory other than `"."`** — an absent `outDir`, `""`, and `"."` all mean alongside output, where the tree mirrors the source tree exactly and nothing is stripped. With an `outDir` of `"out"` and `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `out/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output either way.
 - Routing the vendored code back through `node_modules` — a workspace package or a `file:` dependency — reintroduces the no-resolve failure. The import has to stay relative.
 
 For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates importable modules from your `game.project` dependencies.
@@ -6896,8 +6896,8 @@ first `include` pattern that admits it, the generated `main/main.collection`
 names the component [`build`](./build.md) emits for that file, and greenfield
 detection looks for the same pair rather than a `src` literal. A project whose
 `include` is `["game/**/*.ts"]` therefore gets `game/main.ts` and a collection
-pointing at `/game/main.ts.script`, and adding `"outDir": "build"` moves that
-component path to `/build/main.ts.script` in step with the compiled output. A
+pointing at `/game/main.ts.script`, and adding `"outDir": "out"` moves that
+component path to `/out/main.ts.script` in step with the compiled output. A
 tool-added `exclude` entry for that starter is pruned on every re-run, while an
 entry naming a root you have since moved off is left alone as yours. When no
 configured pattern reaches a writable `main.ts` inside the project — an exact
@@ -7447,9 +7447,11 @@ project. To see them in the terminal as well, run with
 
 #### Hot reload
 
-`--hot-reload` pushes each successful rebuild into the game running under the
+`--hot-reload` pushes each successful rebuild that changes a file into the game
+running under the
 [Defold editor](./defold-editor.md#hot-reload-while-it-runs), so you stop
-pressing **Build** after every edit:
+pressing **Build** after every edit. A rebuild whose outputs already hold the
+same bytes, such as a re-save with no edit, posts no reload:
 
 ```sh
 bunx @defold-typescript/cli watch --hot-reload
@@ -7537,7 +7539,7 @@ status you can branch on.
 #### Flags
 
 - `--hot-reload` — push a reload to the running game after every successful
-  rebuild (see [Hot reload](#hot-reload)).
+  rebuild that changes a file (see [Hot reload](#hot-reload)).
 - `--editor-compile` — compile in the attached Defold 1.13.2+ editor after
   every successful rebuild and every project file change, and print its errors
   (see [Compile in the editor](#compile-in-the-editor)).
@@ -7783,8 +7785,12 @@ keeps in `.defold-types/` and its edits to `.gitignore` and `tsconfig.json`: a
 `.gitignore` or `tsconfig.json` that is a link fails it only when the build must
 change that file. A folder link that stays inside the project is
 followed. `outDir` must be a folder inside the project: an absolute path, or one
-that climbs out with `..`, fails the build. A backslash in `outDir` separates
-folders on every OS, so `"build\\lua"` and `"build/lua"` name the same folder.
+that climbs out with `..`, fails the build. It must also be a folder Defold
+loads: an `outDir` that is, or sits inside, `build`, `builtins`, `.internal` or
+`.git` at the project root, or a folder `.defignore` lists, fails the build,
+because the Defold editor never loads files there. A backslash in `outDir`
+separates folders on every OS, so `"out\\lua"` and `"out/lua"` name the same
+folder.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
@@ -7954,12 +7960,12 @@ repo/
   .git/
   factory-core/src/save.ts
   game/
-    tsconfig.json        "outDir": "build"
+    tsconfig.json        "outDir": "out"
     src/main.ts          import { save } from "./core/save";
     src/core  ->  ../../factory-core/src
 ```
 
-`src/core/save.ts` compiles to `build/core/save.lua`, `require("build.core.save")`
+`src/core/save.ts` compiles to `out/core/save.lua`, `require("out.core.save")`
 loads it, and its source map points at `src/core/save.ts`. No output names the
 link's target and nothing is written into it, so two projects that link one
 folder each compile their own copy. Discovery never follows a link inside
@@ -10443,7 +10449,8 @@ when given `--json`. The envelope is always one of two shapes:
 ```
 
 The agent branches on `ok`: on `true`, read `written` for the paths the command
-created or updated; on `false`, read `error` for the failure reason. Some verbs
+created or updated, leaving out a file that already held the same bytes; on
+`false`, read `error` for the failure reason. Some verbs
 add fields to the success envelope (noted per runbook), but `command`, `ok`, and
 either `written` or `error` are always present.
 

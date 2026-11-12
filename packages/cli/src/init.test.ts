@@ -2982,15 +2982,15 @@ describe("resolveStarterTarget (the starter follows the configured include)", ()
   });
 
   test("outDir relocates the output while the source stays under the include base", () => {
-    expect(resolveStarterTarget({ outDir: "build", include: [...DEFAULT_INCLUDE] })).toEqual({
+    expect(resolveStarterTarget({ outDir: "out", include: [...DEFAULT_INCLUDE] })).toEqual({
       sourceRel: "src/main.ts",
-      outputRel: "build/main.ts.script",
-      componentPath: "/build/main.ts.script",
+      outputRel: "out/main.ts.script",
+      componentPath: "/out/main.ts.script",
     });
-    expect(resolveStarterTarget({ outDir: "build", include: ["game/**/*.ts"] })).toEqual({
+    expect(resolveStarterTarget({ outDir: "out", include: ["game/**/*.ts"] })).toEqual({
       sourceRel: "game/main.ts",
-      outputRel: "build/main.ts.script",
-      componentPath: "/build/main.ts.script",
+      outputRel: "out/main.ts.script",
+      componentPath: "/out/main.ts.script",
     });
   });
 
@@ -3074,7 +3074,7 @@ describe("runInit (starter sites read the resolved target)", () => {
   });
 
   test("a configured outDir moves the collection's path and the emitted script together", () => {
-    seedTsconfig(["game/**/*.ts"], { outDir: "build" });
+    seedTsconfig(["game/**/*.ts"], { outDir: "out" });
 
     runInit({ cwd, force: true });
     const result = runBuild({ cwd });

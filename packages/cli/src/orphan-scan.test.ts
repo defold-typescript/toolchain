@@ -54,14 +54,14 @@ describe("scanOrphanOutputs", () => {
   });
 
   test("excludes the lualib bundle and timers runtime even when they carry the banner (outDir mode)", () => {
-    const config = { outDir: "build", include: ["src/**/*.ts"] };
-    writeFile("build/lib/defold_typescript/lualib_bundle.lua", `-- bundle\n${GENERATED_BANNER}\n`);
-    writeFile("build/lib/defold_typescript/timers.lua", `-- timers\n${GENERATED_BANNER}\n`);
-    writeFile("build/old.lua", `return 1\n${GENERATED_BANNER}\n`);
+    const config = { outDir: "out", include: ["src/**/*.ts"] };
+    writeFile("out/lib/defold_typescript/lualib_bundle.lua", `-- bundle\n${GENERATED_BANNER}\n`);
+    writeFile("out/lib/defold_typescript/timers.lua", `-- timers\n${GENERATED_BANNER}\n`);
+    writeFile("out/old.lua", `return 1\n${GENERATED_BANNER}\n`);
 
     const warnings = scanOrphanOutputs(cwd, [], config);
 
-    expect(warnings.some((w) => w.includes("build/old.lua"))).toBe(true);
+    expect(warnings.some((w) => w.includes("out/old.lua"))).toBe(true);
     expect(warnings.some((w) => w.includes("lualib_bundle.lua"))).toBe(false);
     expect(warnings.some((w) => w.includes("timers.lua"))).toBe(false);
   });

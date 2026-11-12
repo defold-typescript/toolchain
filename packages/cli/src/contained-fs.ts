@@ -171,24 +171,30 @@ export function assertContained(root: string, target: string): string {
 // An output's modification time moves only with its content: the debug
 // launcher reads a compiled copy older than its output as a stale engine build.
 // A direct write rather than a temp-file rename, which would briefly put a
-// `.tmp` file in the game's resource folders.
-function writeIfChanged(abs: string, text: string): void {
+// `.tmp` file in the game's resource folders. Resolves whether the file was
+// created or its bytes changed.
+function writeIfChanged(abs: string, text: string): boolean {
   let current: string | undefined;
   try {
     current = readFileSync(abs, "utf8");
   } catch {
     current = undefined;
   }
-  if (current !== text) {
-    writeFileSync(abs, text);
+  if (current === text) {
+    return false;
   }
+  writeFileSync(abs, text);
+  return true;
 }
 
-/** Write `text` to `target` under `root`, creating its folders, once the path is contained. */
-export function writeContainedFile(root: string, target: string, text: string): void {
+/**
+ * Write `text` to `target` under `root`, creating its folders, once the path is
+ * contained. Resolves whether the file was created or its bytes changed.
+ */
+export function writeContainedFile(root: string, target: string, text: string): boolean {
   const abs = assertContained(root, target);
   mkdirSync(path.dirname(abs), { recursive: true });
-  writeIfChanged(abs, text);
+  return writeIfChanged(abs, text);
 }
 
 /** Remove `target` under `root`, a missing path included, once the path is contained. */

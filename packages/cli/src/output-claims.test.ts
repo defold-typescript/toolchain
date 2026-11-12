@@ -92,7 +92,7 @@ describe("output claims — two sources on one path", () => {
       "tsconfig.json",
       JSON.stringify(
         {
-          compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+          compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
           include: ["src/**/*.ts", "vendor/**/*.ts"],
         },
         null,
@@ -105,10 +105,10 @@ describe("output claims — two sources on one path", () => {
 
   test("a second claimant fails the build and leaves the contested file unchanged", () => {
     scaffoldCollision();
-    writeFile("build/shared.lua", `-- first\n${GENERATED_BANNER}\n`);
+    writeFile("out/shared.lua", `-- first\n${GENERATED_BANNER}\n`);
 
-    expect(() => runBuild({ cwd })).toThrow(/build\/shared\.lua/);
-    expect(read("build/shared.lua")).toContain("-- first");
+    expect(() => runBuild({ cwd })).toThrow(/out\/shared\.lua/);
+    expect(read("out/shared.lua")).toContain("-- first");
   });
 
   test("the collision names both sources", () => {
@@ -172,7 +172,7 @@ describe("output claims — the runtime artifacts", () => {
       "tsconfig.json",
       JSON.stringify(
         {
-          compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+          compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
           include: ["src/**/*.ts"],
         },
         null,
@@ -184,7 +184,7 @@ describe("output claims — the runtime artifacts", () => {
 
     // The artifact claims first, so it is the incumbent the source contends with.
     expect(() => runBuild({ cwd })).toThrow(
-      /build\/lib\/defold_typescript\/lualib_bundle\.lua is claimed by two sources: the TypeScript standard-library bundle and src\/lib\/defold_typescript\/lualib_bundle\.ts/,
+      /out\/lib\/defold_typescript\/lualib_bundle\.lua is claimed by two sources: the TypeScript standard-library bundle and src\/lib\/defold_typescript\/lualib_bundle\.ts/,
     );
   });
 

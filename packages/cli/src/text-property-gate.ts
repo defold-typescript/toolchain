@@ -1,7 +1,7 @@
 import { findTextScriptProperties } from "@defold-typescript/transpiler";
 import type * as ts from "typescript";
 import type { FailureEntry } from "./build-output";
-import { compareSemver } from "./upgrade";
+import { compareSemver } from "./semver";
 
 /** The first Defold release whose `go.property` accepts a string default. */
 export const TEXT_SCRIPT_PROPERTY_MIN_VERSION = "1.13.2";

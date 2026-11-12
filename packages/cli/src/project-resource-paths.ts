@@ -2,9 +2,10 @@ import { type Dirent, readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { isDefignoredPath, parseDefignore } from "@defold-typescript/transpiler";
 
-// Tool state, not project resources: the build tree the editor writes, its own
-// port file, and version control.
-export const NON_RESOURCE_ROOTS: readonly string[] = ["build", ".internal", ".git"];
+// Folders the Defold editor keeps for itself and never loads as project
+// resources: its builtins mount, the build tree it writes, its port file, and
+// version control.
+export const NON_RESOURCE_ROOTS: readonly string[] = ["builtins", "build", ".internal", ".git"];
 export const NON_RESOURCE_SEGMENTS: readonly string[] = ["node_modules", ".defold-types"];
 
 export function readDefignoreLines(cwd: string): string[] {
@@ -15,11 +16,24 @@ export function readDefignoreLines(cwd: string): string[] {
   }
 }
 
+/**
+ * What hides the project-relative POSIX path `rel` from the Defold editor: the
+ * reserved first folder (`"build"`) or the `.defignore` line (`"/generated"`)
+ * that covers it, or undefined when the editor loads it.
+ */
+export function editorHiddenFolder(
+  rel: string,
+  defignoreLines: readonly string[],
+): string | undefined {
+  const first = rel.split("/")[0] ?? "";
+  if (NON_RESOURCE_ROOTS.includes(first)) return first;
+  return defignoreLines.find((line) => isDefignoredPath(rel, [line]));
+}
+
 export function isNonResourcePath(rel: string, defignoreLines: readonly string[]): boolean {
+  if (editorHiddenFolder(rel, defignoreLines) !== undefined) return true;
   const segments = rel.split("/");
-  if (NON_RESOURCE_ROOTS.includes(segments[0] ?? "")) return true;
-  if (NON_RESOURCE_SEGMENTS.some((segment) => segments.includes(segment))) return true;
-  return isDefignoredPath(rel, defignoreLines);
+  return NON_RESOURCE_SEGMENTS.some((segment) => segments.includes(segment));
 }
 
 // The project-relative POSIX folder (`"."` at the root) of the first

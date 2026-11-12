@@ -130,10 +130,10 @@ describe("readBuildConfig runtime-dir", () => {
 
 describe("a backslash in outDir", () => {
   test("separates folders in every output and runtime path", () => {
-    const config = parseBuildConfig(JSON.stringify({ compilerOptions: { outDir: "build\\lua" } }));
+    const config = parseBuildConfig(JSON.stringify({ compilerOptions: { outDir: "out\\lua" } }));
 
-    expect(computeOutputRel("src/main.ts", config, "module")).toBe("build/lua/main.lua");
-    expect(lualibBundleRel(config)).toBe("build/lua/lib/defold_typescript/lualib_bundle.lua");
+    expect(computeOutputRel("src/main.ts", config, "module")).toBe("out/lua/main.lua");
+    expect(lualibBundleRel(config)).toBe("out/lua/lib/defold_typescript/lualib_bundle.lua");
   });
 });
 
@@ -227,8 +227,8 @@ describe("computeOutputRel script paths", () => {
 
   test("outDir branch strips the include base, then appends .ts.script", () => {
     expect(
-      computeOutputRel("src/player.ts", { outDir: "build", include: ["src/**/*.ts"] }, "script"),
-    ).toBe("build/player.ts.script");
+      computeOutputRel("src/player.ts", { outDir: "out", include: ["src/**/*.ts"] }, "script"),
+    ).toBe("out/player.ts.script");
   });
 
   test("alongside mode yields the same posix output as a posix input", () => {
@@ -240,8 +240,8 @@ describe("computeOutputRel script paths", () => {
 
   test("outDir mode strips the includeBase only because normalization ran first", () => {
     const rel = toPosix("src\\game\\hero.ts", "\\");
-    expect(computeOutputRel(rel, { outDir: "build/lua", include: ["src/**/*.ts"] }, "script")).toBe(
-      "build/lua/game/hero.ts.script",
+    expect(computeOutputRel(rel, { outDir: "out/lua", include: ["src/**/*.ts"] }, "script")).toBe(
+      "out/lua/game/hero.ts.script",
     );
   });
 });
@@ -340,14 +340,14 @@ describe("computeOutputRel kind suffix", () => {
   });
 
   test("outDir mode re-roots module paths after stripping the include base", () => {
-    expect(computeOutputRel("src/util.ts", { outDir: "build", include }, "module")).toBe(
-      "build/util.lua",
+    expect(computeOutputRel("src/util.ts", { outDir: "out", include }, "module")).toBe(
+      "out/util.lua",
     );
   });
 
   test("outDir mode re-roots and applies the kind suffix", () => {
-    expect(computeOutputRel("src/hud.ts", { outDir: "build", include }, "gui-script")).toBe(
-      "build/hud.ts.gui_script",
+    expect(computeOutputRel("src/hud.ts", { outDir: "out", include }, "gui-script")).toBe(
+      "out/hud.ts.gui_script",
     );
   });
 
@@ -358,8 +358,8 @@ describe("computeOutputRel kind suffix", () => {
   });
 
   test("outDir mode re-roots and applies the editor-script suffix", () => {
-    expect(computeOutputRel("src/tools.ts", { outDir: "build", include }, "editor-script")).toBe(
-      "build/tools.ts.editor_script",
+    expect(computeOutputRel("src/tools.ts", { outDir: "out", include }, "editor-script")).toBe(
+      "out/tools.ts.editor_script",
     );
   });
 });
@@ -388,7 +388,7 @@ describe("retargetSourceRoot", () => {
   test("points the source root at the authored directory for an outDir layout", () => {
     const retargeted = retargetSourceRoot(
       mapWithSources(["hero.ts"]),
-      "build/lua/game/hero.ts.script",
+      "out/lua/game/hero.ts.script",
       "src/game/hero.ts",
     );
 
@@ -406,18 +406,18 @@ describe("retargetSourceRoot", () => {
   test("returns the map unchanged when it is not valid JSON", () => {
     const map = "{ not json";
 
-    expect(retargetSourceRoot(map, "build/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
+    expect(retargetSourceRoot(map, "out/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
   });
 
   test("returns the map unchanged when it carries more than one source", () => {
     const map = mapWithSources(["hero.ts", "sidekick.ts"]);
 
-    expect(retargetSourceRoot(map, "build/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
+    expect(retargetSourceRoot(map, "out/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
   });
 
   test("returns undefined when there is no map to retarget", () => {
     expect(
-      retargetSourceRoot(undefined, "build/lua/game/hero.ts.script", "src/game/hero.ts"),
+      retargetSourceRoot(undefined, "out/lua/game/hero.ts.script", "src/game/hero.ts"),
     ).toBeUndefined();
   });
 });
@@ -473,9 +473,9 @@ describe("writeScriptFile source-map sibling", () => {
   });
 
   test("writes a basename-only sourceMappingURL for a nested scriptRel", () => {
-    writeScriptFile(cwd, "build/lua/game/hero.ts.script", "print('hi')", "{}");
-    const script = readFileSync(path.join(cwd, "build/lua/game/hero.ts.script"), "utf8");
-    const map = readFileSync(path.join(cwd, "build/lua/game/hero.ts.script.map"), "utf8");
+    writeScriptFile(cwd, "out/lua/game/hero.ts.script", "print('hi')", "{}");
+    const script = readFileSync(path.join(cwd, "out/lua/game/hero.ts.script"), "utf8");
+    const map = readFileSync(path.join(cwd, "out/lua/game/hero.ts.script.map"), "utf8");
     expect(map).toBe("{}");
     expect(script).toContain("\n--# sourceMappingURL=hero.ts.script.map\n");
     expect(script).not.toContain("game/hero.ts.script.map");
@@ -518,8 +518,8 @@ describe("writeScriptFile generated banner", () => {
   });
 
   test("with a map, the body stays at line 1, sourceMappingURL is basename-only and last", () => {
-    writeScriptFile(cwd, "build/lua/game/hero.ts.script", "local x = 1", "{}");
-    const script = readFileSync(path.join(cwd, "build/lua/game/hero.ts.script"), "utf8");
+    writeScriptFile(cwd, "out/lua/game/hero.ts.script", "local x = 1", "{}");
+    const script = readFileSync(path.join(cwd, "out/lua/game/hero.ts.script"), "utf8");
     // Both trailers sit after the mapped body, so line 1 is still the first Lua line.
     expect(script.split("\n")[0]).toBe("local x = 1");
     expect(script).toContain("\n--# sourceMappingURL=hero.ts.script.map\n");

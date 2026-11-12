@@ -407,16 +407,16 @@ describe("script-linked component addresses", () => {
   }
 
   test("a script address resolves to its source through the build's outDir mapping", async () => {
-    // The scene names `/build/wave.ts.script`; only mapping `src/wave.ts`
+    // The scene names `/out/wave.ts.script`; only mapping `src/wave.ts`
     // forward through `outDir` reaches it, and a reverse parse of the resource
-    // would look for `build/wave.ts` and find nothing.
+    // would look for `out/wave.ts` and find nothing.
     write(
       "tsconfig.json",
-      JSON.stringify({ compilerOptions: { outDir: "build" }, include: ["src/**/*.ts"] }),
+      JSON.stringify({ compilerOptions: { outDir: "out" }, include: ["src/**/*.ts"] }),
     );
     write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
     write("main/main.collection", 'instances {\n  id: "logic"\n  prototype: "/main/logic.go"\n}\n');
-    write("main/logic.go", 'components {\n  id: "wave"\n  component: "/build/wave.ts.script"\n}\n');
+    write("main/logic.go", 'components {\n  id: "wave"\n  component: "/out/wave.ts.script"\n}\n');
     write(
       "src/wave.ts",
       "declare function defineScript<T>(handlers: T): T;\n" +
