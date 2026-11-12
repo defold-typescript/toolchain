@@ -3,7 +3,10 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
+  readlinkSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -46,6 +49,7 @@ import {
   sceneIndexForBuild,
   scriptWorldsForBuild,
 } from "./scene-types-command";
+import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
 import type { WatchEditorClient } from "./watch";
 
 function countMatches(haystack: string, needle: RegExp): number {
@@ -2918,5 +2922,146 @@ describe("runBuild (companion module emit)", () => {
     expect(rebuilt.written).not.toContain("src/doors/door.lua");
     expect(existsSync(path.join(cwd, "src/doors/door.lua"))).toBe(false);
     expect(existsSync(path.join(cwd, "src/doors/door.ts.script"))).toBe(true);
+  });
+});
+
+describe("runBuild writes only inside the project", () => {
+  let tmp: string;
+  let proj: string;
+  let outside: string;
+
+  beforeEach(() => {
+    tmp = realpathSync(mkdtempSync(path.join(os.tmpdir(), "defold-typescript-contained-build-")));
+    proj = path.join(tmp, "proj");
+    outside = path.join(tmp, "outside");
+    mkdirSync(path.join(proj, "src"), { recursive: true });
+    mkdirSync(outside, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function writeProjectFile(rel: string, contents: string): void {
+    const abs = path.join(proj, rel);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, contents);
+  }
+
+  function tsconfigWithOutDir(outDir: string): string {
+    return JSON.stringify({
+      compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir },
+      include: ["src/**/*.ts"],
+    });
+  }
+
+  function buildFailure(): BuildFailureError {
+    try {
+      runBuild({ cwd: proj });
+    } catch (error) {
+      if (error instanceof BuildFailureError) {
+        return error;
+      }
+      throw error;
+    }
+    throw new Error("runBuild succeeded");
+  }
+
+  function linkText(rel: string): string {
+    return readlinkSync(path.join(proj, rel));
+  }
+
+  test.skipIf(!canLinkFiles)(
+    "a dangling link at an output path fails the build before anything is written",
+    () => {
+      writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+      writeProjectFile("src/alpha.ts", "export const alpha = 1;\n");
+      writeProjectFile("src/levels.ts", "export const levels = 2;\n");
+      linkFile("../../outside/new.txt", path.join(proj, "src/levels.lua"));
+
+      const failure = buildFailure();
+
+      expect(
+        failure.entries.some(
+          ({ message }) =>
+            message.includes("src/levels.lua") && message.includes(linkText("src/levels.lua")),
+        ),
+      ).toBe(true);
+      expect(existsSync(path.join(outside, "new.txt"))).toBe(false);
+      expect(existsSync(path.join(proj, "src/alpha.lua"))).toBe(false);
+    },
+  );
+
+  test.skipIf(!canLinkFiles)(
+    "a link to a file outside holding the generated banner leaves it unchanged",
+    () => {
+      const victim = `${GENERATED_BANNER}\nprecious\n`;
+      writeFileSync(path.join(outside, "victim.txt"), victim);
+      writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+      writeProjectFile("src/levels.ts", "export const levels = 2;\n");
+      linkFile("../../outside/victim.txt", path.join(proj, "src/levels.lua"));
+
+      buildFailure();
+
+      expect(readFileSync(path.join(outside, "victim.txt"), "utf8")).toBe(victim);
+    },
+  );
+
+  test.skipIf(!canLinkFiles)("a link at a source-map path leaves its target unchanged", () => {
+    writeFileSync(path.join(outside, "victim.txt"), "precious\n");
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/levels.ts", "export const levels = 2;\n");
+    linkFile("../../outside/victim.txt", path.join(proj, "src/levels.lua.map"));
+
+    const failure = buildFailure();
+
+    expect(failure.entries.some(({ message }) => message.includes("src/levels.lua.map"))).toBe(
+      true,
+    );
+    expect(readFileSync(path.join(outside, "victim.txt"), "utf8")).toBe("precious\n");
+  });
+
+  test("an outDir that is a folder link leading outside fails the build", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("build"));
+    writeProjectFile("src/main.ts", "export const main = 1;\n");
+    linkDir(path.join("..", "outside"), path.join(proj, "build"));
+
+    const failure = buildFailure();
+
+    expect(failure.entries.some(({ message }) => message.includes(linkText("build")))).toBe(true);
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test("a runtime folder that is a folder link leading outside fails the build", () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", "export const ks = Object.keys({ a: 1 });\n");
+    mkdirSync(path.join(proj, "lib"));
+    linkDir(path.join("..", "..", "outside"), path.join(proj, "lib/defold_typescript"));
+
+    const failure = buildFailure();
+
+    expect(failure.entries.some(({ message }) => message.includes("lib/defold_typescript"))).toBe(
+      true,
+    );
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test("an outDir that is a folder link staying inside the project builds through it", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("build"));
+    writeProjectFile("src/main.ts", "export const main = 1;\n");
+    mkdirSync(path.join(proj, "real-build"));
+    linkDir("real-build", path.join(proj, "build"));
+
+    runBuild({ cwd: proj });
+
+    expect(existsSync(path.join(proj, "real-build/main.lua"))).toBe(true);
+  });
+
+  test("an outDir that climbs out of the project is rejected", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("../escape"));
+    writeProjectFile("src/main.ts", "export const main = 1;\n");
+
+    expect(() => runBuild({ cwd: proj })).toThrow('"compilerOptions"."outDir"');
+    expect(existsSync(path.join(tmp, "escape"))).toBe(false);
   });
 });

@@ -12,6 +12,7 @@ import {
   GENERATED_BANNER,
   PROJECT_BUCKET,
 } from "./build-output";
+import { containmentProblem } from "./contained-fs";
 
 export interface OutputClaimant {
   /** The source rel whose output this is. */
@@ -86,8 +87,10 @@ function isGenerated(cwd: string, outputRel: string): boolean {
 /**
  * Which source owns each output path this build will write.
  *
- * Two claimants on one path, and a path already holding Lua this tool did not
- * generate, are both build failures rather than an overwrite. Claims are
+ * Two claimants on one path, a path already holding Lua this tool did not
+ * generate, and a path `containmentProblem` refuses (a link at the output or its
+ * map, or a folder link leading outside the project) are all build failures
+ * rather than an overwrite. Claims are
  * recorded for every output, not just companions: two sources collapsing onto
  * one rel under a shared `outDir` predates companions and was silently writing
  * whichever source came last.
@@ -97,6 +100,14 @@ export function createOutputClaimRegistry(cwd: string): OutputClaimRegistry {
   const collisions: OutputClaimCollision[] = [];
 
   function claim(outputRel: string, claimant: OutputClaimant): boolean {
+    // The map is checked with its output: it is written beside it, and a link
+    // there redirects that write as surely as one at the output itself.
+    const problem =
+      containmentProblem(cwd, outputRel) ?? containmentProblem(cwd, `${outputRel}.map`);
+    if (problem !== undefined) {
+      collisions.push({ outputRel, claimant, message: problem });
+      return false;
+    }
     const holder = claimed.get(outputRel);
     if (holder !== undefined) {
       collisions.push({
