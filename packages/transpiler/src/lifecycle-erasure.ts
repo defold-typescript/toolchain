@@ -33,7 +33,11 @@ import {
   SyntaxKind,
   type TransformationContext,
 } from "typescript-to-lua";
-import { resolvesToDispatchExport } from "./message-dispatch-lowering";
+import {
+  isPlainParameter,
+  resolvesToDispatchExport,
+  unbindableParameter,
+} from "./message-dispatch-lowering";
 import type { PropertyValue } from "./property-default-evaluator";
 
 export const FACTORY_MODULE = "@defold-typescript/types";
@@ -178,16 +182,12 @@ function emitInitMerge(
 ): Statement[] {
   // init-self: Defold has already populated `self` with the declared property
   // values when `init` runs, so an `init(self)` body must resolve `self` to the
-  // engine table — not a nil global. Bind the builder's parameter to the
-  // author's first non-`this:` param (which may be named anything) and pass the
-  // engine `self` at the call. A param-less `init` keeps the zero-arg builder.
-  const authorParam = fn.parameters.find(
-    (param) => !isThisParameter(param) && ts.isIdentifier(param.name),
-  );
-  const builderParams: Identifier[] =
-    authorParam === undefined
-      ? []
-      : [context.transformExpression(authorParam.name as ts.Identifier) as Identifier];
+  // engine table — not a nil global. The builder takes every author param (the
+  // first may be named anything) and the call passes only the engine `self`, so
+  // any later param is nil. A param-less `init` keeps the zero-arg builder.
+  const builderParams: Identifier[] = fn.parameters
+    .filter((param) => !isThisParameter(param))
+    .map((param) => context.transformExpression(param.name as ts.Identifier) as Identifier);
   const builder = createFunctionExpression(
     createBlock(initBuilderBody(fn, context)),
     builderParams,
@@ -197,7 +197,7 @@ function emitInitMerge(
   );
   const builderDecl = createVariableDeclarationStatement(createIdentifier("____init"), builder);
 
-  const builderArgs = authorParam === undefined ? [] : [createIdentifier("self")];
+  const builderArgs = builderParams.length === 0 ? [] : [createIdentifier("self")];
   const stateDecl = createVariableDeclarationStatement(
     createIdentifier("____s"),
     createCallExpression(createIdentifier("____init"), builderArgs),
@@ -1065,7 +1065,7 @@ function eraseFactoryCall(
     if (fn === undefined) {
       // A hook whose initializer is a recognized `onMessage({...})` call: let it
       // route through the message-dispatch lowering, which yields the flat
-      // `function(self, message_id, message, sender)` chunk, then bind it.
+      // `function(____self, message_id, message, sender)` chunk, then bind it.
       const dispatch = dispatcherInitializer(property, context.checker);
       if (dispatch !== undefined) {
         statements.push(
@@ -1078,6 +1078,13 @@ function eraseFactoryCall(
       }
       continue;
     }
+    const unbindable = fn.parameters.find(
+      (param) => !isThisParameter(param) && !isPlainParameter(param),
+    );
+    if (unbindable !== undefined) {
+      context.diagnostics.push(unbindableParameter(unbindable, `hook \`${name}\``));
+      continue;
+    }
     if (name === "init" && initReturnsValue(fn)) {
       statements.push(
         ...emitInitMerge(fn, context, property, callbackTarget(name, moduleBindings)),
@@ -1085,7 +1092,7 @@ function eraseFactoryCall(
       continue;
     }
     const params: Identifier[] = fn.parameters
-      .filter((param) => !isThisParameter(param) && ts.isIdentifier(param.name))
+      .filter((param) => !isThisParameter(param))
       .map((param) => context.transformExpression(param.name as ts.Identifier) as Identifier);
     const fnExpression = createFunctionExpression(
       createBlock(transformHookBody(fn, context)),

@@ -6,6 +6,7 @@ import {
   createFunctionExpression,
   createIdentifier,
   createIfStatement,
+  createNilLiteral,
   createStringLiteral,
   createVariableDeclarationStatement,
   type Expression,
@@ -22,8 +23,10 @@ const DISPATCH_MODULE = "@defold-typescript/types";
 const DISPATCH_NAME = "onMessage";
 
 // The engine calls `on_message(self, message_id, message, sender)`; a handler's
-// own params (in order) alias onto these three value-bearing names.
-const HANDLER_PARAM_TARGETS = ["self", "message", "sender"] as const;
+// own params (in order) alias onto these three value-bearing names. The engine
+// `self` takes `____self`, the name TypeScript-to-Lua emits for a `self` the
+// handler body reads.
+const HANDLER_PARAM_TARGETS = ["____self", "message", "sender"] as const;
 
 export function resolvesToDispatchExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
   let symbol = checker.getSymbolAtLocation(callee);
@@ -83,6 +86,30 @@ function unlowerableHandler(node: ts.Node, text: string): ts.Diagnostic {
   };
 }
 
+// A handler or hook parameter binds to one engine argument by position, so only
+// a plain name lowers: a destructured, defaulted or rest parameter has no single
+// Lua name the engine argument can take.
+export function isPlainParameter(param: ts.ParameterDeclaration): boolean {
+  return (
+    ts.isIdentifier(param.name) &&
+    param.initializer === undefined &&
+    param.dotDotDotToken === undefined
+  );
+}
+
+export function unbindableParameter(param: ts.ParameterDeclaration, owner: string): ts.Diagnostic {
+  const file = param.getSourceFile();
+  const start = param.getStart(file);
+  return {
+    file,
+    start,
+    length: param.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText: `${owner} cannot bind the parameter \`${param.getText(file)}\`: give it a plain name, then destructure or default it inside the body.`,
+  };
+}
+
 function handlerFunction(property: ts.ObjectLiteralElementLike): HandlerFunction | undefined {
   if (ts.isMethodDeclaration(property) && property.body !== undefined) {
     return property as HandlerFunction;
@@ -103,24 +130,23 @@ function isThisParameter(param: ts.ParameterDeclaration): boolean {
   );
 }
 
-function aliasStatements(fn: HandlerFunction): Statement[] {
-  const params = fn.parameters.filter((param) => !isThisParameter(param));
-  const aliases: Statement[] = [];
-  params.forEach((param, index) => {
-    const engineName = HANDLER_PARAM_TARGETS[index];
-    if (engineName === undefined || !ts.isIdentifier(param.name)) {
-      return;
-    }
-    if (param.name.text !== engineName) {
-      aliases.push(
-        createVariableDeclarationStatement(
-          createIdentifier(param.name.text),
-          createIdentifier(engineName),
-        ),
-      );
-    }
-  });
-  return aliases;
+// One multiple assignment, so every engine name is read before any alias can
+// shadow it; a parameter past `sender` is bound to nil.
+function aliasStatements(fn: HandlerFunction, context: TransformationContext): Statement[] {
+  const lefts: Identifier[] = [];
+  const rights: Expression[] = [];
+  fn.parameters
+    .filter((param) => !isThisParameter(param))
+    .forEach((param, index) => {
+      const local = context.transformExpression(param.name as ts.Identifier) as Identifier;
+      const engineName = HANDLER_PARAM_TARGETS[index];
+      if (local.text === engineName) {
+        return;
+      }
+      lefts.push(local);
+      rights.push(engineName === undefined ? createNilLiteral() : createIdentifier(engineName));
+    });
+  return lefts.length === 0 ? [] : [createVariableDeclarationStatement(lefts, rights)];
 }
 
 function handlerBody(fn: HandlerFunction, context: TransformationContext): Statement[] {
@@ -156,16 +182,25 @@ export const messageDispatchLoweringPlugin: Plugin = {
             context.diagnostics.push(unlowerableHandler(property, offending.getText()));
             continue;
           }
+          const unbindable = fn.parameters.find(
+            (param) => !isThisParameter(param) && !isPlainParameter(param),
+          );
+          if (unbindable !== undefined) {
+            context.diagnostics.push(
+              unbindableParameter(unbindable, `${DISPATCH_NAME} handler \`${name}\``),
+            );
+            continue;
+          }
           const condition = createBinaryExpression(
             createIdentifier("message_id"),
             createCallExpression(createIdentifier("hash"), [createStringLiteral(name)]),
             SyntaxKind.EqualityOperator,
           );
-          const body = [...aliasStatements(fn), ...handlerBody(fn, context)];
+          const body = [...aliasStatements(fn, context), ...handlerBody(fn, context)];
           chain = createIfStatement(condition, createBlock(body), chain);
         }
         const params: Identifier[] = [
-          createIdentifier("self"),
+          createIdentifier("____self"),
           createIdentifier("message_id"),
           createIdentifier("message"),
           createIdentifier("sender"),
