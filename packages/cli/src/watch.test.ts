@@ -35,7 +35,7 @@ import {
   SCENE_ADDRESSES_DECLARATION,
   scriptWorldsForBuild,
 } from "./scene-types-command";
-import { canLinkFiles, linkFile } from "./symlink.test-support";
+import { canLinkFiles, linkDir, linkFile, unlinkDir } from "./symlink.test-support";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -78,41 +78,58 @@ function captureStreams() {
   };
 }
 
+interface OpenedWatcher {
+  readonly root: string;
+  readonly onEvent: (e: WatchEvent) => void;
+  closed: boolean;
+}
+
 interface ControllableFactory {
   readonly factory: WatcherFactory;
   readonly opened: boolean;
+  /** Whether the project-root watcher, the first one opened, is closed. */
   readonly closed: boolean;
   readonly observedRoot: string | null;
+  /** Every watcher opened so far, in order. */
+  readonly watchers: readonly OpenedWatcher[];
+  /** Fires the project-root watcher. */
   trigger(kind: "change" | "rename", relPath: string): void;
+  /** Fires the most recently opened watcher on `root` that is still open. */
+  triggerAt(root: string, kind: "change" | "rename", relPath: string): void;
 }
 
 function makeFactory(): ControllableFactory {
-  let onEvent: ((e: WatchEvent) => void) | null = null;
-  const state = { opened: false, closed: false, observedRoot: null as string | null };
+  const watchers: OpenedWatcher[] = [];
   const factory: WatcherFactory = (root, cb): Watcher => {
-    state.opened = true;
-    state.observedRoot = root;
-    onEvent = cb;
+    const opened: OpenedWatcher = { root, onEvent: cb, closed: false };
+    watchers.push(opened);
     return {
       close() {
-        state.closed = true;
+        opened.closed = true;
       },
     };
   };
   return {
     factory,
+    watchers,
     get opened() {
-      return state.opened;
+      return watchers.length > 0;
     },
     get closed() {
-      return state.closed;
+      return watchers[0]?.closed ?? false;
     },
     get observedRoot() {
-      return state.observedRoot;
+      return watchers[0]?.root ?? null;
     },
     trigger(kind, relPath) {
-      if (!onEvent) throw new Error("watcher not opened");
-      onEvent({ kind, path: relPath });
+      const project = watchers[0];
+      if (!project) throw new Error("watcher not opened");
+      project.onEvent({ kind, path: relPath });
+    },
+    triggerAt(root, kind, relPath) {
+      const target = [...watchers].reverse().find((w) => w.root === root && !w.closed);
+      if (!target) throw new Error(`no open watcher on ${root}`);
+      target.onEvent({ kind, path: relPath });
     },
   };
 }
@@ -4692,4 +4709,180 @@ describe("runWatch writes only inside the project", () => {
       }
     },
   );
+});
+
+describe("runWatch with symlinked source folders", () => {
+  let tmp: string;
+  let proj: string;
+  let target: string;
+
+  const MAIN_MODULE = 'import { save } from "./core/save";\nexport const saved = save();\n';
+
+  function saveSource(value: number): string {
+    return `export function save(): number {\n  return ${value};\n}\n`;
+  }
+
+  beforeEach(() => {
+    tmp = realpathSync.native(
+      mkdtempSync(path.join(os.tmpdir(), "defold-typescript-watch-linked-")),
+    );
+    const repo = path.join(tmp, "repo");
+    mkdirSync(path.join(repo, ".git"), { recursive: true });
+    mkdirSync(path.join(repo, "factory-core", "src"), { recursive: true });
+    writeFileSync(path.join(repo, "factory-core", "src", "save.ts"), saveSource(1));
+    proj = path.join(repo, "game");
+    mkdirSync(path.join(proj, "src"), { recursive: true });
+    writeFileSync(
+      path.join(proj, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    writeFileSync(path.join(proj, "src", "main.ts"), MAIN_MODULE);
+    linkDir("../../factory-core/src", path.join(proj, "src", "core"));
+    target = realpathSync.native(path.join(repo, "factory-core", "src"));
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function openOn(factory: ControllableFactory, root: string): OpenedWatcher[] {
+    return factory.watchers.filter((w) => w.root === root && !w.closed);
+  }
+
+  test("opens a watcher on each linked folder's real target, and stop closes it", async () => {
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(failureOutput(err())).toBe("");
+    expect(factory.observedRoot).toBe(proj);
+    expect(openOn(factory, target)).toHaveLength(1);
+
+    handle.stop();
+    await handle.done;
+    expect(factory.watchers.every((w) => w.closed)).toBe(true);
+  });
+
+  test("an edit inside a linked folder rebuilds its output at the link path", async () => {
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+    const afterStartup = out().length;
+
+    writeFileSync(path.join(target, "save.ts"), saveSource(2));
+    factory.triggerAt(target, "change", "save.ts");
+    await handle.waitForIdle();
+
+    expect(failureOutput(err())).toBe("");
+    expect(readFileSync(path.join(proj, "build", "core", "save.lua"), "utf8")).toContain(
+      "return 2",
+    );
+    expect(out().slice(afterStartup)).toMatch(/wrote \d+ files: .*build\/core\/save\.lua/);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an edit inside a linked folder hot-reloads the editor", async () => {
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd: proj,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeFileSync(path.join(target, "save.ts"), saveSource(2));
+    factory.triggerAt(target, "change", "save.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.slice(afterStartup)).toEqual(["hot-reload"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("removing a link closes its target watcher, and adding it back opens a new one", async () => {
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+    const first = openOn(factory, target);
+    expect(first).toHaveLength(1);
+
+    unlinkDir(path.join(proj, "src", "core"));
+    factory.trigger("rename", "src/core");
+    await handle.waitForIdle();
+
+    expect(first[0]?.closed).toBe(true);
+    expect(openOn(factory, target)).toHaveLength(0);
+
+    linkDir("../../factory-core/src", path.join(proj, "src", "core"));
+    factory.trigger("rename", "src/core");
+    await handle.waitForIdle();
+
+    const reopened = openOn(factory, target);
+    expect(reopened).toHaveLength(1);
+    expect(reopened[0]).not.toBe(first[0]);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a link added mid-watch that leads outside the repository is never watched, and the others still sync", async () => {
+    const outside = path.join(tmp, "elsewhere");
+    mkdirSync(outside);
+    writeFileSync(path.join(outside, "extra.ts"), "export const extra = 1;\n");
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    linkDir("../../../elsewhere", path.join(proj, "src", "ext"));
+    factory.trigger("rename", "src/ext");
+    await handle.waitForIdle();
+    unlinkDir(path.join(proj, "src", "core"));
+    factory.trigger("rename", "src/core");
+    await handle.waitForIdle();
+
+    expect(factory.watchers.map((w) => w.root)).not.toContain(realpathSync.native(outside));
+    expect(openOn(factory, target)).toHaveLength(0);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an event inside a linked folder for a file the include pattern skips starts no rebuild", async () => {
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd: proj, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+    const afterStartup = out().length;
+
+    writeFileSync(path.join(target, "notes.md"), "notes\n");
+    factory.triggerAt(target, "change", "notes.md");
+    await handle.waitForIdle();
+
+    expect(out().slice(afterStartup)).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
 });

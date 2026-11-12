@@ -1,4 +1,4 @@
-import { existsSync, watch as fsWatch } from "node:fs";
+import { existsSync, watch as fsWatch, lstatSync } from "node:fs";
 import * as path from "node:path";
 import {
   SCRIPT_SUFFIX_BY_KIND,
@@ -39,6 +39,7 @@ import {
 import { editorCompileReport } from "./editor-compile";
 import { renderWatchEvent } from "./json-output";
 import { isNonResourcePath, readDefignoreLines } from "./project-resource-paths";
+import { followedFolderLinks } from "./scan";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
 import { colorConsoleTag, severityLine } from "./terminal-style";
 
@@ -812,6 +813,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       reportFailure(err, "rebuild");
     }
     if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
+    syncLinkWatchers();
     // A posted reload attaches on its own; this covers the rebuilds that post
     // nothing, so an editor started mid-watch is still picked up.
     if (!reloadBusy) scheduleAttach();
@@ -823,6 +825,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (stopped) return;
     if (!e.path) return;
     const key = toPosix(e.path);
+    if (e.kind === "rename" && isLinkChange(key)) syncLinkWatchers();
     // Defold's Fetch Libraries rewrites its manifest once the archives it
     // lists are in place, which changes what `resolve` reads as surely as a
     // `game.project` edit does.
@@ -852,7 +855,59 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     scheduled = setTimeout(rebuild, debounceMs);
   }
 
+  // A recursive watch on the project misses edits inside a linked folder on
+  // some hosts, so each followed folder link's real target gets a watcher of
+  // its own, keyed by that target, whose events re-enter as link paths.
+  const linkWatchers = new Map<string, { readonly linkRel: string; readonly watcher: Watcher }>();
+
+  function isLinkChange(key: string): boolean {
+    for (const { linkRel } of linkWatchers.values()) {
+      if (linkRel === key) return true;
+    }
+    try {
+      return lstatSync(path.join(cwd, key)).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  }
+
+  function syncLinkWatchers(): void {
+    if (stopped) return;
+    let links: Map<string, string>;
+    try {
+      links = followedFolderLinks(cwd, config.include);
+    } catch {
+      // Only an unreadable `link-roots` setting or a vanished project gets
+      // here; a build reports both, so the watchers stay as they were.
+      return;
+    }
+    const relByTarget = new Map<string, string>();
+    for (const [linkRel, target] of links) {
+      if (!relByTarget.has(target)) relByTarget.set(target, linkRel);
+    }
+    for (const [target, entry] of linkWatchers) {
+      if (relByTarget.get(target) !== entry.linkRel) {
+        entry.watcher.close();
+        linkWatchers.delete(target);
+      }
+    }
+    for (const [target, linkRel] of relByTarget) {
+      if (linkWatchers.has(target)) continue;
+      let linkWatcher: Watcher;
+      try {
+        linkWatcher = factory(target, (e) => {
+          if (e.path) onEvent({ kind: e.kind, path: `${linkRel}/${toPosix(e.path)}` });
+        });
+      } catch {
+        // The target went away after the scan; the next sync sees that.
+        continue;
+      }
+      linkWatchers.set(target, { linkRel, watcher: linkWatcher });
+    }
+  }
+
   const watcher = factory(cwd, onEvent);
+  syncLinkWatchers();
 
   function runSync(): void {
     syncScheduled = null;
@@ -1008,6 +1063,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       stopDiscovery = null;
     }
     watcher.close();
+    for (const { watcher: linkWatcher } of linkWatchers.values()) linkWatcher.close();
+    linkWatchers.clear();
     componentWatcher?.close();
     // Order matters: the abort is what unparks a stream waiting on the socket,
     // and `return()` is the ordinary close for one that is mid-chunk.

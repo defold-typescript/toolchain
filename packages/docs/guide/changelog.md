@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`build` and `tsc` agree** on `onMessage`, [socket](/api/socket) aliases and the API and libraries an editor or game script may use ([Editor scripts](./editor-scripts.md#the-editor-vms-own-libraries)).
 > - **Interface values pass as tables** to `sys.save` and every `PlainTable` slot on all targets.
 > - **Clean scaffolds that `upgrade` keeps current:** docs paths, `.gitignore` and Biome ([init](./init.md)).
-> - **Symbolic links:** `build` and `watch` compile sources through a linked folder an `include` pattern reaches, in the repository or a `link-roots` folder, and `build`, `watch` and `resolve` refuse to write through a link or outside the project ([Linked source folders](./build.md#linked-source-folders)).
+> - **Symbolic links:** `build` and `watch` compile, and `watch` follows edits in, a linked folder an `include` pattern reaches inside the repository or a `link-roots` folder, while `build`, `watch` and `resolve` refuse to write through a link or outside the project ([Linked source folders](./build.md#linked-source-folders)).
 
 ### Breaking
 
@@ -27,7 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Added
 
 - **`@defold-typescript/types/hsm`, `@defold-typescript/types/ecs` and their sub-modules run under `bun test`**, so a machine or a world can be unit-tested with a plain import and no Defold engine. See [State machines](./state-machines.md#test-a-machine-with-bun) and [Entity systems](./entity-systems.md#test-a-world-with-bun).
-- **`build` and `watch` compile sources behind a symbolic link** as if they sat at the link's path, when the link leads inside the repository or a folder listed in `package.json` `"defold-typescript"."link-roots"`. Only a link an `include` pattern can reach is followed, and the pattern matches through it as in a real folder; one file reached under two paths fails the build, naming both ([Linked source folders](./build.md#linked-source-folders)).
+- **`build` and `watch` compile sources behind a symbolic link** an `include` pattern can reach, as if they sat at the link's path, when the link leads inside the repository or a folder listed in `package.json` `"defold-typescript"."link-roots"`, and `watch` rebuilds and hot-reloads on an edit inside a linked folder. The pattern matches through a link as in a real folder, and one file reached under two paths fails the build, naming both ([Linked source folders](./build.md#linked-source-folders)).
 
 ### Fixed
 
