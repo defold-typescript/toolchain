@@ -38,6 +38,7 @@ import {
 import { decodeMappings } from "./console-source-map";
 import { dispatch } from "./dispatch";
 import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
+import { skipWithoutGitFreeTemp } from "./git-free-temp.test-support";
 import { runInit } from "./init";
 import {
   installEngineSurface,
@@ -85,10 +86,10 @@ const DEFAULT_TSCONFIG = JSON.stringify(
 // The build config the outDir cases share, in both the shapes they need it:
 // the tsconfig text the build reads, and the parsed form the expected output
 // paths are computed from.
-const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+const OUTDIR_CONFIG: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
 const OUTDIR_TSCONFIG = JSON.stringify(
   {
-    compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build/lua" },
+    compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out/lua" },
     include: ["src/**/*.ts"],
   },
   null,
@@ -1158,6 +1159,53 @@ describe("runBuild", () => {
   });
 });
 
+describe("written lists only files the build changed", () => {
+  const BUNDLE_REL = "lib/defold_typescript/lualib_bundle.lua";
+
+  beforeEach(() => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/a.ts", "export const value = 1;\n");
+    writeFile("src/b.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+  });
+
+  test("a second build with nothing edited lists nothing", () => {
+    expect(runBuild({ cwd }).written).toEqual([BUNDLE_REL, "src/a.lua", "src/b.lua"]);
+
+    expect(runBuild({ cwd }).written).toEqual([]);
+  });
+
+  test("an edit lists only the edited source's output and leaves the bundle untouched", () => {
+    runBuild({ cwd });
+    const bundlePath = path.join(cwd, BUNDLE_REL);
+    const bundleBefore = readFileSync(bundlePath, "utf8");
+    const bundleMtimeBefore = statSync(bundlePath).mtimeMs;
+
+    writeFile("src/a.ts", "export const value = 2;\n");
+
+    expect(runBuild({ cwd }).written).toEqual(["src/a.lua"]);
+    expect(readFileSync(bundlePath, "utf8")).toBe(bundleBefore);
+    expect(statSync(bundlePath).mtimeMs).toBe(bundleMtimeBefore);
+  });
+
+  test("build on an up-to-date project reports an empty written list", async () => {
+    runBuild({ cwd });
+    const json = captureStreams();
+    const human = captureStreams();
+
+    const jsonCode = await dispatch(["build", "--json", cwd], json.io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+    const humanCode = await dispatch(["build", cwd], human.io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+
+    expect(jsonCode).toBe(0);
+    expect(json.out()).toContain('"written":[]');
+    expect(humanCode).toBe(0);
+    expect(human.out()).toContain("defold-typescript build: wrote 0 files\n");
+  });
+});
+
 describe("runBuild outDir tree mirroring", () => {
   const NESTED_SCRIPT =
     'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() {} });\n';
@@ -1171,9 +1219,9 @@ describe("runBuild outDir tree mirroring", () => {
     const result = runBuild({ cwd });
 
     const mirrored = [
-      "build/lua/util.lua",
-      "build/lua/world/player.ts.script",
-      "build/lua/world/ui/hud.ts.script",
+      "out/lua/util.lua",
+      "out/lua/world/player.ts.script",
+      "out/lua/world/ui/hud.ts.script",
     ];
     for (const rel of mirrored) {
       expect(existsSync(path.join(cwd, rel))).toBe(true);
@@ -1198,16 +1246,16 @@ describe("runBuild outDir tree mirroring", () => {
     const result = runBuild({ cwd });
 
     for (const rootFile of [
-      "build/lua/lib/defold_typescript/lualib_bundle.lua",
-      "build/lua/lib/defold_typescript/timers.lua",
+      "out/lua/lib/defold_typescript/lualib_bundle.lua",
+      "out/lua/lib/defold_typescript/timers.lua",
     ]) {
       if (result.written.includes(rootFile)) {
         expect(existsSync(path.join(cwd, rootFile))).toBe(true);
       }
     }
     // Never re-rooted under the source subtree.
-    expect(result.written).not.toContain("build/lua/world/lib/defold_typescript/lualib_bundle.lua");
-    expect(result.written).not.toContain("build/lua/world/lib/defold_typescript/timers.lua");
+    expect(result.written).not.toContain("out/lua/world/lib/defold_typescript/lualib_bundle.lua");
+    expect(result.written).not.toContain("out/lua/world/lib/defold_typescript/timers.lua");
   });
 
   // The only cover these two chunk kinds get: the resolution check reads
@@ -1834,6 +1882,8 @@ describe("build editor attach", () => {
   });
 
   test("no editor leaves stdout and the exit code exactly as an attached run, and adds no stderr", async () => {
+    // Both compared runs then find every output current, so their stdout agrees.
+    runBuild({ cwd });
     const attached = captureStreams();
     const attachedCode = await dispatch(["build", cwd], attached.io, {
       editorClient: makeBuildEditor("http://localhost:4242").client,
@@ -1852,6 +1902,8 @@ describe("build editor attach", () => {
   });
 
   test("an editor that never answers is treated as absent rather than blocking the build", async () => {
+    // Both compared runs then find every output current, so their stdout agrees.
+    runBuild({ cwd });
     const attached = captureStreams();
     const attachedCode = await dispatch(["build", cwd], attached.io, {
       editorClient: makeBuildEditor(null).client,
@@ -3023,13 +3075,13 @@ describe("runBuild writes only inside the project", () => {
   });
 
   test("an outDir that is a folder link leading outside fails the build", () => {
-    writeProjectFile("tsconfig.json", tsconfigWithOutDir("build"));
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("out"));
     writeProjectFile("src/main.ts", "export const main = 1;\n");
-    linkDir(path.join("..", "outside"), path.join(proj, "build"));
+    linkDir(path.join("..", "outside"), path.join(proj, "out"));
 
     const failure = buildFailure();
 
-    expect(failure.entries.some(({ message }) => message.includes(linkText("build")))).toBe(true);
+    expect(failure.entries.some(({ message }) => message.includes(linkText("out")))).toBe(true);
     expect(readdirSync(outside)).toEqual([]);
   });
 
@@ -3048,33 +3100,33 @@ describe("runBuild writes only inside the project", () => {
   });
 
   test("an outDir that is a folder link staying inside the project builds through it", () => {
-    writeProjectFile("tsconfig.json", tsconfigWithOutDir("build"));
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("out"));
     writeProjectFile("src/main.ts", "export const main = 1;\n");
-    mkdirSync(path.join(proj, "real-build"));
-    linkDir("real-build", path.join(proj, "build"));
+    mkdirSync(path.join(proj, "real-out"));
+    linkDir("real-out", path.join(proj, "out"));
 
     runBuild({ cwd: proj });
 
-    expect(existsSync(path.join(proj, "real-build/main.lua"))).toBe(true);
+    expect(existsSync(path.join(proj, "real-out/main.lua"))).toBe(true);
   });
 
   // Windows reads the backslash as a separator, so no link can carry that name there.
   test.skipIf(process.platform === "win32")(
     "a backslash in outDir separates folders, so a link named with it is never written through",
     () => {
-      writeProjectFile("tsconfig.json", tsconfigWithOutDir("build\\output"));
+      writeProjectFile("tsconfig.json", tsconfigWithOutDir("out\\lua"));
       writeProjectFile("src/main.ts", "export const ks = Object.keys({ a: 1 });\n");
-      linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+      linkDir(path.join("..", "outside"), path.join(proj, "out\\lua"));
 
       runBuild({ cwd: proj });
 
-      expect(existsSync(path.join(proj, "build/output/main.lua"))).toBe(true);
-      expect(
-        existsSync(path.join(proj, "build/output/lib/defold_typescript/lualib_bundle.lua")),
-      ).toBe(true);
-      const build = lstatSync(path.join(proj, "build"));
-      expect(build.isDirectory()).toBe(true);
-      expect(build.isSymbolicLink()).toBe(false);
+      expect(existsSync(path.join(proj, "out/lua/main.lua"))).toBe(true);
+      expect(existsSync(path.join(proj, "out/lua/lib/defold_typescript/lualib_bundle.lua"))).toBe(
+        true,
+      );
+      const out = lstatSync(path.join(proj, "out"));
+      expect(out.isDirectory()).toBe(true);
+      expect(out.isSymbolicLink()).toBe(false);
       expect(readdirSync(outside)).toEqual([]);
     },
   );
@@ -3085,6 +3137,69 @@ describe("runBuild writes only inside the project", () => {
 
     expect(() => runBuild({ cwd: proj })).toThrow('"compilerOptions"."outDir"');
     expect(existsSync(path.join(tmp, "escape"))).toBe(false);
+  });
+
+  function luaOutputsUnder(root: string): string[] {
+    return readdirSync(root, { recursive: true, encoding: "utf8" }).filter(
+      (entry) => entry.endsWith(".lua") || entry.endsWith(".script"),
+    );
+  }
+
+  test.each([
+    "build",
+    "build/lua",
+    "./build",
+    "build\\lua",
+    "builtins",
+    ".internal/out",
+    ".git/out",
+  ])("an outDir of %p, in a folder the Defold editor keeps for itself, is rejected", (outDir) => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir(outDir));
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+
+    let message = "";
+    try {
+      runBuild({ cwd: proj });
+    } catch (err) {
+      message = (err as Error).message;
+    }
+
+    expect(message).toContain('"compilerOptions"."outDir"');
+    expect(message).toContain(JSON.stringify(outDir.replace(/\\/g, "/")));
+    expect(message).toContain('"out"');
+    expect(luaOutputsUnder(proj)).toEqual([]);
+  });
+
+  test("an outDir inside a folder .defignore lists is rejected, naming the line", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("generated/lua"));
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+    writeProjectFile(".defignore", "/generated\n");
+
+    let message = "";
+    try {
+      runBuild({ cwd: proj });
+    } catch (err) {
+      message = (err as Error).message;
+    }
+
+    expect(message).toContain('"compilerOptions"."outDir"');
+    expect(message).toContain(".defignore");
+    expect(message).toContain("/generated");
+    expect(luaOutputsUnder(proj)).toEqual([]);
+  });
+
+  test("the same outDir builds when no .defignore lists its folder", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("generated/lua"));
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+
+    expect(runBuild({ cwd: proj }).written).toContain("generated/lua/main.ts.script");
+  });
+
+  test("an outDir with a reserved name below the project root builds", () => {
+    writeProjectFile("tsconfig.json", tsconfigWithOutDir("src/build"));
+    writeProjectFile("src/main.ts", MAIN_SCRIPT);
+
+    expect(runBuild({ cwd: proj }).written).toContain("src/build/main.ts.script");
   });
 
   test("a .defold-types folder link leading outside fails the build and writes nothing there", async () => {
@@ -3139,7 +3254,7 @@ describe("runBuild with symlinked source folders", () => {
     mkdirSync(path.join(repo, "factory-core", "src", "deep"), { recursive: true });
     writeFileSync(path.join(repo, "factory-core", "src", "save.ts"), SAVE);
     writeFileSync(path.join(repo, "factory-core", "src", "deep", "util.ts"), UTIL);
-    proj = scaffoldLinkedProject("game", { outDir: "build" });
+    proj = scaffoldLinkedProject("game", { outDir: "out" });
   });
 
   afterEach(() => {
@@ -3174,20 +3289,20 @@ describe("runBuild with symlinked source folders", () => {
   test("a linked folder builds under outDir at its link path", () => {
     runBuild({ cwd: proj });
 
-    expect(existsSync(path.join(proj, "build", "core", "save.lua"))).toBe(true);
-    expect(existsSync(path.join(proj, "build", "core", "deep", "util.lua"))).toBe(true);
-    expect(readFileSync(path.join(proj, "build", "main.lua"), "utf8")).toContain(
-      'require("build.core.save")',
+    expect(existsSync(path.join(proj, "out", "core", "save.lua"))).toBe(true);
+    expect(existsSync(path.join(proj, "out", "core", "deep", "util.lua"))).toBe(true);
+    expect(readFileSync(path.join(proj, "out", "main.lua"), "utf8")).toContain(
+      'require("out.core.save")',
     );
   });
 
   test("maps and requires derive from the link path, never the target's", () => {
     runBuild({ cwd: proj });
 
-    const map = JSON.parse(readFileSync(path.join(proj, "build", "core", "save.lua.map"), "utf8"));
+    const map = JSON.parse(readFileSync(path.join(proj, "out", "core", "save.lua.map"), "utf8"));
     expect(map.sourceRoot).toBe("../../src/core");
-    for (const rel of outputsUnder(path.join(proj, "build"))) {
-      expect(readFileSync(path.join(proj, "build", rel), "utf8")).not.toContain("factory-core");
+    for (const rel of outputsUnder(path.join(proj, "out"))) {
+      expect(readFileSync(path.join(proj, "out", rel), "utf8")).not.toContain("factory-core");
     }
   });
 
@@ -3198,7 +3313,7 @@ describe("runBuild with symlinked source folders", () => {
   });
 
   test("two projects linking one folder each write only under their own outDir", () => {
-    const tool = scaffoldLinkedProject("tool", { outDir: "build" });
+    const tool = scaffoldLinkedProject("tool", { outDir: "out" });
     const before = listing(path.join(repo, "factory-core"));
 
     const gameBuild = runBuild({ cwd: proj });
@@ -3208,9 +3323,9 @@ describe("runBuild with symlinked source folders", () => {
       [proj, gameBuild],
       [tool, toolBuild],
     ] as const) {
-      expect(result.written).toContain("build/core/save.lua");
-      expect(result.written.every((rel) => rel.startsWith("build/"))).toBe(true);
-      expect(existsSync(path.join(root, "build", "core", "save.lua"))).toBe(true);
+      expect(result.written).toContain("out/core/save.lua");
+      expect(result.written.every((rel) => rel.startsWith("out/"))).toBe(true);
+      expect(existsSync(path.join(root, "out", "core", "save.lua"))).toBe(true);
     }
     expect(listing(path.join(repo, "factory-core"))).toEqual(before);
   });
@@ -3250,8 +3365,44 @@ describe("runBuild with symlinked source folders", () => {
       JSON.stringify({ name: "game", "defold-typescript": { "link-roots": ["../../shared"] } }),
     );
     runBuild({ cwd: proj });
-    expect(existsSync(path.join(proj, "build", "far", "far.lua"))).toBe(true);
+    expect(existsSync(path.join(proj, "out", "far", "far.lua"))).toBe(true);
   });
+
+  test.skipIf(skipWithoutGitFreeTemp)(
+    "with no .git above the project, a link leaving it fails naming the project as the boundary",
+    () => {
+      const bare = realpathSync.native(
+        mkdtempSync(path.join(os.tmpdir(), "defold-typescript-no-git-")),
+      );
+      try {
+        const game = path.join(bare, "game");
+        mkdirSync(path.join(game, "src"), { recursive: true });
+        mkdirSync(path.join(bare, "shared"));
+        writeFileSync(path.join(bare, "shared", "far.ts"), "export const far = 3;\n");
+        writeFileSync(
+          path.join(game, "tsconfig.json"),
+          JSON.stringify({
+            compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "out" },
+            include: ["src/**/*.ts"],
+          }),
+        );
+        linkDir(path.join("..", "..", "shared"), path.join(game, "src", "far"));
+
+        expect(() => runBuild({ cwd: game })).toThrow(
+          `src/far is a symbolic link to ${readlinkSync(path.join(game, "src", "far"))}, which leads outside the project (no .git at or above it marks a repository). List its folder in package.json "defold-typescript"."link-roots" to compile it.`,
+        );
+
+        writeFileSync(
+          path.join(game, "package.json"),
+          JSON.stringify({ name: "game", "defold-typescript": { "link-roots": ["../shared"] } }),
+        );
+        runBuild({ cwd: game });
+        expect(existsSync(path.join(game, "out", "far", "far.lua"))).toBe(true);
+      } finally {
+        rmSync(bare, { recursive: true, force: true });
+      }
+    },
+  );
 
   test("a link leading outside the repository that no include pattern reaches does not fail the build", () => {
     const tsconfigPath = path.join(proj, "tsconfig.json");
@@ -3264,9 +3415,9 @@ describe("runBuild with symlinked source folders", () => {
 
     runBuild({ cwd: proj });
 
-    expect(existsSync(path.join(proj, "build", "main.lua"))).toBe(true);
+    expect(existsSync(path.join(proj, "out", "main.lua"))).toBe(true);
     expect(
-      readdirSync(path.join(proj, "build")).filter((name) => name === "assets" || name === "core"),
+      readdirSync(path.join(proj, "out")).filter((name) => name === "assets" || name === "core"),
     ).toEqual([]);
   });
 });

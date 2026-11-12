@@ -1,5 +1,5 @@
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { compareSemver } from "./upgrade";
+import { compareSemver } from "./semver";
 
 export const DEFOLD_CHANNELS = ["stable", "beta", "alpha"] as const;
 export type DefoldChannel = (typeof DEFOLD_CHANNELS)[number];

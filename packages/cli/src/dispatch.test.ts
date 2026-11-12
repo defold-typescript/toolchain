@@ -1635,6 +1635,10 @@ describe("dispatch", () => {
 
   test("build --fail-on-drift --json exits 1 with a byte-identical payload", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    // Both compared runs then find every output current, so `written` agrees.
+    await dispatch(["build", cwd, "--json"], captureStreams().io, {
+      detectEditorVersion: () => "1.13.0",
+    });
 
     const advisory = captureStreams();
     const advisoryCode = await dispatch(["build", cwd, "--json"], advisory.io, {

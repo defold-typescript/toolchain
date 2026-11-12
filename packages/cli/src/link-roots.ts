@@ -101,7 +101,14 @@ export function linkEscapeMessage(
   linkRel: string,
   text: string,
 ): string {
+  const realProject = realpathSync.native(cwd);
+  const fix = `List its folder in ${LINK_ROOTS_SETTING} to compile it.`;
+  // `readLinkRoots` falls back to the project when no repository encloses it,
+  // and that fallback reads the same as a repository root at the project.
+  if (repositoryRoot(realProject) === undefined) {
+    return `${linkRel} is a symbolic link to ${text}, which leads outside the project (no .git at or above it marks a repository). ${fix}`;
+  }
   const repository = roots[0] ?? cwd;
-  const shown = path.relative(realpathSync.native(cwd), repository).split(path.sep).join("/");
-  return `${linkRel} is a symbolic link to ${text}, which leads outside the repository (${shown === "" ? "." : shown}). List its folder in ${LINK_ROOTS_SETTING} to compile it.`;
+  const shown = path.relative(realProject, repository).split(path.sep).join("/");
+  return `${linkRel} is a symbolic link to ${text}, which leads outside the repository (${shown === "" ? "." : shown}). ${fix}`;
 }

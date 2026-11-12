@@ -33,6 +33,7 @@ describe("findNativeExtensionManifest", () => {
 
   test.each([
     "build/arm64-osx",
+    "builtins/x",
     ".internal/lib",
     ".git/x",
     "node_modules/x",

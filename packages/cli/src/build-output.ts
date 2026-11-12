@@ -22,6 +22,7 @@ import {
   writeContainedFile,
 } from "./contained-fs";
 import { compileIncludeGlob } from "./include-glob";
+import { editorHiddenFolder, readDefignoreLines } from "./project-resource-paths";
 
 export type { SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
@@ -85,6 +86,20 @@ export function readRuntimeDir(cwd: string): string | undefined {
   return value;
 }
 
+// Checked on the first folder only: `src/build` is an ordinary resource folder.
+function throwIfEditorHidden(outDir: string, defignoreLines: readonly string[]): void {
+  const hidden = editorHiddenFolder(path.posix.normalize(outDir), defignoreLines);
+  if (hidden === undefined) {
+    return;
+  }
+  const reason = hidden.startsWith("/")
+    ? `.defignore lists ${hidden}, so Defold never loads files under it`
+    : `the Defold editor keeps ${hidden}/ for itself and never loads files under it`;
+  throw new Error(
+    `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(outDir)}; ${reason}. Pick another folder, such as "out".`,
+  );
+}
+
 export function readBuildConfig(cwd: string): BuildConfig {
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   let raw: string;
@@ -102,8 +117,17 @@ export function readBuildConfig(cwd: string): BuildConfig {
       `defold-typescript: tsconfig.json "compilerOptions"."outDir" is ${JSON.stringify(config.outDir)}; it must be a folder inside the project, with no leading slash, no drive and no "..", because the build writes only inside the project folder.`,
     );
   }
+  if (config.outDir !== undefined && config.outDir !== "" && config.outDir !== ".") {
+    throwIfEditorHidden(config.outDir, readDefignoreLines(cwd));
+  }
   const runtimeDir = readRuntimeDir(cwd);
   return { ...config, ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
+}
+
+/** The human line `build` and `watch` print after a build. */
+export function formatBuildLine(written: readonly string[]): string {
+  const list = written.length === 0 ? "" : `: ${written.join(", ")}`;
+  return `defold-typescript build: wrote ${written.length} files${list}\n`;
 }
 
 export function isFileIncluded(rel: string, include: readonly string[]): boolean {
@@ -489,24 +513,28 @@ function withSourceRoot(map: string, sourceRoot: string): string {
   return JSON.stringify({ ...(parsed as Record<string, unknown>), sourceRoot });
 }
 
+/**
+ * Writes the script and its map, and resolves whether the script itself was
+ * created or changed. A map-only change does not count: `written` never lists
+ * maps.
+ */
 export function writeScriptFile(
   cwd: string,
   scriptRel: string,
   lua: string,
   map: string | undefined,
-): void {
+): boolean {
   if (map) {
     const mapBasename = `${path.posix.basename(scriptRel)}.map`;
     writeContainedFile(cwd, `${scriptRel}.map`, map);
     // The sourceMappingURL directive must stay the file's last line: the Local
     // Lua Debugger only honors it at end-of-file (its matcher anchors `%s*$`),
     // so the banner is appended before it, not after.
-    writeContainedFile(
+    return writeContainedFile(
       cwd,
       scriptRel,
       `${lua}\n${GENERATED_BANNER}\n--# sourceMappingURL=${mapBasename}\n`,
     );
-  } else {
-    writeContainedFile(cwd, scriptRel, `${lua}\n${GENERATED_BANNER}\n`);
   }
+  return writeContainedFile(cwd, scriptRel, `${lua}\n${GENERATED_BANNER}\n`);
 }
