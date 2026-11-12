@@ -29,9 +29,11 @@ export const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
 // how the text was obtained: the CLI reads it off disk, the editor plugin gets
 // it from the language-service host, and both must derive the same names from
 // the same text or the plugin predicts a resource the build never writes.
+// A backslash in `outDir` separates folders on every OS, as the debug launcher
+// reads it, so every output and runtime path is spelled with forward slashes.
 export function parseBuildConfig(raw: string): BuildConfig {
   const tsconfig = JSON.parse(raw) as TsConfig;
-  const outDir = tsconfig.compilerOptions?.outDir;
+  const outDir = tsconfig.compilerOptions?.outDir?.replace(/\\/g, "/");
   const include = tsconfig.include?.length ? tsconfig.include : DEFAULT_INCLUDE;
   return { outDir, include };
 }

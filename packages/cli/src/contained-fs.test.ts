@@ -150,3 +150,61 @@ describe("firstLinkOnPath", () => {
     expect(firstLinkOnPath(proj, "src/main.lua")).toBeUndefined();
   });
 });
+
+// Windows reads a backslash as a separator, so no such name exists there.
+describe("a backslash in a name on macOS and Linux", () => {
+  const posixOnly = test.skipIf(process.platform === "win32");
+
+  posixOnly("a folder link with a backslash in its name is checked like any other", () => {
+    linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+
+    const problem = containmentProblem(proj, "build\\output/main.lua");
+
+    expect(problem).toContain("build\\output/main.lua");
+    expect(problem).toContain(" build\\output, ");
+    expect(problem).toContain(linkText("build\\output"));
+  });
+
+  posixOnly("a write through that link throws and writes nothing outside", () => {
+    linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+
+    expect(() => writeContainedFile(proj, "build\\output/main.lua", "return 1\n")).toThrow(
+      ContainedPathError,
+    );
+    expect(existsSync(path.join(outside, "main.lua"))).toBe(false);
+  });
+
+  posixOnly("a removal through that link throws and keeps the file", () => {
+    writeFileSync(path.join(outside, "old.lua"), "precious\n");
+    linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+
+    expect(() => removeContained(proj, "build\\output/old.lua")).toThrow(ContainedPathError);
+    expect(existsSync(path.join(outside, "old.lua"))).toBe(true);
+  });
+
+  posixOnly("a dangling file link with a backslash in its name is refused", () => {
+    linkFile("../../outside/new.txt", path.join(proj, "src/a\\b.lua"));
+
+    expect(() => writeContainedFile(proj, "src/a\\b.lua", "return 1\n")).toThrow("src/a\\b.lua");
+    expect(existsSync(path.join(outside, "new.txt"))).toBe(false);
+  });
+
+  posixOnly("an accepted write lands at the name the caller gave", () => {
+    mkdirSync(path.join(proj, "real-build"));
+    linkDir("real-build", path.join(proj, "build\\output"));
+
+    writeContainedFile(proj, "build\\output/main.lua", "return 1\n");
+
+    expect(readFileSync(path.join(proj, "real-build", "main.lua"), "utf8")).toBe("return 1\n");
+    expect(existsSync(path.join(proj, "build"))).toBe(false);
+  });
+
+  posixOnly("firstLinkOnPath names the link with its backslash", () => {
+    linkDir(path.join("..", "outside"), path.join(proj, "build\\output"));
+
+    expect(firstLinkOnPath(proj, "build\\output/main.lua")).toEqual({
+      linkRel: "build\\output",
+      text: linkText("build\\output"),
+    });
+  });
+});
