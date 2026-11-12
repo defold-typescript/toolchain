@@ -1,9 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { ContainedPathError } from "./contained-fs";
 import { extensionArchiveKey } from "./extension-archive";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
+import { linkDir } from "./symlink.test-support";
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), "library-scenes-"));
@@ -191,5 +200,21 @@ describe("materializeLibrarySceneSources", () => {
         .dependencies.map((entry) => entry.url)
         .sort(),
     ).toEqual([DRUID_URL, EXTRA_URL].sort());
+  });
+});
+
+describe("materializeLibrarySceneSources writes only inside the project", () => {
+  test("a .defold-types folder link leading outside is refused and writes nothing there", () => {
+    const base = tmp();
+    const cwd = join(base, "proj");
+    const outside = join(base, "outside");
+    mkdirSync(cwd);
+    mkdirSync(outside);
+    linkDir(join("..", "outside"), join(cwd, ".defold-types"));
+
+    expect(() => materializeLibrarySceneSources({ cwd, bundles: [DRUID_BUNDLE] })).toThrow(
+      ContainedPathError,
+    );
+    expect(readdirSync(outside)).toEqual([]);
   });
 });

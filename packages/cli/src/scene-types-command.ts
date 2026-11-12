@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   buildSceneAddressDeclaration,
@@ -22,6 +22,12 @@ import {
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
 import { type BuildConfig, detectSourceOutputKind, readBuildConfig, toPosix } from "./build-output";
+import {
+  assertContained,
+  removeContained,
+  renameContained,
+  writeContainedFile,
+} from "./contained-fs";
 import { MATERIALIZED_ROOT } from "./materialize";
 import { scanFilesSync } from "./scan";
 
@@ -128,23 +134,24 @@ function fsSceneReadHost(): SceneReadHost {
 // Byte-identical content is not rewritten: `watch` regenerates on every scene
 // save, and a touched file re-checks the whole program in the editor even when
 // nothing about it changed. The write itself goes through a temp file and a
-// rename so a reader never observes a half-written declaration.
-function writeIfChanged(target: string, contents: string): boolean {
+// rename so a reader never observes a half-written declaration. The target is
+// checked before anything is staged, so a refused path leaves no temp file.
+function writeIfChanged(cwd: string, target: string, contents: string): boolean {
   let existing: string | undefined;
   try {
-    existing = readFileSync(target, "utf8");
+    existing = readFileSync(path.join(cwd, target), "utf8");
   } catch {
     existing = undefined;
   }
   if (existing === contents) return false;
 
-  mkdirSync(path.dirname(target), { recursive: true });
+  assertContained(cwd, target);
   const staged = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync(staged, contents);
-    renameSync(staged, target);
+    writeContainedFile(cwd, staged, contents);
+    renameContained(cwd, staged, target);
   } catch (err) {
-    rmSync(staged, { force: true });
+    removeContained(cwd, staged);
     throw err;
   }
   return true;
@@ -228,7 +235,8 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
   }
   const sceneObjects = buildSceneObjectPathIndex(documents, roles);
   const wrote = writeIfChanged(
-    path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
+    opts.cwd,
+    SCENE_ADDRESSES_DECLARATION,
     buildSceneAddressDeclaration(documents, roles, scriptModulesOf(opts.cwd)),
   );
   return {

@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   readlinkSync,
   realpathSync,
@@ -16,8 +17,10 @@ import * as path from "node:path";
 import {
   ContainedPathError,
   containmentProblem,
+  ensureContainedDir,
   firstLinkOnPath,
   removeContained,
+  renameContained,
   writeContainedFile,
 } from "./contained-fs";
 import { canLinkFiles, linkDir, linkFile } from "./symlink.test-support";
@@ -135,6 +138,97 @@ describe("removeContained", () => {
 
     expect(() => removeContained(proj, "build/old.lua")).toThrow(ContainedPathError);
     expect(existsSync(path.join(outside, "old.lua"))).toBe(true);
+  });
+});
+
+describe("ensureContainedDir", () => {
+  test("a folder through a folder link leading outside throws and creates nothing", () => {
+    linkDir(path.join("..", "outside"), path.join(proj, "build"));
+
+    expect(() => ensureContainedDir(proj, "build/inner")).toThrow(ContainedPathError);
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  test("an accepted folder is created with its parents", () => {
+    ensureContainedDir(proj, "build/inner");
+
+    expect(statSync(path.join(proj, "build/inner")).isDirectory()).toBe(true);
+  });
+});
+
+describe("renameContained", () => {
+  test("a destination through a folder link leading outside throws and moves nothing", () => {
+    writeFileSync(path.join(proj, "src/staged.tmp"), "return 1\n");
+    linkDir(path.join("..", "outside"), path.join(proj, "build"));
+
+    expect(() => renameContained(proj, "src/staged.tmp", "build/main.lua")).toThrow(
+      ContainedPathError,
+    );
+    expect(readdirSync(outside)).toEqual([]);
+    expect(existsSync(path.join(proj, "src/staged.tmp"))).toBe(true);
+  });
+
+  test("a source through a folder link leading outside throws and moves nothing", () => {
+    writeFileSync(path.join(outside, "precious.txt"), "precious\n");
+    linkDir(path.join("..", "outside"), path.join(proj, "build"));
+
+    expect(() => renameContained(proj, "build/precious.txt", "src/main.lua")).toThrow(
+      ContainedPathError,
+    );
+    expect(readFileSync(path.join(outside, "precious.txt"), "utf8")).toBe("precious\n");
+    expect(existsSync(path.join(proj, "src/main.lua"))).toBe(false);
+  });
+
+  test("an accepted rename moves the file", () => {
+    writeFileSync(path.join(proj, "src/staged.tmp"), "return 1\n");
+
+    renameContained(proj, "src/staged.tmp", "src/main.lua");
+
+    expect(readFileSync(path.join(proj, "src/main.lua"), "utf8")).toBe("return 1\n");
+    expect(existsSync(path.join(proj, "src/staged.tmp"))).toBe(false);
+  });
+});
+
+// The writers below own every file `build`, `watch` and `resolve` put in
+// `.defold-types/`, `.gitignore` and `tsconfig.json`. A raw `node:fs` write in
+// any of them bypasses the containment check, and the behavioral tests reach
+// only the first write each one makes under a link.
+describe("project writers reach the filesystem only through contained-fs", () => {
+  const WRITERS = [
+    "materialize.ts",
+    "scene-types-command.ts",
+    "library-materialize.ts",
+    "extension-materialize.ts",
+    "library-scene-materialize.ts",
+  ] as const;
+  const WRITE_CALLS = new Set([
+    "appendFileSync",
+    "copyFileSync",
+    "cpSync",
+    "mkdirSync",
+    "renameSync",
+    "rmSync",
+    "rmdirSync",
+    "symlinkSync",
+    "unlinkSync",
+    "writeFileSync",
+  ]);
+
+  test.each(WRITERS)("%s imports no node:fs write call", (file) => {
+    const source = readFileSync(path.join(import.meta.dir, file), "utf8");
+    const imported: string[] = [];
+    for (const match of source.matchAll(/^import\s+([\s\S]*?)\s+from\s+"(?:node:)?fs";/gm)) {
+      const clause = match[1] as string;
+      expect(clause).toStartWith("{");
+      for (const specifier of clause.replace(/[{}]/g, "").split(",")) {
+        const name = specifier
+          .trim()
+          .replace(/^type\s+/, "")
+          .split(/\s+as\s+/)[0];
+        if (name) imported.push(name);
+      }
+    }
+    expect(imported.filter((name) => WRITE_CALLS.has(name))).toEqual([]);
   });
 });
 
