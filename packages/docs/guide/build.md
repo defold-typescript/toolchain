@@ -85,7 +85,8 @@ refuses an output or source-map path that is a symbolic link, and any path a
 folder link leads outside the project, and the failure names the path, the link
 and where the link points. A folder link that stays inside the project is
 followed. `outDir` must be a folder inside the project: an absolute path, or one
-that climbs out with `..`, fails the build.
+that climbs out with `..`, fails the build. A backslash in `outDir` separates
+folders on every OS, so `"build\\lua"` and `"build/lua"` name the same folder.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a

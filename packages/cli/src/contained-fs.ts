@@ -26,9 +26,23 @@ export interface LinkOnPath {
   readonly text: string;
 }
 
-function toPosixRel(root: string, target: string): string {
-  const rel = path.isAbsolute(target) ? path.relative(root, target) : target;
-  return path.posix.normalize(rel.replace(/\\/g, "/")).replace(/\/+$/, "");
+interface ResolvedTarget {
+  readonly rootAbs: string;
+  /** The path to read, write or remove: exactly the file the check inspects. */
+  readonly abs: string;
+  /** The components under the root, split on the host's own separator. */
+  readonly parts: readonly string[];
+  /** The components joined with forward slashes, for messages and the outside test. */
+  readonly rel: string;
+}
+
+// Split on the host separator only: on macOS and Linux a backslash is part of
+// a name, and a check that splits on it walks a different path than the write.
+function resolveTarget(root: string, target: string): ResolvedTarget {
+  const rootAbs = path.resolve(root);
+  const hostRel = path.relative(rootAbs, path.resolve(rootAbs, target));
+  const parts = hostRel === "" ? [] : hostRel.split(path.sep);
+  return { rootAbs, abs: path.join(rootAbs, ...parts), parts, rel: parts.join("/") };
 }
 
 // Checked on the posix spelling rather than with `path.isAbsolute`, which only
@@ -71,12 +85,12 @@ interface PathComponent {
   readonly isLast: boolean;
 }
 
-/** Each existing component of `rel` under `root`, root first, up to the first missing one. */
-function* existingComponents(root: string, rel: string): Generator<PathComponent> {
-  const parts = rel.split("/");
+/** Each existing component of the target, root first, up to the first missing one. */
+function* existingComponents(resolved: ResolvedTarget): Generator<PathComponent> {
+  const { rootAbs, parts } = resolved;
   for (let i = 0; i < parts.length; i++) {
     const componentRel = parts.slice(0, i + 1).join("/");
-    const abs = path.join(root, componentRel);
+    const abs = path.join(rootAbs, ...parts.slice(0, i + 1));
     const stat = lstatOrUndefined(abs);
     if (stat === undefined) {
       return;
@@ -87,7 +101,7 @@ function* existingComponents(root: string, rel: string): Generator<PathComponent
 
 /** The first symbolic link among the components of `rel`, root first. */
 export function firstLinkOnPath(root: string, rel: string): LinkOnPath | undefined {
-  for (const component of existingComponents(root, toPosixRel(root, rel))) {
+  for (const component of existingComponents(resolveTarget(root, rel))) {
     if (component.stat.isSymbolicLink()) {
       return { linkRel: component.rel, text: readlinkSync(component.abs) };
     }
@@ -105,16 +119,20 @@ export function firstLinkOnPath(root: string, rel: string): LinkOnPath | undefin
  * that `lstat` does not report as a link.
  */
 export function containmentProblem(root: string, target: string): string | undefined {
-  const rel = toPosixRel(root, target);
+  return problemOf(resolveTarget(root, target), target);
+}
+
+function problemOf(resolved: ResolvedTarget, target: string): string | undefined {
+  const { rel, rootAbs } = resolved;
   if (isOutsideRel(rel)) {
     return `${target.replace(/\\/g, "/")} is outside the project folder; the build writes only inside it.`;
   }
-  if (rel === "." || rel === "") {
+  if (rel === "") {
     return undefined;
   }
-  const realRoot = realpathSync.native(root);
-  let deepestDir = { rel: ".", abs: root };
-  for (const component of existingComponents(root, rel)) {
+  const realRoot = realpathSync.native(rootAbs);
+  let deepestDir = { rel: ".", abs: rootAbs };
+  for (const component of existingComponents(resolved)) {
     if (component.stat.isSymbolicLink()) {
       const text = readlinkSync(component.abs);
       if (component.isLast) {
@@ -139,15 +157,14 @@ export function containmentProblem(root: string, target: string): string | undef
   return undefined;
 }
 
-export function assertContained(root: string, target: string): void {
-  const problem = containmentProblem(root, target);
+/** The absolute path of `target` under `root`, once it is contained; act on this path and no other. */
+export function assertContained(root: string, target: string): string {
+  const resolved = resolveTarget(root, target);
+  const problem = problemOf(resolved, target);
   if (problem !== undefined) {
     throw new ContainedPathError(problem);
   }
-}
-
-function absoluteTarget(root: string, target: string): string {
-  return path.isAbsolute(target) ? target : path.join(root, target);
+  return resolved.abs;
 }
 
 // An output's modification time moves only with its content: the debug
@@ -168,8 +185,7 @@ function writeIfChanged(abs: string, text: string): void {
 
 /** Write `text` to `target` under `root`, creating its folders, once the path is contained. */
 export function writeContainedFile(root: string, target: string, text: string): void {
-  assertContained(root, target);
-  const abs = absoluteTarget(root, target);
+  const abs = assertContained(root, target);
   mkdirSync(path.dirname(abs), { recursive: true });
   writeIfChanged(abs, text);
 }
@@ -180,6 +196,5 @@ export function removeContained(
   target: string,
   opts: Omit<RmOptions, "force"> = {},
 ): void {
-  assertContained(root, target);
-  rmSync(absoluteTarget(root, target), { force: true, ...opts });
+  rmSync(assertContained(root, target), { force: true, ...opts });
 }
