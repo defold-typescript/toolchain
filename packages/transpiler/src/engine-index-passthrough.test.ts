@@ -14,6 +14,7 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import * as ts from "typescript";
+import { AMBIENT_FILES } from "./kind-surfaces";
 import { transpile, transpileProject } from "./transpile";
 
 const TYPES_ROOT = path.dirname(
@@ -49,40 +50,42 @@ const OPTION_INDEX_APIS: ReadonlySet<string> = new Set(
     .map((key) => key.slice(0, key.indexOf(":"))),
 );
 
-// The editor lane's declarations, which a plain script does not see.
-function editorDeclarations(): Record<string, string> {
-  const root = path.join(TYPES_ROOT, "generated", "editor-vm");
-  return Object.fromEntries(
-    readdirSync(root)
-      .filter((name) => name.endsWith(".d.ts"))
-      .map((name) => [`editor-vm/${name}`, readFileSync(path.join(root, name), "utf8")]),
-  );
-}
-
 // The declarations a project's scripts and editor scripts type against, generated
-// and authored, so a generated call can find each classified function.
-const GENERATED_ROOT = path.join(TYPES_ROOT, "generated");
-const AUTHORED_ROOT = path.join(TYPES_ROOT, "src");
-const EDITOR_DECLARATIONS = editorDeclarations();
+// and authored, so a generated call can find each classified function. The editor
+// lane's declarations, which a plain script does not see, are those outside the
+// runtime surface; a call into one compiles in an editor-side source.
+const DECLARATION_DIRS = ["generated", "generated/editor-vm", "src"];
+const EDITOR_SIDE_REFERENCE = '/// <reference types="@defold-typescript/types/editor-script" />';
 
 interface DeclaredSignature {
   readonly receiver?: string;
   readonly parameters: readonly string[];
+  readonly editor: boolean;
+}
+
+interface DeclarationSource {
+  readonly file: ts.SourceFile;
+  readonly editor: boolean;
 }
 
 // Parsed once for the whole file: a lookup per classified slot that re-read and re-parsed
 // every declaration file took the scalar test past its timeout on Windows runners.
-let parsedDeclarations: ts.SourceFile[] | undefined;
+let parsedDeclarations: DeclarationSource[] | undefined;
 
-function declarationSources(): ts.SourceFile[] {
-  parsedDeclarations ??= [
-    ...[GENERATED_ROOT, AUTHORED_ROOT].flatMap((root) =>
-      readdirSync(root)
-        .filter((entry) => entry.endsWith(".d.ts"))
-        .map((entry) => readFileSync(path.join(root, entry), "utf8")),
-    ),
-    ...Object.values(EDITOR_DECLARATIONS),
-  ].map((text) => ts.createSourceFile("d.ts", text, ts.ScriptTarget.Latest, true));
+function declarationSources(): DeclarationSource[] {
+  parsedDeclarations ??= DECLARATION_DIRS.flatMap((dir) =>
+    readdirSync(path.join(TYPES_ROOT, dir))
+      .filter((entry) => entry.endsWith(".d.ts"))
+      .map((entry) => ({
+        file: ts.createSourceFile(
+          "d.ts",
+          readFileSync(path.join(TYPES_ROOT, dir, entry), "utf8"),
+          ts.ScriptTarget.Latest,
+          true,
+        ),
+        editor: !(`node_modules/@defold-typescript/types/${dir}/${entry}` in AMBIENT_FILES),
+      })),
+  );
   return parsedDeclarations;
 }
 
@@ -94,6 +97,7 @@ function declaredSignatures(base: string): DeclaredSignature[] {
   const namespace = base.slice(0, base.lastIndexOf("."));
   const name = base.slice(base.lastIndexOf(".") + 1);
   const found: DeclaredSignature[] = [];
+  let editor = false;
   const visit = (node: ts.Node, path: string): void => {
     if (ts.isModuleDeclaration(node)) {
       const next =
@@ -111,7 +115,7 @@ function declaredSignatures(base: string): DeclaredSignature[] {
       path === namespace &&
       node.name?.text === name
     ) {
-      found.push({ parameters: node.parameters.map((p) => p.name.getText()) });
+      found.push({ parameters: node.parameters.map((p) => p.name.getText()), editor });
     }
     if (ts.isInterfaceDeclaration(node) && node.name.text === owner) {
       for (const member of node.members) {
@@ -119,13 +123,17 @@ function declaredSignatures(base: string): DeclaredSignature[] {
           found.push({
             receiver: `${path}.${owner}`,
             parameters: member.parameters.map((p) => p.name.getText()),
+            editor,
           });
         }
       }
     }
     ts.forEachChild(node, (child) => visit(child, path));
   };
-  for (const source of declarationSources()) visit(source, "");
+  for (const source of declarationSources()) {
+    editor = source.editor;
+    visit(source.file, "");
+  }
   return found;
 }
 
@@ -145,10 +153,14 @@ function callOf(
   };
 }
 
-// The whitespace-collapsed Lua and message list `text` compiles to beside the
-// editor declarations.
-function compileMain(text: string): { flat: string; diagnostics: string[] } {
-  const result = transpileProject({ files: { "main.ts": text, ...EDITOR_DECLARATIONS } });
+// The whitespace-collapsed Lua and message list `text` compiles to, against the
+// editor declarations when `signature` is one of theirs.
+function compileMain(
+  text: string,
+  signature: DeclaredSignature,
+): { flat: string; diagnostics: string[] } {
+  const main = signature.editor ? `${EDITOR_SIDE_REFERENCE}\n${text}` : text;
+  const result = transpileProject({ files: { "main.ts": main } });
   return {
     flat: (result.lua["main.ts"] ?? "").replace(/\s+/g, " "),
     diagnostics: result.diagnostics.map((d) => d.message),
@@ -247,6 +259,7 @@ describe("every classified scalar index argument", () => {
             "export {};",
             "",
           ].join("\n"),
+          signature,
         );
         expect({
           key,
@@ -282,6 +295,7 @@ describe("every classified index table and return", () => {
             "export {};",
             "",
           ].join("\n"),
+          signature,
         );
         const position = signature.parameters.indexOf(slot);
         expect({ key, diagnostics, emitted: emittedArgs(flat, luaCallee)[position] }).toEqual({
@@ -315,6 +329,7 @@ describe("every classified index table and return", () => {
             "export {};",
             "",
           ].join("\n"),
+          signature,
         );
         expect({ key, diagnostics, assigned: flat.includes(`local r = ${luaCallee}(`) }).toEqual({
           key,
