@@ -53,7 +53,8 @@ guide live, and the hard rules that are expensive to rediscover — never commit
 `defold-target` pin's exact `package.json` key, and that `.gui` and `.collection`
 edits are checked with `build --editor-compile --json` while the Defold editor
 has the project open ([Compile in the editor](./build.md#compile-in-the-editor)),
-because type-checking and `build` never read them. It also lists the built-in
+because type-checking and a plain `build` do not fully validate or compile them.
+It also lists the built-in
 libraries with their import paths and guide pages — `@defold-typescript/types/hsm`
 ([State machines](./state-machines.md)) and `@defold-typescript/types/ecs`
 ([Entity systems](./entity-systems.md)) — so an agent imports them instead of
