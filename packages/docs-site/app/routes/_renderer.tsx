@@ -132,7 +132,7 @@ const CLIENT_MANIFEST = import.meta.env.PROD
  *
  * The Tailwind bundle and every `@font-face` rule are imported through
  * `app/client.ts`, so without an explicit `<link>` they only take effect once
- * the async client script executes. Each navigation would then paint first with
+ * the client script executes. Each navigation would then paint first with
  * `critical.css`, then reflow (and swap fonts) when the bundle arrives — the
  * layout shift / blink. Emitting the bundle as a render-blocking `<link>` and
  * preloading the Latin font subsets makes the full stylesheet and font faces
@@ -279,17 +279,21 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         ))}
         <link rel="stylesheet" href={withBase("/critical.css")} />
         {/* Dev has no built bundle: link the source stylesheet so vite serves the
-            full Tailwind CSS render-blocking, instead of letting the async client
+            full Tailwind CSS render-blocking, instead of letting the client
             script inject it after first paint (which snapped the unstyled layout
             into place — a full-viewport shift on every navigation). */}
         {import.meta.env.DEV ? <link rel="stylesheet" href={withBase("/app/styles.css")} /> : null}
         {styles.stylesheets.map((href) => (
           <link key={href} rel="stylesheet" href={href} />
         ))}
+        {/* Deferred, never async: honox hydrates the islands it finds when the
+            client script runs, once. An async script can run while the parser is
+            still short of the islands at the end of a long page (CodeTabs,
+            CodeCopy, the tooltips), which then never hydrate. */}
         {import.meta.env.DEV ? (
-          <Script src="/app/client.ts" async />
+          <Script src="/app/client.ts" />
         ) : styles.script ? (
-          <script type="module" async src={styles.script} />
+          <script type="module" src={styles.script} />
         ) : null}
       </head>
       <body class="min-h-screen bg-bg text-text antialiased">
