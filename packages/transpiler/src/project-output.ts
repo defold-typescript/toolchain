@@ -12,7 +12,7 @@ import {
 } from "./bundled-libraries";
 import { createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
-import { LUALIB_REQUIRE_NAME } from "./emitted-requires";
+import { LUALIB_REQUIRE_NAME, requiresLualib } from "./emitted-requires";
 import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
@@ -24,7 +24,6 @@ import {
   type PendingProperties,
 } from "./lifecycle-erasure";
 import { LUA_COMPILE_LIB } from "./lua-compile-lib";
-import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import {
@@ -374,10 +373,6 @@ function shiftSourceMap(map: string, lines: number): string {
   }
   const parsed = JSON.parse(map) as { mappings: string };
   return JSON.stringify({ ...parsed, mappings: `${";".repeat(lines)}${parsed.mappings}` });
-}
-
-function requiresLualib(lua: string): boolean {
-  return scanEmittedRequires(lua).some(({ path: requirePath }) => requirePath === "lualib_bundle");
 }
 
 /**

@@ -326,7 +326,8 @@ renamed, and hot-reloading as it does for any other source.
   editor to build and launch the game, print the running engine's URL, and fail
   the build on its errors. See [Run in the editor](#run-in-the-editor).
 - `--json` — emit the build result as a single JSON object (including the
-  `warnings` array and, when either address check found any, a structured
+  `warnings` array, the `lualibRequiredBy` list of outputs that require
+  `lualib_bundle`, and, when either address check found any, a structured
   `unreachableAddresses` and `crossWorldAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
