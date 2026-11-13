@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { withBase } from "@defold-typescript/docs-render/base";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
 import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
+import { renderGuidePage } from "../app/lib/content";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";
 import {
@@ -51,6 +52,14 @@ function section(text: string, heading: string): string {
 }
 
 const LINK = /^- \[.*\]\(.*\)$/gm;
+
+// The package copy's hand-authored head: everything before the curated list.
+function packagePreamble(): string {
+  const txt = buildLlmsTxt(PACKAGE_TARGET);
+  const end = txt.indexOf("## Key docs for agents");
+  expect(end).toBeGreaterThan(0);
+  return txt.slice(0, end);
+}
 
 describe("llms.txt regeneration drift guard", () => {
   test("committed packages/docs/llms.txt matches the package-target build", () => {
@@ -160,6 +169,47 @@ describe("package target — repo-local, cat-able links", () => {
     expect(txt).toContain(
       "paths starting `@defold-typescript/` or `lua-types/` are package specifiers resolved under `node_modules/`",
     );
+  });
+
+  test("the preamble's types paths ship, and one declares `InputAction`", () => {
+    const named = [
+      ...packagePreamble().matchAll(/@defold-typescript\/types\/src\/([A-Za-z0-9_.-]+\.ts)/g),
+    ].map((match) => match[1] as string);
+    expect(named.length).toBeGreaterThan(0);
+    const typesSrc = join(TYPES_DIR, "src");
+    for (const file of named) {
+      expect(existsSync(join(typesSrc, file))).toBe(true);
+    }
+    const pkg = JSON.parse(readFileSync(join(TYPES_DIR, "package.json"), "utf8")) as {
+      files: string[];
+    };
+    expect(pkg.files).toContain("src");
+    const declaring = readdirSync(typesSrc).filter(
+      (file) =>
+        file.endsWith(".ts") &&
+        !file.endsWith(".test.ts") &&
+        /^export interface InputAction\b/m.test(readFileSync(join(typesSrc, file), "utf8")),
+    );
+    expect(declaring).toHaveLength(1);
+    expect(named).toContain(declaring[0] as string);
+  });
+
+  test("every guide anchor the preamble links resolves", async () => {
+    const links = [...packagePreamble().matchAll(/\]\(guide\/([a-z0-9-]+\.md)#([^)\s]+)\)/g)].map(
+      (match) => ({ file: match[1] as string, anchor: match[2] as string }),
+    );
+    expect(links.length).toBeGreaterThan(0);
+    const pages = new Map(listGuidePages(GUIDE_DIR).map((page) => [page.file, page]));
+    for (const { file, anchor } of links) {
+      const page = pages.get(file);
+      expect(page).toBeDefined();
+      if (!page) continue;
+      // Ids come from the site's own render, never a hand slugify, the same
+      // way `guide-links.test.ts` resolves authored anchors.
+      const html = await renderGuidePage(GUIDE_DIR, page);
+      const ids = new Set([...html.matchAll(/<h[1-6][^>]*\sid="([^"]+)"/g)].map((m) => m[1]));
+      expect(ids.has(anchor)).toBe(true);
+    }
   });
 
   test("`Key docs for agents` list ordered by agentEntry, unflagged pages excluded", () => {
