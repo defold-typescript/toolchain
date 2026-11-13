@@ -86,7 +86,7 @@
             },
             {
               "name": "receipt",
-              "doc": "Store receipt. Accepted on iOS and Android only; elsewhere the key raises an error.",
+              "doc": "Store receipt. iOS validates it, Android validates it with `signature`,\nand other platforms send the event without it.",
               "types": [
                 "string"
               ],
@@ -94,7 +94,7 @@
             },
             {
               "name": "signature",
-              "doc": "Receipt signature. Accepted on Android only; elsewhere the key raises an error.",
+              "doc": "Receipt signature, which Android uses to validate `receipt`. Other platforms ignore it.",
               "types": [
                 "string"
               ],
@@ -102,7 +102,7 @@
             },
             {
               "name": "autoFetchReceipt",
-              "doc": "Fetch the App Store receipt automatically instead of sending `receipt`.\nAccepted on iOS only; elsewhere the key raises an error.",
+              "doc": "Fetch the App Store receipt instead of sending `receipt` and `signature`,\nwhich are then ignored. Only iOS fetches one; other platforms send the\nevent without a receipt.",
               "types": [
                 "boolean"
               ],
@@ -193,7 +193,7 @@
             },
             {
               "name": "mergeFields",
-              "doc": "Accepted as a boolean, but the extension reads it as a string, so it is\nalways `false` and `customFields` replaces the global custom fields.",
+              "doc": "Merge `customFields` into the global custom fields instead of replacing them.",
               "types": [
                 "boolean"
               ],
@@ -385,7 +385,7 @@
       "type": "FUNCTION",
       "name": "addAdEvent",
       "brief": "Sends an ad event. With `duration` the event carries the duration;",
-      "description": "Sends an ad event. With `duration` the event carries the duration;\nwithout it, the event carries `noAdReason`.",
+      "description": "Sends an ad event. With `duration` the event carries the duration;\nwithout it, the event carries `noAdReason` when given, and neither\notherwise.",
       "parameters": [
         {
           "name": "options",
@@ -694,14 +694,279 @@
     {
       "type": "FUNCTION",
       "name": "setRemoteConfigsListener",
-      "brief": "Sets the listener called when the remote configs are updated, replacing",
-      "description": "Sets the listener called when the remote configs are updated, replacing\nany earlier one.",
+      "brief": "Sets the listener called when the remote configs change, replacing any",
+      "description": "Sets the listener called when the remote configs change, replacing any\nearlier one. The extension calls it from its update, on the main thread,\nin the frame after a change; several changes between two frames call it\nonce.",
       "parameters": [
         {
           "name": "listener",
-          "doc": "Called as `(self)`.",
+          "doc": "Called as `(self)`. A value that is not a function\nraises an error.",
           "types": [
             "(self: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getRemoteConfigsValueAsNumber",
+      "brief": "Reads one remote config value as a number.",
+      "description": "Reads one remote config value as a number.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "`key` must be a non-empty string.",
+          "types": [
+            "{ key: string; defaultValue?: number; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "key",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "defaultValue",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The value, or `defaultValue` (`0` when not given) when the key\nhas no value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getRemoteConfigsValueAsJson",
+      "brief": "Reads one remote config value as JSON.",
+      "description": "Reads one remote config value as JSON.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The config key; an empty string raises an error.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The value, as a JSON string.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setExternalUserId",
+      "brief": "Sets an external user id, which links this user to an id in another",
+      "description": "Sets an external user id, which links this user to an id in another\nsystem, such as your own backend.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The external user id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getUserId",
+      "brief": "The id the SDK knows this user by.",
+      "description": "The id the SDK knows this user by.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The user id.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getExternalUserId",
+      "brief": "The external user id set with {@link gameanalytics.setExternalUserId}.",
+      "description": "The external user id set with {@link gameanalytics.setExternalUserId}.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The external user id.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getABTestingId",
+      "brief": "The id of the A/B test this user is in.",
+      "description": "The id of the A/B test this user is in.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The A/B testing id.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getABTestingVariantId",
+      "brief": "The id of the A/B test variant this user was given.",
+      "description": "The id of the A/B test variant this user was given.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The A/B testing variant id.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getElapsedSessionTime",
+      "brief": "How long the current session has run.",
+      "description": "How long the current session has run.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The time, in seconds.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getElapsedTimeForPreviousSession",
+      "brief": "How long the previous session ran.",
+      "description": "How long the previous session ran.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The time, in seconds.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "getElapsedTimeFromAllSessions",
+      "brief": "How long every session so far has run, added together.",
+      "description": "How long every session so far has run, added together.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The time, in seconds.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enableSDKInitEvent",
+      "brief": "Turns the SDK init health event on or off. The event measures the time",
+      "description": "Turns the SDK init health event on or off. The event measures the time\nuntil the SDK starts, so call this before\n{@link gameanalytics.initialize}. `gameanalytics.enable_sdk_init_event`\nin `game.project` sets it at startup.",
+      "parameters": [
+        {
+          "name": "flag",
+          "doc": "`true` to send the event.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enableFpsHistogram",
+      "brief": "Turns the frame rate histogram health event on or off.",
+      "description": "Turns the frame rate histogram health event on or off.\n`gameanalytics.enable_fps_histogram` in `game.project` sets it at startup.",
+      "parameters": [
+        {
+          "name": "flag",
+          "doc": "`true` to send the histogram.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enableMemoryHistogram",
+      "brief": "Turns the memory usage histogram health event on or off.",
+      "description": "Turns the memory usage histogram health event on or off.\n`gameanalytics.enable_memory_histogram` in `game.project` sets it at\nstartup.",
+      "parameters": [
+        {
+          "name": "flag",
+          "doc": "`true` to send the histogram.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enableHealthHardwareInfo",
+      "brief": "Turns the hardware info sent with health events on or off.",
+      "description": "Turns the hardware info sent with health events on or off.\n`gameanalytics.enable_health_hardware_info` in `game.project` sets it at\nstartup.",
+      "parameters": [
+        {
+          "name": "flag",
+          "doc": "`true` to send the hardware info.",
+          "types": [
+            "boolean"
           ],
           "is_optional": "False"
         }

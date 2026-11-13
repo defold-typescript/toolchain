@@ -368,7 +368,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     imp: [1, 0, 0],
     openal: [5, 3, 4],
     ainpc: [6, 0, 0],
-    gameanalytics: [22, 0, 0],
+    gameanalytics: [36, 0, 0],
   };
 
   test("every native target is measured", () => {
