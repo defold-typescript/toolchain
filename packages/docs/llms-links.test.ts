@@ -31,7 +31,9 @@ function isExempt(target: string): boolean {
 
 function resolveTarget(target: string): { path: string; exists: boolean } {
   if (target.startsWith("guide/")) {
-    const path = join(PKG_DIR, target);
+    // The `#anchor` on a guide link is checked against the site's rendered
+    // heading ids in `build-llms.test.ts`; here only the page must ship.
+    const path = join(PKG_DIR, target.split("#")[0] as string);
     return { path, exists: existsSync(path) };
   }
   // Combined engine namespaces link to their `### <namespace>` section in the

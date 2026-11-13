@@ -49,8 +49,11 @@ shape `AGENTS.md` gets.
 The block tells an agent to author TypeScript under the `include` paths in
 `tsconfig.json`, to drive the CLI with `--json`, where the typed API and the
 guide live, and the hard rules that are expensive to rediscover — never commit
-`build/` or `.defold-types/`, one `define*` factory per script file, and the
-`defold-target` pin's exact `package.json` key. It also lists the built-in
+`build/` or `.defold-types/`, one `define*` factory per script file, the
+`defold-target` pin's exact `package.json` key, and that `.gui` and `.collection`
+edits are checked with `build --editor-compile --json` while the Defold editor
+has the project open ([Compile in the editor](./build.md#compile-in-the-editor)),
+because type-checking and `build` never read them. It also lists the built-in
 libraries with their import paths and guide pages — `@defold-typescript/types/hsm`
 ([State machines](./state-machines.md)) and `@defold-typescript/types/ecs`
 ([Entity systems](./entity-systems.md)) — so an agent imports them instead of
