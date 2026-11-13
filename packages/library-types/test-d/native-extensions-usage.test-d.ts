@@ -204,6 +204,34 @@ const _flag: string = gameanalytics.getRemoteConfigsValueAsString({
 gameanalytics.setRemoteConfigsListener((_self) => {
   const _content: string = gameanalytics.getRemoteConfigsContentAsString();
 });
+const _userId: string = gameanalytics.getUserId();
+const _externalUserId: string = gameanalytics.getExternalUserId();
+const _abTestingId: string = gameanalytics.getABTestingId();
+const _abTestingVariantId: string = gameanalytics.getABTestingVariantId();
+const _configJson: string = gameanalytics.getRemoteConfigsValueAsJson("flags");
+const _sessionTime: number = gameanalytics.getElapsedSessionTime();
+const _previousSessionTime: number = gameanalytics.getElapsedTimeForPreviousSession();
+const _allSessionsTime: number = gameanalytics.getElapsedTimeFromAllSessions();
+const _configSpeed: number = gameanalytics.getRemoteConfigsValueAsNumber({
+  key: "speed",
+  defaultValue: 1,
+});
+const _configSpeedOrZero: number = gameanalytics.getRemoteConfigsValueAsNumber({ key: "speed" });
+gameanalytics.setExternalUserId("player-1");
+gameanalytics.enableSDKInitEvent(true);
+gameanalytics.enableFpsHistogram(true);
+gameanalytics.enableMemoryHistogram(false);
+gameanalytics.enableHealthHardwareInfo(true);
+// @ts-expect-error the flag is a boolean.
+gameanalytics.enableFpsHistogram("yes");
+// @ts-expect-error the key is required.
+gameanalytics.getRemoteConfigsValueAsNumber({ defaultValue: 1 });
+// @ts-expect-error the default is a number.
+gameanalytics.getRemoteConfigsValueAsNumber({ key: "speed", defaultValue: "1" });
+// @ts-expect-error ids are strings.
+const _badId: number = gameanalytics.getUserId();
+// @ts-expect-error the external user id is required.
+gameanalytics.setExternalUserId();
 // @ts-expect-error the user id is required.
 gameanalytics.configureUserId();
 // @ts-expect-error the flag is a boolean.

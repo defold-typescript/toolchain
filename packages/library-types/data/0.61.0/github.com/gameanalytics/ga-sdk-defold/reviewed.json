@@ -1,5 +1,5 @@
 {
-  "ref": "4.2.6",
+  "ref": "5.0.0",
   "reviews": [
     {
       "version": 1,
@@ -22,6 +22,42 @@
         "gameanalytics/src/android/GameAnalyticsJNI.cpp": "72dc8366f99d8427",
         "gameanalytics/src/gameanalytics.cpp": "d159b321b5df923c",
         "gameanalytics/src/ios/GameAnalyticsCpp.mm": "56b0c85aa09b863f"
+      }
+    },
+    {
+      "version": 1,
+      "commits": [
+        "579aa934387c389352774b992e034e53e0a911de"
+      ],
+      "api": "990559bc64d11836b8a62e527dbe4860ad853205719a8a91ececf7142d7052bc",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "4bfc8c0024a13fb6d2e2c01d789db66f244782cd3794b61f43b767128bed57b4",
+      "members": {
+        "gameanalytics/include/GAEnums.h": "3677f8fc327e4e4d",
+        "gameanalytics/include/GAWrapper.h": "b069a3cb099d2d9f",
+        "gameanalytics/include/GameAnalytics/GAHttpClient.h": "71516e3279e9d85b",
+        "gameanalytics/include/GameAnalytics/GATypes.h": "4f23f15e81515a96",
+        "gameanalytics/include/GameAnalytics/GameAnalytics.h": "ac84e57d967fd886",
+        "gameanalytics/include/GameAnalytics/GameAnalyticsExtern.h": "5ebee3176eb97747",
+        "gameanalytics/lib/arm64-ios/GameAnalytics.framework/Headers/GameAnalytics.h": "e3ecf49d822c7705",
+        "gameanalytics/lib/arm64-ios/GameAnalytics.framework/Headers/GameAnalyticsWrapper.h": "fab6edc07b3eb68b",
+        "gameanalytics/lib/arm64_sim-ios/GameAnalytics.framework/Headers/GameAnalytics.h": "e3ecf49d822c7705",
+        "gameanalytics/lib/arm64_sim-ios/GameAnalytics.framework/Headers/GameAnalyticsWrapper.h": "fab6edc07b3eb68b",
+        "gameanalytics/src/GADefold.cpp": "f2ceee654d37ea06",
+        "gameanalytics/src/GADefold.h": "622aabf3ee3d8b55",
+        "gameanalytics/src/ga/android/GAWrapperAndroid.cpp": "ce908077368b2d86",
+        "gameanalytics/src/ga/android/GAWrapperAndroid.h": "27e4ed2fef347f05",
+        "gameanalytics/src/ga/desktop/GALinuxCompat.cpp": "0db6b5442a73cf7a",
+        "gameanalytics/src/ga/desktop/GAWrapperCpp.cpp": "cbd1e1bf3ef904ac",
+        "gameanalytics/src/ga/desktop/GAWrapperCpp.h": "d3d19495cba744e7",
+        "gameanalytics/src/ga/ios/GAWrapperIOS.h": "ac6b52a3aad62850",
+        "gameanalytics/src/ga/ios/GAWrapperIOS.mm": "0220234adb5d0a6b",
+        "gameanalytics/src/ga/ios/GameAnalytics/GameAnalytics.h": "58eb62a18fa8ae3d",
+        "gameanalytics/src/ga/web/GAWrapperWeb.cpp": "d6c33a33161ee16c",
+        "gameanalytics/src/ga/web/GAWrapperWeb.h": "a0b0b1a40116f0b9",
+        "gameanalytics/src/gameanalytics.cpp": "bcd6eaaa132c45b3",
+        "gameanalytics/src/http/GAHttpClientDefold.cpp": "aef36c055bd66d30",
+        "gameanalytics/src/http/GAHttpClientDefold.h": "297d12227599870f"
       }
     }
   ]
