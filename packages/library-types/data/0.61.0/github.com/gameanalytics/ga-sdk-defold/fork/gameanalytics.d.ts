@@ -3,14 +3,12 @@
  * GameAnalytics event tracking, sessions and remote configs. The extension
  * reads its game key, secret key and settings from the `gameanalytics`
  * section of `game.project`, and initializes the SDK at startup unless
- * `use_custom_id` or `manual_initialize` is set there. It registers this
- * namespace on iOS, Android, HTML5, macOS, Windows and Linux only; on every
- * other platform it does not exist at runtime.
+ * `use_custom_id` or `manual_initialize` is set there. Its `ext.manifest`
+ * lists iOS, Android, HTML5, macOS, x86-64 Windows and x86-64 Linux.
  *
  * Every event table raises an error on a key the event does not list. An
  * enum-valued string field is compared ignoring case, and an event left
- * without one sends the SDK the value `0`, which names no member of that
- * enum.
+ * without one sends the SDK that enum's `undefined` value.
  *
  * @see {@link https://github.com/GameAnalytics/GA-SDK-DEFOLD|Github Source}
  */
@@ -46,13 +44,17 @@ declare module "gameanalytics" {
     itemType: string;
     itemId: string;
     cartType?: string;
-    /** Store receipt. Accepted on iOS and Android only; elsewhere the key raises an error. */
+    /**
+     * Store receipt. iOS validates it, Android validates it with `signature`,
+     * and other platforms send the event without it.
+     */
     receipt?: string;
-    /** Receipt signature. Accepted on Android only; elsewhere the key raises an error. */
+    /** Receipt signature, which Android uses to validate `receipt`. Other platforms ignore it. */
     signature?: string;
     /**
-     * Fetch the App Store receipt automatically instead of sending `receipt`.
-     * Accepted on iOS only; elsewhere the key raises an error.
+     * Fetch the App Store receipt instead of sending `receipt` and `signature`,
+     * which are then ignored. Only iOS fetches one; other platforms send the
+     * event without a receipt.
      */
     autoFetchReceipt?: boolean;
     /** Custom fields for this event, as a JSON object string. */
@@ -76,10 +78,7 @@ declare module "gameanalytics" {
     itemId: string;
     /** Custom fields for this event, as a JSON object string. */
     customFields?: string;
-    /**
-     * Accepted as a boolean, but the extension reads it as a string, so it is
-     * always `false` and `customFields` replaces the global custom fields.
-     */
+    /** Merge `customFields` into the global custom fields instead of replacing them. */
     mergeFields?: boolean;
   }): void;
 
@@ -133,7 +132,8 @@ declare module "gameanalytics" {
 
   /**
    * Sends an ad event. With `duration` the event carries the duration;
-   * without it, the event carries `noAdReason`.
+   * without it, the event carries `noAdReason` when given, and neither
+   * otherwise.
    *
    * @param options - The event.
    */
@@ -249,10 +249,123 @@ declare module "gameanalytics" {
   function getRemoteConfigsContentAsString(): string;
 
   /**
-   * Sets the listener called when the remote configs are updated, replacing
-   * any earlier one.
+   * Sets the listener called when the remote configs change, replacing any
+   * earlier one. The extension calls it from its update, on the main thread,
+   * in the frame after a change; several changes between two frames call it
+   * once.
    *
-   * @param listener - Called as `(self)`.
+   * @param listener - Called as `(self)`. A value that is not a function
+   * raises an error.
    */
   function setRemoteConfigsListener(listener: (self: unknown) => void): void;
+
+  /**
+   * Reads one remote config value as a number.
+   *
+   * @param options - `key` must be a non-empty string.
+   * @returns The value, or `defaultValue` (`0` when not given) when the key
+   * has no value.
+   */
+  function getRemoteConfigsValueAsNumber(options: { key: string; defaultValue?: number }): number;
+
+  /**
+   * Reads one remote config value as JSON.
+   *
+   * @param key - The config key; an empty string raises an error.
+   * @returns The value, as a JSON string.
+   */
+  function getRemoteConfigsValueAsJson(key: string): string;
+
+  /**
+   * Sets an external user id, which links this user to an id in another
+   * system, such as your own backend.
+   *
+   * @param id - The external user id.
+   */
+  function setExternalUserId(id: string): void;
+
+  /**
+   * The id the SDK knows this user by.
+   *
+   * @returns The user id.
+   */
+  function getUserId(): string;
+
+  /**
+   * The external user id set with {@link gameanalytics.setExternalUserId}.
+   *
+   * @returns The external user id.
+   */
+  function getExternalUserId(): string;
+
+  /**
+   * The id of the A/B test this user is in.
+   *
+   * @returns The A/B testing id.
+   */
+  function getABTestingId(): string;
+
+  /**
+   * The id of the A/B test variant this user was given.
+   *
+   * @returns The A/B testing variant id.
+   */
+  function getABTestingVariantId(): string;
+
+  /**
+   * How long the current session has run.
+   *
+   * @returns The time, in seconds.
+   */
+  function getElapsedSessionTime(): number;
+
+  /**
+   * How long the previous session ran.
+   *
+   * @returns The time, in seconds.
+   */
+  function getElapsedTimeForPreviousSession(): number;
+
+  /**
+   * How long every session so far has run, added together.
+   *
+   * @returns The time, in seconds.
+   */
+  function getElapsedTimeFromAllSessions(): number;
+
+  /**
+   * Turns the SDK init health event on or off. The event measures the time
+   * until the SDK starts, so call this before
+   * {@link gameanalytics.initialize}. `gameanalytics.enable_sdk_init_event`
+   * in `game.project` sets it at startup.
+   *
+   * @param flag - `true` to send the event.
+   */
+  function enableSDKInitEvent(flag: boolean): void;
+
+  /**
+   * Turns the frame rate histogram health event on or off.
+   * `gameanalytics.enable_fps_histogram` in `game.project` sets it at startup.
+   *
+   * @param flag - `true` to send the histogram.
+   */
+  function enableFpsHistogram(flag: boolean): void;
+
+  /**
+   * Turns the memory usage histogram health event on or off.
+   * `gameanalytics.enable_memory_histogram` in `game.project` sets it at
+   * startup.
+   *
+   * @param flag - `true` to send the histogram.
+   */
+  function enableMemoryHistogram(flag: boolean): void;
+
+  /**
+   * Turns the hardware info sent with health events on or off.
+   * `gameanalytics.enable_health_hardware_info` in `game.project` sets it at
+   * startup.
+   *
+   * @param flag - `true` to send the hardware info.
+   */
+  function enableHealthHardwareInfo(flag: boolean): void;
 }
