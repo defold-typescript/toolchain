@@ -339,6 +339,11 @@ runs. `build --editor-compile` closes that gap: once every output file is on dis
 it asks the open Defold editor to compile the project, without running it, and
 waits for the answer.
 
+The editor compiles its own open copy of the project, not the files on disk.
+Before compiling it reloads every file that changed on disk, so the compile sees
+the Lua this build wrote and any `.gui` or `.collection` another tool saved. An
+edit made in the editor and not yet saved is compiled as it stands there.
+
 ```sh
 bunx @defold-typescript/cli build --editor-compile
 ```

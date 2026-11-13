@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { BUNDLED_LIBRARIES } from "@defold-typescript/transpiler";
+import { renderHelpJson } from "./help";
 import {
   AGENTS_BLOCK_END,
   AGENTS_BLOCK_START,
@@ -13,6 +14,8 @@ import {
 } from "./init-agents";
 
 const GUIDE_DIR = path.resolve(import.meta.dir, "..", "..", "docs", "guide");
+const TYPES_DIR = path.resolve(import.meta.dir, "..", "..", "types");
+const TYPES_SRC_DIR = path.join(TYPES_DIR, "src");
 
 let cwd: string;
 
@@ -230,6 +233,47 @@ describe("runInitAgents", () => {
     expect(pages).toContain("upgrading.md");
     for (const page of pages) {
       expect(existsSync(path.join(GUIDE_DIR, page))).toBe(true);
+    }
+  });
+
+  test("every types path the block names ships, and one declares `InputAction`", () => {
+    const named = [
+      ...renderAgentsBlock().matchAll(/@defold-typescript\/types\/src\/([A-Za-z0-9_.-]+\.ts)/g),
+    ].map((match) => match[1] as string);
+    expect(named.length).toBeGreaterThan(0);
+    for (const file of named) {
+      expect(existsSync(path.join(TYPES_SRC_DIR, file))).toBe(true);
+    }
+    const pkg = JSON.parse(readFileSync(path.join(TYPES_DIR, "package.json"), "utf8")) as {
+      files: string[];
+    };
+    expect(pkg.files).toContain("src");
+    const declaring = readdirSync(TYPES_SRC_DIR).filter(
+      (file) =>
+        file.endsWith(".ts") &&
+        !file.endsWith(".test.ts") &&
+        /^export interface InputAction\b/m.test(
+          readFileSync(path.join(TYPES_SRC_DIR, file), "utf8"),
+        ),
+    );
+    expect(declaring).toHaveLength(1);
+    expect(named).toContain(declaring[0] as string);
+  });
+
+  test("every flag the block names on a build command is one `build` accepts", () => {
+    const spans = [
+      ...renderAgentsBlock().matchAll(/`(bunx @defold-typescript\/cli build[^`]*)`/g),
+    ].map((match) => match[1] as string);
+    expect(spans.length).toBeGreaterThan(0);
+    const helpFlags = (subject: string | null): string[] =>
+      (JSON.parse(renderHelpJson(subject)) as { flags: { flag: string }[] }).flags.map(
+        (entry) => entry.flag.split(" ")[0] as string,
+      );
+    const accepted = new Set([...helpFlags("build"), ...helpFlags(null)]);
+    for (const span of spans) {
+      for (const token of span.split(/\s+/).filter((word) => word.startsWith("--"))) {
+        expect(accepted).toContain(token);
+      }
     }
   });
 
