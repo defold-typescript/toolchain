@@ -260,7 +260,7 @@ describe("runInitAgents", () => {
     expect(named).toContain(declaring[0] as string);
   });
 
-  test("every flag the block names on a build command is one `build` accepts", () => {
+  test("every flag the block names on a build command is listed in `build`'s help", () => {
     const spans = [
       ...renderAgentsBlock().matchAll(/`(bunx @defold-typescript\/cli build[^`]*)`/g),
     ].map((match) => match[1] as string);

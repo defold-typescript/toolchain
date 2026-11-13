@@ -22,7 +22,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **The agent contract and the package `llms.txt` tell an agent how to check Defold resource edits:** type-checking and `build` never read `.gui` or `.collection` files, so they point at `build --editor-compile --json` with the editor open. They also list `@defold-typescript/types/src/lifecycle.ts` for script callback payloads such as `InputAction` ([Install the agent contract](./init-agents.md), [Compile in the editor](./build.md#compile-in-the-editor)).
+- **The agent contract and the package `llms.txt` tell an agent how to check Defold resource edits:** type-checking and a plain `build` do not fully validate or compile `.gui` or `.collection` files, so they point at `build --editor-compile --json` with the editor open. They also list `@defold-typescript/types/src/lifecycle.ts` for script callback payloads such as `InputAction` ([Install the agent contract](./init-agents.md), [Compile in the editor](./build.md#compile-in-the-editor)).
 
 ## v0.65.0
 

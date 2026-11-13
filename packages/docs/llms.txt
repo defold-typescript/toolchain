@@ -6,7 +6,7 @@ For the Defold engine's own machine docs, see https://defold.com/llms.txt.
 
 Beyond the per-namespace links below, the hand-authored typed API lives in `@defold-typescript/types/src/core-types.ts` (value types such as `Vector3` and `Hash`), `@defold-typescript/types/src/engine-globals.d.ts` (engine globals) and `@defold-typescript/types/src/lifecycle.ts` (script callbacks and their payloads, such as `InputAction`).
 
-Type-checking and a plain `build` never read `.gui`, `.collection` or other Defold resource files. To check edits to those, run `bunx @defold-typescript/cli build --editor-compile --json` with the Defold editor open on the project; see [Compile in the editor after a build](guide/agent-runbooks.md#compile-in-the-editor-after-a-build).
+A plain `build` reads scene files such as `.collection`, `.go` and `.gui` to type and check the addresses scripts use, and flags a few component-reference mistakes, but neither it nor type-checking fully validates or compiles Defold resources. To check edits to `.gui`, `.collection` or other Defold resource files, run `bunx @defold-typescript/cli build --editor-compile --json` with the Defold editor open on the project; see [Compile in the editor after a build](guide/agent-runbooks.md#compile-in-the-editor-after-a-build).
 
 Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: false` (long tutorials) are linked here but omitted from that full-text pack.
 
