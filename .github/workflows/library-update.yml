@@ -2,8 +2,8 @@
 # and opens one PR per changed library. `scripts/library-update-prs.ts` turns on
 # auto-merge only for a safe change whose every path is library data, and only for
 # the commit the run checked. It closes its PR for a library found current or held,
-# and keeps one issue open per library it cannot land, so the bot token needs
-# write access to issues as well as pull requests.
+# or one the report no longer lists, and keeps one issue open per library it cannot
+# land, so the bot token needs write access to issues as well as pull requests.
 
 name: Library update
 

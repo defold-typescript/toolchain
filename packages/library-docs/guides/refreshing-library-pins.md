@@ -85,7 +85,7 @@ which would fail every run; they hold no review, so `resolve` reports them
 The [library update workflow](#the-library-update-workflow) runs daily, so a library
 that moved upstream gets one PR from `library-update/<library>`, refreshed on each
 run. The bot closes that PR, with a comment, once a run finds the library current or
-held.
+held, or no longer lists the library, as when a new data folder renames it.
 
 The bot files an issue titled `library update cannot land <library>` only when it
 cannot land a library: `library update` failed for it, or its PR's checks were red
