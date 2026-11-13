@@ -606,6 +606,75 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "lib/defold_typescript/timers.lua"))).toBe(false);
   });
 
+  test("lualibRequiredBy names only the outputs whose Lua requires the bundle", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+    writeFile("src/plain.ts", "export const answer = 42;\n");
+
+    expect(runBuild({ cwd }).lualibRequiredBy).toEqual(["src/main.lua"]);
+  });
+
+  test("lualibRequiredBy covers outputs this run did not rewrite", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+    runBuild({ cwd });
+
+    const second = runBuild({ cwd });
+
+    expect(second.written).not.toContain("src/main.lua");
+    expect(second.lualibRequiredBy).toEqual(["src/main.lua"]);
+  });
+
+  test("lualibRequiredBy lists the timers runtime", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      'import { setTimeout } from "@defold-typescript/types/timers";\nsetTimeout(() => print(1), 250);\n',
+    );
+
+    expect(runBuild({ cwd }).lualibRequiredBy).toContain("lib/defold_typescript/timers.lua");
+  });
+
+  test("lualibRequiredBy lists a bundled library module, sorted with the sources", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      [
+        'import { sequence } from "@defold-typescript/types/hsm/async";',
+        "export const ks = Object.keys({ a: 1 });",
+        "export const task = sequence((_ctx, signal) => signal.wait(0.5));",
+        "",
+      ].join("\n"),
+    );
+
+    expect(runBuild({ cwd }).lualibRequiredBy).toEqual([
+      "lib/defold_typescript/hsm/async.lua",
+      "src/main.lua",
+    ]);
+  });
+
+  test("lualibRequiredBy lists a companion whose Lua requires the bundle", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/door.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        "export const KEYS = Object.keys({ a: 1 });",
+        "export default defineScript({ init() { print(KEYS.length); } });",
+        "",
+      ].join("\n"),
+    );
+
+    expect(runBuild({ cwd }).lualibRequiredBy).toContain("src/door.lua");
+  });
+
+  test("lualibRequiredBy is empty when nothing requires the bundle", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+
+    expect(runBuild({ cwd }).lualibRequiredBy).toEqual([]);
+  });
+
   const HSM_SCRIPT = [
     'import { defineScript } from "@defold-typescript/types";',
     'import { defineMachine } from "@defold-typescript/types/hsm";',
