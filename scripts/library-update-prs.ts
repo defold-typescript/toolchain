@@ -9,8 +9,9 @@ export const ISSUE_TITLE_PREFIX = "library update cannot land ";
 // Opens one PR per library that `library update --json` changed, and turns on
 // auto-merge for a PR only when the change is safe and every path is library data,
 // and only for the commit it checked. It closes its PR for a library found current
-// or held, and keeps one issue open per library it cannot land: one that failed to
-// update, or whose PR's checks were red when the run started.
+// or held, or one the report no longer lists, and keeps one issue open per library
+// it cannot land: one that failed to update, or whose PR's checks were red when the
+// run started.
 
 type Change = "kept" | "added" | "changed";
 
@@ -199,6 +200,18 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
   }
 }
 
+function closePullRequest(library: string, reason: string, run: Run): void {
+  must(run, [
+    "gh",
+    "pr",
+    "close",
+    `${BOT_BRANCH_PREFIX}${library}`,
+    "--delete-branch",
+    "--comment",
+    `${reason} This PR has nothing left to land.`,
+  ]);
+}
+
 function listed<T>(run: Run, args: string[]): T[] {
   return JSON.parse(must(run, args)) as T[];
 }
@@ -324,17 +337,16 @@ export function main(reportPath: string, { cwd, run }: { cwd: string; run: Run }
     }
     const reason = settledReason(entry);
     settled.set(entry.library, reason);
-    if (pulls.delete(entry.library)) {
-      must(run, [
-        "gh",
-        "pr",
-        "close",
-        `${BOT_BRANCH_PREFIX}${entry.library}`,
-        "--delete-branch",
-        "--comment",
-        `${reason} This PR has nothing left to land.`,
-      ]);
-    }
+    if (pulls.delete(entry.library)) closePullRequest(entry.library, reason, run);
+  }
+  // With no name given, `library update` reports every library of its data folder
+  // in `updated` or `failed`, so a PR for any other library has nothing to land.
+  const reported = new Set([...report.updated, ...report.failed].map(({ library }) => library));
+  for (const library of [...pulls.keys()].filter((library) => !reported.has(library))) {
+    const reason = `\`library update\` no longer lists ${library}: the library data has no such library.`;
+    settled.set(library, reason);
+    pulls.delete(library);
+    closePullRequest(library, reason, run);
   }
   reconcileIssues(report.failed, pulls, settled, issues, run);
   for (const { library, message } of report.failed) console.error(`${library}: ${message}`);
