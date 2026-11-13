@@ -29,7 +29,7 @@ export {
   DEBUG_MANAGED_BLOCK,
   findManagedBootstrap,
 } from "./debug-bootstrap";
-export { findEmittedRequires, LUALIB_REQUIRE_NAME } from "./emitted-requires";
+export { findEmittedRequires, LUALIB_REQUIRE_NAME, requiresLualib } from "./emitted-requires";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";

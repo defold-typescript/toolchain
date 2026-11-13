@@ -4,6 +4,7 @@ import {
   bundledModuleOfRequire,
   createTranspileSession,
   requireLibrarySourceDir,
+  requiresLualib,
   rewriteEmittedRequires,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -109,6 +110,11 @@ export interface RunBuildResult {
   readonly unreachableAddresses: UnreachableAddressEntry[];
   /** The foreign-world addresses `warnings` also names in prose. */
   readonly crossWorldAddresses: CrossWorldAddressEntry[];
+  /**
+   * Every output whose Lua requires the lualib bundle, sorted, whether or not
+   * this run rewrote it.
+   */
+  readonly lualibRequiredBy: string[];
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
@@ -119,7 +125,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   throwOnLinkedAlongsideSources(cwd, sources, config);
 
   if (sources.length === 0) {
-    return { written: [], warnings: [], unreachableAddresses: [], crossWorldAddresses: [] };
+    return {
+      written: [],
+      warnings: [],
+      unreachableAddresses: [],
+      crossWorldAddresses: [],
+      lualibRequiredBy: [],
+    };
   }
 
   const files: Record<string, string> = {};
@@ -259,6 +271,31 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
   claims.throwOnCollisions();
 
+  // Read before the require rewrite, where every chunk still names the bundle
+  // `lualib_bundle` whatever the project's out and runtime folders respell it to.
+  const lualibRequiredBy: string[] = [];
+  for (const rel of writable) {
+    const outputRel = outputBySource[rel];
+    const lua = result.lua[rel];
+    if (outputRel !== undefined && lua !== undefined && requiresLualib(lua)) {
+      lualibRequiredBy.push(outputRel);
+    }
+    const companionRel = companionBySource[rel];
+    const companion = result.companions?.[rel];
+    if (companionRel !== undefined && companion !== undefined && requiresLualib(companion)) {
+      lualibRequiredBy.push(companionRel);
+    }
+  }
+  if (result.timersRuntime !== undefined && requiresLualib(result.timersRuntime)) {
+    lualibRequiredBy.push(timersModuleRel(config));
+  }
+  for (const [requireName, lua] of Object.entries(result.libraryModules ?? {})) {
+    const moduleRel = libraryRels[requireName];
+    if (moduleRel !== undefined && requiresLualib(lua)) {
+      lualibRequiredBy.push(moduleRel);
+    }
+  }
+
   const written: string[] = [];
   for (const rel of writable) {
     const lua = luaBySource[rel];
@@ -357,5 +394,6 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     warnings,
     unreachableAddresses: reachability.entries,
     crossWorldAddresses: crossWorld.entries,
+    lualibRequiredBy: lualibRequiredBy.sort(),
   };
 }

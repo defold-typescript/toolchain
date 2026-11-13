@@ -92,6 +92,20 @@ against, because the project's scenes host no script the walk could resolve.
 There is no suppression line for this check; its silence *is* per file, so an
 absent field means only that no finding survived that per-file honesty rule.
 
+`lualibRequiredBy` lists the outputs whose Lua requires the TypeScript runtime
+helper bundle (`lualib_bundle`), sorted and project-relative: scripts, modules,
+companions, the timers runtime and bundled library modules. A project that
+avoids the bundle reads it instead of scanning its output folder:
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":[],"warnings":[],"lualibRequiredBy":["src/util.lua"],...}
+```
+
+Unlike the address findings, it is always present on a successful build and is
+`[]` when nothing requires the bundle. It covers every output the build
+produced, including files this run left unchanged and so left out of `written`.
+
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
 `start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
