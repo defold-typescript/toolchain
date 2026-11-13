@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.64.1
+
+> Summary:
+>
+> - **Docs code tabs and tooltips work on long pages** ([vmath](/api/vmath)).
+
+### Fixed
+
+- **Code tabs, copy buttons, hover tooltips and live state machine demos could stay dead on a long docs page** when the end of the page arrived after the site's script had run, which a cached script makes likely: Opera on Windows showed it on the Config/Builder tabs of the [State machines](./state-machines.md) guide and the TypeScript/Lua tabs of reference pages such as [vmath](/api/vmath). Every page now sets them up once it has fully loaded.
+
 ## v0.64.0
 
 > Summary:

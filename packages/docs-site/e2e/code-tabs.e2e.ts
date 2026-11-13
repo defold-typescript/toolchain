@@ -61,3 +61,41 @@ test("switching a Config/Builder group leaves the other groups and the clicked t
 
   await expect(groups.first().locator(".code-tab").nth(0)).toHaveAttribute("aria-selected", "true");
 });
+
+// The CodeTabs island sits after the article, at the very end of a long page. On a
+// slow connection the end of the page arrives well after the client script, which
+// must still find that island. A script parked just before the trailing islands
+// holds the parser there until the islands near the top have hydrated (or a few
+// seconds pass), the way a late page tail does.
+test("a tab group switches when the end of the page arrives after the client script", async ({
+  page,
+}) => {
+  await page.route("**/__hold-page-tail.js", async (route) => {
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      const hydrated = await page
+        .evaluate(() => document.querySelector("[data-hono-hydrated]") !== null)
+        .catch(() => false);
+      if (hydrated) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    await route.fulfill({ contentType: "text/javascript", body: "" });
+  });
+  await page.route("**/state-machines", async (route) => {
+    const response = await route.fetch();
+    const html = await response.text();
+    const trailingIslands = html.indexOf("<honox-island", html.lastIndexOf("</article>"));
+    expect(trailingIslands).toBeGreaterThan(0);
+    const body = `${html.slice(0, trailingIslands)}<script src="/__hold-page-tail.js"></script>${html.slice(trailingIslands)}`;
+    await route.fulfill({ response, body });
+  });
+
+  await page.goto("/state-machines");
+  const builder = page
+    .locator('[data-code-tabs="config-builder"]')
+    .last()
+    .locator(".code-tab")
+    .nth(1);
+  await builder.click();
+  await expect(builder).toHaveAttribute("aria-selected", "true");
+});
