@@ -9,11 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.64.1
+## v0.65.0
 
 > Summary:
 >
+> - **gameanalytics follows GA-SDK-DEFOLD `5.0.0`** ([resolve](./resolve.md#curated-native-extensions)).
 > - **Docs code tabs and tooltips work on long pages** ([vmath](/api/vmath)).
+
+### Improved
+
+- **The [gameanalytics](https://defold-typescript.github.io/library-data/api/github.com/gameanalytics/ga-sdk-defold/gameanalytics) types follow `GameAnalytics/GA-SDK-DEFOLD` tag `5.0.0`**: they add the user and A/B-testing id getters with `gameanalytics.setExternalUserId`, the session-time getters, the number and JSON remote-config reads, and four health-event toggles such as `gameanalytics.enableFpsHistogram`. `gameanalytics.addBusinessEvent` accepts `receipt`, `signature` and `autoFetchReceipt` on every platform.
 
 ### Fixed
 

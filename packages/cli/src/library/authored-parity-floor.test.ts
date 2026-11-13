@@ -632,7 +632,7 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
   "github.com/myopic-design/defold-fontscale/source/upstream/fontscale/src/fontscale.cpp":
     "5685352a52bc182625d52e79e366de5323cc6fe1cd02a13122a8e3e272afb863",
   "github.com/gameanalytics/ga-sdk-defold/source/upstream/gameanalytics/src/gameanalytics.cpp":
-    "d159b321b5df923c9753a8725aa83b044e2ec41c34e703942a4873f2096328db",
+    "bcd6eaaa132c45b3cd62228cfde59b657b6ab5ab495a43b04bd7dcb179f0ab6d",
   "github.com/britzl/defold-gyro/source/upstream/gyro/src/gyro.cpp":
     "40fbeea34a035a055208cb81ffedd1b2773ae0dc8527738207463dd1e5e8af4c",
   "github.com/britzl/defold-imp/source/upstream/imp/src/imp.cpp":
