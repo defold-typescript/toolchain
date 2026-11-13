@@ -672,10 +672,39 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     expect(err()).toBe("");
-    const parsed = JSON.parse(out()) as { ok: boolean; command: string; written: string[] };
+    const parsed = JSON.parse(out()) as {
+      ok: boolean;
+      command: string;
+      written: string[];
+      lualibRequiredBy: string[];
+    };
     expect(parsed.ok).toBe(true);
     expect(parsed.command).toBe("build");
     expect(parsed.written).toContain("src/main.ts.script");
+    expect(parsed.lualibRequiredBy).toEqual([]);
+  });
+
+  test("build --json lists the outputs that require lualib_bundle", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(
+      path.join(srcDir, "main.ts"),
+      'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n',
+    );
+    writeFileSync(path.join(srcDir, "util.ts"), "export const keys = Object.keys({ a: 1 });\n");
+
+    const { io, out } = captureStreams();
+    const code = await dispatch(["build", "--json", cwd], io);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { lualibRequiredBy: string[] };
+    expect(parsed.lualibRequiredBy).toEqual(["src/util.lua"]);
   });
 
   test("build --json on failure writes error JSON to stdout, nothing to stderr, returns 1", async () => {
@@ -715,6 +744,21 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string };
     expect(parsed.defoldVersion).toBe("1.9.8");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("build --json on a ref-doc surface lists the outputs that require lualib_bundle", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
+    writeFileSync(path.join(cwd, "src", "util.ts"), "export const keys = Object.keys({ a: 1 });\n");
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { resolveOpts });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { lualibRequiredBy: string[] };
+    expect(parsed.lualibRequiredBy).toEqual(["src/util.lua"]);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });

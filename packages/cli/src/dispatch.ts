@@ -11,6 +11,7 @@ import {
   reportBobStatus,
   runBobCommand,
 } from "./bob-command";
+import type { RunBuildResult } from "./build";
 import { readCliVersion } from "./cli-version";
 import { libraryDataFromFlag } from "./data-folder-flag";
 import {
@@ -75,7 +76,6 @@ import {
   upstreamNoticeCachePath,
   upstreamRefreshDue,
 } from "./upstream-notice";
-import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
@@ -1440,9 +1440,12 @@ function dispatchCommand(
           written: readonly string[],
           warnings: readonly string[],
           materializedDir: string | null,
-          unreachableAddresses: readonly UnreachableAddressEntry[] = [],
-          crossWorldAddresses: readonly CrossWorldAddressEntry[] = [],
+          findings: Pick<
+            RunBuildResult,
+            "unreachableAddresses" | "crossWorldAddresses" | "lualibRequiredBy"
+          >,
         ): Promise<number> => {
+          const { unreachableAddresses, crossWorldAddresses, lualibRequiredBy } = findings;
           ensureMaterializedReference(cwd, materializedDir);
           // Posted only once every output is on disk: the editor compiles what
           // this run wrote, never the previous run's Lua. `run` builds before it
@@ -1465,6 +1468,7 @@ function dispatchCommand(
                 // separates the two.
                 ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
                 ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
+                lualibRequiredBy,
                 defoldVersion: head.version,
                 defoldVersionSource: targetSource,
                 defoldChannel: head.channel,
@@ -1517,7 +1521,7 @@ function dispatchCommand(
             const sceneIndex = sceneIndexForBuild(sceneTypes);
             const sceneObjects = sceneObjectsForBuild(sceneTypes);
             const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
-            const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
+            const { written, warnings, ...findings } = runBuild({
               cwd,
               defoldVersion: head.version,
               ...(sceneIndex !== undefined ? { sceneIndex } : {}),
@@ -1539,8 +1543,7 @@ function dispatchCommand(
               written,
               [...incomplete, ...warnings],
               materializedDir,
-              unreachableAddresses,
-              crossWorldAddresses,
+              findings,
             );
           } catch (err) {
             return reportError(err);
@@ -1558,7 +1561,7 @@ function dispatchCommand(
           const sceneIndex = sceneIndexForBuild(sceneTypes);
           const sceneObjects = sceneObjectsForBuild(sceneTypes);
           const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
-          const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
+          const { written, warnings, ...findings } = runBuild({
             cwd,
             defoldVersion: head.version,
             ...(sceneIndex !== undefined ? { sceneIndex } : {}),
@@ -1574,8 +1577,7 @@ function dispatchCommand(
             written,
             [...incomplete, ...warnings],
             materializedDir,
-            unreachableAddresses,
-            crossWorldAddresses,
+            findings,
           );
         } catch (err) {
           return reportError(err);

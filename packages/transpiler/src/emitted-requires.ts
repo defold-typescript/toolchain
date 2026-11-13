@@ -36,3 +36,8 @@ export function findEmittedRequires(lua: string): string[] {
 
   return found;
 }
+
+/** Whether an emitted Lua chunk requires the lualib bundle by its emitted name. */
+export function requiresLualib(lua: string): boolean {
+  return scanEmittedRequires(lua).some(({ path }) => path === LUALIB_REQUIRE_NAME);
+}

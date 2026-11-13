@@ -13,7 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
+
+### Added
+
+- **`build --json` reports which outputs require the TypeScript runtime helper bundle:** a successful result always carries `lualibRequiredBy`, the sorted output paths whose Lua requires `lualib_bundle`, including files this run left unchanged, so a project that avoids the bundle can check it without scanning its output folder ([Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
 ### Improved
 

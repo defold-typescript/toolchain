@@ -124,6 +124,10 @@ export interface RenderResultInput {
   // The structured half of the cross-world address findings, under the identical
   // absent-versus-empty contract as `unreachableAddresses` above.
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
+  // Every output whose Lua requires the lualib bundle. Unlike the address
+  // findings above it has no suppressed state, so `build` always sends it and
+  // an empty array means nothing requires the bundle.
+  readonly lualibRequiredBy?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   // Stated outright so a consumer reads "no surface" from a present field
@@ -266,8 +270,12 @@ export function renderResult(input: RenderResultInput): string {
     "crossWorldAddresses" in input
       ? { ...withUnreachable, crossWorldAddresses: input.crossWorldAddresses }
       : withUnreachable;
+  const withLualib =
+    "lualibRequiredBy" in input
+      ? { ...withCrossWorld, lualibRequiredBy: input.lualibRequiredBy }
+      : withCrossWorld;
   const withPinMismatch =
-    "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
+    "pinMismatch" in input ? { ...withLualib, pinMismatch: input.pinMismatch } : withLualib;
   const withUpstream =
     "upstreamRelease" in input
       ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }
