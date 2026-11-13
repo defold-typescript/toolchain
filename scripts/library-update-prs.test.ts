@@ -530,6 +530,33 @@ describe("main", () => {
     expect(remoteHead("library-update/beta")).toBe(seed);
   });
 
+  test("a bot PR and issue for a library the report no longer lists are closed, naming why", () => {
+    openPull("old", { autoMerging: false, number: 27, rollup: RED });
+    issues = [{ number: 30, title: "library update cannot land old" }];
+    const code = main(report([unchanged("alpha", "current")]), { cwd: repo, run });
+    expect(code).toBe(0);
+    const closes = gh("close");
+    expect(closes.map((args) => args[3])).toEqual(["library-update/old"]);
+    expect(closes[0]).toContain("--delete-branch");
+    expect(flag(closes[0] ?? [], "--comment")).toContain("no longer lists");
+    const issueCloses = issueCalls("close");
+    expect(issueCloses.map((args) => args[3])).toEqual(["30"]);
+    expect(flag(issueCloses[0] ?? [], "--comment")).toContain("no longer lists");
+    expect(issueCalls("create")).toEqual([]);
+    expect(issueCalls("edit")).toEqual([]);
+  });
+
+  test("a failed library keeps its red PR open", () => {
+    openPull("beta", { autoMerging: false, number: 8, rollup: RED });
+    main(report([], [{ library: "beta", message: "upstream answered 404" }]), { cwd: repo, run });
+    expect(gh("close")).toEqual([]);
+    const creates = issueCalls("create");
+    expect(creates.map((args) => flag(args, "--title"))).toEqual([
+      "library update cannot land beta",
+    ]);
+    expect(flag(creates[0] ?? [], "--body")).toContain("#8");
+  });
+
   test("a failed library gets one issue naming the failure, which a later run edits", () => {
     const failedBeta = () => report([], [{ library: "beta", message: "upstream answered 404" }]);
     expect(main(failedBeta(), { cwd: repo, run })).toBe(1);
