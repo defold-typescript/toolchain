@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
+> - **Walls clear `outDir`** ([wall](./wall.md#what-a-wall-is)).
 
 ### Added
 
@@ -23,6 +24,10 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **The agent contract and the package `llms.txt` tell an agent how to check Defold resource edits:** type-checking and a plain `build` do not fully validate or compile `.gui` or `.collection` files, so they point at `build --editor-compile --json` with the editor open. They also list `@defold-typescript/types/src/lifecycle.ts` for script callback payloads such as `InputAction` ([Install the agent contract](./init-agents.md), [Compile in the editor](./build.md#compile-in-the-editor)).
+
+### Fixed
+
+- **A walled directory whose source imports a module outside it reported TS6059 in the editor and in `wall --check` when the root `tsconfig.json` sets `outDir`.** Each wall now sets `outDir` to `null`; run `wall <dir>` once for any walled directory to rewrite existing walls ([Wall](./wall.md#what-a-wall-is)).
 
 ## v0.65.0
 
