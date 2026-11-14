@@ -16,6 +16,7 @@ import { Writable } from "node:stream";
 import * as ts from "typescript";
 import { ContainedPathError } from "./contained-fs";
 import { dispatch } from "./dispatch";
+import { runInit } from "./init";
 import { MATERIALIZED_ROOT } from "./materialize";
 import {
   createIncompleteReporter,
@@ -380,6 +381,17 @@ describe("scene-types verb", () => {
 
     expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).not.toContain('"/player/player"');
     expect(err).toContain("game.project");
+  });
+});
+
+describe("a fresh scaffold", () => {
+  test("its starter collection reads completely", () => {
+    runInit({ cwd });
+
+    const result = runSceneTypes({ cwd });
+
+    expect(result.incomplete).toEqual([]);
+    expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).toContain('"/main": true');
   });
 });
 
