@@ -16,6 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
 > - **Walls clear `outDir`** ([wall](./wall.md#what-a-wall-is)).
+> - **Starter scene parses** ([scene-types](./scene-types.md)).
 
 ### Added
 
@@ -28,6 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **A walled directory whose source imports a module outside it reported TS6059 in the editor and in `wall --check` when the root `tsconfig.json` sets `outDir`.** Each wall now sets `outDir` to `null`; run `wall <dir>` once for any walled directory to rewrite existing walls ([Wall](./wall.md#what-a-wall-is)).
+- **A fresh project's `main/main.collection` could not be parsed:** `build` printed three warnings and skipped the unreachable-address check, and `scene-types` left `/main` out of `.defold-types/scene-addresses.d.ts`. A scene file with several fields on one line now reads the way Defold reads it ([Scene types](./scene-types.md#what-it-writes)).
 
 ## v0.65.0
 
