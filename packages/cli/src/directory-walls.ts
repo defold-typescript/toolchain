@@ -219,11 +219,18 @@ interface WallTsconfig {
   readonly compilerOptions: {
     readonly typeRoots: null | string[];
     readonly types: string[];
+    readonly outDir: null;
     readonly paths?: Record<string, string[]>;
   };
   readonly include: readonly ["**/*.ts"];
   readonly exclude: readonly string[];
 }
+
+// A wall inherits the root's `outDir`, and with `outDir` set but no `rootDir`
+// TypeScript takes the wall folder as `rootDir`, so a wall file importing a
+// module outside its folder fails with TS6059. Only the root's `outDir` drives
+// the build, so clearing it in the wall changes no output.
+const WALL_INHERITED_RESETS = { outDir: null } as const;
 
 // A wall's `include` is recursive, so without this a declared descendant stays
 // inside its ancestor's program and injects its own kind's ambient namespaces
@@ -387,7 +394,11 @@ export function directoryWallTsconfig(
   if (pinnedSurface === null || !surfaceKinds.includes(wall.kind)) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,
-      compilerOptions: { typeRoots: null, types: [wall.typesEntrypoint] },
+      compilerOptions: {
+        typeRoots: null,
+        types: [wall.typesEntrypoint],
+        ...WALL_INHERITED_RESETS,
+      },
       include: ["**/*.ts"],
       exclude,
     };
@@ -397,6 +408,7 @@ export function directoryWallTsconfig(
     compilerOptions: {
       typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
       types: [`${pinnedSurface}/${wall.kind}`],
+      ...WALL_INHERITED_RESETS,
       paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind, rootAliases),
     },
     include: ["**/*.ts"],
@@ -577,6 +589,7 @@ export function writeDirectoryWallTsconfigs(
         !Object.hasOwn(options, "composite") &&
         JSON.stringify(options.typeRoots) === JSON.stringify(desired.compilerOptions.typeRoots) &&
         JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types) &&
+        options.outDir === desired.compilerOptions.outDir &&
         JSON.stringify(options.paths ?? null) === JSON.stringify(mergedPaths ?? null) &&
         JSON.stringify(current.include) === JSON.stringify(desired.include) &&
         JSON.stringify(current.exclude) === JSON.stringify(desired.exclude);
@@ -585,6 +598,7 @@ export function writeDirectoryWallTsconfigs(
           ...options,
           typeRoots: desired.compilerOptions.typeRoots,
           types: desired.compilerOptions.types,
+          outDir: desired.compilerOptions.outDir,
         };
         delete nextOptions.composite;
         if (mergedPaths === undefined) {

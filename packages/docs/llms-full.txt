@@ -8493,6 +8493,13 @@ The root `tsconfig.json` excludes each walled directory from its own program, an
 rest of the project stays full-surface. Your editor reads the same configs: a file
 inside a wall uses that wall's surface, and every other file uses the root's.
 
+A wall also sets `compilerOptions.outDir` to `null`. `build` reads `outDir` from
+the root config alone, so this changes no output; inherited into a wall, the
+root's `outDir` would make TypeScript treat the walled directory as the root of
+every source, and a wall file importing a module outside it would fail with
+TS6059. Running `wall <dir>` for any walled directory rewrites every existing wall
+into this shape.
+
 A directory is **eligible** to be walled only when every `.ts` source **in its
 whole subtree** is one kind; a directory whose subtree mixes kinds cannot be
 walled, because no single narrowing applies. `build` and `watch` never touch
