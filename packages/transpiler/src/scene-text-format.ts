@@ -18,6 +18,7 @@ export class SceneTextFormatError extends Error {
 }
 
 const IDENTIFIER_PART = /[A-Za-z0-9_]/;
+const UNQUOTED_SCALAR_END = new Set([" ", "\t", "\r", "\n", "}"]);
 
 function append<T>(target: Map<string, T[]>, key: string, value: T): void {
   const existing = target.get(key);
@@ -120,12 +121,14 @@ export function parseSceneTextFormat(text: string): SceneMessage {
     }
   }
 
+  // Protobuf text format ends an unquoted value at whitespace or a closing
+  // brace, so `position { x: 0.0 y: 0.0 z: 0.0 }` holds three fields.
   function readUnquotedScalar(): string {
-    const newline = text.indexOf("\n", pos);
-    const end = newline === -1 ? text.length : newline;
-    const raw = text.slice(pos, end);
-    pos = end;
-    return raw.trim();
+    const start = pos;
+    while (pos < text.length && !UNQUOTED_SCALAR_END.has(text.charAt(pos))) {
+      pos += 1;
+    }
+    return text.slice(start, pos);
   }
 
   function parseBody(nested: boolean, openedAt: number): SceneMessage {

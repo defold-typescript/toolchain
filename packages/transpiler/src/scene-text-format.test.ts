@@ -101,6 +101,29 @@ describe("parseSceneTextFormat structural parse", () => {
     expect(field(document, "locked_rotation")).toBe("false");
   });
 
+  test("reads several fields on one line and a block closed on the same line", () => {
+    const document = parseSceneTextFormat(
+      'name: "main" scale_along_z: 0\n' +
+        "embedded_instances {\n" +
+        '  id: "main"\n' +
+        "  position { x: 1.0 y: 2.0 z: 3.0 }\n" +
+        "  rotation { x: 0.0 y: 0.0 z: 0.0 w: 1.0 }\n" +
+        "  scale3 { x: 1.0 y: 1.0 z: 1.0}\n" +
+        "}\n",
+    );
+
+    expect(field(document, "name")).toBe("main");
+    expect(field(document, "scale_along_z")).toBe("0");
+    const instance = sub(document, "embedded_instances");
+    expect(field(instance, "id")).toBe("main");
+    const position = sub(instance, "position");
+    expect(field(position, "x")).toBe("1.0");
+    expect(field(position, "y")).toBe("2.0");
+    expect(field(position, "z")).toBe("3.0");
+    expect(field(sub(instance, "rotation"), "w")).toBe("1.0");
+    expect(field(sub(instance, "scale3"), "z")).toBe("1.0");
+  });
+
   test("an empty trailing literal contributes nothing and is not an error", () => {
     const document = parseSceneTextFormat(
       'embedded_instances {\n  data: "id: \\"a\\"\\n"\n  ""\n}\n',
