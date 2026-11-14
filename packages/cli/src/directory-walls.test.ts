@@ -394,6 +394,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/gui-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -410,6 +411,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/render-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -429,6 +431,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: [`../../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/gui-script"],
+        outDir: null,
         paths: {
           "@defold-typescript/types/gui-script": [
             `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
@@ -453,6 +456,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: [`../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/render-script"],
+        outDir: null,
         paths: {
           "@defold-typescript/types/render-script": [
             `../${MATERIALIZED_ROOT}/1.9.8/render-script/index.d.ts`,
@@ -500,6 +504,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/editor-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -519,6 +524,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: [`../../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/editor-script"],
+        outDir: null,
         paths: {
           "@defold-typescript/types/editor-script": [
             `../../${MATERIALIZED_ROOT}/1.9.8/editor-script/index.d.ts`,
@@ -541,6 +547,7 @@ describe("directoryWallTsconfig", () => {
     ).toEqual({
       typeRoots: null,
       types: ["@defold-typescript/types/gui-script"],
+      outDir: null,
     });
   });
 
@@ -555,6 +562,7 @@ describe("directoryWallTsconfig", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/gui-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -682,6 +690,7 @@ describe("writeDirectoryWallTsconfigs", () => {
         strict: true,
         typeRoots: null,
         types: ["@defold-typescript/types/gui-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],

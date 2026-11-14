@@ -127,6 +127,7 @@ describe("applyWallSelection", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/gui-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -193,6 +194,7 @@ describe("applyWallSelection", () => {
       compilerOptions: {
         typeRoots: null,
         types: ["@defold-typescript/types/gui-script"],
+        outDir: null,
       },
       include: ["**/*.ts"],
       exclude: [],

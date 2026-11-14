@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import * as os from "node:os";
 import * as path from "node:path";
 import { type DirectoryWall, wireWallRoot, writeDirectoryWallTsconfigs } from "./directory-walls";
-import { applyWallSelection } from "./wall";
+import { applyWallSelection, currentWalledDirs } from "./wall";
 import { runWallCheck, type WallCheckResult } from "./wall-check";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
@@ -404,6 +404,63 @@ describe("a nested wall overrides its ancestor", () => {
 
       expectClean(result);
       expect(result.programs.map((p) => p.dir)).toEqual(["src/gui", "src/gui/hud"]);
+    });
+  });
+});
+
+function readJson(cwd: string, rel: string): { compilerOptions: Record<string, unknown> } {
+  return JSON.parse(readFileSync(path.join(cwd, rel), "utf8")) as {
+    compilerOptions: Record<string, unknown>;
+  };
+}
+
+function writeJsonFile(cwd: string, rel: string, value: unknown): void {
+  touch(cwd, rel, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function wallImportingOutsideUnderRootOutDir(cwd: string): void {
+  const root = readJson(cwd, "tsconfig.json");
+  root.compilerOptions.outDir = "out";
+  writeJsonFile(cwd, "tsconfig.json", root);
+  touch(
+    cwd,
+    "src/shared/util.ts",
+    "export function double(n: number): number {\n  return n * 2;\n}\n",
+  );
+  touch(
+    cwd,
+    "src/ui/menu.ts",
+    guiScript("const x = double(2);", ['import { double } from "../shared/util";']),
+  );
+  applyWallSelection(cwd, ["src/ui"]);
+}
+
+describe("a wall under a root outDir", () => {
+  test("wall check reports no TS6059 for a wall file importing outside its folder", () => {
+    inProject((cwd) => {
+      wallImportingOutsideUnderRootOutDir(cwd);
+
+      const result = runWallCheck(cwd);
+
+      const ui = result.programs.find((p) => p.dir === "src/ui");
+      expect(ui?.diagnostics).toEqual([]);
+    });
+  });
+
+  test("the next wall run rewrites a wall written without outDir", () => {
+    inProject((cwd) => {
+      wallImportingOutsideUnderRootOutDir(cwd);
+      const wall = readJson(cwd, "src/ui/tsconfig.json");
+      delete wall.compilerOptions.outDir;
+      writeJsonFile(cwd, "src/ui/tsconfig.json", wall);
+
+      const before = diagnosticsOf(runWallCheck(cwd)).filter((d) => d.program === "src/ui");
+      expect(before.map((d) => d.code)).toContain(6059);
+
+      applyWallSelection(cwd, currentWalledDirs(cwd));
+
+      const after = diagnosticsOf(runWallCheck(cwd)).filter((d) => d.program === "src/ui");
+      expect(after).toEqual([]);
     });
   });
 });
