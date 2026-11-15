@@ -13,11 +13,15 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **Breaking: `build` skips everything under `src/test/`**, so game code there moves out ([build](./build.md#what-it-does)).
 > - **`init` writes a Bun test config, and `build` skips test files** ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
-> - **Walls clear `outDir`** ([wall](./wall.md#what-a-wall-is)).
-> - **Starter scene parses** ([scene-types](./scene-types.md)).
+> - **Walls clear `outDir`, and the starter scene parses** ([wall](./wall.md#what-a-wall-is), [scene-types](./scene-types.md)).
+
+### Breaking
+
+- **`build`, `watch` and `wall` skip everything under `src/test/`, the folder for tests and helpers that need Bun's runtime:** a module there writes no Lua and joins no program the build type-checks, so game code in that folder moves out. A wall at `src` excludes the folder; run `wall src` to rewrite an existing one ([Build](./build.md#what-it-does), [Wall](./wall.md#what-a-wall-is)).
 
 ### Added
 

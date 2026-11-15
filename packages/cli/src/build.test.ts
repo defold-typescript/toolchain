@@ -410,6 +410,33 @@ describe("runBuild", () => {
     ).toEqual(["score.test.ts"]);
   });
 
+  describe("the src/test/ folder", () => {
+    beforeEach(() => {
+      writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+      writeFile("src/test/helpers.ts", "export function helper(): number {\n  return 1;\n}\n");
+      writeFile("src/test/globals.d.ts", "declare const fromTestFolder: number;\n");
+    });
+
+    test("writes no output for a module there", () => {
+      writeFile("src/main.ts", "export function main(): number {\n  return 2;\n}\n");
+
+      const result = runBuild({ cwd });
+
+      expect(result.written).toEqual(["src/main.lua"]);
+      expect(
+        readdirSync(cwd, { recursive: true })
+          .map((rel) => String(rel).replaceAll("\\", "/"))
+          .filter((rel) => rel.includes("test/helpers")),
+      ).toEqual(["src/test/helpers.ts"]);
+    });
+
+    test("hands none of its declarations to the build's type pass", () => {
+      writeFile("src/main.ts", "export function main(): number {\n  return fromTestFolder;\n}\n");
+
+      expect(() => runBuild({ cwd })).toThrow("Cannot find name 'fromTestFolder'");
+    });
+  });
+
   test("resolves cross-file imports between src/ TypeScript files", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile(
