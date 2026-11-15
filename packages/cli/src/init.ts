@@ -20,7 +20,6 @@ import {
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
-import { compileIncludeGlob } from "./include-glob";
 import { runInitAgents } from "./init-agents";
 import { isAbsolutePath, toPosixSeparators } from "./materialize";
 import { mergeMiseToml } from "./mise-scaffold";
@@ -28,6 +27,7 @@ import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { compareSemver } from "./semver";
+import { TEST_FOLDER_REL } from "./test-folder";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
 import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -1087,76 +1087,46 @@ function pruneMainTsExclude(
   return remaining.length > 0 ? (remaining as string[]) : undefined;
 }
 
-const TEST_TSCONFIG_REL = "test/tsconfig.json";
-const TEST_ENV_REL = "test/env.d.ts";
+const TEST_TSCONFIG_REL = `${TEST_FOLDER_REL}/tsconfig.json`;
+const TEST_ENV_REL = `${TEST_FOLDER_REL}/env.d.ts`;
 const TEST_ENV_CONTENT = '/// <reference types="bun" />\n';
+const TEST_FOLDER_TO_ROOT = "../".repeat(TEST_FOLDER_REL.split("/").length);
 
-function rebaseOntoParent(pattern: string): string {
+function rebaseOntoProjectRoot(pattern: string): string {
   const normalized = toPosixSeparators(pattern).replace(/^(\.\/)+/, "");
-  return isAbsolutePath(normalized) ? normalized : `../${normalized}`;
-}
-
-// Reads an entry the way TypeScript does, not the way `build` does: resolved
-// against the project folder with `.` and `..` folded, and a last segment with
-// no `.`, `*` or `?` read as that folder and everything below it. The leading
-// segments the entry shares with `<project>/test` are stripped before matching,
-// so a `[` or `{` in the project path or a parent folder stays literal.
-function reachesTestFolder(cwd: string, pattern: string): boolean {
-  const root = path.posix.normalize(toPosixSeparators(cwd)).replace(/\/$/, "");
-  const spec = toPosixSeparators(pattern);
-  let absolute = path.posix
-    .normalize(isAbsolutePath(spec) ? spec : `${root}/${spec}`)
-    .replace(/\/$/, "");
-  if (!/[.*?]/.test(absolute.slice(absolute.lastIndexOf("/") + 1))) {
-    absolute = `${absolute}/**/*`;
-  }
-  const entrySegments = absolute.split("/");
-  const targetSegments = `${root}/test`.split("/");
-  let shared = 0;
-  while (
-    shared < entrySegments.length &&
-    shared < targetSegments.length &&
-    entrySegments[shared] !== "**" &&
-    entrySegments[shared] === targetSegments[shared]
-  ) {
-    shared++;
-  }
-  return compileIncludeGlob(entrySegments.slice(shared).join("/")).mayContain(
-    targetSegments.slice(shared).join("/"),
-  );
+  return isAbsolutePath(normalized) ? normalized : `${TEST_FOLDER_TO_ROOT}${normalized}`;
 }
 
 // The test config extends the root rather than naming its own `types`, so it
 // follows whatever surface `resolve` pins there, and Bun's types come in only
-// through `env.d.ts`, which no root pattern reaches.
+// through `env.d.ts`, which the root `exclude` keeps out of the game program.
+// It also leaves out the editor plugin, whose build diagnostics mean nothing
+// for files `build` never compiles. Its own `exclude` restates the root's other
+// entries, since inheriting the root's would exclude the config's own folder.
 function writeTestTsconfig(
   cwd: string,
   include: readonly string[],
+  rootExclude: readonly string[],
   written: string[],
   operations: InitOperation[],
 ): void {
-  const skipBoth = (detail: string): void => {
-    for (const target of [TEST_TSCONFIG_REL, TEST_ENV_REL]) {
-      operations.push({ target, status: "skipped", detail });
-    }
-  };
-  const reaching = include.filter((pattern) => reachesTestFolder(cwd, pattern));
-  if (reaching.length > 0) {
-    skipBoth(
-      `the root tsconfig.json include (${reaching.join(", ")}) reaches test/, so Bun's types would reach the game program`,
-    );
-    return;
-  }
   const configPath = path.join(cwd, ...TEST_TSCONFIG_REL.split("/"));
   if (existsSync(configPath)) {
-    skipBoth(`a ${TEST_TSCONFIG_REL} already exists`);
+    for (const target of [TEST_TSCONFIG_REL, TEST_ENV_REL]) {
+      operations.push({
+        target,
+        status: "skipped",
+        detail: `a ${TEST_TSCONFIG_REL} already exists`,
+      });
+    }
     return;
   }
   mkdirSync(path.dirname(configPath), { recursive: true });
   writeJson(configPath, {
-    extends: "../tsconfig.json",
-    compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true },
-    include: ["**/*.ts", ...include.map(rebaseOntoParent)],
+    extends: `${TEST_FOLDER_TO_ROOT}tsconfig.json`,
+    compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true, plugins: [] },
+    include: ["**/*.ts", ...include.map(rebaseOntoProjectRoot)],
+    exclude: rootExclude.filter((entry) => entry !== TEST_FOLDER_REL).map(rebaseOntoProjectRoot),
   });
   written.push(TEST_TSCONFIG_REL);
   operations.push({ target: TEST_TSCONFIG_REL, status: "written" });
@@ -1263,9 +1233,13 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     compilerOptions,
     include,
   };
-  const pruned = pruneMainTsExclude(existing?.exclude, starter?.sourceRel);
-  if (pruned !== undefined) {
-    tsconfig.exclude = pruned;
+  const exclude = [...(pruneMainTsExclude(existing?.exclude, starter?.sourceRel) ?? [])];
+  const writesTestPair = !existsSync(path.join(cwd, ...TEST_TSCONFIG_REL.split("/")));
+  if (writesTestPair && !exclude.includes(TEST_FOLDER_REL)) {
+    exclude.push(TEST_FOLDER_REL);
+  }
+  if (exclude.length > 0) {
+    tsconfig.exclude = exclude;
   }
   writeJson(tsconfigPath, tsconfig);
   written.push("tsconfig.json");
@@ -1273,7 +1247,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     target: "tsconfig.json",
     status: existing === undefined ? "written" : "merged",
   });
-  writeTestTsconfig(cwd, include, written, operations);
+  writeTestTsconfig(cwd, include, exclude, written, operations);
 
   // Decided once, before `package.json` is rewritten below: by the time
   // `writeBiome` runs, the pin would already name the new version and the pair
