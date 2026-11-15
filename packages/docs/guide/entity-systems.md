@@ -428,9 +428,10 @@ To watch a world without the game, run `bunx @defold-typescript/cli view swarm_d
 
 ## Test a world with Bun
 
-`@defold-typescript/types/ecs` and its sub-modules also run under Bun, so systems and a world can be tested with `bun test`, with no Defold engine and no mock of the import. Keep test files out of `src/`: `build` compiles every `.ts` file there to Lua, and `bun:test` has no Lua module. A test imports the systems from their module under `src/`, or defines them itself:
+`@defold-typescript/types/ecs` and its sub-modules also run under Bun, so systems and a world can be tested with `bun test`, with no Defold engine and no mock of the import. A test that imports only `bun:test` and game code sits next to its module and starts with `/// <reference types="bun-types/test" />`, and one that needs Bun's runtime goes in `src/test/` ([Test with Bun](./testing.md)). A test imports the systems from their module, or defines them itself:
 
-```ts title="test/movement.test.ts"
+```ts title="movement.test.ts"
+/// <reference types="bun-types/test" />
 import { expect, test } from "bun:test";
 import { addEntity, processingSystem, requireAll, world } from "@defold-typescript/types/ecs";
 

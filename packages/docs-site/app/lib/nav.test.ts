@@ -244,6 +244,7 @@ describe("buildNav", () => {
       "/debugging",
       "/agent-runbooks",
       "/helper-scripts",
+      "/testing",
       "/terminal-output",
     ]);
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([

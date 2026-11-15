@@ -58,6 +58,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Debugging](guide/debugging.md)
 - [Agent runbooks](guide/agent-runbooks.md)
 - [Helper scripts](guide/helper-scripts.md)
+- [Test with Bun](guide/testing.md)
 - [Terminal output](guide/terminal-output.md)
 - [Pinning the Defold target](guide/pinning-defold-target.md)
 - [Upgrading the toolchain](guide/upgrading.md)

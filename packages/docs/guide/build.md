@@ -34,7 +34,7 @@ to the module it tests. Start such a test with
 `/// <reference types="bun-types/test" />` so the project's own `tsc --noEmit`
 checks it against `bun:test` without Bun's globals reaching game code. A test
 that needs `node:*` or `Bun` goes under [`src/test/`](./init.md#two-modes)
-instead.
+instead. [Test with Bun](./testing.md) covers both places and how to write a test.
 
 They also skip every file under `src/test/`, the folder [`init`](./init.md#two-modes)
 scaffolds for tests and helpers that need Bun's runtime: a module there writes no

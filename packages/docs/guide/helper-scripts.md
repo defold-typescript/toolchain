@@ -26,8 +26,11 @@ gives you for free.
 Keep helper scripts in a `/scripts` folder at the project root. **Do not** put
 them under `src/`[^src-root] — the Defold build compiles source by `tsconfig.include`
 (default `src/**/*.ts`) and **ignores `exclude`**, so any `.ts` file under
-`src/**` is transpiled to Lua and shipped into your game, whether you meant it
-to be or not.
+`src/**`, other than a test or a file in `src/test/`, is transpiled to Lua and
+shipped into your game, whether you meant it to be or not.
+
+Tests are not helper scripts: a `bun:test` file sits next to the module it tests
+or in `src/test/`, and `build` skips both ([Test with Bun](./testing.md)).
 
 `src/` is also the wrong place for typing: the scaffolded `tsconfig.json` pins
 `compilerOptions.types` to `["@defold-typescript/types"]` so your game code sees
