@@ -106,6 +106,36 @@ describe("editJsoncFile", () => {
     expect(result).toBe(["{", '  "exclude": [', '    "a" // first', "  ]", "}", ""].join("\n"));
   });
 
+  test("deleting a last entry that shares a line with its closing bracket keeps the comments before it", () => {
+    const before = [
+      "{",
+      '  "compilerOptions": {',
+      '    "types": [',
+      '      "defold-1.12.4", // engine',
+      "      // extension declarations",
+      '      "extensions"]',
+      "  }",
+      "}",
+      "",
+    ].join("\n");
+    const filePath = fileWith(before);
+    const result = editTo(filePath, (value) => {
+      const options = value.compilerOptions as { types: string[] };
+      options.types = options.types.filter((entry) => entry !== "extensions");
+    });
+    expect(result).toBe(
+      before.replace('"defold-1.12.4",', '"defold-1.12.4"').replace('"extensions"]', "]"),
+    );
+    expect(readJsoncObject(filePath)).toEqual({ compilerOptions: { types: ["defold-1.12.4"] } });
+  });
+
+  test("deleting the last entry of a one-line array takes its comma and its own comment and keeps the line compact", () => {
+    const result = editTo(fileWith('{ "a": ["x", "y" /* own */] }\n'), (value) => {
+      value.a = ["x"];
+    });
+    expect(result).toBe('{ "a": ["x"] }\n');
+  });
+
   for (const [name, eol] of [
     ["LF", "\n"],
     ["CRLF", "\r\n"],
