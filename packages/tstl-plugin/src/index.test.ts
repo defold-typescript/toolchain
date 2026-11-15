@@ -14,17 +14,20 @@ import { DEFOLD_COMPLETION_SOURCE } from "./scene-completions";
 // signal the plugin appends on top of the base service's diagnostics.
 const UNSUPPORTED_SOURCE = "export const x: number = 1; export const y = x & 2;";
 
-function decoratedService(source: string): {
+function decoratedService(
+  source: string,
+  fileName = "main.ts",
+): {
   service: ts.LanguageService;
   base: ts.Diagnostic[];
 } {
   const session = createTranspileSession();
-  session.update({ "main.ts": source });
+  session.update({ [fileName]: source });
   const program = session.getProgram();
   if (!program) {
     throw new Error("session produced no program");
   }
-  const sourceFile = program.getSourceFile("main.ts");
+  const sourceFile = program.getSourceFile(fileName);
   const base = [...program.getSemanticDiagnostics(sourceFile)];
   const languageService = {
     getProgram: () => program,
@@ -292,6 +295,11 @@ describe("tstl-plugin", () => {
   test("returns exactly the base diagnostics for a clean file", () => {
     const { service, base } = decoratedService("export const x = 1;");
     expect(service.getSemanticDiagnostics("main.ts")).toEqual(base);
+  });
+
+  test("returns exactly the base diagnostics for a Bun test file", () => {
+    const { service, base } = decoratedService(UNSUPPORTED_SOURCE, "score.test.ts");
+    expect(service.getSemanticDiagnostics("score.test.ts")).toEqual(base);
   });
 
   test("forwards a non-overridden member to the base, preserving `this` and arguments", () => {

@@ -1,3 +1,4 @@
+export { isBunTestSource } from "./bun-test-source";
 export type { BundledLibrary, BundledModule } from "./bundled-libraries";
 export {
   BUNDLED_LIBRARIES,
