@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, rmSync } from "node:fs";
 import * as path from "node:path";
 import {
   type DirectoryWall,
@@ -8,6 +8,7 @@ import {
   wireWallRoot,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
+import { readJsoncObject } from "./jsonc-file";
 
 function sortDirs<T extends { dir: string }>(items: T[]): T[] {
   return items.sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
@@ -23,7 +24,7 @@ export interface WallConfig {
 function readWallConfig(cwd: string, dir: string): WallConfig | null {
   let parsed: { extends?: unknown; compilerOptions?: { types?: unknown; composite?: unknown } };
   try {
-    parsed = JSON.parse(readFileSync(path.join(cwd, dir, "tsconfig.json"), "utf8"));
+    parsed = readJsoncObject(path.join(cwd, dir, "tsconfig.json"));
   } catch {
     return null;
   }

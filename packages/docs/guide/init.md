@@ -64,8 +64,8 @@ standalone [`init-agents`](./init-agents.md) verb
 writes.
 
 Both modes also write `src/test/tsconfig.json` and `src/test/env.d.ts`, for tests and
-helpers that need Bun's runtime, **when `src/test/tsconfig.json` is absent**;
-[`upgrade`](./upgrade.md) adds them to a project that has none. Writing them also adds
+helpers that need Bun's runtime, **when they are absent**;
+[`upgrade`](./upgrade.md) adds them to a project that has none. Both modes also add
 `src/test` to the root `exclude`, unless an entry already names that folder
 (`./src/test` and `src/test/` count), so the game program never takes in the folder,
 and [`build`](./build.md#what-it-does) skips it. `src/test/tsconfig.json` extends the
@@ -80,11 +80,15 @@ exact version, which adds Bun's types (`bun:test`, `node:*`, `Bun`) to that prog
 only, so they never reach the code `build` compiles. Type-check the tests with
 `tsc --noEmit -p src/test/tsconfig.json`. A test next to its module instead starts with
 `/// <reference types="bun-types/test" />`, which adds `bun:test` alone, so the root
-`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). `init` never overwrites either file, and
-leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
-change to the root `include` or `exclude` needs the same change in
-`src/test/tsconfig.json`. [Test with Bun](./testing.md) explains each setting and
-where a test goes.
+`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). An existing
+`src/test/tsconfig.json` that extends the root gains each missing setting, keeps every
+value you set, and has its `include` and `exclude` replaced only when they select other
+files than the rebased root lists, so `init --force` keeps it in step after a root
+`include` or `exclude` change; one warning names what changed. `init` also warns when
+the installed Bun is older than its `bun-types` pin, when your exact `bun-types` pin
+differs from the installed Bun, and when `test/` or `tests/` holds Bun tests.
+[Test with Bun](./testing.md#when-srctest-already-exists) explains each setting, each
+warning and where a test goes.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
@@ -95,7 +99,12 @@ the `.defold-types` root and pinned engine surface that
 language-service plugin is unioned in exactly once. The scaffold also sets
 `noEmit: true` when your project sets none, so a bare `tsc` type-checks without
 writing a `.js` file beside each source, while `build` still emits Lua; a `noEmit`
-you set yourself is kept. For `mise.toml` it means the
+you set yourself is kept. `tsconfig.json` and the `.vscode/` JSON files are read as
+JSON with comments and edited in place, one key or list entry at a time, so your
+comments, layout and other keys (`extends`, `references`, `files`) survive. Settings
+count as TypeScript reads them through `extends`: a managed default is written only
+when no config in the chain sets it, and an inherited `include`, `exclude` or
+`plugins` list is restated in the root only when a managed entry is missing from it. For `mise.toml` it means the
 refresh rewrites only `description` and `run` inside each managed
 `defold-typescript:*` task, so keys you add to one — an `alias`, a `depends`, an
 `env`, a comment of your own — are carried across every re-run. A managed task

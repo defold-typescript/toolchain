@@ -123,6 +123,8 @@ export { findTextScriptProperties } from "./text-script-property";
 export { TIMERS_REQUIRE_NAME } from "./timers-runtime";
 export type { TranspileProjectInput, TranspileResult } from "./transpile";
 export { transpile, transpileProject } from "./transpile";
+export type { EffectiveTsconfig } from "./tsconfig-effective";
+export { readEffectiveTsconfig } from "./tsconfig-effective";
 export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,

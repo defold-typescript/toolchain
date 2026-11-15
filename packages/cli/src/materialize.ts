@@ -15,6 +15,7 @@ import {
 } from "./contained-fs";
 import type { DefoldChannel } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
+import { editJsoncText, readJsoncObject } from "./jsonc-file";
 
 export const MATERIALIZED_ROOT = ".defold-types";
 
@@ -190,6 +191,18 @@ export interface MaterializeApiSurfaceResult {
 
 function writeJson(cwd: string, rel: string, value: unknown): void {
   writeContainedFile(cwd, rel, `${formatJsonLikeBiome(value)}\n`);
+}
+
+/**
+ * Edits a project config in place, through the same containment check as every
+ * other write, so comments, layout and keys outside `desired`'s changes stay.
+ */
+export function editProjectJsonc(cwd: string, rel: string, desired: Record<string, unknown>): void {
+  const before = readFileSync(path.join(cwd, rel), "utf8");
+  const after = editJsoncText(before, desired, rel);
+  if (after !== before) {
+    writeContainedFile(cwd, rel, after);
+  }
 }
 
 function listDts(dir: string): string[] {
@@ -728,7 +741,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
 
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (existsSync(tsconfigPath)) {
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+    const tsconfig = readJsoncObject(tsconfigPath) as {
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
@@ -763,7 +776,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
           options.paths = desiredPaths;
         }
         tsconfig.compilerOptions = options;
-        writeJson(cwd, "tsconfig.json", tsconfig);
+        editProjectJsonc(cwd, "tsconfig.json", tsconfig);
       }
       return;
     }
@@ -802,7 +815,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
         options.paths = desiredPaths;
       }
       tsconfig.compilerOptions = options;
-      writeJson(cwd, "tsconfig.json", tsconfig);
+      editProjectJsonc(cwd, "tsconfig.json", tsconfig);
     }
   }
 
