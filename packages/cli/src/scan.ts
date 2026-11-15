@@ -9,6 +9,7 @@ import {
   statSync,
 } from "node:fs";
 import * as path from "node:path";
+import { isBunTestSource } from "@defold-typescript/transpiler";
 import { compileIncludeGlob, type IncludeGlob } from "./include-glob";
 import { isUnderLinkRoot, LinkEscapeError, linkEscapeMessage, readLinkRoots } from "./link-roots";
 
@@ -221,15 +222,17 @@ export function scanFilesSync(
 
 /**
  * The project's sources: every file an `include` pattern reaches, links
- * followed, sorted. One file reached under two paths fails, since it would be
- * compiled twice under two module names.
+ * followed, sorted, less the files `bun test` runs. One file reached under two
+ * paths fails, since it would be compiled twice under two module names.
  */
 export function discoverSources(cwd: string, include: readonly string[]): string[] {
   const roots = readLinkRoots(cwd);
   const rels = new Set<string>();
   for (const pattern of include) {
     for (const match of scanFilesSync(cwd, pattern, roots)) {
-      rels.add(match);
+      if (!isBunTestSource(match)) {
+        rels.add(match);
+      }
     }
   }
   const sources = [...rels].sort();

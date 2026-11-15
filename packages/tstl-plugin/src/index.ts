@@ -17,6 +17,7 @@ import {
   getProgramDiagnostics,
   INPUT_BINDING_EXTENSIONS,
   isAddressClass,
+  isBunTestSource,
   isFragmentCaret,
   PROJECT_EXTENSIONS,
   resolveClassifiedSlotAtPosition,
@@ -361,7 +362,9 @@ export default function init(modules: { typescript: typeof import("typescript") 
     proxy.getSemanticDiagnostics = (fileName: string): ts.Diagnostic[] => {
       const prior = base.getSemanticDiagnostics(fileName);
       const program = base.getProgram();
-      if (!program) {
+      // The build never compiles a file `bun test` runs, so nothing the build
+      // would report applies to it.
+      if (!program || isBunTestSource(fileName)) {
         return prior;
       }
       // Advisory category so a valid project's `tsc --noEmit` stays clean — the
