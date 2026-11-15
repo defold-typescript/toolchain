@@ -1096,6 +1096,25 @@ function rebaseOntoParent(pattern: string): string {
   return isAbsolutePath(normalized) ? normalized : `../${normalized}`;
 }
 
+// Reads an entry the way TypeScript does, not the way `build` does: resolved
+// against the project folder with `.` and `..` folded, and a last segment with
+// no `.`, `*` or `?` read as that folder and everything below it. The project
+// path is stripped before matching so a `[` or `{` in it stays literal.
+function reachesTestFolder(cwd: string, pattern: string): boolean {
+  const root = path.posix.normalize(toPosixSeparators(cwd)).replace(/\/$/, "");
+  const spec = toPosixSeparators(pattern);
+  let absolute = path.posix
+    .normalize(isAbsolutePath(spec) ? spec : `${root}/${spec}`)
+    .replace(/\/$/, "");
+  if (!/[.*?]/.test(absolute.slice(absolute.lastIndexOf("/") + 1))) {
+    absolute = `${absolute}/**/*`;
+  }
+  if (absolute === root || absolute.startsWith(`${root}/`)) {
+    return compileIncludeGlob(absolute.slice(root.length + 1)).mayContain("test");
+  }
+  return compileIncludeGlob(absolute).mayContain(`${root}/test`);
+}
+
 // The test config extends the root rather than naming its own `types`, so it
 // follows whatever surface `resolve` pins there, and Bun's types come in only
 // through `env.d.ts`, which no root pattern reaches.
@@ -1110,10 +1129,10 @@ function writeTestTsconfig(
       operations.push({ target, status: "skipped", detail });
     }
   };
-  const reaching = include.filter((pattern) => compileIncludeGlob(pattern).mayContain("test"));
+  const reaching = include.filter((pattern) => reachesTestFolder(cwd, pattern));
   if (reaching.length > 0) {
     skipBoth(
-      `the root tsconfig.json include (${reaching.join(", ")}) reaches test/, so build would compile it and Bun's types would reach the game program`,
+      `the root tsconfig.json include (${reaching.join(", ")}) reaches test/, so Bun's types would reach the game program`,
     );
     return;
   }

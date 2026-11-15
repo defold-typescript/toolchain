@@ -42,6 +42,7 @@ import {
   renderAgentsBlock,
   renderClaudeBlock,
 } from "./init-agents";
+import { toPosixSeparators } from "./materialize";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { reconcileManagedList } from "./vscode-json";
@@ -1062,6 +1063,54 @@ describe("runInit test config", () => {
       expect(operation?.status).toBe("skipped");
       expect(operation?.detail).toContain("**/*.ts");
     }
+  });
+
+  function absoluteEntry(folder: string): string {
+    return `${toPosixSeparators(path.join(cwd, folder))}/**/*.ts`;
+  }
+
+  function expectSkippedFor(include: readonly string[], reported: string): void {
+    touch("game.project", "[project]\n");
+    touch("tsconfig.json", `${JSON.stringify({ include })}\n`);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(false);
+    expect(existsSync(path.join(cwd, TEST_ENV))).toBe(false);
+    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
+      const operation = result.operations.find((op) => op.target === target);
+      expect(operation?.status).toBe("skipped");
+      expect(operation?.detail).toContain(`(${reported})`);
+    }
+  }
+
+  test("a folder-only root include reaching test/ gets no test pair", () => {
+    expectSkippedFor(["src/**/*.ts", "test"], "test");
+  });
+
+  test.each([
+    ["absolute", () => absoluteEntry("test")],
+    ["parent-relative", () => `../${path.basename(cwd)}/**/*.ts`],
+    ["current-folder", () => "."],
+  ])("a %s root include reaching test/ gets no test pair", (_kind, entry) => {
+    const reaching = entry();
+    expectSkippedFor([reaching], reaching);
+  });
+
+  test("safe folder-only and absolute includes still get the test pair", () => {
+    touch("game.project", "[project]\n");
+    const absoluteSrc = absoluteEntry("src");
+    touch("tsconfig.json", `${JSON.stringify({ include: ["src", absoluteSrc] })}\n`);
+
+    runInit({ cwd, force: true });
+
+    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
+    expect(JSON.parse(readCwd(TEST_TSCONFIG)).include).toEqual([
+      "**/*.ts",
+      "../src",
+      absoluteSrc,
+      "../.defold-types/scene-addresses.d.ts",
+    ]);
   });
 });
 
