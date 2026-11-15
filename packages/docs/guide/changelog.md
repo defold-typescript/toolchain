@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.67.0
+
+> Summary:
+>
+> - **`build` deletes unused runtime files** ([Build](./build.md#the-runtime-folder)).
+
+### Fixed
+
+- **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file without the generated banner, or one a hand-written Lua or script file requires by name, stays. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
+
 ## v0.66.0
 
 > Summary:

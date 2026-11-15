@@ -1,4 +1,4 @@
-import { lstatSync, readdirSync, readFileSync, rmdirSync } from "node:fs";
+import { type Dirent, lstatSync, readdirSync, readFileSync, rmdirSync } from "node:fs";
 import * as path from "node:path";
 import {
   BUNDLED_LIBRARIES,
@@ -9,6 +9,7 @@ import {
   HSM_LIBRARY,
   isBunTestSource,
   parseBuildConfig,
+  requirePathForRel,
   type ScriptKind,
   type SourceOutputKind,
   stripIncludeBase,
@@ -23,7 +24,12 @@ import {
   writeContainedFile,
 } from "./contained-fs";
 import { compileIncludeGlob } from "./include-glob";
-import { editorHiddenFolder, readDefignoreLines } from "./project-resource-paths";
+import {
+  editorHiddenFolder,
+  isNonResourcePath,
+  readDefignoreLines,
+} from "./project-resource-paths";
+import type { RuntimeArtifactRels } from "./require-resolution";
 import { isTestFolderSource } from "./test-folder";
 
 export type { SourceOutputKind };
@@ -158,10 +164,20 @@ function validatedBuildConfig(cwd: string, config: TsconfigBuildConfig): BuildCo
   return { ...config, ...(runtimeDir !== undefined ? { runtimeDir } : {}) };
 }
 
-/** The human line `build` and `watch` print after a build. */
-export function formatBuildLine(written: readonly string[]): string {
+/**
+ * The human line `build` and `watch` print after a build, and a second line
+ * naming the runtime files it deleted when there are any.
+ */
+export function formatBuildLine(
+  written: readonly string[],
+  removed: readonly string[] = [],
+): string {
   const list = written.length === 0 ? "" : `: ${written.join(", ")}`;
-  return `defold-typescript build: wrote ${written.length} files${list}\n`;
+  const wrote = `defold-typescript build: wrote ${written.length} files${list}\n`;
+  if (removed.length === 0) {
+    return wrote;
+  }
+  return `${wrote}defold-typescript build: removed ${removed.length} unused runtime files: ${removed.join(", ")}\n`;
 }
 
 export function isFileIncluded(rel: string, include: readonly string[]): boolean {
@@ -269,6 +285,15 @@ export function builtinRuntimeRels(config: BuildConfig): string[] {
   ];
 }
 
+/** The runtime files a build produced: each artifact its requires were respelled to. */
+export function producedRuntimeRels(rels: RuntimeArtifactRels): string[] {
+  return [
+    ...(rels.lualibRel !== undefined ? [rels.lualibRel] : []),
+    ...(rels.timersRel !== undefined ? [rels.timersRel] : []),
+    ...Object.values(rels.libraryRels ?? {}),
+  ];
+}
+
 export function outputRelsForSource(rel: string, config: BuildConfig): string[] {
   const outputs = [
     computeOutputRel(rel, config, "module"),
@@ -289,6 +314,10 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
 // on any line, so its position never matters to detection.
 export const GENERATED_BANNER = "--# defold-typescript:generated";
 
+function carriesGeneratedBanner(content: string): boolean {
+  return content.split("\n").some((line) => line.trim() === GENERATED_BANNER);
+}
+
 export function hasGeneratedBanner(cwd: string, rel: string): boolean {
   let content: string;
   try {
@@ -296,7 +325,97 @@ export function hasGeneratedBanner(cwd: string, rel: string): boolean {
   } catch {
     return false;
   }
-  return content.split("\n").some((line) => line.trim() === GENERATED_BANNER);
+  return carriesGeneratedBanner(content);
+}
+
+// Remove the folder `rel` once nothing is left in it.
+function removeFolderIfEmpty(cwd: string, rel: string): void {
+  const abs = path.join(cwd, rel);
+  let entries: string[];
+  try {
+    // Only a real folder: the build never makes a link there, so a link is
+    // someone else's and stays.
+    if (!lstatSync(abs).isDirectory()) {
+      return;
+    }
+    entries = readdirSync(abs);
+  } catch {
+    // No folder: nothing to remove.
+    return;
+  }
+  if (entries.length === 0) {
+    rmdirSync(assertContained(cwd, rel));
+  }
+}
+
+const HAND_WRITTEN_LUA_RE = /\.(lua|script|gui_script|render_script|editor_script)$/;
+
+// Which of `requireNames` a Lua or script file the editor loads names in quotes.
+// A file carrying the banner is the build's own and is left out. A plain text
+// match rather than a require scan, because hand-written Lua often writes
+// `require "x"`; a name matched anywhere, even in a comment, only keeps a file.
+function requireNamesInHandWrittenLua(cwd: string, requireNames: readonly string[]): Set<string> {
+  const defignoreLines = readDefignoreLines(cwd);
+  const found = new Set<string>();
+  const visit = (rel: string): void => {
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(rel === "" ? cwd : path.join(cwd, rel), { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const child = rel === "" ? entry.name : `${rel}/${entry.name}`;
+      if (isNonResourcePath(child, defignoreLines)) continue;
+      if (entry.isDirectory()) {
+        visit(child);
+        continue;
+      }
+      if (!entry.isFile() || !HAND_WRITTEN_LUA_RE.test(entry.name)) continue;
+      const text = readTextFile(path.join(cwd, child));
+      if (text === undefined || carriesGeneratedBanner(text)) continue;
+      for (const name of requireNames) {
+        if (text.includes(`"${name}"`) || text.includes(`'${name}'`)) {
+          found.add(name);
+        }
+      }
+    }
+  };
+  visit("");
+  return found;
+}
+
+/**
+ * Remove each runtime file a build with no failures did not produce, with its
+ * map, and each library folder that leaves empty. A file stays when it lacks
+ * the generated banner, or when a hand-written Lua or script file in the
+ * project requires it by name. Returns the removed files, sorted.
+ */
+export function pruneUnusedRuntimeOutputs(
+  cwd: string,
+  config: BuildConfig,
+  produced: readonly string[],
+): string[] {
+  const live = new Set(produced);
+  const candidates = builtinRuntimeRels(config).filter(
+    (rel) => !live.has(rel) && hasGeneratedBanner(cwd, rel),
+  );
+  if (candidates.length === 0) {
+    return [];
+  }
+  const required = requireNamesInHandWrittenLua(cwd, candidates.map(requirePathForRel));
+  const removed = candidates.filter((rel) => !required.has(requirePathForRel(rel)));
+  for (const rel of removed) {
+    removeContained(cwd, rel);
+    removeContained(cwd, `${rel}.map`);
+  }
+  for (const library of BUNDLED_LIBRARIES) {
+    const folderRel = runtimeRel(config, library.id);
+    if (removed.some((rel) => rel.startsWith(`${folderRel}/`))) {
+      removeFolderIfEmpty(cwd, folderRel);
+    }
+  }
+  return removed.sort();
 }
 
 // The output-root paths earlier releases wrote the build's own Lua to, each
@@ -335,23 +454,7 @@ export function pruneLegacyRuntimeOutputs(
     removeContained(cwd, `${rel}.map`);
   }
   const { outDir } = config;
-  const hsmRel = path.posix.join(outDir ?? "", HSM_LIBRARY.requireRoot);
-  const hsmAbs = path.join(cwd, hsmRel);
-  let entries: string[];
-  try {
-    // Only a real folder: earlier builds never made a link there, so a link is
-    // someone else's and stays.
-    if (!lstatSync(hsmAbs).isDirectory()) {
-      return;
-    }
-    entries = readdirSync(hsmAbs);
-  } catch {
-    // No old hsm folder: nothing to remove.
-    return;
-  }
-  if (entries.length === 0) {
-    rmdirSync(assertContained(cwd, hsmRel));
-  }
+  removeFolderIfEmpty(cwd, path.posix.join(outDir ?? "", HSM_LIBRARY.requireRoot));
 }
 
 // Delete every output a source could have produced except the ones it currently

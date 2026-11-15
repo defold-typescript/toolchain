@@ -22,8 +22,10 @@ import {
   libraryModuleRels,
   lualibBundleRel,
   outputRelsForSource,
+  producedRuntimeRels,
   pruneAlternativeOutputs,
   pruneLegacyRuntimeOutputs,
+  pruneUnusedRuntimeOutputs,
   readBuildConfig,
   retargetLibrarySourceMap,
   retargetSourceRoot,
@@ -105,6 +107,8 @@ export interface BuildResult {
   readonly unreachableAddresses: UnreachableAddressEntry[];
   /** The foreign-world addresses `warnings` also names in prose. */
   readonly crossWorldAddresses: CrossWorldAddressEntry[];
+  /** The runtime files this build deleted, sorted; only `buildAll` deletes any. */
+  readonly removed: string[];
 }
 
 export interface BuildSession {
@@ -211,7 +215,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     result: TranspileProjectResult,
     keys: readonly string[],
     pruneAlternatives = false,
-  ): BuildResult {
+  ): { readonly written: string[]; readonly runtimeRels: RuntimeArtifactRels } {
     const failures = collectFailures(result.diagnostics);
     // Every held source, not only `keys`: a source left inside `outDir` fails
     // each rebuild until it moves.
@@ -400,19 +404,20 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     written.sort();
     throwIfFailures(failures, written);
-    return {
-      written,
-      warnings: [],
-      unreachableAddresses: [],
-      crossWorldAddresses: [],
-    };
+    return { written, runtimeRels };
   }
 
   function buildAll(): BuildResult {
     const sources = discoverSources(cwd, config.include);
     throwOnLinkedAlongsideSources(cwd, sources, config);
     if (sources.length === 0) {
-      return { written: [], warnings: [], unreachableAddresses: [], crossWorldAddresses: [] };
+      return {
+        written: [],
+        warnings: [],
+        unreachableAddresses: [],
+        crossWorldAddresses: [],
+        removed: [],
+      };
     }
 
     const files: Record<string, string> = {};
@@ -431,6 +436,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     const built = writeOutputs(result, sources, true);
     pruneLegacyRuntimeOutputs(cwd, config, sources);
+    // Here and not in `writeOutputs`, which a rebuild also runs: a rebuild writes
+    // only the changed sources, so an unchanged source's output on disk may be
+    // older than the program and still require a file this one does not.
+    // `writeOutputs` has already thrown on any failure.
+    const removed = pruneUnusedRuntimeOutputs(cwd, config, producedRuntimeRels(built.runtimeRels));
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
     return {
@@ -443,6 +453,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       ],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
+      removed,
     };
   }
 
@@ -479,6 +490,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       warnings: [...reachability.warnings, ...crossWorld.warnings],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
+      removed: [],
     };
   }
 

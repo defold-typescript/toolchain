@@ -128,6 +128,10 @@ export interface RenderResultInput {
   // findings above it has no suppressed state, so `build` always sends it and
   // an empty array means nothing requires the bundle.
   readonly lualibRequiredBy?: readonly string[];
+  // The runtime files the build deleted because nothing requires them, sorted.
+  // Like `lualibRequiredBy`, `build` always sends it and an empty array means
+  // the build deleted none.
+  readonly removed?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   // Stated outright so a consumer reads "no surface" from a present field
@@ -274,8 +278,12 @@ export function renderResult(input: RenderResultInput): string {
     "lualibRequiredBy" in input
       ? { ...withCrossWorld, lualibRequiredBy: input.lualibRequiredBy }
       : withCrossWorld;
+  const withRuntimeRemoved =
+    "removed" in input ? { ...withLualib, removed: input.removed } : withLualib;
   const withPinMismatch =
-    "pinMismatch" in input ? { ...withLualib, pinMismatch: input.pinMismatch } : withLualib;
+    "pinMismatch" in input
+      ? { ...withRuntimeRemoved, pinMismatch: input.pinMismatch }
+      : withRuntimeRemoved;
   const withUpstream =
     "upstreamRelease" in input
       ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }

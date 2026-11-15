@@ -1442,10 +1442,10 @@ function dispatchCommand(
           materializedDir: string | null,
           findings: Pick<
             RunBuildResult,
-            "unreachableAddresses" | "crossWorldAddresses" | "lualibRequiredBy"
+            "unreachableAddresses" | "crossWorldAddresses" | "lualibRequiredBy" | "removed"
           >,
         ): Promise<number> => {
-          const { unreachableAddresses, crossWorldAddresses, lualibRequiredBy } = findings;
+          const { unreachableAddresses, crossWorldAddresses, lualibRequiredBy, removed } = findings;
           ensureMaterializedReference(cwd, materializedDir);
           // Posted only once every output is on disk: the editor compiles what
           // this run wrote, never the previous run's Lua. `run` builds before it
@@ -1469,6 +1469,7 @@ function dispatchCommand(
                 ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
                 ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
                 lualibRequiredBy,
+                removed,
                 defoldVersion: head.version,
                 defoldVersionSource: targetSource,
                 defoldChannel: head.channel,
@@ -1481,7 +1482,7 @@ function dispatchCommand(
               }),
             );
           } else {
-            io.stdout.write(formatBuildLine(written));
+            io.stdout.write(formatBuildLine(written, removed));
             for (const notice of notices) {
               io.stderr.write(`defold-typescript build: ${notice}\n`);
             }

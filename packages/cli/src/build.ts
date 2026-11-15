@@ -17,8 +17,10 @@ import {
   LUALIB_BUNDLE_LABEL,
   libraryModuleRels,
   lualibBundleRel,
+  producedRuntimeRels,
   pruneAlternativeOutputs,
   pruneLegacyRuntimeOutputs,
+  pruneUnusedRuntimeOutputs,
   readBuildConfig,
   retargetLibrarySourceMap,
   retargetSourceRoot,
@@ -115,6 +117,8 @@ export interface RunBuildResult {
    * this run rewrote it.
    */
   readonly lualibRequiredBy: string[];
+  /** The runtime files this build deleted, sorted, because nothing requires them. */
+  readonly removed: string[];
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
@@ -131,6 +135,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       unreachableAddresses: [],
       crossWorldAddresses: [],
       lualibRequiredBy: [],
+      removed: [],
     };
   }
 
@@ -367,6 +372,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     }
   }
   pruneLegacyRuntimeOutputs(cwd, config, sources);
+  // Only with no failures: a failed source's earlier output stays on disk and
+  // may still require a runtime file this build did not produce.
+  const removed =
+    failures.size === 0
+      ? pruneUnusedRuntimeOutputs(cwd, config, producedRuntimeRels(runtimeRels))
+      : [];
 
   throwIfFailures(failures);
   const program = session.getProgram();
@@ -395,5 +406,6 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     unreachableAddresses: reachability.entries,
     crossWorldAddresses: crossWorld.entries,
     lualibRequiredBy: lualibRequiredBy.sort(),
+    removed,
   };
 }

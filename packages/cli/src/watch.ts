@@ -303,7 +303,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings, unreachableAddresses, crossWorldAddresses } = session.buildAll();
+      const { written, warnings, unreachableAddresses, crossWorldAddresses, removed } =
+        session.buildAll();
       outputCurrent = true;
       if (opts.json) {
         stdout.write(
@@ -316,7 +317,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           }),
         );
       } else {
-        stdout.write(formatBuildLine(written));
+        stdout.write(formatBuildLine(written, removed));
         for (const warning of warnings) {
           writeWarning(`defold-typescript watch: ${warning}`);
         }

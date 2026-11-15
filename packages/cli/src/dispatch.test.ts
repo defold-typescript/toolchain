@@ -707,6 +707,40 @@ describe("dispatch", () => {
     expect(parsed.lualibRequiredBy).toEqual(["src/util.lua"]);
   });
 
+  test("build reports deleted runtime files in --json and in its human output", async () => {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }),
+    );
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    const mainPath = path.join(cwd, "src", "main.ts");
+    const keysSource = "export const ks = Object.keys({ a: 1 });\n";
+    const plainSource = "export const answer = 42;\n";
+    const bundleRel = "lib/defold_typescript/lualib_bundle.lua";
+    const buildJson = async (): Promise<{ removed?: string[] }> => {
+      const { io, out } = captureStreams();
+      expect(await dispatch(["build", "--json", cwd], io)).toBe(0);
+      return JSON.parse(out()) as { removed?: string[] };
+    };
+    const buildHuman = async (): Promise<string> => {
+      const { io, out } = captureStreams();
+      expect(await dispatch(["build", cwd], io)).toBe(0);
+      return out();
+    };
+
+    writeFileSync(mainPath, keysSource);
+    expect((await buildJson()).removed).toEqual([]);
+    writeFileSync(mainPath, plainSource);
+    expect((await buildJson()).removed).toEqual([bundleRel]);
+
+    writeFileSync(mainPath, keysSource);
+    expect(await buildHuman()).not.toContain("removed");
+    writeFileSync(mainPath, plainSource);
+    expect(await buildHuman()).toBe(
+      `defold-typescript build: wrote 1 files: src/main.lua\ndefold-typescript build: removed 1 unused runtime files: ${bundleRel}\n`,
+    );
+  });
+
   test("build --json on failure writes error JSON to stdout, nothing to stderr, returns 1", async () => {
     const { io, out, err } = captureStreams();
     const code = await dispatch(["build", cwd, "--json"], io);

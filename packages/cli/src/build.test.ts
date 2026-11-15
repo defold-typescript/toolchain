@@ -1862,6 +1862,119 @@ describe("runBuild runtime folder", () => {
     expect(failure).toBeInstanceOf(BuildFailureError);
     expect((failure as BuildFailureError).message).toContain("lualib_bundle.ts");
   });
+
+  const BUNDLE_REL = "lib/defold_typescript/lualib_bundle.lua";
+  const KEYS_SOURCE = "export const ks = Object.keys({ a: 1 });\n";
+  const PLAIN_SOURCE = "export const answer = 42;\n";
+
+  test("a clean build removes a runtime file nothing requires", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", KEYS_SOURCE);
+    expect(runBuild({ cwd }).written).toContain(BUNDLE_REL);
+
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(false);
+    expect(result.removed).toEqual([BUNDLE_REL]);
+    expect(result.lualibRequiredBy).toEqual([]);
+    expect(runBuild({ cwd }).removed).toEqual([]);
+  });
+
+  test("keeps the bundle while an unchanged output still requires it", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/a.ts", KEYS_SOURCE);
+    writeFile("src/b.ts", KEYS_SOURCE);
+    runBuild({ cwd });
+
+    writeFile("src/b.ts", PLAIN_SOURCE);
+    const result = runBuild({ cwd });
+
+    // The bundle is unchanged, so this build does not list it as written.
+    expect(result.written).toEqual(["src/b.lua"]);
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(true);
+    expect(result.removed).toEqual([]);
+    expect(result.lualibRequiredBy).toEqual(["src/a.lua"]);
+  });
+
+  test("leaves a runtime file without the generated banner", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    writeFile(BUNDLE_REL, "return {}\n");
+
+    const result = runBuild({ cwd });
+
+    expect(readFileSync(path.join(cwd, BUNDLE_REL), "utf8")).toBe("return {}\n");
+    expect(result.removed).toEqual([]);
+  });
+
+  test.each([
+    {
+      rel: "scripts/helper.lua",
+      text: 'local lualib = require "lib.defold_typescript.lualib_bundle"\n',
+    },
+    {
+      rel: "main/hand.script",
+      text: "local lualib = require('lib.defold_typescript.lualib_bundle')\n",
+    },
+  ])("keeps a runtime file the project's own Lua requires ($rel)", ({ rel, text }) => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", KEYS_SOURCE);
+    runBuild({ cwd });
+    writeFile(rel, text);
+
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(true);
+    expect(result.removed).toEqual([]);
+  });
+
+  test("a failing build removes nothing, and the next clean build does", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", KEYS_SOURCE);
+    runBuild({ cwd });
+
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    writeFile("src/broken.ts", 'export const n: number = "x";\n');
+    expect(() => runBuild({ cwd })).toThrow(BuildFailureError);
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(true);
+
+    rmSync(path.join(cwd, "src/broken.ts"));
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(false);
+    expect(result.removed).toEqual([BUNDLE_REL]);
+  });
+
+  test("removes the timers runtime and an hsm module the program stopped importing", () => {
+    const timersRel = "lib/defold_typescript/timers.lua";
+    const asyncRel = "lib/defold_typescript/hsm/async.lua";
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      [
+        'import { sequence } from "@defold-typescript/types/hsm/async";',
+        'import { setTimeout } from "@defold-typescript/types/timers";',
+        'export const task = sequence<{}, { type: "GO" }>((_ctx, signal) => signal.wait(0.5));',
+        "setTimeout(() => print(1), 250);",
+        "",
+      ].join("\n"),
+    );
+    const first = runBuild({ cwd });
+    expect(first.written).toContain(timersRel);
+    expect(first.written).toContain(asyncRel);
+    expect(existsSync(path.join(cwd, `${asyncRel}.map`))).toBe(true);
+
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    const result = runBuild({ cwd });
+
+    for (const rel of [BUNDLE_REL, timersRel, asyncRel, `${asyncRel}.map`]) {
+      expect({ rel, exists: existsSync(path.join(cwd, rel)) }).toEqual({ rel, exists: false });
+    }
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm"))).toBe(false);
+    expect(result.removed).toEqual([asyncRel, BUNDLE_REL, timersRel]);
+  });
 });
 
 function captureStreams() {
