@@ -1041,15 +1041,24 @@ describe("runInit test config", () => {
     expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
   });
 
-  test("a root exclude that already names src/test gets no second entry", () => {
-    touch("game.project", "[project]\n");
-    touch("tsconfig.json", `${JSON.stringify({ exclude: ["src/test"] })}\n`);
+  test.each(["src/test", "./src/test", "src/test/", "./src/test/", "src\\test"])(
+    "a root exclude naming the test folder as %s gets no second entry",
+    (spelling) => {
+      touch("game.project", "[project]\n");
+      touch(
+        "tsconfig.json",
+        `${JSON.stringify({ exclude: ["game/wip", "src/test/fixtures", spelling] })}\n`,
+      );
 
-    runInit({ cwd, force: true });
+      runInit({ cwd, force: true });
 
-    expect(readRootExclude()).toEqual(["src/test"]);
-    expect(JSON.parse(readCwd(TEST_TSCONFIG)).exclude).toEqual([]);
-  });
+      expect(readRootExclude()).toEqual(["game/wip", "src/test/fixtures", spelling]);
+      expect(JSON.parse(readCwd(TEST_TSCONFIG)).exclude).toEqual([
+        "../../game/wip",
+        "../../src/test/fixtures",
+      ]);
+    },
+  );
 
   test("init --force never overwrites the test pair and adds it when missing", () => {
     touch("game.project", "[project]\n");
