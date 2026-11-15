@@ -111,8 +111,8 @@ describe("runInit (add-TS mode)", () => {
         "mise.toml",
         "package.json",
         "src/main.ts",
-        "test/env.d.ts",
-        "test/tsconfig.json",
+        "src/test/env.d.ts",
+        "src/test/tsconfig.json",
         "tsconfig.json",
       ].sort(),
     );
@@ -159,8 +159,8 @@ describe("runInit (add-TS mode)", () => {
         "mise.toml",
         "package.json",
         "src/main.ts",
-        "test/env.d.ts",
-        "test/tsconfig.json",
+        "src/test/env.d.ts",
+        "src/test/tsconfig.json",
         "tsconfig.json",
       ].sort(),
     );
@@ -1005,113 +1005,86 @@ describe("runInit (agent contract)", () => {
 });
 
 describe("runInit test config", () => {
-  const TEST_TSCONFIG = path.join("test", "tsconfig.json");
-  const TEST_ENV = path.join("test", "env.d.ts");
+  const TEST_TSCONFIG = path.join("src", "test", "tsconfig.json");
+  const TEST_ENV = path.join("src", "test", "env.d.ts");
 
   function readCwd(rel: string): string {
     return readFileSync(path.join(cwd, rel), "utf8");
   }
 
-  test("an existing project's test include rebases its own include", () => {
+  function readRootExclude(): unknown {
+    return (JSON.parse(readCwd("tsconfig.json")) as { exclude?: unknown }).exclude;
+  }
+
+  function setRootExclude(exclude: readonly string[]): void {
+    const config = JSON.parse(readCwd("tsconfig.json")) as Record<string, unknown>;
+    config.exclude = exclude;
+    writeFileSync(path.join(cwd, "tsconfig.json"), `${JSON.stringify(config, null, 2)}\n`);
+  }
+
+  test("an existing project's test config rebases its include and exclude", () => {
     touch("game.project", "[project]\n");
-    touch("tsconfig.json", `${JSON.stringify({ include: ["game/**/*.ts"] })}\n`);
+    touch(
+      "tsconfig.json",
+      `${JSON.stringify({ include: ["game/**/*.ts"], exclude: ["game/wip"] })}\n`,
+    );
 
     runInit({ cwd, force: true });
 
     expect(JSON.parse(readCwd(TEST_TSCONFIG))).toEqual({
-      extends: "../tsconfig.json",
-      compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true },
-      include: ["**/*.ts", "../game/**/*.ts", "../.defold-types/scene-addresses.d.ts"],
+      extends: "../../tsconfig.json",
+      compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true, plugins: [] },
+      include: ["**/*.ts", "../../game/**/*.ts", "../../.defold-types/scene-addresses.d.ts"],
+      exclude: ["../../game/wip"],
     });
+    expect(readRootExclude()).toEqual(["game/wip", "src/test"]);
     expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
+  });
+
+  test("a root exclude that already names src/test gets no second entry", () => {
+    touch("game.project", "[project]\n");
+    touch("tsconfig.json", `${JSON.stringify({ exclude: ["src/test"] })}\n`);
+
+    runInit({ cwd, force: true });
+
+    expect(readRootExclude()).toEqual(["src/test"]);
+    expect(JSON.parse(readCwd(TEST_TSCONFIG)).exclude).toEqual([]);
   });
 
   test("init --force never overwrites the test pair and adds it when missing", () => {
     touch("game.project", "[project]\n");
     runInit({ cwd });
-    const customConfig = '{ "extends": "../tsconfig.json", "include": ["custom/**/*.ts"] }\n';
+    const customConfig = '{ "extends": "../../tsconfig.json", "include": ["custom/**/*.ts"] }\n';
     const customEnv = "// custom test environment\n";
     writeFileSync(path.join(cwd, TEST_TSCONFIG), customConfig);
     writeFileSync(path.join(cwd, TEST_ENV), customEnv);
+    setRootExclude(["other"]);
 
     const result = runInit({ cwd, force: true });
 
     expect(readCwd(TEST_TSCONFIG)).toBe(customConfig);
     expect(readCwd(TEST_ENV)).toBe(customEnv);
-    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
+    expect(readRootExclude()).toEqual(["other"]);
+    for (const target of ["src/test/tsconfig.json", "src/test/env.d.ts"]) {
       expect(result.written).not.toContain(target);
-      expect(result.operations.find((op) => op.target === target)?.status).toBe("skipped");
+      const operation = result.operations.find((op) => op.target === target);
+      expect(operation?.status).toBe("skipped");
+      expect(operation?.detail).toBe("a src/test/tsconfig.json already exists");
     }
 
-    rmSync(path.join(cwd, "test"), { recursive: true, force: true });
+    rmSync(path.join(cwd, "src", "test"), { recursive: true, force: true });
     runInit({ cwd, force: true });
 
     expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(true);
     expect(existsSync(path.join(cwd, TEST_ENV))).toBe(true);
-  });
-
-  test("a root include that reaches test/ gets no test pair", () => {
-    touch("game.project", "[project]\n");
-    touch("tsconfig.json", `${JSON.stringify({ include: ["**/*.ts"] })}\n`);
-
-    const result = runInit({ cwd, force: true });
-
-    expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(false);
-    expect(existsSync(path.join(cwd, TEST_ENV))).toBe(false);
-    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
-      const operation = result.operations.find((op) => op.target === target);
-      expect(operation?.status).toBe("skipped");
-      expect(operation?.detail).toContain("**/*.ts");
-    }
+    expect(readRootExclude()).toEqual(["other", "src/test"]);
   });
 
   function absoluteEntry(folder: string): string {
     return `${toPosixSeparators(path.join(cwd, folder))}/**/*.ts`;
   }
 
-  function expectSkippedFor(include: readonly string[], reported: string): void {
-    touch("game.project", "[project]\n");
-    touch("tsconfig.json", `${JSON.stringify({ include })}\n`);
-
-    const result = runInit({ cwd, force: true });
-
-    expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(false);
-    expect(existsSync(path.join(cwd, TEST_ENV))).toBe(false);
-    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
-      const operation = result.operations.find((op) => op.target === target);
-      expect(operation?.status).toBe("skipped");
-      expect(operation?.detail).toContain(`(${reported})`);
-    }
-  }
-
-  test("a folder-only root include reaching test/ gets no test pair", () => {
-    expectSkippedFor(["src/**/*.ts", "test"], "test");
-  });
-
-  test.each([
-    ["absolute", () => absoluteEntry("test")],
-    ["parent-relative", () => `../${path.basename(cwd)}/**/*.ts`],
-    ["current-folder", () => "."],
-  ])("a %s root include reaching test/ gets no test pair", (_kind, entry) => {
-    const reaching = entry();
-    expectSkippedFor([reaching], reaching);
-  });
-
-  test.each(["[games]", "{games,demo}"])(
-    "a parent-relative root include beneath a %s folder gets no test pair",
-    (folder) => {
-      const outer = cwd;
-      cwd = path.join(outer, folder, "demo");
-      mkdirSync(cwd, { recursive: true });
-      try {
-        expectSkippedFor(["../**/*.ts"], "../**/*.ts");
-      } finally {
-        cwd = outer;
-      }
-    },
-  );
-
-  test("safe folder-only and absolute includes still get the test pair", () => {
+  test("an absolute include entry stays absolute in the test config", () => {
     touch("game.project", "[project]\n");
     const absoluteSrc = absoluteEntry("src");
     touch("tsconfig.json", `${JSON.stringify({ include: ["src", absoluteSrc] })}\n`);
@@ -1121,9 +1094,9 @@ describe("runInit test config", () => {
     expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
     expect(JSON.parse(readCwd(TEST_TSCONFIG)).include).toEqual([
       "**/*.ts",
-      "../src",
+      "../../src",
       absoluteSrc,
-      "../.defold-types/scene-addresses.d.ts",
+      "../../.defold-types/scene-addresses.d.ts",
     ]);
   });
 });
@@ -1134,8 +1107,8 @@ describe("runInit (new-project mode)", () => {
     "main/main.collection",
     "input/game.input_binding",
     "src/main.ts",
-    "test/env.d.ts",
-    "test/tsconfig.json",
+    "src/test/env.d.ts",
+    "src/test/tsconfig.json",
     "tsconfig.json",
     "package.json",
     ".gitignore",
@@ -2742,6 +2715,8 @@ describe("runInit (merges an existing tsconfig)", () => {
       include: ["src/**/*.ts"],
       exclude: ["src/main.ts"],
     });
+    mkdirSync(path.join(cwd, "src", "test"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "test", "tsconfig.json"), "{}\n");
 
     runInit({ cwd, force: true });
 
@@ -2757,7 +2732,7 @@ describe("runInit (merges an existing tsconfig)", () => {
 
     runInit({ cwd, force: true });
 
-    expect(readTsconfig().exclude).toEqual(["dist"]);
+    expect(readTsconfig().exclude).toEqual(["dist", "src/test"]);
   });
 
   test("keeps a collection-wired src/main.ts in the program (never excluded)", () => {
@@ -2780,14 +2755,14 @@ describe("runInit (merges an existing tsconfig)", () => {
     expect(exclude).not.toContain("src/main.ts");
   });
 
-  test("fresh directory still writes the managed defaults and no exclude", () => {
+  test("fresh directory still writes the managed defaults and excludes only src/test", () => {
     touch("game.project", "[project]\n");
     runInit({ cwd });
     const tsconfig = readTsconfig();
     expect(tsconfig.compilerOptions.types).toEqual(["@defold-typescript/types"]);
     expect(tsconfig.compilerOptions.plugins).toContainEqual({ name: PLUGIN });
     expect(tsconfig.include).toEqual(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION]);
-    expect(tsconfig.exclude).toBeUndefined();
+    expect(tsconfig.exclude).toEqual(["src/test"]);
   });
 
   test("reports the resolved starter as skipped with a reason for a user-authored project", () => {
@@ -3244,7 +3219,7 @@ describe("runInit (starter sites read the resolved target)", () => {
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       exclude?: string[];
     };
-    expect(tsconfig.exclude).toEqual(["vendor/**"]);
+    expect(tsconfig.exclude).toEqual(["vendor/**", "src/test"]);
   });
 
   test("greenfield detection recognizes a project laid out under another root", () => {

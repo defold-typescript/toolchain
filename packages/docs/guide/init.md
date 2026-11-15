@@ -63,20 +63,23 @@ above or below the markers always survives. This is the same contract the
 standalone [`init-agents`](./init-agents.md) verb
 writes.
 
-Both modes also write `test/tsconfig.json` and `test/env.d.ts`, for Bun tests that
-import game code, **when `test/tsconfig.json` is absent**; [`upgrade`](./upgrade.md)
-adds them to a project that has none. `test/tsconfig.json` extends the root config
-and names no `types` of its own, so a test sees the same Defold types, `.d.ts`
-declarations and pinned surface as the game. It includes `test/` plus every root
-`include` pattern rebased onto the parent folder, and sets `outDir: null` so a root
-`outDir` does not break it. `test/env.d.ts` adds Bun's types (`bun:test`, `node:*`,
-`Bun`) to that program only, so they never reach the code `build` compiles.
-Type-check the tests with `tsc --noEmit -p test/tsconfig.json`. `init` never
-overwrites either file, so a later change to the root `include` needs the same
-change in `test/tsconfig.json`. When a root `include` entry already reaches
-`test/` (a glob, a bare folder name such as `test` or `.`, or an absolute path),
-`init` writes neither file and reports the entry, since Bun's types would then reach
-the game program.
+Both modes also write `src/test/tsconfig.json` and `src/test/env.d.ts`, for tests and
+helpers that need Bun's runtime, **when `src/test/tsconfig.json` is absent**;
+[`upgrade`](./upgrade.md) adds them to a project that has none. Writing them also adds
+`src/test` to the root `exclude`, so the game program never takes in the folder, and
+[`build`](./build.md#what-it-does) skips it. `src/test/tsconfig.json` extends the root
+config and names no `types` of its own, so a test sees the same Defold types, `.d.ts`
+declarations and pinned surface as the game. It includes `src/test/` plus every root
+`include` pattern rebased onto the project folder, and its `exclude` restates the
+root's other entries the same way, since inheriting the root's `exclude` would leave
+out its own folder. It sets `outDir: null` so a root `outDir` does not break it, and
+`plugins: []` so the editor plugin reports no build diagnostics on code `build` never
+compiles. `src/test/env.d.ts` adds Bun's types (`bun:test`, `node:*`, `Bun`) to that
+program only, so they never reach the code `build` compiles. Type-check the tests
+with `tsc --noEmit -p src/test/tsconfig.json`. `init` never overwrites either file, and
+leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
+change to the root `include` or `exclude` needs the same change in
+`src/test/tsconfig.json`.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
