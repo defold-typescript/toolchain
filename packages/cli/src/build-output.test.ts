@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   utimesSync,
@@ -18,6 +19,7 @@ import {
   type TranspileDiagnostic,
   transpileProject,
 } from "@defold-typescript/transpiler";
+import { runBuild } from "./build";
 import {
   BuildFailureError,
   collectFailures,
@@ -40,6 +42,9 @@ import {
   writeScriptFile,
 } from "./build-output";
 import { INCLUDE_PARITY_FILES, INCLUDE_PARITY_PATTERNS } from "./include-parity.test-support";
+
+// biome-ignore lint/suspicious/noTemplateCurlyInString: TypeScript's own config placeholder, written literally
+const CONFIG_DIR = "${configDir}";
 
 describe("readBuildConfig runtime-dir", () => {
   let cwd: string;
@@ -128,9 +133,73 @@ describe("readBuildConfig runtime-dir", () => {
   });
 });
 
+describe("readBuildConfig reads the config as TypeScript does", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = realpathSync(mkdtempSync(path.join(os.tmpdir(), "defold-typescript-effective-config-")));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  function write(root: string, rel: string, contents: string): void {
+    const full = path.join(root, rel);
+    mkdirSync(path.dirname(full), { recursive: true });
+    writeFileSync(full, contents);
+  }
+
+  // The editor plugin's host reader gets the same two files in
+  // `packages/tstl-plugin/src/build-config.test.ts` and must agree.
+  test("a commented root that extends a base gives the base's outDir and include", () => {
+    write(cwd, "tsconfig.json", '// root\n{ "extends": "./configs/base.json", }\n');
+    write(
+      cwd,
+      "configs/base.json",
+      JSON.stringify({ compilerOptions: { outDir: "../out/lua" }, include: ["../game/**/*.ts"] }),
+    );
+
+    expect(readBuildConfig(cwd)).toEqual({ outDir: "out/lua", include: ["game/**/*.ts"] });
+  });
+
+  test(`a ${CONFIG_DIR} include discovers the same sources and names outputs out/main.ts.script, not out/src/main.ts.script`, () => {
+    const outputs: string[][] = [];
+    for (const [name, include] of [
+      ["config-dir", `${CONFIG_DIR}/src/**/*.ts`],
+      ["control", "src/**/*.ts"],
+    ] as const) {
+      const root = path.join(cwd, name);
+      write(
+        root,
+        "tsconfig.json",
+        JSON.stringify({ compilerOptions: { outDir: "out" }, include: [include] }),
+      );
+      write(
+        root,
+        "src/main.ts",
+        'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n',
+      );
+      runBuild({ cwd: root });
+      outputs.push(
+        globSync("out/**/*.ts.script", { cwd: root })
+          .map((rel) => toPosix(rel))
+          .sort(),
+      );
+    }
+
+    expect(outputs[0]).toEqual(["out/main.ts.script"]);
+    expect(outputs[0]).toEqual(outputs[1] as string[]);
+  });
+});
+
 describe("a backslash in outDir", () => {
   test("separates folders in every output and runtime path", () => {
-    const config = parseBuildConfig(JSON.stringify({ compilerOptions: { outDir: "out\\lua" } }));
+    const config = parseBuildConfig("/project/tsconfig.json", (file) =>
+      file === "/project/tsconfig.json"
+        ? JSON.stringify({ compilerOptions: { outDir: "out\\lua" } })
+        : undefined,
+    );
 
     expect(computeOutputRel("src/main.ts", config, "module")).toBe("out/lua/main.lua");
     expect(lualibBundleRel(config)).toBe("out/lua/lib/defold_typescript/lualib_bundle.lua");

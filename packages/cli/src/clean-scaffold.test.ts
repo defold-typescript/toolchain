@@ -438,6 +438,58 @@ describe("scaffolded project is clean out of the box", () => {
   );
 
   test(
+    "a reconciled hand-made test config type-checks a Bun test importing JSON and game code",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-reconcile-"));
+      try {
+        runInit({ cwd });
+        // The hand-made shape a project wrote before the scaffold had a test
+        // config: no `resolveJsonModule`, no `plugins: []`.
+        writeFileSync(
+          path.join(cwd, TEST_TSCONFIG),
+          `${JSON.stringify(
+            {
+              extends: "../../tsconfig.json",
+              compilerOptions: { noEmit: true, outDir: null },
+              include: ["**/*.ts", "../**/*.ts", "../../.defold-types/scene-addresses.d.ts"],
+              exclude: [],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        runInit({ cwd, force: true });
+        linkTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+        writeBunTestFixtures(cwd);
+        writeFileSync(path.join(cwd, "src", "test", "waves.json"), '{ "max": 150 }\n');
+        writeFileSync(
+          path.join(cwd, "src", "test", "waves.test.ts"),
+          [
+            'import { expect, test } from "bun:test";',
+            'import { clamp } from "../score";',
+            'import waves from "./waves.json";',
+            "",
+            'test("the largest wave is capped", () => {',
+            "  expect(clamp(waves.max)).toBe(100);",
+            "});",
+            "",
+          ].join("\n"),
+        );
+
+        const tests = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
+        if (tests.code !== 0) {
+          throw new Error(`tsc reported errors on the reconciled test config:\n${tests.output}`);
+        }
+        expect(tests.code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
     "upgrading a v0.65.0 project gives both test layouts a Bun package they resolve",
     () => {
       const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-upgrade-"));

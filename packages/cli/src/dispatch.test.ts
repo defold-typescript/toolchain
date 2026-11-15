@@ -309,7 +309,7 @@ describe("dispatch", () => {
 
   test("init --force overwrites a conflicting tsconfig.json and returns 0", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
-    writeFileSync(path.join(cwd, "tsconfig.json"), "{}\n");
+    writeFileSync(path.join(cwd, "tsconfig.json"), '{ "exclude": ["src/test"] }\n');
     const { io, out, err } = captureStreams();
 
     const code = dispatch(["init", cwd, "--force"], io);

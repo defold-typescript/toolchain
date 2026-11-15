@@ -1,12 +1,21 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  type Dirent,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   type BuildConfig,
   computeOutputRel,
   DEFAULT_INCLUDE,
+  isBunTestSource,
   parseBuildConfig,
   projectRelativeBase,
+  readEffectiveTsconfig,
   SCAFFOLDED_DEFIGNORE_LINES,
 } from "@defold-typescript/transpiler";
 import type { RenderScriptHooks, ScriptHookName } from "@defold-typescript/types";
@@ -15,27 +24,38 @@ import {
   isFileIncluded,
   RUNTIME_DEFAULT_DIR,
   readRuntimeDir,
+  readTextFile,
 } from "./build-output";
 
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
-import { isAbsolutePath, toPosixSeparators } from "./materialize";
+import { detectInstalledBun } from "./installed-bun";
+import { editJsoncFile, readJsoncObject } from "./jsonc-file";
 import { mergeMiseToml } from "./mise-scaffold";
 import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { compareSemver } from "./semver";
+import {
+  fileWarning,
+  reconcileTestTsconfig,
+  TEST_TSCONFIG_REL,
+  TESTING_GUIDE,
+  writeTestTsconfig,
+} from "./test-config";
 import { BUN_TYPES_PACKAGE, namesTestFolder, TEST_FOLDER_REL } from "./test-folder";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
-import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
+import { isJsonObject, readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
 
 export interface RunInitOptions {
   readonly cwd: string;
   readonly force?: boolean;
   readonly template?: string;
+  /** The installed Bun's version, `null` for none; detected when left out. */
+  readonly installedBun?: string | null | undefined;
 }
 
 export interface InitOperation {
@@ -234,7 +254,7 @@ function readBuildConfig(cwd: string): BuildConfig {
   if (!existsSync(tsconfigPath)) {
     return { outDir: undefined, include: [...DEFAULT_INCLUDE] };
   }
-  return parseBuildConfig(readFileSync(tsconfigPath, "utf8"));
+  return parseBuildConfig(tsconfigPath, readTextFile);
 }
 
 export function biomeIncludesFromInclude(include: readonly string[]): string[] {
@@ -565,7 +585,7 @@ export const TYPESCRIPT_SPEC = "6.0.2";
 // The exact `bun-types` pin a scaffold lists. It moves in lockstep with the
 // repo's own `bun-types` devDependency, which every scaffold `tsc` test runs
 // against; the drift guard in `init.test.ts` fails when the two diverge.
-export const BUN_TYPES_VERSION = "1.4.3";
+export const BUN_TYPES_VERSION = "1.4.4";
 
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
@@ -904,7 +924,7 @@ function writeVscodeExtensions(cwd: string, written: string[]): void {
       VSCODE_EXTENSIONS_CONTENT.unwantedRecommendations,
     );
     if (JSON.stringify(existing) !== before) {
-      writeJson(filePath, existing);
+      editJsoncFile(filePath, existing);
     }
     return;
   }
@@ -973,7 +993,7 @@ function writeVscodeSettings(
     } else {
       existing[LUA_IGNORE_DIR_KEY] = merged;
     }
-    writeJson(filePath, existing);
+    editJsoncFile(filePath, existing);
     return;
   }
   mkdirSync(dir, { recursive: true });
@@ -1010,7 +1030,7 @@ function writeVscodeSnippets(cwd: string, written: string[], force = false): voi
     }
     const changed = refreshManagedSnippets(existing, force);
     if (changed) {
-      writeJson(filePath, existing);
+      editJsoncFile(filePath, existing);
     }
     // Non-force merges backfill missing keys silently (as before); a forced
     // refresh that actually changed the file is surfaced in `written`.
@@ -1032,7 +1052,7 @@ function writeVscodeTasks(cwd: string, written: string[]): void {
     if (existing === null) {
       return;
     }
-    writeJson(filePath, mergeVscodeTasks(existing));
+    editJsoncFile(filePath, mergeVscodeTasks(existing));
     return;
   }
   mkdirSync(dir, { recursive: true });
@@ -1087,71 +1107,138 @@ function anyFileWithExt(root: string, ext: string, exceptRel = ""): boolean {
 // Only the starter this configuration resolves is stripped — a retired entry
 // from a root the project has since moved off is the user's.
 function pruneMainTsExclude(
-  existing: unknown,
+  existing: string[] | undefined,
   starterRel: string | undefined,
 ): string[] | undefined {
-  if (!Array.isArray(existing)) return undefined;
-  const remaining = existing.filter((entry) => entry !== starterRel);
-  return remaining.length > 0 ? (remaining as string[]) : undefined;
+  return existing?.filter((entry) => entry !== starterRel);
 }
 
-const TEST_TSCONFIG_REL = `${TEST_FOLDER_REL}/tsconfig.json`;
-const TEST_ENV_REL = `${TEST_FOLDER_REL}/env.d.ts`;
-const TEST_ENV_CONTENT = `/// <reference types="${BUN_TYPES_PACKAGE}" />\n`;
-const TEST_FOLDER_TO_ROOT = "../".repeat(TEST_FOLDER_REL.split("/").length);
+const TSTL_PLUGIN = "@defold-typescript/tstl-plugin";
 
-function rebaseOntoProjectRoot(pattern: string): string {
-  const normalized = toPosixSeparators(pattern).replace(/^(\.\/)+/, "");
-  return isAbsolutePath(normalized) ? normalized : `${TEST_FOLDER_TO_ROOT}${normalized}`;
+function stringEntries(value: unknown): string[] | undefined {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : undefined;
 }
 
-// The test config extends the root rather than naming its own `types`, so it
-// follows whatever surface `resolve` pins there, and Bun's types come in only
-// through `env.d.ts`, which the root `exclude` keeps out of the game program.
-// It also leaves out the editor plugin, whose build diagnostics mean nothing
-// for files `build` never compiles. Its own `exclude` restates the root's other
-// entries, since inheriting the root's would exclude the config's own folder;
-// the dropped entry is that folder in any spelling (`./src/test`, `src/test/`).
-function writeTestTsconfig(
-  cwd: string,
-  include: readonly string[],
-  rootExclude: readonly string[],
-  written: string[],
-  operations: InitOperation[],
-): void {
-  const configPath = path.join(cwd, ...TEST_TSCONFIG_REL.split("/"));
-  if (existsSync(configPath)) {
-    for (const target of [TEST_TSCONFIG_REL, TEST_ENV_REL]) {
-      operations.push({
-        target,
-        status: "skipped",
-        detail: `a ${TEST_TSCONFIG_REL} already exists`,
-      });
+// A managed setting is written only where TypeScript, reading the whole
+// `extends` chain, finds none, and a managed list entry only where the list in
+// force lacks it. A list the root does not set itself is restated from the one
+// it inherits, since setting it replaces that one. Every other key, comment and
+// line of the root stays as it is.
+function mergeRootTsconfig(tsconfigPath: string, starterRel: string | undefined): boolean {
+  const own = readJsoncObject(tsconfigPath);
+  const effective = readEffectiveTsconfig(tsconfigPath, readTextFile);
+
+  const ownCompiler: Record<string, unknown> = isJsonObject(own.compilerOptions)
+    ? { ...own.compilerOptions }
+    : {};
+  const defaults: Record<string, unknown> = {
+    ...TSCONFIG_COMPILER_OPTIONS,
+    types: [DEFAULT_TYPES_ENTRYPOINT],
+  };
+  for (const [key, value] of Object.entries(defaults)) {
+    if (effective.options[key] === undefined) {
+      ownCompiler[key] = value;
     }
-    return;
   }
-  mkdirSync(path.dirname(configPath), { recursive: true });
-  writeJson(configPath, {
-    extends: `${TEST_FOLDER_TO_ROOT}tsconfig.json`,
-    compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true, plugins: [] },
-    include: ["**/*.ts", ...include.map(rebaseOntoProjectRoot)],
-    exclude: rootExclude.filter((entry) => !namesTestFolder(entry)).map(rebaseOntoProjectRoot),
-  });
-  written.push(TEST_TSCONFIG_REL);
-  operations.push({ target: TEST_TSCONFIG_REL, status: "written" });
+  const effectivePlugins = Array.isArray(effective.options.plugins)
+    ? (effective.options.plugins as Array<{ name?: string }>)
+    : [];
+  if (!effectivePlugins.some((entry) => entry?.name === TSTL_PLUGIN)) {
+    const ownPlugins = Array.isArray(ownCompiler.plugins) ? ownCompiler.plugins : effectivePlugins;
+    ownCompiler.plugins = [...ownPlugins, { name: TSTL_PLUGIN }];
+  }
+  if (isJsonObject(own.compilerOptions) || Object.keys(ownCompiler).length > 0) {
+    own.compilerOptions = ownCompiler;
+  }
 
-  const envPath = path.join(cwd, ...TEST_ENV_REL.split("/"));
-  if (existsSync(envPath)) {
-    operations.push({
-      target: TEST_ENV_REL,
-      status: "skipped",
-      detail: `a ${TEST_ENV_REL} already exists`,
-    });
-    return;
+  // The exact declaration path, never a glob: `.defold-types` is the project's
+  // typeRoots, so a pattern there would sweep every other materialized surface
+  // into the transpile source set. An `include` entry matching nothing is
+  // silently ignored, so naming it before `scene-types` first runs is safe.
+  if (!(effective.includeRelative ?? DEFAULT_INCLUDE).includes(SCENE_ADDRESSES_DECLARATION)) {
+    own.include = [
+      ...(stringEntries(own.include) ?? effective.include ?? DEFAULT_INCLUDE),
+      SCENE_ADDRESSES_DECLARATION,
+    ];
   }
-  writeFileSync(envPath, TEST_ENV_CONTENT);
-  written.push(TEST_ENV_REL);
-  operations.push({ target: TEST_ENV_REL, status: "written" });
+
+  const kept = pruneMainTsExclude(stringEntries(own.exclude), starterRel);
+  const addsTestFolder = !(effective.excludeRelative ?? []).some(namesTestFolder);
+  if (addsTestFolder) {
+    own.exclude = [...(kept ?? effective.exclude ?? []), TEST_FOLDER_REL];
+  } else if (kept !== undefined) {
+    own.exclude = kept;
+  }
+
+  editJsoncFile(tsconfigPath, own);
+  return addsTestFolder;
+}
+
+function projectBunTypesPin(cwd: string): string | undefined {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as PackageJson;
+    return pkg.devDependencies?.[BUN_TYPES_PACKAGE];
+  } catch {
+    return undefined;
+  }
+}
+
+const EXACT_VERSION_RE = /^\d+\.\d+\.\d+$/;
+
+// Two independent checks joined into one warning: a Bun older than the CLI's
+// `bun-types` pin lacks APIs the scaffold's tests are typed with, and a project
+// pinned to another Bun's `bun-types` types its tests against that Bun. A newer
+// Bun is never told to update, and a range or `latest` pin is not compared.
+function bunWarnings(cwd: string, installedBun: string | null): string[] {
+  if (installedBun === null) {
+    return [];
+  }
+  const notes: string[] = [];
+  if (compareSemver(installedBun, BUN_TYPES_VERSION) < 0) {
+    notes.push(
+      `it is older than the ${BUN_TYPES_VERSION} this CLI's bun-types is pinned to, and \`bun upgrade\` updates it`,
+    );
+  }
+  const pin = projectBunTypesPin(cwd);
+  if (pin !== undefined && EXACT_VERSION_RE.test(pin) && pin !== installedBun) {
+    notes.push(
+      `package.json pins bun-types ${pin}, so tests are type-checked against another Bun than the one that runs them`,
+    );
+  }
+  return notes.length === 0
+    ? []
+    : [`Bun ${installedBun} is installed: ${notes.join("; ")}; see ${TESTING_GUIDE}`];
+}
+
+const OLD_TEST_FOLDERS = ["test", "tests"] as const;
+
+function holdsBunTests(dir: string): boolean {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+  return entries.some((entry) =>
+    entry.isDirectory()
+      ? entry.name !== "node_modules" && holdsBunTests(path.join(dir, entry.name))
+      : entry.isFile() && isBunTestSource(entry.name),
+  );
+}
+
+// `bun test` still runs a test under `test/` or `tests/`, but nothing types it:
+// the root program leaves Bun out and the test config covers `src/test/` only.
+function oldTestFolderWarnings(cwd: string): string[] {
+  const holding = OLD_TEST_FOLDERS.filter((folder) => holdsBunTests(path.join(cwd, folder)));
+  if (holding.length === 0) {
+    return [];
+  }
+  const folders = holding.map((folder) => `${folder}/`).join(" and ");
+  return [
+    `${folders}: ${holding.length === 1 ? "holds" : "hold"} Bun tests that no tsconfig.json type-checks; a test goes next to the module it tests, or in ${TEST_FOLDER_REL}/ when it needs Bun's runtime; see ${TESTING_GUIDE}`,
+  ];
 }
 
 interface TsSurfaceOptions {
@@ -1164,6 +1251,7 @@ interface TsSurfaceOptions {
   readonly force?: boolean;
   readonly mainTs?: string;
   readonly writeMainTs?: boolean;
+  readonly installedBun?: string | null | undefined;
 }
 
 function writeTsSurface(opts: TsSurfaceOptions): void {
@@ -1177,6 +1265,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     force = false,
     mainTs = MAIN_TS_CONTENT,
     writeMainTs = true,
+    installedBun = detectInstalledBun(),
   } = opts;
   if (starter === undefined) {
     const searched = config.include.join(", ");
@@ -1203,60 +1292,49 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
 
   // init: tsconfig-merge-preserves-config
   const tsconfigPath = path.join(cwd, "tsconfig.json");
-  const existing = existsSync(tsconfigPath)
-    ? (JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
-        compilerOptions?: Record<string, unknown>;
-        include?: unknown;
-        exclude?: unknown;
-      })
-    : undefined;
-  const tstlPlugin = { name: "@defold-typescript/tstl-plugin" };
-  const existingCompiler = existing?.compilerOptions ?? {};
-  const compilerOptions: Record<string, unknown> = {
-    ...TSCONFIG_COMPILER_OPTIONS,
-    types: [DEFAULT_TYPES_ENTRYPOINT],
-    plugins: [tstlPlugin],
-    ...existingCompiler,
-  };
-  const existingPlugins = Array.isArray(existingCompiler.plugins)
-    ? (existingCompiler.plugins as Array<{ name?: string }>)
-    : [];
-  const plugins = [...existingPlugins];
-  if (!plugins.some((entry) => entry?.name === tstlPlugin.name)) {
-    plugins.push(tstlPlugin);
+  const existed = existsSync(tsconfigPath);
+  if (existed) {
+    if (mergeRootTsconfig(tsconfigPath, starter?.sourceRel)) {
+      warnings.push(
+        fileWarning("tsconfig.json", [
+          `added ${TEST_FOLDER_REL} to exclude, so the game program leaves the Bun tests out`,
+        ]),
+      );
+    }
+  } else {
+    writeJson(tsconfigPath, {
+      compilerOptions: {
+        ...TSCONFIG_COMPILER_OPTIONS,
+        types: [DEFAULT_TYPES_ENTRYPOINT],
+        plugins: [{ name: TSTL_PLUGIN }],
+      },
+      include: [...DEFAULT_INCLUDE, SCENE_ADDRESSES_DECLARATION],
+      exclude: [TEST_FOLDER_REL],
+    });
   }
-  compilerOptions.plugins = plugins;
-
-  const existingInclude = Array.isArray(existing?.include)
-    ? (existing.include as unknown[]).filter((entry): entry is string => typeof entry === "string")
-    : [...DEFAULT_INCLUDE];
-  // The exact declaration path, never a glob: `.defold-types` is the project's
-  // typeRoots, so a pattern there would sweep every other materialized surface
-  // into the transpile source set. An `include` entry matching nothing is
-  // silently ignored, so naming it before `scene-types` first runs is safe.
-  const include = existingInclude.includes(SCENE_ADDRESSES_DECLARATION)
-    ? existingInclude
-    : [...existingInclude, SCENE_ADDRESSES_DECLARATION];
-
-  const tsconfig: Record<string, unknown> = {
-    compilerOptions,
-    include,
-  };
-  const exclude = [...(pruneMainTsExclude(existing?.exclude, starter?.sourceRel) ?? [])];
-  const writesTestPair = !existsSync(path.join(cwd, ...TEST_TSCONFIG_REL.split("/")));
-  if (writesTestPair && !exclude.some(namesTestFolder)) {
-    exclude.push(TEST_FOLDER_REL);
-  }
-  if (exclude.length > 0) {
-    tsconfig.exclude = exclude;
-  }
-  writeJson(tsconfigPath, tsconfig);
   written.push("tsconfig.json");
-  operations.push({
-    target: "tsconfig.json",
-    status: existing === undefined ? "written" : "merged",
-  });
-  writeTestTsconfig(cwd, include, exclude, written, operations);
+  operations.push({ target: "tsconfig.json", status: existed ? "merged" : "written" });
+
+  // Every later reader takes the project's settings as TypeScript reads the
+  // merged file, so a setting inherited through `extends` counts for them too.
+  const merged = readEffectiveTsconfig(tsconfigPath, readTextFile);
+  const built = readBuildConfig(cwd);
+  const include = built.include;
+  const rootExclude = merged.excludeRelative ?? [];
+  if (existsSync(path.join(cwd, ...TEST_TSCONFIG_REL.split("/")))) {
+    const reconciled = reconcileTestTsconfig(cwd, include, rootExclude);
+    written.push(...reconciled.written);
+    warnings.push(...reconciled.warnings);
+    operations.push({
+      target: TEST_TSCONFIG_REL,
+      status: reconciled.written.includes(TEST_TSCONFIG_REL) ? "merged" : "skipped",
+      ...(reconciled.written.includes(TEST_TSCONFIG_REL)
+        ? {}
+        : { detail: `the existing ${TEST_TSCONFIG_REL} needed no change` }),
+    });
+  } else {
+    written.push(...writeTestTsconfig(cwd, include, rootExclude));
+  }
 
   // Decided once, before `package.json` is rewritten below: by the time
   // `writeBiome` runs, the pin would already name the new version and the pair
@@ -1291,6 +1369,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     writeJson(pkgPath, fresh);
   }
   written.push("package.json");
+  warnings.push(...bunWarnings(cwd, installedBun), ...oldTestFolderWarnings(cwd));
 
   writeGitignore(cwd);
   written.push(".gitignore");
@@ -1307,14 +1386,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written, warnings, include);
   writeVscodeSnippets(cwd, written, force);
-  const launchAction = writeVscodeLaunch(
-    cwd,
-    {
-      outDir: typeof compilerOptions.outDir === "string" ? compilerOptions.outDir : undefined,
-      include,
-    },
-    "refresh",
-  );
+  const launchAction = writeVscodeLaunch(cwd, built, "refresh");
   if (launchAction === "refreshed") {
     written.push(".vscode/launch.json");
   }
@@ -1355,6 +1427,7 @@ export function runNewProjectInit(
   cwd: string,
   force = false,
   mainTs: string = MAIN_TS_CONTENT,
+  installedBun?: string | null,
 ): RunInitResult {
   if (!existsSync(cwd)) {
     mkdirSync(cwd, { recursive: true });
@@ -1404,13 +1477,14 @@ export function runNewProjectInit(
     force,
     mainTs,
     writeMainTs: !skipUserAuthored,
+    installedBun,
   });
 
   return withScaffoldOperations(written, operations, warnings);
 }
 
 export function runInit(opts: RunInitOptions): RunInitResult {
-  const { cwd, force = false, template } = opts;
+  const { cwd, force = false, template, installedBun } = opts;
   const resolvedTemplate = resolveTemplate(template);
   const hasGameProject = existsSync(path.join(cwd, "game.project"));
 
@@ -1421,7 +1495,7 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   }
 
   if (!hasGameProject) {
-    return runNewProjectInit(cwd, force, TEMPLATE_MAIN_TS[resolvedTemplate]);
+    return runNewProjectInit(cwd, force, TEMPLATE_MAIN_TS[resolvedTemplate], installedBun);
   }
 
   if (!force) {
@@ -1452,6 +1526,16 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   const written: string[] = [];
   const operations: InitOperation[] = [];
   const warnings: string[] = [];
-  writeTsSurface({ cwd, written, operations, warnings, config, starter, force, writeMainTs });
+  writeTsSurface({
+    cwd,
+    written,
+    operations,
+    warnings,
+    config,
+    starter,
+    force,
+    writeMainTs,
+    installedBun,
+  });
   return withScaffoldOperations(written, operations, warnings);
 }

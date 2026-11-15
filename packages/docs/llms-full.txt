@@ -6862,8 +6862,8 @@ standalone [`init-agents`](./init-agents.md) verb
 writes.
 
 Both modes also write `src/test/tsconfig.json` and `src/test/env.d.ts`, for tests and
-helpers that need Bun's runtime, **when `src/test/tsconfig.json` is absent**;
-[`upgrade`](./upgrade.md) adds them to a project that has none. Writing them also adds
+helpers that need Bun's runtime, **when they are absent**;
+[`upgrade`](./upgrade.md) adds them to a project that has none. Both modes also add
 `src/test` to the root `exclude`, unless an entry already names that folder
 (`./src/test` and `src/test/` count), so the game program never takes in the folder,
 and [`build`](./build.md#what-it-does) skips it. `src/test/tsconfig.json` extends the
@@ -6878,11 +6878,15 @@ exact version, which adds Bun's types (`bun:test`, `node:*`, `Bun`) to that prog
 only, so they never reach the code `build` compiles. Type-check the tests with
 `tsc --noEmit -p src/test/tsconfig.json`. A test next to its module instead starts with
 `/// <reference types="bun-types/test" />`, which adds `bun:test` alone, so the root
-`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). `init` never overwrites either file, and
-leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
-change to the root `include` or `exclude` needs the same change in
-`src/test/tsconfig.json`. [Test with Bun](./testing.md) explains each setting and
-where a test goes.
+`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). An existing
+`src/test/tsconfig.json` that extends the root gains each missing setting, keeps every
+value you set, and has its `include` and `exclude` replaced only when they select other
+files than the rebased root lists, so `init --force` keeps it in step after a root
+`include` or `exclude` change; one warning names what changed. `init` also warns when
+the installed Bun is older than its `bun-types` pin, when your exact `bun-types` pin
+differs from the installed Bun, and when `test/` or `tests/` holds Bun tests.
+[Test with Bun](./testing.md#when-srctest-already-exists) explains each setting, each
+warning and where a test goes.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
@@ -6893,7 +6897,12 @@ the `.defold-types` root and pinned engine surface that
 language-service plugin is unioned in exactly once. The scaffold also sets
 `noEmit: true` when your project sets none, so a bare `tsc` type-checks without
 writing a `.js` file beside each source, while `build` still emits Lua; a `noEmit`
-you set yourself is kept. For `mise.toml` it means the
+you set yourself is kept. `tsconfig.json` and the `.vscode/` JSON files are read as
+JSON with comments and edited in place, one key or list entry at a time, so your
+comments, layout and other keys (`extends`, `references`, `files`) survive. Settings
+count as TypeScript reads them through `extends`: a managed default is written only
+when no config in the chain sets it, and an inherited `include`, `exclude` or
+`plugins` list is restated in the root only when a managed entry is missing from it. For `mise.toml` it means the
 refresh rewrites only `description` and `run` inside each managed
 `defold-typescript:*` task, so keys you add to one — an `alias`, a `depends`, an
 `env`, a comment of your own — are carried across every re-run. A managed task
@@ -7126,9 +7135,16 @@ The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
 `AGENTS.md` block, and reconciles `tsconfig.json`, adding `noEmit: true` when the
-project sets none. A project with no `src/test/tsconfig.json` gets the
-[Bun test config](./init.md#two-modes) `init` writes; an existing one is left as
-it is. If `.vscode/defold-debug.ts`
+project sets none. Configs are edited in place, so comments, layout and keys such
+as `extends`, `references` and `files` survive, and a setting inherited through
+`extends` counts as set. A project with no `src/test/tsconfig.json` gets the
+[Bun test config](./init.md#two-modes) `init` writes; an existing one that extends
+the root gains each missing setting and has its `include` and `exclude` brought
+in step with the root's, and `src/test` joins the root `exclude` when no entry
+names it. Each of those edits, an installed Bun that is older than the CLI's
+`bun-types` pin or differs from the project's exact pin, and a `test/` or `tests/`
+folder holding Bun tests is reported in `warnings`; see
+[Test with Bun](./testing.md#when-srctest-already-exists). If `.vscode/defold-debug.ts`
 already exists and its normalized checksum matches a generated launcher — including
 an unmodified legacy launcher whose line endings became CRLF — it is refreshed too.
 An absent launcher stays absent.
@@ -11169,6 +11185,21 @@ existing bytes because it may be customized; the path is absent from `written`.
 Delete it and run `defold-typescript setup-debug` only when replacing it is the
 intended action.
 
+The test layout adds more warnings, each a plain sentence ending in
+`node_modules/@defold-typescript/docs/guide/testing.md`, the same in the terminal
+and under `--json`, including through the hand-off:
+
+- A line starting `src/test/tsconfig.json:` names the settings the upgrade added
+  to an existing test config, the values it kept that differ from the scaffold's,
+  the `include` and `exclude` it replaced (before and after), or that the config
+  does not extend the root and was left alone. Read it; the edits are already made.
+- A line starting `tsconfig.json:` says `src/test` was added to the root `exclude`.
+- A line starting `Bun` names an installed Bun older than the CLI's `bun-types`
+  pin, or an exact project pin that differs from the installed Bun. Report it to
+  the user; never change the pin or run `bun upgrade` on your own.
+- A line starting `test/` or `tests/` names a root test folder holding Bun tests.
+  Moving those tests is the user's call.
+
 **The offline failure mode:** upgrading is the one command that needs the network.
 When the npm registry is unreachable the run fails — `ok` is `false` with a
 non-zero exit — instead of re-scaffolding against the version already on disk.
@@ -12229,8 +12260,9 @@ test("a combo multiplies the score, up to five times", () => {
 
 [`init`](./init.md#two-modes) and [`upgrade`](./upgrade.md) scaffold `src/test/`
 for tests, and the helpers they share, that need Bun's runtime. `build`, `watch`
-and the build's type pass skip every file under it, and writing the folder's
-config adds `src/test` to the root `exclude`, so nothing in it reaches game code.
+and the build's type pass skip every file under it, and both commands add
+`src/test` to the root `exclude` unless an entry already names the folder, so
+nothing in it reaches game code.
 
 The folder holds two scaffolded files:
 
@@ -12249,8 +12281,40 @@ The folder holds two scaffolded files:
 | `include`: `**/*.ts` plus each root `include` entry, rebased onto `../../` | The program holds the game's `.d.ts` files, and `scene-addresses.d.ts`, which imports script modules. |
 | `exclude`: the root's other entries, rebased the same way | An inherited `exclude` would contain `src/test` and leave out the folder's own files. |
 
-`init` and `upgrade` never overwrite either file. When you later change the root
-`include` or `exclude`, make the same change in `src/test/tsconfig.json` by hand.
+##### When `src/test/` already exists
+
+`init` and `upgrade` keep an existing `src/test/env.d.ts` and write it only when
+it is missing. They bring an existing `src/test/tsconfig.json` onto the table
+above, editing it in place so its comments and layout stay, and print one warning
+for the file that names what they did:
+
+- A config whose `extends`, or one entry of an `extends` list, is not the root
+  `tsconfig.json` is yours alone: nothing in it changes, and the warning says so.
+- A missing setting from the table is added. A value you set is kept, and is
+  named only when it differs from the scaffold's.
+- `include` and `exclude` are compared by the files TypeScript selects with
+  them, against the files the lists above select, on disk when the command runs.
+  The same files leave both lists as you wrote them; other files replace both,
+  and the warning shows each list before and after. This is what keeps the test
+  program in step after you change the root `include` or `exclude`: run `upgrade`
+  or `init --force`.
+- Your own `types`, `typeRoots` or `paths` stay, and the warning notes that they
+  replace the root config's game types for the tests.
+
+Adding `src/test` to an existing root `exclude` prints a warning for
+`tsconfig.json` too.
+
+##### Bun and old test folders
+
+The same commands check the installed Bun against `bun-types`. A Bun older than
+the version the CLI pins is named, with `bun upgrade` to update it; a newer one
+never is. An exact `bun-types` pin in your `package.json` that differs from the
+installed Bun is named whether that Bun is older or newer, since the tests are
+then type-checked against another Bun than the one that runs them; a range or
+`latest` is not compared, and the pin is never changed. A `test/` or `tests/`
+folder at the project root holding Bun tests is named as well: `bun test` still
+runs those, but no `tsconfig.json` type-checks them, so move each one next to its
+module or into `src/test/`.
 
 #### Run and check
 

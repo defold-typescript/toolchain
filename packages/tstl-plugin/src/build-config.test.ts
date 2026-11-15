@@ -37,6 +37,22 @@ describe("readBuildConfigFromHost", () => {
     expect(readBuildConfigFromHost(hostServing(files), "\\project").outDir).toBe("build");
   });
 
+  // The CLI's `readBuildConfig` reads the same two files off disk in
+  // `build-output.test.ts` and must come to the same answer.
+  test("a commented root that extends a base gives the base's outDir and include", () => {
+    const config = readBuildConfigFromHost(
+      hostServing({
+        "/project/tsconfig.json": '// root\n{ "extends": "./configs/base.json", }\n',
+        "/project/configs/base.json": JSON.stringify({
+          compilerOptions: { outDir: "../out/lua" },
+          include: ["../game/**/*.ts"],
+        }),
+      }),
+      "/project",
+    );
+    expect(config).toEqual({ outDir: "out/lua", include: ["game/**/*.ts"] });
+  });
+
   test("degrades to alongside output when the host cannot read the file", () => {
     const config = readBuildConfigFromHost(hostServing({}), "/project");
     expect(config).toEqual({ outDir: undefined, include: ["src/**/*.ts"] });

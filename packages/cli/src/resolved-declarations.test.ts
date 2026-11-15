@@ -55,6 +55,29 @@ describe("collectResolvedDeclarations", () => {
     );
   });
 
+  test("types and typeRoots inherited through extends are collected", () => {
+    scaffoldResolvedProject(cwd);
+    const root = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[]; typeRoots: string[] };
+    };
+    mkdirSync(path.join(cwd, "configs"));
+    writeFileSync(
+      path.join(cwd, "configs", "base.json"),
+      JSON.stringify({
+        compilerOptions: {
+          types: root.compilerOptions.types,
+          typeRoots: root.compilerOptions.typeRoots.map((entry) => `../${entry}`),
+        },
+      }),
+    );
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      '// inherits its types\n{ "extends": "./configs/base.json", "include": ["src/**/*.ts"] }\n',
+    );
+
+    expect(Object.keys(collectResolvedDeclarations(cwd).files).sort()).toEqual(resolvedFiles());
+  });
+
   test("returns nothing once resolve has dropped both types entries", () => {
     scaffoldResolvedProject(cwd);
     ensureExtensionTypesReference(cwd, null);

@@ -659,6 +659,27 @@ describe("ensureExtensionTypesReference", () => {
     return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
   }
 
+  test("a root tsconfig with a comment and extends keeps both", () => {
+    const original = [
+      "// project root",
+      "{",
+      '  "extends": "./base.json",',
+      '  "compilerOptions": {',
+      '    "typeRoots": [".defold-types"], /* shared */',
+      '    "types": ["defold-1.12.4"]',
+      "  }",
+      "}",
+      "",
+    ].join("\n");
+    writeFileSync(path.join(cwd, "tsconfig.json"), original);
+
+    ensureExtensionTypesReference(cwd, ".defold-types/extensions");
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(
+      original.replace('["defold-1.12.4"]', '["defold-1.12.4", "extensions"]'),
+    );
+  });
+
   test("adds extensions additively, preserving an engine surfaceId entry", () => {
     writeTsconfig({
       compilerOptions: { strict: true, typeRoots: [".defold-types"], types: ["defold-1.12.4"] },

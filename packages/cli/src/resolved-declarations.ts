@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import { readEffectiveTsconfig } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
-import { toPosix } from "./build-output";
+import { readTextFile, toPosix } from "./build-output";
 import { readCliVersion } from "./cli-version";
 import { librariesDirName } from "./library-materialize";
 
@@ -61,16 +62,12 @@ export function collectResolvedDeclarations(
   if (!existsSync(tsconfigPath)) {
     return { files: {}, runtimeOnly: new Set() };
   }
-  const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
-    compilerOptions?: { types?: unknown; typeRoots?: unknown };
-  };
+  // TypeScript's own reading, so `types` and `typeRoots` inherited through
+  // `extends` count; its `typeRoots` are already absolute.
+  const { options } = readEffectiveTsconfig(tsconfigPath, readTextFile);
   const wanted = new Set([EXTENSIONS_ENTRY, librariesDirName(cliVersion)]);
-  const entries = (stringEntries(compilerOptions?.types) ?? []).filter((entry) =>
-    wanted.has(entry),
-  );
-  const typeRoots = stringEntries(compilerOptions?.typeRoots)?.map((root) =>
-    path.resolve(cwd, root),
-  );
+  const entries = (stringEntries(options.types) ?? []).filter((entry) => wanted.has(entry));
+  const typeRoots = stringEntries(options.typeRoots)?.map((root) => path.resolve(cwd, root));
   const typeOptions: ts.CompilerOptions = {
     preserveSymlinks: true,
     ...(typeRoots === undefined ? {} : { typeRoots }),

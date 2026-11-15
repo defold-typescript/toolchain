@@ -19,6 +19,7 @@ import {
   wireWallRoot,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
+import { parseJsoncObject } from "./jsonc-file";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import type { ScriptKind } from "./script-kind";
 
@@ -701,6 +702,55 @@ describe("writeDirectoryWallTsconfigs", () => {
       include: ["**/*.ts"],
       exclude: [],
     });
+  });
+
+  test("wall <dir> rewriting an existing commented wall config keeps the comment", () => {
+    // The wall shape from before the wall's own `outDir: null`, which the
+    // rewrite adds.
+    touch(
+      "src/ui/tsconfig.json",
+      [
+        "{",
+        "  // the HUD's own config",
+        '  "extends": "../../tsconfig.json",',
+        '  "compilerOptions": {',
+        '    "typeRoots": null,',
+        '    "types": ["@defold-typescript/types/gui-script"]',
+        "  },",
+        '  "include": ["**/*.ts"],',
+        '  "exclude": []',
+        "}",
+        "",
+      ].join("\n"),
+    );
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+
+    expect(writeDirectoryWallTsconfigs(cwd, walls)).toEqual(["src/ui/tsconfig.json"]);
+
+    const text = readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8");
+    expect(text).toContain('{\n  // the HUD\'s own config\n  "extends"');
+    expect(parseJsoncObject(text, "src/ui/tsconfig.json") as unknown).toEqual(
+      directoryWallTsconfig(walls[0] as DirectoryWall),
+    );
+  });
+
+  test("a root tsconfig with a comment and extends keeps both through wireWallRoot", () => {
+    const original = [
+      "// project root",
+      "{",
+      '  "extends": "./base.json",',
+      '  "include": ["src/**/*.ts"], // game code',
+      '  "exclude": ["vendor"]',
+      "}",
+      "",
+    ].join("\n");
+    touch("tsconfig.json", original);
+
+    wireWallRoot(cwd, [], [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")]);
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(
+      original.replace('["vendor"]', '["vendor", "src/ui"]'),
+    );
   });
 
   test("writes nothing for an empty wall list", () => {
