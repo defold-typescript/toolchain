@@ -6868,9 +6868,10 @@ declarations and pinned surface as the game. It includes `test/` plus every root
 `Bun`) to that program only, so they never reach the code `build` compiles.
 Type-check the tests with `tsc --noEmit -p test/tsconfig.json`. `init` never
 overwrites either file, so a later change to the root `include` needs the same
-change in `test/tsconfig.json`. When a root `include` pattern already reaches
-`test/`, `init` writes neither file and reports the pattern, since `build` would
-compile that folder to Lua.
+change in `test/tsconfig.json`. When a root `include` entry already reaches
+`test/` (a glob, a bare folder name such as `test` or `.`, or an absolute path),
+`init` writes neither file and reports the entry, since Bun's types would then reach
+the game program.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
