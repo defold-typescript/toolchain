@@ -19,6 +19,7 @@ const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
 const BIN_DIR = path.join(REPO_ROOT, "node_modules", ".bin");
 const TSC_TIMEOUT_MS = 120_000;
+const TEST_TSCONFIG = "src/test/tsconfig.json";
 
 function linkTypes(cwd: string): void {
   const scope = path.join(cwd, "node_modules", "@defold-typescript");
@@ -56,13 +57,13 @@ function writeBunTestFixtures(cwd: string): void {
       "",
     ].join("\n"),
   );
-  mkdirSync(path.join(cwd, "test"), { recursive: true });
+  mkdirSync(path.join(cwd, "src", "test"), { recursive: true });
   writeFileSync(
-    path.join(cwd, "test", "score.test.ts"),
+    path.join(cwd, "src", "test", "score.test.ts"),
     [
       'import { readFileSync } from "node:fs";',
       'import { expect, test } from "bun:test";',
-      'import { clamp } from "../src/score";',
+      'import { clamp } from "../score";',
       "",
       'test("clamp caps the score", () => {',
       '  expect(typeof readFileSync).toBe("function");',
@@ -199,7 +200,7 @@ describe("scaffolded project is clean out of the box", () => {
         linkBunTypes(cwd);
         writeBunTestFixtures(cwd);
 
-        const plain = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        const plain = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
         if (plain.code !== 0) {
           throw new Error(`tsc reported errors on the scaffolded test config:\n${plain.output}`);
         }
@@ -208,7 +209,7 @@ describe("scaffolded project is clean out of the box", () => {
         editRootCompilerOptions(cwd, (options) => {
           options.outDir = "out";
         });
-        const withOutDir = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        const withOutDir = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
         if (withOutDir.code !== 0) {
           throw new Error(
             `tsc reported errors on the test config under a root outDir:\n${withOutDir.output}`,
@@ -246,7 +247,7 @@ describe("scaffolded project is clean out of the box", () => {
           "export const pinned = pinnedSurfaceOnly;\n",
         );
 
-        const { code, output } = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        const { code, output } = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
         if (code !== 0) {
           throw new Error(
             `tsc reported errors on the test config over a pinned surface:\n${output}`,
@@ -273,6 +274,35 @@ describe("scaffolded project is clean out of the box", () => {
         expect(code).toBe(0);
         expect(output).toContain("src/main.ts");
         expect(output).not.toContain("bun-types");
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "the root program keeps Bun's globals out of game code",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-leak-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkBunTypes(cwd);
+        writeFileSync(
+          path.join(cwd, "src", "leak.ts"),
+          "export const argc = process.argv.length;\n",
+        );
+
+        const root = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
+        expect(root.code).not.toBe(0);
+        expect(root.output).toContain("'process'");
+
+        const tests = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
+        if (tests.code !== 0) {
+          throw new Error(`tsc reported errors on the scaffolded test config:\n${tests.output}`);
+        }
+        expect(tests.code).toBe(0);
       } finally {
         rmSync(cwd, { recursive: true, force: true });
       }

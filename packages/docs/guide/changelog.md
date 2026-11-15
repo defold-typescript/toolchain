@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: `build` skips everything under `src/test/`**, so game code there moves out ([build](./build.md#what-it-does)).
-> - **`init` writes a Bun test config, and `build` skips test files** ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
+> - **`init` scaffolds `src/test/`, and `build` skips test files** ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
 > - **Walls clear `outDir`, and the starter scene parses** ([wall](./wall.md#what-a-wall-is), [scene-types](./scene-types.md)).
@@ -25,7 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Added
 
-- **`init` and `upgrade` write a test config for Bun tests:** `test/tsconfig.json` extends the root config and `test/env.d.ts` adds Bun's types, so a `bun:test` file under `test/` that imports game code type-checks with `tsc --noEmit -p test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`, while Bun's types stay out of the game program. Neither file is ever overwritten, and neither is written when a root `include` entry reaches `test/`, whether as a glob, a bare folder name such as `test` or `.`, or an absolute path ([Init](./init.md#two-modes)).
+- **`init` and `upgrade` write a test config for tests that need Bun's runtime:** `src/test/tsconfig.json` extends the root config and `src/test/env.d.ts` adds Bun's types, so a `bun:test` file under `src/test/` that imports game code type-checks with `tsc --noEmit -p src/test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`. Writing them adds `src/test` to the root `exclude`, so Bun's types stay out of the game program, and neither file is ever overwritten ([Init](./init.md#two-modes)).
 - **`build`, `watch` and the editor plugin skip the files `bun test` runs:** a `*.test.ts`, `*_test.ts`, `*.spec.ts` or `*_spec.ts` file under the source roots writes no Lua, joins no program the build type-checks, and gets no build diagnostic in the editor, so a test can sit next to the module it tests ([Build](./build.md#what-it-does)).
 - **`build --json` reports which outputs require the TypeScript runtime helper bundle:** a successful result always carries `lualibRequiredBy`, the sorted output paths whose Lua requires `lualib_bundle`, including files this run left unchanged, so a project that avoids the bundle can check it without scanning its output folder ([Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
