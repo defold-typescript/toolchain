@@ -125,9 +125,11 @@ bunx tsc --noEmit -p src/test/tsconfig.json
 ```
 
 `bun test` from the project root finds the tests in both places. The first
-`tsc` checks the game and every test next to its module (the scaffolded
-`defold-typescript:typecheck` [mise task](./editor-setup.md#opinionated-misetoml)
-runs it); the second checks `src/test/`. Run all three before a commit and in CI.
+`tsc` checks the game and every test next to its module; the second checks
+`src/test/`. The scaffolded `defold-typescript:typecheck`
+[mise task](./editor-setup.md#opinionated-misetoml) runs both `tsc` commands in
+that order and stops at the first that fails, so an error in the game hides any
+error in `src/test/` until you fix it. Run all three before a commit and in CI.
 
 ## Stub the engine
 
