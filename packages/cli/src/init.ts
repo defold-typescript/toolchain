@@ -27,7 +27,7 @@ import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { compareSemver } from "./semver";
-import { namesTestFolder, TEST_FOLDER_REL } from "./test-folder";
+import { BUN_TYPES_PACKAGE, namesTestFolder, TEST_FOLDER_REL } from "./test-folder";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
 import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -562,6 +562,11 @@ export const LUA_TYPES_SPEC = "^2.13.1";
 // in lockstep with `packages/types` by the drift guard.
 export const TYPESCRIPT_SPEC = "6.0.2";
 
+// The exact `bun-types` pin a scaffold lists. It moves in lockstep with the
+// repo's own `bun-types` devDependency, which every scaffold `tsc` test runs
+// against; the drift guard in `init.test.ts` fails when the two diverge.
+export const BUN_TYPES_VERSION = "1.4.3";
+
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
 // inside an installed project) both ship into the consumer. The transpiler must NOT be a direct
@@ -576,11 +581,14 @@ export const SCAFFOLD_DEV_DEPS: Record<string, string> = {
   "@defold-typescript/tstl-plugin": typesVersionSpec(),
   "@defold-typescript/docs": typesVersionSpec(),
   "@biomejs/biome": BIOME_VERSION,
-  // The `.vscode/defold-debug.ts` launcher is a Bun script importing `node:fs`/
-  // `node:path` and using `Bun.*`/`process`/`fetch`; `@types/bun` resolves those
-  // (it pulls in `@types/node`). The project tsconfig pins `types` to
-  // `@defold-typescript/types`, so these never leak into the `src/` Defold compile.
-  "@types/bun": "latest",
+  // The `.vscode/defold-debug.ts` launcher (a Bun script importing `node:fs`/
+  // `node:path` and using `Bun.*`/`process`/`fetch`) and `src/test/env.d.ts`
+  // reference the whole `bun-types` package, which pulls in `@types/node`; a
+  // test next to its module references only `bun-types/test`. It is a direct
+  // dependency because an isolated install reaches nothing else, and the project
+  // tsconfig pins `types` to `@defold-typescript/types`, so it never joins the
+  // `src/` Defold compile.
+  [BUN_TYPES_PACKAGE]: BUN_TYPES_VERSION,
   "lua-types": LUA_TYPES_SPEC,
   typescript: TYPESCRIPT_SPEC,
 };
@@ -1089,7 +1097,7 @@ function pruneMainTsExclude(
 
 const TEST_TSCONFIG_REL = `${TEST_FOLDER_REL}/tsconfig.json`;
 const TEST_ENV_REL = `${TEST_FOLDER_REL}/env.d.ts`;
-const TEST_ENV_CONTENT = '/// <reference types="bun" />\n';
+const TEST_ENV_CONTENT = `/// <reference types="${BUN_TYPES_PACKAGE}" />\n`;
 const TEST_FOLDER_TO_ROOT = "../".repeat(TEST_FOLDER_REL.split("/").length);
 
 function rebaseOntoProjectRoot(pattern: string): string {
