@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import * as path from "node:path";
 import { detectSourceOutputKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { formatJsonLikeBiome } from "./format-json";
+import { editJsoncFile, readJsoncObject } from "./jsonc-file";
 import {
   isAbsolutePath,
   isManagedPathsTarget,
@@ -262,7 +263,7 @@ export function readRootPathAliases(cwd: string): RootPathAliases {
   }
   let parsed: { compilerOptions?: { baseUrl?: unknown; paths?: unknown } };
   try {
-    parsed = JSON.parse(readFileSync(rootPath, "utf8"));
+    parsed = readJsoncObject(rootPath);
   } catch {
     return {};
   }
@@ -429,7 +430,7 @@ export function resolveActivePinnedSurface(cwd: string): string | null {
   if (!existsSync(rootPath)) {
     return null;
   }
-  const parsed = JSON.parse(readFileSync(rootPath, "utf8")) as {
+  const parsed = readJsoncObject(rootPath) as {
     compilerOptions?: { typeRoots?: unknown; types?: unknown };
   };
   const typeRoots = parsed.compilerOptions?.typeRoots;
@@ -507,7 +508,7 @@ export function wireWallRoot(
   walls: readonly DirectoryWall[],
 ): void {
   const rootPath = path.join(cwd, "tsconfig.json");
-  const current = JSON.parse(readFileSync(rootPath, "utf8")) as RootTsconfig;
+  const current = readJsoncObject(rootPath) as RootTsconfig;
   const wallDirs = sortedWallDirs(walls);
   const managed = new Set([...previousDirs, ...wallDirs]);
   const nextExclude = [
@@ -533,7 +534,7 @@ export function wireWallRoot(
   }
 
   if (JSON.stringify(next) !== JSON.stringify(current)) {
-    writeJson(rootPath, next);
+    editJsoncFile(rootPath, next);
   }
 }
 
@@ -574,7 +575,7 @@ export function writeDirectoryWallTsconfigs(
         depth: w.dir.split("/").length,
       });
     if (existsSync(target)) {
-      const current = JSON.parse(readFileSync(target, "utf8")) as {
+      const current = readJsoncObject(target) as {
         extends?: string;
         compilerOptions?: Record<string, unknown>;
         [key: string]: unknown;
@@ -610,7 +611,7 @@ export function writeDirectoryWallTsconfigs(
         } else {
           nextOptions.paths = mergedPaths;
         }
-        writeJson(target, {
+        editJsoncFile(target, {
           ...current,
           extends: desired.extends,
           compilerOptions: nextOptions,

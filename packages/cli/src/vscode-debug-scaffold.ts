@@ -8,6 +8,7 @@ import {
   isGeneratedDebugLauncher,
   vscodeLaunchContent,
 } from "./debug-launcher";
+import { editJsoncFile } from "./jsonc-file";
 import type { FileAction } from "./setup-debug";
 import { isJsonObject, readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 
@@ -73,12 +74,12 @@ export function writeVscodeLaunch(
     }
     // `configs` holds the live configuration objects, so the field mutations
     // above already landed on `existing`; the reassignment matters only where
-    // the key was absent or not an array, which set `changed` itself. Writing
-    // only when something changed is what keeps a user's JSONC comments and
-    // formatting — neither of which survives the parse `writeJson` serializes.
+    // the key was absent or not an array, which set `changed` itself. The edit
+    // goes in place, entry by entry, so a user's JSONC comments and formatting
+    // around every configuration we do not own stay as they were.
     if (changed) {
       existing.configurations = configs;
-      writeJson(filePath, existing);
+      editJsoncFile(filePath, existing);
     }
     return changed ? "refreshed" : "unchanged";
   }
@@ -148,7 +149,7 @@ export function writeDebugRecommendation(cwd: string): FileAction {
     if (JSON.stringify(existing) === before) {
       return "unchanged";
     }
-    writeJson(filePath, existing);
+    editJsoncFile(filePath, existing);
     return "injected";
   }
   mkdirSync(dir, { recursive: true });

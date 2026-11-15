@@ -1,6 +1,9 @@
 export interface FormatJsonOptions {
   readonly lineWidth?: number;
   readonly indentWidth?: number;
+  // The column the value starts at, so a value spliced into an existing line
+  // breaks where the whole line would pass the width rather than the value alone.
+  readonly column?: number;
 }
 
 const DEFAULT_LINE_WIDTH = 100;
@@ -70,5 +73,5 @@ export function formatJsonLikeBiome(value: unknown, opts?: FormatJsonOptions): s
     lineWidth: opts?.lineWidth ?? DEFAULT_LINE_WIDTH,
     indentWidth: opts?.indentWidth ?? DEFAULT_INDENT_WIDTH,
   };
-  return render(value, 0, 0, false, ctx);
+  return render(value, 0, opts?.column ?? 0, false, ctx);
 }

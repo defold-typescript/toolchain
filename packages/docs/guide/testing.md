@@ -60,8 +60,9 @@ test("a combo multiplies the score, up to five times", () => {
 
 [`init`](./init.md#two-modes) and [`upgrade`](./upgrade.md) scaffold `src/test/`
 for tests, and the helpers they share, that need Bun's runtime. `build`, `watch`
-and the build's type pass skip every file under it, and writing the folder's
-config adds `src/test` to the root `exclude`, so nothing in it reaches game code.
+and the build's type pass skip every file under it, and both commands add
+`src/test` to the root `exclude` unless an entry already names the folder, so
+nothing in it reaches game code.
 
 The folder holds two scaffolded files:
 
@@ -80,8 +81,40 @@ The folder holds two scaffolded files:
 | `include`: `**/*.ts` plus each root `include` entry, rebased onto `../../` | The program holds the game's `.d.ts` files, and `scene-addresses.d.ts`, which imports script modules. |
 | `exclude`: the root's other entries, rebased the same way | An inherited `exclude` would contain `src/test` and leave out the folder's own files. |
 
-`init` and `upgrade` never overwrite either file. When you later change the root
-`include` or `exclude`, make the same change in `src/test/tsconfig.json` by hand.
+### When `src/test/` already exists
+
+`init` and `upgrade` keep an existing `src/test/env.d.ts` and write it only when
+it is missing. They bring an existing `src/test/tsconfig.json` onto the table
+above, editing it in place so its comments and layout stay, and print one warning
+for the file that names what they did:
+
+- A config whose `extends`, or one entry of an `extends` list, is not the root
+  `tsconfig.json` is yours alone: nothing in it changes, and the warning says so.
+- A missing setting from the table is added. A value you set is kept, and is
+  named only when it differs from the scaffold's.
+- `include` and `exclude` are compared by the files TypeScript selects with
+  them, against the files the lists above select, on disk when the command runs.
+  The same files leave both lists as you wrote them; other files replace both,
+  and the warning shows each list before and after. This is what keeps the test
+  program in step after you change the root `include` or `exclude`: run `upgrade`
+  or `init --force`.
+- Your own `types`, `typeRoots` or `paths` stay, and the warning notes that they
+  replace the root config's game types for the tests.
+
+Adding `src/test` to an existing root `exclude` prints a warning for
+`tsconfig.json` too.
+
+### Bun and old test folders
+
+The same commands check the installed Bun against `bun-types`. A Bun older than
+the version the CLI pins is named, with `bun upgrade` to update it; a newer one
+never is. An exact `bun-types` pin in your `package.json` that differs from the
+installed Bun is named whether that Bun is older or newer, since the tests are
+then type-checked against another Bun than the one that runs them; a range or
+`latest` is not compared, and the pin is never changed. A `test/` or `tests/`
+folder at the project root holding Bun tests is named as well: `bun test` still
+runs those, but no `tsconfig.json` type-checks them, so move each one next to its
+module or into `src/test/`.
 
 ## Run and check
 

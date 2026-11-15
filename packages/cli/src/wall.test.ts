@@ -52,6 +52,23 @@ describe("currentWalledDirs", () => {
     expect(currentWalledDirs(cwd)).toEqual(["src/render", "src/ui"]);
   });
 
+  test("a commented wall config still reads as a wall", () => {
+    writeRootTsconfig({ include: ["src/**/*.ts"] });
+    touch(
+      "src/ui/tsconfig.json",
+      [
+        "// the HUD wall",
+        "{",
+        '  "extends": "../../tsconfig.json",',
+        '  "compilerOptions": { "types": ["@defold-typescript/types/gui-script"], },',
+        "}",
+        "",
+      ].join("\n"),
+    );
+
+    expect(currentWalledDirs(cwd)).toEqual(["src/ui"]);
+  });
+
   test("does not list a user tsconfig that extends the root without a kind types entry", () => {
     writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/ui/hud.ts", "export default defineGuiScript({});");

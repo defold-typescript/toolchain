@@ -13,6 +13,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { DEFAULT_INCLUDE } from "@defold-typescript/transpiler";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
+import * as ts from "typescript";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
 import {
@@ -43,10 +44,14 @@ import {
   renderAgentsBlock,
   renderClaudeBlock,
 } from "./init-agents";
+import { parseJsoncObject } from "./jsonc-file";
 import { toPosixSeparators } from "./materialize";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { reconcileManagedList } from "./vscode-json";
+
+// biome-ignore lint/suspicious/noTemplateCurlyInString: TypeScript's own config placeholder, written literally
+const CONFIG_DIR = "${configDir}";
 
 const CLI_VERSION = (
   JSON.parse(readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8")) as {
@@ -1081,7 +1086,7 @@ describe("runInit test config", () => {
     },
   );
 
-  test("init --force never overwrites the test pair and adds it when missing", () => {
+  test("init --force keeps a hand-made env.d.ts, reconciles the config and adds the pair when missing", () => {
     touch("game.project", "[project]\n");
     runInit({ cwd });
     const customConfig = '{ "extends": "../../tsconfig.json", "include": ["custom/**/*.ts"] }\n';
@@ -1092,15 +1097,18 @@ describe("runInit test config", () => {
 
     const result = runInit({ cwd, force: true });
 
-    expect(readCwd(TEST_TSCONFIG)).toBe(customConfig);
     expect(readCwd(TEST_ENV)).toBe(customEnv);
-    expect(readRootExclude()).toEqual(["other"]);
-    for (const target of ["src/test/tsconfig.json", "src/test/env.d.ts"]) {
-      expect(result.written).not.toContain(target);
-      const operation = result.operations.find((op) => op.target === target);
-      expect(operation?.status).toBe("skipped");
-      expect(operation?.detail).toBe("a src/test/tsconfig.json already exists");
-    }
+    expect(result.written).not.toContain("src/test/env.d.ts");
+    expect(readRootExclude()).toEqual(["other", "src/test"]);
+    expect(result.written).toContain("src/test/tsconfig.json");
+    expect(result.operations.find((op) => op.target === "src/test/tsconfig.json")?.status).toBe(
+      "merged",
+    );
+    expect(JSON.parse(readCwd(TEST_TSCONFIG)).include).toEqual([
+      "**/*.ts",
+      "../../src/**/*.ts",
+      "../../.defold-types/scene-addresses.d.ts",
+    ]);
 
     rmSync(path.join(cwd, "src", "test"), { recursive: true, force: true });
     runInit({ cwd, force: true });
@@ -1678,7 +1686,7 @@ describe("runInit --force brings a released biome scaffold forward", () => {
 
 describe("runInit (.vscode editor config)", () => {
   function readJson(rel: string): Record<string, unknown> {
-    return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+    return parseJsoncObject(readFileSync(path.join(cwd, rel), "utf8"), rel);
   }
 
   test("new-project mode recommends no extension of its own and marks Luau LSP unwanted", () => {
@@ -2443,7 +2451,10 @@ describe("runInit (.vscode script snippets)", () => {
 
 describe("runInit (scaffolds .vscode/tasks.json build/watch tasks)", () => {
   function readTasks(dir: string): Record<string, unknown> {
-    return JSON.parse(readFileSync(path.join(dir, ".vscode", "tasks.json"), "utf8"));
+    return parseJsoncObject(
+      readFileSync(path.join(dir, ".vscode", "tasks.json"), "utf8"),
+      "tasks.json",
+    );
   }
 
   function labelsOf(tasks: Record<string, unknown>): string[] {
@@ -2739,18 +2750,16 @@ describe("runInit (merges an existing tsconfig)", () => {
     expect(exclude).not.toContain("src/main.ts");
   });
 
-  test("self-heals a tool-added src/main.ts exclude, dropping the key when it was the sole entry", () => {
+  test("self-heals a tool-added src/main.ts exclude when it was the sole entry, leaving the test folder", () => {
     seedExistingTsconfig({
       compilerOptions: { types: ["defold-1.12.4"] },
       include: ["src/**/*.ts"],
       exclude: ["src/main.ts"],
     });
-    mkdirSync(path.join(cwd, "src", "test"), { recursive: true });
-    writeFileSync(path.join(cwd, "src", "test", "tsconfig.json"), "{}\n");
 
     runInit({ cwd, force: true });
 
-    expect(readTsconfig().exclude).toBeUndefined();
+    expect(readTsconfig().exclude).toEqual(["src/test"]);
   });
 
   test("self-heals a tool-added src/main.ts exclude while preserving sibling excludes", () => {
@@ -2820,6 +2829,295 @@ describe("runInit (merges an existing tsconfig)", () => {
   });
 });
 
+describe("runInit Bun checks", () => {
+  const GUIDE = "node_modules/@defold-typescript/docs/guide/testing.md";
+
+  // Versions one patch either side of the CLI's own pin, so the cases keep
+  // their meaning across every later bump of it.
+  function patchedBy(delta: number): string {
+    const [major, minor, patch] = BUN_TYPES_VERSION.split(".").map(Number) as [
+      number,
+      number,
+      number,
+    ];
+    return `${major}.${minor}.${patch + delta}`;
+  }
+  const OLDER = patchedBy(-1);
+  const NEWER = patchedBy(1);
+
+  function seed(pin: string): void {
+    touch("game.project", "[project]\n");
+    touch(
+      "package.json",
+      `${JSON.stringify({ name: "game", devDependencies: { "bun-types": pin } }, null, 2)}\n`,
+    );
+  }
+
+  function bunWarnings(installedBun: string | null): string[] {
+    const { warnings } = runInit({ cwd, force: true, installedBun });
+    const found = warnings.filter((warning) => warning.startsWith("Bun"));
+    for (const warning of found) {
+      expect(warning.endsWith(GUIDE)).toBe(true);
+    }
+    return found;
+  }
+
+  function projectPin(): string {
+    return JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")).devDependencies[
+      "bun-types"
+    ];
+  }
+
+  test("an installed Bun older than the pin is named in one warning", () => {
+    seed(OLDER);
+    const [warning, ...rest] = bunWarnings(OLDER);
+    expect(rest).toEqual([]);
+    expect(warning).toContain(OLDER);
+    expect(warning).toContain(BUN_TYPES_VERSION);
+    expect(warning).toContain("bun upgrade");
+    expect(warning).not.toContain("pins");
+  });
+
+  test("a bun-types pin that differs from the installed Bun is named, and the pin stays", () => {
+    seed(OLDER);
+    const [warning, ...rest] = bunWarnings(BUN_TYPES_VERSION);
+    expect(rest).toEqual([]);
+    expect(warning).toContain(`pins bun-types ${OLDER}`);
+    expect(warning).not.toContain("bun upgrade");
+    expect(projectPin()).toBe(OLDER);
+  });
+
+  test("a newer Bun with an older pin is named for the pin only", () => {
+    seed(BUN_TYPES_VERSION);
+    const [warning, ...rest] = bunWarnings(NEWER);
+    expect(rest).toEqual([]);
+    expect(warning).toContain(`pins bun-types ${BUN_TYPES_VERSION}`);
+    expect(warning).toContain(NEWER);
+    expect(warning).not.toContain("bun upgrade");
+    expect(warning).not.toContain("older");
+  });
+
+  test("a newer Bun with a matching pin raises no warning", () => {
+    seed(NEWER);
+    expect(bunWarnings(NEWER)).toEqual([]);
+  });
+
+  test.each(["^1.4.0", "latest"])("a %s pin skips the pin check", (pin) => {
+    seed(pin);
+    expect(bunWarnings(NEWER)).toEqual([]);
+    expect(projectPin()).toBe(pin);
+  });
+
+  test("no Bun installed raises no Bun warning", () => {
+    seed(OLDER);
+    expect(bunWarnings(null)).toEqual([]);
+  });
+
+  test("a test/ or tests/ folder holding Bun tests is named once", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, "test"));
+    mkdirSync(path.join(cwd, "scripts"));
+    touch("test/helpers.ts", "export {};\n");
+    touch("scripts/pack.test.ts", "export {};\n");
+    const folderWarnings = (): string[] =>
+      runInit({ cwd, force: true, installedBun: null }).warnings.filter((warning) =>
+        warning.startsWith("test/"),
+      );
+
+    expect(folderWarnings()).toEqual([]);
+
+    touch("test/a.test.ts", "export {};\n");
+    mkdirSync(path.join(cwd, "tests", "x"), { recursive: true });
+    touch("tests/x/y_spec.ts", "export {};\n");
+    const [warning, ...rest] = folderWarnings();
+    expect(rest).toEqual([]);
+    expect(warning).toContain("tests/");
+    expect(warning).toContain("src/test/");
+    expect(warning?.endsWith(GUIDE)).toBe(true);
+  });
+});
+
+describe("runInit (configs with comments and inherited settings)", () => {
+  const PLUGIN = "@defold-typescript/tstl-plugin";
+
+  function write(rel: string, contents: string | object, root = cwd): void {
+    const full = path.join(root, rel);
+    mkdirSync(path.dirname(full), { recursive: true });
+    writeFileSync(
+      full,
+      typeof contents === "string" ? contents : `${JSON.stringify(contents, null, 2)}\n`,
+    );
+  }
+
+  function read(rel: string): string {
+    return readFileSync(path.join(cwd, rel), "utf8");
+  }
+
+  // TypeScript's own reading of the root, with the real `readDirectory`, is the
+  // judge of what a merged config selects and sets.
+  function parsedRoot(root = cwd): ts.ParsedCommandLine {
+    const parsed = ts.getParsedCommandLineOfConfigFile(
+      path.join(root, "tsconfig.json"),
+      {},
+      { ...ts.sys, onUnRecoverableConfigFileDiagnostic: () => {} },
+    );
+    if (parsed === undefined) {
+      throw new Error("tsconfig.json did not parse");
+    }
+    return parsed;
+  }
+
+  function selected(root = cwd): string[] {
+    return parsedRoot(root).fileNames.map((file) => toPosixSeparators(path.relative(root, file)));
+  }
+
+  test("a root tsconfig with a comment keeps it, its trailing comma, extends, references and files", () => {
+    touch("game.project", "[project]\n");
+    write("base.json", { compilerOptions: { strict: true } });
+    write(
+      "tsconfig.json",
+      [
+        "// project config",
+        "{",
+        '  "extends": "./base.json",',
+        '  "references": [{ "path": "./tools" }],',
+        '  "files": ["types/extra.d.ts"],',
+        '  "compilerOptions": { "strict": true },',
+        '  "include": ["src/**/*.ts"],',
+        "}",
+        "",
+      ].join("\n"),
+    );
+
+    runInit({ cwd, force: true });
+
+    const text = read("tsconfig.json");
+    expect(text.startsWith("// project config\n{\n")).toBe(true);
+    expect(text).toMatch(/,\n\}\n$/);
+    const own = parseJsoncObject(text, "tsconfig.json");
+    expect(own.extends).toBe("./base.json");
+    expect(own.references).toEqual([{ path: "./tools" }]);
+    expect(own.files).toEqual(["types/extra.d.ts"]);
+    expect(own.include).toEqual(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION]);
+  });
+
+  test("inherited include and exclude survive init --force", () => {
+    touch("game.project", "[project]\n");
+    write("base.json", { include: ["game/**/*.ts"], exclude: ["game/wip"] });
+    write("tsconfig.json", { extends: "./base.json" });
+    write("game/main.ts", "export {};\n");
+    write("game/wip/x.ts", "export {};\n");
+
+    const result = runInit({ cwd, force: true });
+
+    const files = selected();
+    expect(files).toContain("game/main.ts");
+    expect(files).not.toContain("game/wip/x.ts");
+    expect(files).not.toContain("src/test/env.d.ts");
+    expect(result.operations.map((op) => op.target)).toContain("game/main.ts");
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+  });
+
+  test("inherited compiler options survive init --force", () => {
+    touch("game.project", "[project]\n");
+    write("base.json", {
+      compilerOptions: { strict: false, target: "ES2020", plugins: [{ name: "user-plugin" }] },
+    });
+    write("tsconfig.json", { extends: "./base.json" });
+
+    runInit({ cwd, force: true });
+
+    const { options } = parsedRoot();
+    expect(options.strict).toBe(false);
+    expect(options.target).toBe(ts.ScriptTarget.ES2020);
+    expect((options.plugins as Array<{ name: string }>).map((p) => p.name)).toEqual([
+      "user-plugin",
+      PLUGIN,
+    ]);
+    const own = parseJsoncObject(read("tsconfig.json"), "tsconfig.json") as {
+      compilerOptions: Record<string, unknown>;
+    };
+    expect(own.compilerOptions).not.toHaveProperty("strict");
+    expect(own.compilerOptions).not.toHaveProperty("target");
+  });
+
+  test("upgrade refreshes the debug launch config from an inherited outDir", () => {
+    touch("game.project", "[project]\n");
+    write("base.json", { compilerOptions: { outDir: "out" } });
+    write("tsconfig.json", { extends: "./base.json" });
+    write(".vscode/launch.json", {
+      version: "0.2.0",
+      configurations: [debugLaunchConfig({ outDir: undefined, include: [...DEFAULT_INCLUDE] })],
+    });
+
+    runInit({ cwd, force: true });
+
+    const launch = JSON.parse(read(".vscode/launch.json")) as {
+      configurations: Array<{ scriptFiles: string[] }>;
+    };
+    const expected = debugLaunchConfig({
+      outDir: "out",
+      include: [...DEFAULT_INCLUDE, SCENE_ADDRESSES_DECLARATION],
+    });
+    expect(launch.configurations[0]?.scriptFiles).toEqual(expected.scriptFiles);
+    expect(expected.scriptFiles.every((pattern) => pattern.startsWith("out/"))).toBe(true);
+  });
+
+  test(`a ${CONFIG_DIR} include wires the same starter`, () => {
+    const control = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-control-"));
+    try {
+      for (const [root, include] of [
+        [cwd, `${CONFIG_DIR}/src/**/*.ts`],
+        [control, "src/**/*.ts"],
+      ] as const) {
+        write("game.project", "[project]\n", root);
+        write("tsconfig.json", { include: [include] }, root);
+        runInit({ cwd: root, force: true });
+      }
+      expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+      expect(existsSync(path.join(control, "src", "main.ts"))).toBe(true);
+      expect(readdirSync(cwd)).not.toContain(CONFIG_DIR);
+      expect(selected()).toEqual(selected(control));
+    } finally {
+      rmSync(control, { recursive: true, force: true });
+    }
+  });
+
+  test("a comment inside or above an untouched user task survives adding the managed tasks", () => {
+    touch("game.project", "[project]\n");
+    const userTask = [
+      "    // my lint task",
+      "    {",
+      '      "label": "lint", // run biome',
+      '      "type": "shell",',
+      '      "command": "bunx biome check"',
+      "    }",
+    ].join("\n");
+    write(".vscode/tasks.json", `{\n  "version": "2.0.0",\n  "tasks": [\n${userTask}\n  ]\n}\n`);
+
+    runInit({ cwd, force: true });
+
+    const text = read(".vscode/tasks.json");
+    expect(text).toContain(userTask);
+    const labels = (
+      parseJsoncObject(text, "tasks.json") as { tasks: Array<{ label: string }> }
+    ).tasks.map((task) => task.label);
+    expect(labels[0]).toBe("lint");
+    expect(labels.length).toBeGreaterThan(1);
+  });
+
+  test("a commented settings.json keeps its comment through the merge", () => {
+    touch("game.project", "[project]\n");
+    write(".vscode/settings.json", '{\n  // editor font\n  "editor.fontSize": 14\n}\n');
+
+    runInit({ cwd, force: true });
+
+    const text = read(".vscode/settings.json");
+    expect(text).toContain('  // editor font\n  "editor.fontSize": 14');
+    expect(parseJsoncObject(text, "settings.json")["Lua.workspace.ignoreDir"]).toEqual(["src"]);
+  });
+});
+
 // Quoted from `git show v0.36.0:packages/cli/src/init.ts` — the gitignore globs
 // at `:50`-`:57`, the Biome includes at `:124` and `:130`-`:131`, and
 // `Lua.workspace.ignoreDir` at `:180`. It is a snapshot of a released tag, so a
@@ -2845,7 +3143,7 @@ const V0_36_MANAGED_ENTRIES = {
 
 describe("managed scaffold rules derived from tsconfig include", () => {
   function readJson(rel: string): Record<string, unknown> {
-    return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+    return parseJsoncObject(readFileSync(path.join(cwd, rel), "utf8"), rel);
   }
 
   function seed(rel: string, contents: string): void {

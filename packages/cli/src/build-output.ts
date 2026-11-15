@@ -112,17 +112,23 @@ function throwIfEditorHidden(outDir: string, defignoreLines: readonly string[]):
   );
 }
 
+/** A file's text, or undefined when it cannot be read: the reader TypeScript's config parser takes. */
+export function readTextFile(filePath: string): string | undefined {
+  try {
+    return readFileSync(filePath, "utf8");
+  } catch {
+    return undefined;
+  }
+}
+
 export function readBuildConfig(cwd: string): BuildConfig {
   const tsconfigPath = path.join(cwd, "tsconfig.json");
-  let raw: string;
-  try {
-    raw = readFileSync(tsconfigPath, "utf8");
-  } catch {
+  if (readTextFile(tsconfigPath) === undefined) {
     throw new Error(
       `defold-typescript build: no tsconfig.json at ${cwd}; run 'defold-typescript init' first.`,
     );
   }
-  return validatedBuildConfig(cwd, parseBuildConfig(raw));
+  return validatedBuildConfig(cwd, parseBuildConfig(tsconfigPath, readTextFile));
 }
 
 /**
@@ -132,7 +138,7 @@ export function readBuildConfig(cwd: string): BuildConfig {
 export function readBuildConfigIfPresent(cwd: string): BuildConfig | undefined {
   let config: TsconfigBuildConfig;
   try {
-    config = parseBuildConfig(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
+    config = parseBuildConfig(path.join(cwd, "tsconfig.json"), readTextFile);
   } catch {
     return undefined;
   }

@@ -17,6 +17,7 @@ import type { SelectedApiSurface } from "./api-surface";
 import { readCliVersion } from "./cli-version";
 import { ContainedPathError } from "./contained-fs";
 import { ensureExtensionTypesReference } from "./extension-materialize";
+import { parseJsoncObject } from "./jsonc-file";
 import {
   ensureGitignoreLine,
   ensureMaterializedReference,
@@ -485,6 +486,34 @@ describe("ensureMaterializedReference", () => {
     expect(tsconfig.compilerOptions.types).toEqual([surfaceDir("defold-1.12.4")]);
     expect(tsconfig.compilerOptions.types).not.toContain("@defold-typescript/types");
     expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
+  });
+
+  test("a root tsconfig with a comment and extends keeps both", () => {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      [
+        "// project root",
+        "{",
+        '  "extends": "./base.json",',
+        '  "compilerOptions": {',
+        '    "types": ["@defold-typescript/types"] // the engine',
+        "  },",
+        "}",
+        "",
+      ].join("\n"),
+    );
+
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
+
+    const text = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
+    expect(text.startsWith("// project root\n{\n")).toBe(true);
+    expect(text).toContain(`"types": ["${surfaceDir("defold-1.12.4")}"], // the engine\n`);
+    const own = parseJsoncObject(text, "tsconfig.json") as {
+      extends: string;
+      compilerOptions: { types: string[] };
+    };
+    expect(own.extends).toBe("./base.json");
+    expect(own.compilerOptions.types).toEqual([surfaceDir("defold-1.12.4")]);
   });
 
   test("adds .defold-types/ to .gitignore", () => {

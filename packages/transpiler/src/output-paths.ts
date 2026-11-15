@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { readEffectiveTsconfig } from "./tsconfig-effective";
 
 export type ScriptKind = "script" | "gui-script" | "render-script" | "editor-script";
 
@@ -7,13 +8,6 @@ export type SourceOutputKind = ScriptKind | "module";
 export interface BuildConfig {
   readonly outDir: string | undefined;
   readonly include: string[];
-}
-
-interface TsConfig {
-  compilerOptions?: {
-    outDir?: string;
-  };
-  include?: string[];
 }
 
 export const DEFAULT_INCLUDE = ["src/**/*.ts"];
@@ -26,16 +20,21 @@ export const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
 };
 
 // The `tsconfig.json` reading the output-path math depends on, separated from
-// how the text was obtained: the CLI reads it off disk, the editor plugin gets
-// it from the language-service host, and both must derive the same names from
-// the same text or the plugin predicts a resource the build never writes.
-// A backslash in `outDir` separates folders on every OS, as the debug launcher
-// reads it, so every output and runtime path is spelled with forward slashes.
-export function parseBuildConfig(raw: string): BuildConfig {
-  const tsconfig = JSON.parse(raw) as TsConfig;
-  const outDir = tsconfig.compilerOptions?.outDir?.replace(/\\/g, "/");
-  const include = tsconfig.include?.length ? tsconfig.include : DEFAULT_INCLUDE;
-  return { outDir, include };
+// how the files are obtained: the CLI reads them off disk, the editor plugin
+// gets them from the language-service host, and both must derive the same names
+// from the same text or the plugin predicts a resource the build never writes.
+// TypeScript's own parser reads it, so comments count as comments and an
+// `extends` base's `outDir` and `include` count. A backslash in `outDir`
+// separates folders on every OS, as the debug launcher reads it, so every output
+// and runtime path is spelled with forward slashes, and `include` is
+// project-relative, with `${configDir}` already dropped.
+export function parseBuildConfig(
+  configPath: string,
+  readFile: (filePath: string) => string | undefined,
+): BuildConfig {
+  const effective = readEffectiveTsconfig(configPath, readFile);
+  const include = effective.includeRelative?.length ? effective.includeRelative : DEFAULT_INCLUDE;
+  return { outDir: effective.outDir, include };
 }
 
 export function stripIncludeBase(pattern: string): string {
