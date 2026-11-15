@@ -402,7 +402,16 @@ class JsoncEditor {
     } else if (ownComma) {
       edits.push({ start, end: afterComma, content: "" });
     } else if (previousComma !== undefined) {
-      edits.push({ start: previousComma, end: child.offset + child.length, content: "" });
+      const entryEnd = commentEnd ?? child.offset + child.length;
+      // Deleting the comment between the comma and the entry would take a
+      // retained entry's comment with it, and a closing bracket joined to a
+      // `//` comment would be commented out.
+      if (this.hasComment(previousComma + 1, child.offset)) {
+        edits.push({ start: previousComma, end: previousComma + 1, content: "" });
+        edits.push({ start: child.offset, end: entryEnd, content: "" });
+      } else {
+        edits.push({ start: previousComma, end: entryEnd, content: "" });
+      }
     } else {
       edits.push({ start, end: child.offset + child.length, content: "" });
     }
