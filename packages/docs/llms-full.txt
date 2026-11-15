@@ -397,7 +397,7 @@ It rebuilds Lua when files under `src/` change; run the game from the Defold edi
 - **`defold-typescript:watch`** — `bunx @defold-typescript/cli watch`. The watch loop above, as a task.
 - **`defold-typescript:resolve`** — `bunx @defold-typescript/cli resolve`. Materializes the native-extension and vendored-library type surfaces from `game.project` dependencies. `watch` runs this automatically on every `game.project` change, so it is mainly a one-off after adding a dependency.
 - **`defold-typescript:scene-types`** — `bunx @defold-typescript/cli scene-types`. Regenerates the [scene-address declaration](./scene-types.md); `watch` does this on every scene change, so it is mainly a one-off without `watch` running.
-- **`defold-typescript:typecheck`** — `bunx --package typescript tsc --noEmit`. Type-checks the sources with the project's pinned TypeScript and writes no file, whatever `noEmit` your `tsconfig.json` sets.
+- **`defold-typescript:typecheck`** — `bunx --package typescript tsc --noEmit`, then `bunx --package typescript tsc --noEmit -p src/test/tsconfig.json`. Type-checks the game, then [`src/test/`](./testing.md#a-test-in-srctest), with the project's pinned TypeScript, and writes no file, whatever `noEmit` your `tsconfig.json` sets. It stops at the first command that fails, and a missing `src/test/tsconfig.json` fails it until `upgrade` writes the file back.
 - **`defold-typescript:bob-run`** — `bunx @defold-typescript/cli build`, then `bunx @defold-typescript/cli bob run`. Builds the TypeScript, then downloads the Defold target, makes a debug build and launches the game with [`bob run`](./bob.md); needs Java.
 - **`defold-typescript:sync-target`** — `bunx @defold-typescript/cli set-target --detected`. Pins `defold-target` to the installed Defold editor's version (see [`--detected`](./set-target.md#--detected)).
 - **`defold-typescript:setup-debug`** — `bunx @defold-typescript/cli setup-debug`. Wires the lldebugger `game.project` dependency and entry-script bootstrap (see [Debugging](debugging.md)).
@@ -12325,9 +12325,11 @@ bunx tsc --noEmit -p src/test/tsconfig.json
 ```
 
 `bun test` from the project root finds the tests in both places. The first
-`tsc` checks the game and every test next to its module (the scaffolded
-`defold-typescript:typecheck` [mise task](./editor-setup.md#opinionated-misetoml)
-runs it); the second checks `src/test/`. Run all three before a commit and in CI.
+`tsc` checks the game and every test next to its module; the second checks
+`src/test/`. The scaffolded `defold-typescript:typecheck`
+[mise task](./editor-setup.md#opinionated-misetoml) runs both `tsc` commands in
+that order and stops at the first that fails, so an error in the game hides any
+error in `src/test/` until you fix it. Run all three before a commit and in CI.
 
 #### Stub the engine
 

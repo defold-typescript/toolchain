@@ -163,6 +163,30 @@ function run(cmd: string, args: string[], cwd: string): { code: number; output: 
   return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
 }
 
+// Runs the `defold-typescript:typecheck` task from the `mise.toml` the scaffold
+// wrote, one command at a time, stopping at the first failure the way mise does.
+// `bunx --package typescript` is swapped for the repo's installed bin so the run
+// never reaches the registry.
+function runTypecheckTask(cwd: string): { code: number; output: string } {
+  const mise = Bun.TOML.parse(readFileSync(path.join(cwd, "mise.toml"), "utf8")) as {
+    tasks: Record<string, { run: string | readonly string[] }>;
+  };
+  const task = mise.tasks["defold-typescript:typecheck"];
+  expect(task).toBeDefined();
+  const commands = typeof task?.run === "string" ? [task.run] : (task?.run ?? []);
+  expect(commands.length).toBeGreaterThan(0);
+  let result = { code: 0, output: "" };
+  for (const command of commands) {
+    const [bunx, packageFlag, pkg, bin = "", ...args] = command.trim().split(/\s+/);
+    expect([bunx, packageFlag, pkg]).toEqual(["bunx", "--package", "typescript"]);
+    result = run(bin, args, cwd);
+    if (result.code !== 0) {
+      break;
+    }
+  }
+  return result;
+}
+
 describe("scaffolded project is clean out of the box", () => {
   test("tsc --noEmit passes on a freshly scaffolded project", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-tsc-"));
@@ -351,6 +375,33 @@ describe("scaffolded project is clean out of the box", () => {
         expect(output).toContain("broken.test.ts");
         expect(output).toContain("TS2322");
         expect(output).not.toContain("score.test.ts");
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "the scaffolded typecheck task fails on a type error under src/test/ and on a missing test config",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-typecheck-task-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+        const helper = path.join(cwd, "src", "test", "helper.ts");
+        writeFileSync(helper, 'export const wrong: number = "x";\n');
+
+        const illTyped = runTypecheckTask(cwd);
+        expect(illTyped.code).not.toBe(0);
+        expect(illTyped.output.replaceAll("\\", "/")).toContain("src/test/helper.ts");
+
+        rmSync(helper);
+        rmSync(path.join(cwd, TEST_TSCONFIG));
+        const missingConfig = runTypecheckTask(cwd);
+        expect(missingConfig.code).not.toBe(0);
+        expect(missingConfig.output.replaceAll("\\", "/")).toContain(TEST_TSCONFIG);
       } finally {
         rmSync(cwd, { recursive: true, force: true });
       }

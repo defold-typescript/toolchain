@@ -399,6 +399,24 @@ describe("mergeMiseToml (keys added inside a managed block)", () => {
     expect(block).toContain('depends = ["setup"]');
   });
 
+  test("a typecheck task that runs only the root check gains the src/test/ check and keeps its own keys", () => {
+    const TYPECHECK = '[tasks."defold-typescript:typecheck"]';
+    const lines = MISE_TASKS_TOML.split("\n");
+    const header = lines.indexOf(TYPECHECK);
+    const runLine = lines.findIndex((line, i) => i > header && line.startsWith("run = "));
+    expect(header).toBeGreaterThanOrEqual(0);
+    expect(runLine).toBeGreaterThan(header);
+    lines.splice(runLine, 1, 'run = "bunx --package typescript tsc --noEmit"', 'alias = "tc"');
+
+    const merged = mergeMiseToml(lines.join("\n"));
+    const tasks = (Bun.TOML.parse(merged) as { tasks: Record<string, unknown> }).tasks;
+
+    expect(tasks["defold-typescript:typecheck"]).toEqual({
+      ...managedTasks()["defold-typescript:typecheck"],
+      alias: "tc",
+    });
+  });
+
   test("is idempotent with carried keys: a second merge changes nothing", () => {
     const once = mergeMiseToml(onDisk(BUILD, 'alias = "b"'));
     expect(mergeMiseToml(once)).toBe(once);
