@@ -156,8 +156,8 @@
     "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --present label.set_text --absent label.get_layout_objects"
   },
   "dependencies": {
-    "lua-types": "^2.13.1",
-    "yaml": "^2.9.0"
+    "lua-types": "^2.14.1",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@typescript-to-lua/language-extensions": "1.19.0",
