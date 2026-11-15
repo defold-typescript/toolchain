@@ -9,7 +9,9 @@ const MANAGED_MARKER = "# managed by @defold-typescript";
 // inside an installed project bunx resolves the `@defold-typescript/cli` pinned
 // in `SCAFFOLD_DEV_DEPS`, so the task runs the version locked alongside
 // `@defold-typescript/types`. `:typecheck` runs the scaffolded `typescript`
-// through `--package`, so bunx never fetches npm's unrelated `tsc` package.
+// through `--package`, so bunx never fetches npm's unrelated `tsc` package; it
+// checks the root program, then the `src/test/` program, and a missing test
+// config fails it rather than being skipped.
 // `:upgrade` is the deliberate `@latest` pull; it calls the `upgrade` verb
 // rather than spelling the re-scaffold-and-reinstall recipe out longhand, so
 // the recipe lives in exactly one place.
@@ -51,8 +53,8 @@ run = "bunx @defold-typescript/cli scene-types"
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:typecheck"]
-description = "Type-check the TypeScript sources with the project's TypeScript, writing no file"
-run = "bunx --package typescript tsc --noEmit"
+description = "Type-check the game, then src/test/, with the project's TypeScript, writing no file"
+run = ["bunx --package typescript tsc --noEmit", "bunx --package typescript tsc --noEmit -p src/test/tsconfig.json"]
 
 ${MANAGED_MARKER}
 [tasks."defold-typescript:bob-run"]
