@@ -75,9 +75,12 @@ root `include` pattern rebased onto the project folder, and its `exclude` restat
 every other root entry the same way, since inheriting the root's `exclude` would leave
 out its own folder. It sets `outDir: null` so a root `outDir` does not break it, and
 `plugins: []` so the editor plugin reports no build diagnostics on code `build` never
-compiles. `src/test/env.d.ts` adds Bun's types (`bun:test`, `node:*`, `Bun`) to that
-program only, so they never reach the code `build` compiles. Type-check the tests
-with `tsc --noEmit -p src/test/tsconfig.json`. `init` never overwrites either file, and
+compiles. `src/test/env.d.ts` references `bun-types`, the package `init` lists at an
+exact version, which adds Bun's types (`bun:test`, `node:*`, `Bun`) to that program
+only, so they never reach the code `build` compiles. Type-check the tests with
+`tsc --noEmit -p src/test/tsconfig.json`. A test next to its module instead starts with
+`/// <reference types="bun-types/test" />`, which adds `bun:test` alone, so the root
+`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). `init` never overwrites either file, and
 leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
 change to the root `include` or `exclude` needs the same change in
 `src/test/tsconfig.json`.

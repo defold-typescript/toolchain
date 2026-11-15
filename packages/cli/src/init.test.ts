@@ -27,6 +27,7 @@ import {
   BIOME_JSON_CONTENT,
   BIOME_SCHEMA,
   BIOME_VERSION,
+  BUN_TYPES_VERSION,
   biomeIncludesFromInclude,
   LUA_TYPES_SPEC,
   resolveStarterTarget,
@@ -232,7 +233,7 @@ describe("runInit (add-TS mode)", () => {
       "@defold-typescript/tstl-plugin": TYPES_SPEC,
       "@defold-typescript/docs": TYPES_SPEC,
       "@biomejs/biome": BIOME_VERSION,
-      "@types/bun": "latest",
+      "bun-types": BUN_TYPES_VERSION,
       "lua-types": LUA_TYPES_SPEC,
       typescript: TYPESCRIPT_SPEC,
     });
@@ -251,13 +252,33 @@ describe("runInit (add-TS mode)", () => {
     expect(pkg.devDependencies["@defold-typescript/transpiler"]).toBeUndefined();
   });
 
-  test("adds @types/bun so the .vscode/defold-debug.ts launcher's node/Bun imports resolve", () => {
+  test("scaffold's bun-types pin is exact and stays in lockstep with the repo's own", () => {
+    const rootPkg = JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")) as {
+      devDependencies: Record<string, string>;
+    };
+    expect(SCAFFOLD_DEV_DEPS["bun-types"]).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(SCAFFOLD_DEV_DEPS["bun-types"]).toBe(rootPkg.devDependencies["bun-types"]);
+    expect(SCAFFOLD_DEV_DEPS).not.toHaveProperty("@types/bun");
+  });
+
+  test("init and --force keep a project's own bun-types and @types/bun entries", () => {
     touch("game.project", "[project]\n");
+    const original = {
+      name: "user-project",
+      version: "1.2.3",
+      devDependencies: { "bun-types": "1.3.0", "@types/bun": "latest" },
+    };
+    touch("package.json", `${JSON.stringify(original, null, 2)}\n`);
 
     runInit({ cwd });
+    const plain = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(plain.devDependencies["bun-types"]).toBe("1.3.0");
+    expect(plain.devDependencies["@types/bun"]).toBe("latest");
 
-    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
-    expect(pkg.devDependencies["@types/bun"]).toBe("latest");
+    runInit({ cwd, force: true });
+    const forced = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+    expect(forced.devDependencies["bun-types"]).toBe("1.3.0");
+    expect(forced.devDependencies["@types/bun"]).toBe("latest");
   });
 
   test("scaffold declares lua-types so the editor's `types` entrypoint surfaces the Lua stdlib globals", () => {
@@ -1038,7 +1059,7 @@ describe("runInit test config", () => {
       exclude: ["../../game/wip"],
     });
     expect(readRootExclude()).toEqual(["game/wip", "src/test"]);
-    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
+    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun-types" />\n');
   });
 
   test.each(["src/test", "./src/test", "src/test/", "./src/test/", "src\\test"])(
@@ -1100,7 +1121,7 @@ describe("runInit test config", () => {
 
     runInit({ cwd, force: true });
 
-    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
+    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun-types" />\n');
     expect(JSON.parse(readCwd(TEST_TSCONFIG)).include).toEqual([
       "**/*.ts",
       "../../src",

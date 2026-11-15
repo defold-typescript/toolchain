@@ -23,3 +23,9 @@ export function namesTestFolder(entry: string): boolean {
   const bare = posix.replace(/^(\.\/)+/, "").replace(/\/+$/, "");
   return bare === TEST_FOLDER_REL;
 }
+
+/** The package that types Bun for the project's tests and the debug launcher. */
+export const BUN_TYPES_PACKAGE = "bun-types";
+
+/** The first line of a `bun:test` file next to its module: `bun:test` alone, no Bun globals. */
+export const COLOCATED_TEST_REFERENCE = `/// <reference types="${BUN_TYPES_PACKAGE}/test" />`;
