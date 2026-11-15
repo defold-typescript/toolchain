@@ -11,3 +11,15 @@ export function isTestFolderSource(rel: string): boolean {
   const bare = posix.startsWith("./") ? posix.slice(2) : posix;
   return bare.startsWith(`${TEST_FOLDER_REL}/`);
 }
+
+/**
+ * Whether a `tsconfig.json` `exclude` entry names the `src/test` folder itself,
+ * in any path spelling: backslashes count as `/`, and leading `./` and trailing
+ * `/` are ignored. A glob such as `src/test/**` or a subfolder entry is not the
+ * folder name.
+ */
+export function namesTestFolder(entry: string): boolean {
+  const posix = entry.replaceAll("\\", "/");
+  const bare = posix.replace(/^(\.\/)+/, "").replace(/\/+$/, "");
+  return bare === TEST_FOLDER_REL;
+}

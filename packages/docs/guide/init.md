@@ -66,12 +66,13 @@ writes.
 Both modes also write `src/test/tsconfig.json` and `src/test/env.d.ts`, for tests and
 helpers that need Bun's runtime, **when `src/test/tsconfig.json` is absent**;
 [`upgrade`](./upgrade.md) adds them to a project that has none. Writing them also adds
-`src/test` to the root `exclude`, so the game program never takes in the folder, and
-[`build`](./build.md#what-it-does) skips it. `src/test/tsconfig.json` extends the root
-config and names no `types` of its own, so a test sees the same Defold types, `.d.ts`
-declarations and pinned surface as the game. It includes `src/test/` plus every root
-`include` pattern rebased onto the project folder, and its `exclude` restates the
-root's other entries the same way, since inheriting the root's `exclude` would leave
+`src/test` to the root `exclude`, unless an entry already names that folder
+(`./src/test` and `src/test/` count), so the game program never takes in the folder,
+and [`build`](./build.md#what-it-does) skips it. `src/test/tsconfig.json` extends the
+root config and names no `types` of its own, so a test sees the same Defold types,
+`.d.ts` declarations and pinned surface as the game. It includes `src/test/` plus every
+root `include` pattern rebased onto the project folder, and its `exclude` restates
+every other root entry the same way, since inheriting the root's `exclude` would leave
 out its own folder. It sets `outDir: null` so a root `outDir` does not break it, and
 `plugins: []` so the editor plugin reports no build diagnostics on code `build` never
 compiles. `src/test/env.d.ts` adds Bun's types (`bun:test`, `node:*`, `Bun`) to that
