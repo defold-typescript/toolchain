@@ -1097,6 +1097,20 @@ describe("runInit test config", () => {
     expectSkippedFor([reaching], reaching);
   });
 
+  test.each(["[games]", "{games,demo}"])(
+    "a parent-relative root include beneath a %s folder gets no test pair",
+    (folder) => {
+      const outer = cwd;
+      cwd = path.join(outer, folder, "demo");
+      mkdirSync(cwd, { recursive: true });
+      try {
+        expectSkippedFor(["../**/*.ts"], "../**/*.ts");
+      } finally {
+        cwd = outer;
+      }
+    },
+  );
+
   test("safe folder-only and absolute includes still get the test pair", () => {
     touch("game.project", "[project]\n");
     const absoluteSrc = absoluteEntry("src");
