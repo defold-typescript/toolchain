@@ -110,6 +110,8 @@ describe("runInit (add-TS mode)", () => {
         "mise.toml",
         "package.json",
         "src/main.ts",
+        "test/env.d.ts",
+        "test/tsconfig.json",
         "tsconfig.json",
       ].sort(),
     );
@@ -156,6 +158,8 @@ describe("runInit (add-TS mode)", () => {
         "mise.toml",
         "package.json",
         "src/main.ts",
+        "test/env.d.ts",
+        "test/tsconfig.json",
         "tsconfig.json",
       ].sort(),
     );
@@ -999,12 +1003,76 @@ describe("runInit (agent contract)", () => {
   });
 });
 
+describe("runInit test config", () => {
+  const TEST_TSCONFIG = path.join("test", "tsconfig.json");
+  const TEST_ENV = path.join("test", "env.d.ts");
+
+  function readCwd(rel: string): string {
+    return readFileSync(path.join(cwd, rel), "utf8");
+  }
+
+  test("an existing project's test include rebases its own include", () => {
+    touch("game.project", "[project]\n");
+    touch("tsconfig.json", `${JSON.stringify({ include: ["game/**/*.ts"] })}\n`);
+
+    runInit({ cwd, force: true });
+
+    expect(JSON.parse(readCwd(TEST_TSCONFIG))).toEqual({
+      extends: "../tsconfig.json",
+      compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true },
+      include: ["**/*.ts", "../game/**/*.ts", "../.defold-types/scene-addresses.d.ts"],
+    });
+    expect(readCwd(TEST_ENV)).toBe('/// <reference types="bun" />\n');
+  });
+
+  test("init --force never overwrites the test pair and adds it when missing", () => {
+    touch("game.project", "[project]\n");
+    runInit({ cwd });
+    const customConfig = '{ "extends": "../tsconfig.json", "include": ["custom/**/*.ts"] }\n';
+    const customEnv = "// custom test environment\n";
+    writeFileSync(path.join(cwd, TEST_TSCONFIG), customConfig);
+    writeFileSync(path.join(cwd, TEST_ENV), customEnv);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readCwd(TEST_TSCONFIG)).toBe(customConfig);
+    expect(readCwd(TEST_ENV)).toBe(customEnv);
+    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
+      expect(result.written).not.toContain(target);
+      expect(result.operations.find((op) => op.target === target)?.status).toBe("skipped");
+    }
+
+    rmSync(path.join(cwd, "test"), { recursive: true, force: true });
+    runInit({ cwd, force: true });
+
+    expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(true);
+    expect(existsSync(path.join(cwd, TEST_ENV))).toBe(true);
+  });
+
+  test("a root include that reaches test/ gets no test pair", () => {
+    touch("game.project", "[project]\n");
+    touch("tsconfig.json", `${JSON.stringify({ include: ["**/*.ts"] })}\n`);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(existsSync(path.join(cwd, TEST_TSCONFIG))).toBe(false);
+    expect(existsSync(path.join(cwd, TEST_ENV))).toBe(false);
+    for (const target of ["test/tsconfig.json", "test/env.d.ts"]) {
+      const operation = result.operations.find((op) => op.target === target);
+      expect(operation?.status).toBe("skipped");
+      expect(operation?.detail).toContain("**/*.ts");
+    }
+  });
+});
+
 describe("runInit (new-project mode)", () => {
   const NEW_PROJECT_FILES = [
     "game.project",
     "main/main.collection",
     "input/game.input_binding",
     "src/main.ts",
+    "test/env.d.ts",
+    "test/tsconfig.json",
     "tsconfig.json",
     "package.json",
     ".gitignore",

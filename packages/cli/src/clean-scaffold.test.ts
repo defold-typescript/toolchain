@@ -1,13 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runInit } from "./init";
@@ -15,11 +18,71 @@ import { runInit } from "./init";
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
 const BIN_DIR = path.join(REPO_ROOT, "node_modules", ".bin");
+const TSC_TIMEOUT_MS = 120_000;
 
 function linkTypes(cwd: string): void {
   const scope = path.join(cwd, "node_modules", "@defold-typescript");
   mkdirSync(scope, { recursive: true });
   symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
+}
+
+// Linking the real path lets `bun-types` resolve as `@types/bun`'s own
+// dependency, the way an isolated install lays it out.
+function linkBunTypes(cwd: string): void {
+  const typesBun = path.dirname(
+    createRequire(path.join(REPO_ROOT, "package.json")).resolve("@types/bun/package.json"),
+  );
+  const scope = path.join(cwd, "node_modules", "@types");
+  mkdirSync(scope, { recursive: true });
+  symlinkSync(realpathSync(typesBun), path.join(scope, "bun"), "dir");
+}
+
+function writeBunTestFixtures(cwd: string): void {
+  // The starter imports `@defold-typescript/types`, which would hand the test
+  // program the Defold globals whatever its `types` says; without it they come
+  // only through the root config.
+  rmSync(path.join(cwd, "src", "main.ts"));
+  writeFileSync(
+    path.join(cwd, "src", "messages.d.ts"),
+    "declare global {\n  type WaveSize = number;\n}\nexport {};\n",
+  );
+  writeFileSync(
+    path.join(cwd, "src", "score.ts"),
+    [
+      "export function clamp(n: WaveSize): number {",
+      '  msg.post(".", "score", { n });',
+      "  return math.max(0, math.min(100, n));",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  mkdirSync(path.join(cwd, "test"), { recursive: true });
+  writeFileSync(
+    path.join(cwd, "test", "score.test.ts"),
+    [
+      'import { readFileSync } from "node:fs";',
+      'import { expect, test } from "bun:test";',
+      'import { clamp } from "../src/score";',
+      "",
+      'test("clamp caps the score", () => {',
+      '  expect(typeof readFileSync).toBe("function");',
+      "  expect(clamp(150)).toBe(100);",
+      "});",
+      "",
+    ].join("\n"),
+  );
+}
+
+function editRootCompilerOptions(
+  cwd: string,
+  edit: (compilerOptions: Record<string, unknown>) => void,
+): void {
+  const file = path.join(cwd, "tsconfig.json");
+  const config = JSON.parse(readFileSync(file, "utf8")) as {
+    compilerOptions: Record<string, unknown>;
+  };
+  edit(config.compilerOptions);
+  writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
 }
 
 function run(cmd: string, args: string[], cwd: string): { code: number; output: string } {
@@ -125,6 +188,97 @@ describe("scaffolded project is clean out of the box", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  test(
+    "a Bun test importing a src module type-checks under the scaffolded test config",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-test-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkBunTypes(cwd);
+        writeBunTestFixtures(cwd);
+
+        const plain = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        if (plain.code !== 0) {
+          throw new Error(`tsc reported errors on the scaffolded test config:\n${plain.output}`);
+        }
+        expect(plain.code).toBe(0);
+
+        editRootCompilerOptions(cwd, (options) => {
+          options.outDir = "out";
+        });
+        const withOutDir = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        if (withOutDir.code !== 0) {
+          throw new Error(
+            `tsc reported errors on the test config under a root outDir:\n${withOutDir.output}`,
+          );
+        }
+        expect(withOutDir.code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "the test config follows a root repointed at a pinned surface",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-pinned-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkBunTypes(cwd);
+        writeBunTestFixtures(cwd);
+        const standIn = path.join(cwd, ".defold-types", "stand-in");
+        mkdirSync(standIn, { recursive: true });
+        writeFileSync(
+          path.join(standIn, "index.d.ts"),
+          '/// <reference types="@defold-typescript/types" />\ndeclare const pinnedSurfaceOnly: number;\n',
+        );
+        editRootCompilerOptions(cwd, (options) => {
+          options.typeRoots = [".defold-types"];
+          options.types = ["stand-in"];
+        });
+        appendFileSync(
+          path.join(cwd, "src", "score.ts"),
+          "export const pinned = pinnedSurfaceOnly;\n",
+        );
+
+        const { code, output } = run("tsc", ["--noEmit", "-p", "test/tsconfig.json"], cwd);
+        if (code !== 0) {
+          throw new Error(
+            `tsc reported errors on the test config over a pinned surface:\n${output}`,
+          );
+        }
+        expect(code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "the root program never sees Bun's types",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-root-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkBunTypes(cwd);
+
+        const { code, output } = run("tsc", ["-p", "tsconfig.json", "--listFilesOnly"], cwd);
+        expect(code).toBe(0);
+        expect(output).toContain("src/main.ts");
+        expect(output).not.toContain("bun-types");
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
 
   test("biome check passes on the whole scaffold, its own biome.json included", () => {
     const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-biome-"));

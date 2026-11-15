@@ -13,6 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **`init` writes a Bun test config** ([init](./init.md#two-modes)).
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
 > - **Walls clear `outDir`** ([wall](./wall.md#what-a-wall-is)).
@@ -20,6 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Added
 
+- **`init` and `upgrade` write a test config for Bun tests:** `test/tsconfig.json` extends the root config and `test/env.d.ts` adds Bun's types, so a `bun:test` file under `test/` that imports game code type-checks with `tsc --noEmit -p test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`, while Bun's types stay out of the game program. Neither file is ever overwritten, and neither is written when a root `include` pattern reaches `test/` ([Init](./init.md#two-modes)).
 - **`build --json` reports which outputs require the TypeScript runtime helper bundle:** a successful result always carries `lualibRequiredBy`, the sorted output paths whose Lua requires `lualib_bundle`, including files this run left unchanged, so a project that avoids the bundle can check it without scanning its output folder ([Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
 ### Improved
