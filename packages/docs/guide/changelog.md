@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **Bun tests sit next to their modules or in `src/test/`**, which `upgrade` scaffolds and `defold-typescript:typecheck` checks, and stay out of the build ([Test with Bun](./testing.md)).
 > - **`build --json` adds `lualibRequiredBy`**, and **agents check `.gui` edits** ([runbooks](./agent-runbooks.md), [build](./build.md#compile-in-the-editor)).
 > - **`init` and `upgrade` keep a `tsconfig.json`'s comments and `extends`** ([init](./init.md#two-modes)).
-> - **Walls clear `outDir`, the starter scene parses, and the debug launcher type-checks** ([wall](./wall.md#what-a-wall-is), [debugging](./debugging.md#re-running-it)).
+> - **Walls clear `outDir`, the starter scene parses, the debug launcher type-checks, and TypeScriptToLua 1.37.2 fixes several Lua output bugs** ([wall](./wall.md#what-a-wall-is), [debugging](./debugging.md#re-running-it)).
 
 ### Breaking
 
@@ -42,6 +42,8 @@ What changed in each published `defold-typescript` toolchain release.
 - **The `.vscode/defold-debug.ts` launcher reported `Cannot find name 'node:fs'` under the project's TypeScript 6:** it now references `bun-types` itself, and `upgrade` refreshes an unedited launcher ([Debugging](./debugging.md#re-running-it)).
 - **A walled directory whose source imports a module outside it reported TS6059 in the editor and in `wall --check` when the root `tsconfig.json` sets `outDir`.** Each wall now sets `outDir` to `null`; run `wall <dir>` once for any walled directory to rewrite existing walls ([Wall](./wall.md#what-a-wall-is)).
 - **A fresh project's `main/main.collection` could not be parsed:** `build` printed three warnings and skipped the unreachable-address check, and `scene-types` left `/main` out of `.defold-types/scene-addresses.d.ts`. A scene file with several fields on one line now reads the way Defold reads it ([Scene types](./scene-types.md#what-it-writes)).
+- **Several Lua output bugs from the TypeScriptToLua compiler:** the transpiler now requires TypeScriptToLua 1.37.2, which fixes `-(-x)` printing as a Lua comment, `break` and `continue` inside a `try` within a loop, and `@noSelf` on interfaces with call signatures.
+- **`bun audit` could flag the CLI's `hono` and `@hono/node-server` dependencies:** the CLI now requires `hono` 4.13.18 and `@hono/node-server` 2.1.8 or newer, which close the published advisories.
 
 ## v0.65.0
 

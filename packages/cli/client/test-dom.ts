@@ -39,6 +39,8 @@ export function registerDom(): void {
   for (const [name, size] of [
     ["offsetWidth", VIEWPORT.width],
     ["offsetHeight", VIEWPORT.height],
+    ["clientWidth", VIEWPORT.width],
+    ["clientHeight", VIEWPORT.height],
   ] as const) {
     Object.defineProperty(globalThis.HTMLElement.prototype, name, {
       configurable: true,

@@ -573,7 +573,7 @@ function typesVersionSpec(): string {
 // resolvable copy even when the transitive one is absent or unhoisted. Kept in
 // lockstep with the range `packages/types` requires — `init.test.ts`'s drift
 // guard fails loud if the two diverge.
-export const LUA_TYPES_SPEC = "^2.13.1";
+export const LUA_TYPES_SPEC = "^2.14.1";
 
 // The exact `typescript` pin `typescript-to-lua`'s peer and `packages/types`
 // require. An unbounded range lets `bun install` resolve the TS7 native port,
