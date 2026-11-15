@@ -7,7 +7,7 @@
  * a gate to hold them to the exports of the library source. A tutorial's `ts step` fences build
  * one project per lesson, and the last one is held to the surface the library's entry points ship.
  */
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -61,13 +61,10 @@ export function isBunTestFence(rel: string): boolean {
   return rel.endsWith(".test.ts");
 }
 
-// `bun:test` is an ambient module of `bun-types`, which `@types/bun` depends on. Only that one
-// file joins a fence program: the rest of `bun-types` declares Node globals no game has.
+// `bun:test` is an ambient module of `bun-types`, a direct devDependency of the repo root. Only
+// that one file joins a fence program: the rest of `bun-types` declares Node globals no game has.
 function bunTestDeclarations(): string {
-  const typesBun = createRequire(path.join(REPO_ROOT, "package.json")).resolve(
-    "@types/bun/package.json",
-  );
-  return createRequire(realpathSync(typesBun)).resolve("bun-types/test.d.ts");
+  return createRequire(path.join(REPO_ROOT, "package.json")).resolve("bun-types/test.d.ts");
 }
 
 // The info string's second token, as the docs site reads `original`: Shiki and

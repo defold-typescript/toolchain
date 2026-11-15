@@ -6,6 +6,7 @@ import {
   SCRIPT_SUFFIX_BY_KIND,
 } from "@defold-typescript/transpiler";
 import { NON_RESOURCE_ROOTS, NON_RESOURCE_SEGMENTS } from "./project-resource-paths";
+import { BUN_TYPES_PACKAGE } from "./test-folder";
 
 // One native extension whose build engine links platform runtime libraries the
 // Defold build server does not (yet) ship. `tracking` is the upstream note/URL
@@ -240,12 +241,16 @@ export function vscodeLaunchContent(config: BuildConfig) {
 // unit-tested logic stay in lockstep. It is a Bun script: `process.platform` for
 // the OS, `fetch` for the engine download, `Bun.spawn` with inherited stdio for
 // the run (the pipe Local Lua Debugger attaches over). No shell, no Git Bash.
+// Its reference line types those for an editor's inferred project, which under
+// TypeScript 6 loads no `@types` package on its own.
 function renderDebugLauncherBody(): string {
   const targets = JSON.stringify(PLATFORM_TARGETS, null, 2);
   const nonResourceRoots = JSON.stringify(NON_RESOURCE_ROOTS);
   const nonResourceSegments = JSON.stringify(NON_RESOURCE_SEGMENTS);
   const breakpointableSuffixes = JSON.stringify(BREAKPOINTABLE_SUFFIXES);
-  return `import {
+  return `/// <reference types="${BUN_TYPES_PACKAGE}" />
+
+import {
   chmodSync,
   copyFileSync,
   type Dirent,

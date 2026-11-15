@@ -14,10 +14,10 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: `build` skips everything under `src/test/`**, so game code there moves out ([build](./build.md#what-it-does)).
-> - **`init` scaffolds `src/test/`, and `build` skips test files** ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
+> - **`init` scaffolds `src/test/` and pins `bun-types`, and `build` skips test files**, which type-check beside their modules ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
-> - **Walls clear `outDir`, and the starter scene parses** ([wall](./wall.md#what-a-wall-is), [scene-types](./scene-types.md)).
+> - **Walls clear `outDir`, the starter scene parses, and the debug launcher type-checks** ([wall](./wall.md#what-a-wall-is), [scene-types](./scene-types.md), [debugging](./debugging.md#re-running-it)).
 
 ### Breaking
 
@@ -25,16 +25,18 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Added
 
-- **`init` and `upgrade` write a test config for tests that need Bun's runtime:** `src/test/tsconfig.json` extends the root config and `src/test/env.d.ts` adds Bun's types, so a `bun:test` file under `src/test/` that imports game code type-checks with `tsc --noEmit -p src/test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`. Writing them adds `src/test` to the root `exclude` unless an entry already names that folder in any spelling (`./src/test`, `src/test/`), so Bun's types stay out of the game program, and neither file is ever overwritten ([Init](./init.md#two-modes)).
-- **`build`, `watch` and the editor plugin skip the files `bun test` runs:** a `*.test.ts`, `*_test.ts`, `*.spec.ts` or `*_spec.ts` file under the source roots writes no Lua, joins no program the build type-checks, and gets no build diagnostic in the editor, so a test can sit next to the module it tests ([Build](./build.md#what-it-does)).
+- **`init` and `upgrade` write a test config for tests that need Bun's runtime:** `src/test/tsconfig.json` extends the root config and `src/test/env.d.ts` references `bun-types`, which both commands list at an exact version, so a `bun:test` file under `src/test/` that imports game code and uses `node:*` or `Bun` type-checks with `tsc --noEmit -p src/test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`. Writing them adds `src/test` to the root `exclude` unless an entry already names that folder in any spelling (`./src/test`, `src/test/`), so Bun's types stay out of the game program, and neither file is ever overwritten ([Init](./init.md#two-modes)).
+- **`build`, `watch` and the editor plugin skip the files `bun test` runs:** a `*.test.ts`, `*_test.ts`, `*.spec.ts` or `*_spec.ts` file under the source roots writes no Lua, joins no program the build type-checks, and gets no build diagnostic in the editor, so a test can sit next to the module it tests. Starting it with `/// <reference types="bun-types/test" />` lets the project's own `tsc --noEmit` check it without Bun's globals reaching game code; a test that needs `node:*` or `Bun` goes under `src/test/` ([Build](./build.md#what-it-does)).
 - **`build --json` reports which outputs require the TypeScript runtime helper bundle:** a successful result always carries `lualibRequiredBy`, the sorted output paths whose Lua requires `lualib_bundle`, including files this run left unchanged, so a project that avoids the bundle can check it without scanning its output folder ([Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
 ### Improved
 
 - **The agent contract and the package `llms.txt` tell an agent how to check Defold resource edits:** type-checking and a plain `build` do not fully validate or compile `.gui` or `.collection` files, so they point at `build --editor-compile --json` with the editor open. They also list `@defold-typescript/types/src/lifecycle.ts` for script callback payloads such as `InputAction` ([Install the agent contract](./init-agents.md), [Compile in the editor](./build.md#compile-in-the-editor)).
+- **A new project lists `bun-types` at an exact version in place of `@types/bun`,** and `upgrade` adds it beside an existing `@types/bun` entry, which stays ([Helper scripts](./helper-scripts.md)).
 
 ### Fixed
 
+- **The `.vscode/defold-debug.ts` launcher reported `Cannot find name 'node:fs'` under the project's TypeScript 6:** it now references `bun-types` itself, and `upgrade` refreshes an unedited launcher ([Debugging](./debugging.md#re-running-it)).
 - **A walled directory whose source imports a module outside it reported TS6059 in the editor and in `wall --check` when the root `tsconfig.json` sets `outDir`.** Each wall now sets `outDir` to `null`; run `wall <dir>` once for any walled directory to rewrite existing walls ([Wall](./wall.md#what-a-wall-is)).
 - **A fresh project's `main/main.collection` could not be parsed:** `build` printed three warnings and skipped the unreachable-address check, and `scene-types` left `/main` out of `.defold-types/scene-addresses.d.ts`. A scene file with several fields on one line now reads the way Defold reads it ([Scene types](./scene-types.md#what-it-writes)).
 
