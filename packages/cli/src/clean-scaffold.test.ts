@@ -13,7 +13,9 @@ import {
 import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
+import { DEBUG_LAUNCHER_REL, DEBUG_LAUNCHER_SOURCE } from "./debug-launcher";
 import { runInit } from "./init";
+import { COLOCATED_TEST_REFERENCE } from "./test-folder";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
@@ -27,15 +29,73 @@ function linkTypes(cwd: string): void {
   symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
 }
 
-// Linking the real path lets `bun-types` resolve as `@types/bun`'s own
-// dependency, the way an isolated install lays it out.
-function linkBunTypes(cwd: string): void {
-  const typesBun = path.dirname(
-    createRequire(path.join(REPO_ROOT, "package.json")).resolve("@types/bun/package.json"),
+// Links each scaffolded devDependency this repo resolves by its real path, the
+// way an isolated install lays out a direct dependency, so the package's own
+// dependencies (`@types/node` beside `bun-types`) resolve from where it sits. A
+// name the repo cannot resolve (`lua-types`) is left out; `linkTypes` covers
+// the `@defold-typescript/` scope.
+function linkScaffoldedDevDeps(cwd: string): void {
+  const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+    devDependencies?: Record<string, string>;
+  };
+  const repoRequire = createRequire(path.join(REPO_ROOT, "package.json"));
+  for (const name of Object.keys(pkg.devDependencies ?? {})) {
+    if (name.startsWith("@defold-typescript/")) continue;
+    let manifest: string;
+    try {
+      manifest = repoRequire.resolve(`${name}/package.json`);
+    } catch {
+      continue;
+    }
+    const target = path.join(cwd, "node_modules", ...name.split("/"));
+    mkdirSync(path.dirname(target), { recursive: true });
+    symlinkSync(realpathSync(path.dirname(manifest)), target, "dir");
+  }
+}
+
+// A plain module and a `bun:test` file next to it that carries the documented
+// header, so the root program type-checks it.
+function writeColocatedTest(cwd: string): void {
+  writeFileSync(
+    path.join(cwd, "src", "score.ts"),
+    ["export function clamp(n: number): number {", "  return n > 100 ? 100 : n;", "}", ""].join(
+      "\n",
+    ),
   );
-  const scope = path.join(cwd, "node_modules", "@types");
-  mkdirSync(scope, { recursive: true });
-  symlinkSync(realpathSync(typesBun), path.join(scope, "bun"), "dir");
+  writeFileSync(
+    path.join(cwd, "src", "score.test.ts"),
+    [
+      COLOCATED_TEST_REFERENCE,
+      'import { expect, test } from "bun:test";',
+      'import { clamp } from "./score";',
+      "",
+      'test("clamp caps the score", () => {',
+      "  expect(clamp(150)).toBe(100);",
+      "});",
+      "",
+    ].join("\n"),
+  );
+}
+
+// Rewinds a fresh scaffold to what v0.65.0 wrote: `@types/bun` in place of
+// `bun-types`, no `src/test/` pair, and no root `exclude`.
+function rewindToV065Shape(cwd: string): void {
+  const pkgPath = path.join(cwd, "package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+    devDependencies: Record<string, string>;
+  };
+  delete pkg.devDependencies["bun-types"];
+  pkg.devDependencies["@types/bun"] = "latest";
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  rmSync(path.join(cwd, "src", "test"), { recursive: true, force: true });
+  const configPath = path.join(cwd, "tsconfig.json");
+  const config = JSON.parse(readFileSync(configPath, "utf8")) as Record<string, unknown>;
+  delete config.exclude;
+  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+}
+
+function errorLines(output: string): string[] {
+  return output.split(/\r?\n/).filter((line) => /error TS\d+/.test(line));
 }
 
 function writeBunTestFixtures(cwd: string): void {
@@ -67,6 +127,7 @@ function writeBunTestFixtures(cwd: string): void {
       "",
       'test("clamp caps the score", () => {',
       '  expect(typeof readFileSync).toBe("function");',
+      '  expect(typeof Bun.version).toBe("string");',
       "  expect(clamp(150)).toBe(100);",
       "});",
       "",
@@ -204,7 +265,7 @@ describe("scaffolded project is clean out of the box", () => {
       try {
         runInit({ cwd });
         linkTypes(cwd);
-        linkBunTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
         writeBunTestFixtures(cwd);
 
         const plain = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
@@ -237,7 +298,7 @@ describe("scaffolded project is clean out of the box", () => {
       try {
         runInit({ cwd });
         linkTypes(cwd);
-        linkBunTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
         writeBunTestFixtures(cwd);
         const standIn = path.join(cwd, ".defold-types", "stand-in");
         mkdirSync(standIn, { recursive: true });
@@ -275,7 +336,7 @@ describe("scaffolded project is clean out of the box", () => {
       try {
         runInit({ cwd });
         linkTypes(cwd);
-        linkBunTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
         setRootExclude(cwd, ["./src/test"]);
         rmSync(path.join(cwd, "src", "test"), { recursive: true, force: true });
         runInit({ cwd, force: true });
@@ -304,7 +365,7 @@ describe("scaffolded project is clean out of the box", () => {
       try {
         runInit({ cwd });
         linkTypes(cwd);
-        linkBunTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
 
         const { code, output } = run("tsc", ["-p", "tsconfig.json", "--listFilesOnly"], cwd);
         expect(code).toBe(0);
@@ -324,21 +385,130 @@ describe("scaffolded project is clean out of the box", () => {
       try {
         runInit({ cwd });
         linkTypes(cwd);
-        linkBunTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+        writeColocatedTest(cwd);
         writeFileSync(
           path.join(cwd, "src", "leak.ts"),
-          "export const argc = process.argv.length;\n",
+          "export const argc = process.argv.length;\nexport const runtime = Bun.version;\n",
         );
 
         const root = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
         expect(root.code).not.toBe(0);
         expect(root.output).toContain("'process'");
+        expect(root.output).toContain("'Bun'");
+        expect(root.output).not.toContain("score.test.ts");
+        const errors = errorLines(root.output);
+        expect(errors.length).toBeGreaterThan(0);
+        for (const line of errors) {
+          expect(line).toContain("leak.ts");
+        }
 
         const tests = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
         if (tests.code !== 0) {
           throw new Error(`tsc reported errors on the scaffolded test config:\n${tests.output}`);
         }
         expect(tests.code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "a test next to its module type-checks under the root config with the documented header",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-colocated-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+        writeColocatedTest(cwd);
+
+        const { code, output } = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
+        if (code !== 0) {
+          throw new Error(`tsc reported errors on a test next to its module:\n${output}`);
+        }
+        expect(code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "upgrading a v0.65.0 project gives both test layouts a Bun package they resolve",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-upgrade-"));
+      try {
+        runInit({ cwd });
+        rewindToV065Shape(cwd);
+        runInit({ cwd, force: true });
+        linkTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+        writeColocatedTest(cwd);
+        writeBunTestFixtures(cwd);
+
+        const root = run("tsc", ["--noEmit", "-p", "tsconfig.json"], cwd);
+        if (root.code !== 0) {
+          throw new Error(`tsc reported errors on the upgraded root config:\n${root.output}`);
+        }
+        expect(root.code).toBe(0);
+
+        const tests = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
+        if (tests.code !== 0) {
+          throw new Error(`tsc reported errors on the upgraded test config:\n${tests.output}`);
+        }
+        expect(tests.code).toBe(0);
+
+        const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+          devDependencies: Record<string, string>;
+        };
+        expect(pkg.devDependencies["@types/bun"]).toBe("latest");
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "the debug launcher type-checks with only the scaffolded dependencies",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-launcher-"));
+      try {
+        runInit({ cwd });
+        const launcher = path.join(cwd, ...DEBUG_LAUNCHER_REL.split("/"));
+        mkdirSync(path.dirname(launcher), { recursive: true });
+        writeFileSync(launcher, DEBUG_LAUNCHER_SOURCE);
+        linkTypes(cwd);
+        linkScaffoldedDevDeps(cwd);
+
+        // No `--types`: TypeScript 6 then loads no `@types` package, as an
+        // editor's inferred project does. `--ignoreConfig` because TypeScript 6
+        // refuses file arguments beside a `tsconfig.json` (TS5112).
+        const { code, output } = run(
+          "tsc",
+          [
+            "--ignoreConfig",
+            "--noEmit",
+            "--strict",
+            "--target",
+            "ES2022",
+            "--module",
+            "ESNext",
+            "--moduleResolution",
+            "Bundler",
+            "--skipLibCheck",
+            DEBUG_LAUNCHER_REL,
+          ],
+          cwd,
+        );
+        if (code !== 0) {
+          throw new Error(`tsc reported errors on the debug launcher:\n${output}`);
+        }
+        expect(code).toBe(0);
       } finally {
         rmSync(cwd, { recursive: true, force: true });
       }

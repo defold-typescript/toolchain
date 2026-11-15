@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { BUNDLED_LIBRARIES, type BundledLibrary } from "@defold-typescript/transpiler";
+import { COLOCATED_TEST_REFERENCE, TEST_FOLDER_REL } from "./test-folder";
 
 export const BUNDLED_LIBRARY_GUIDES: Readonly<Record<BundledLibrary["id"], string>> = {
   hsm: "state-machines.md",
@@ -58,6 +59,9 @@ export function renderAgentsBlock(): string {
     "  file compiles to `.ts.script` / `.ts.gui_script` / `.ts.render_script`.",
     "- Files with no `define*` export are plain modules for shared functions and game state;",
     "  they compile to `.lua`, which is expected and encouraged.",
+    `- A \`bun:test\` file next to its module starts with \`${COLOCATED_TEST_REFERENCE}\` and`,
+    "  imports only `bun:test` and game code; a test that needs `node:*` or `Bun` goes under",
+    `  \`${TEST_FOLDER_REL}/\`.`,
     "- Either self-typing form works: infer the state from `init(): T`, or name it explicitly",
     "  as `defineScript<T>(...)` / `defineGuiScript<T>(...)`. Both classify as the factory's",
     "  component kind; neither falls back to a `.lua` module.",

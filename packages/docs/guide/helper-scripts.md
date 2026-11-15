@@ -17,7 +17,7 @@ bun scripts/generate-levels.ts
 ```
 
 The `node:*` builtins — `node:fs`, `node:path`, `node:child_process`, and the
-rest — work under Bun unchanged; `@types/bun` types them. There is no reason to
+rest — work under Bun unchanged; `bun-types` types them. There is no reason to
 reach for the `node` binary, and doing so skips the TypeScript execution Bun
 gives you for free.
 
@@ -47,14 +47,14 @@ the Defold types here — these scripts are not Defold code:
 {
   "compilerOptions": {
     "noEmit": true,
-    "types": ["bun"]
+    "types": ["bun-types"]
   },
   "include": ["**/*.ts"]
 }
 ```
 
 `noEmit` because Bun runs the TypeScript directly — nothing is compiled to disk.
-`types: ["bun"]` swaps the Defold API surface for the Bun and `node:*` typings.
+`types: ["bun-types"]` swaps the Defold API surface for the Bun and `node:*` typings.
 Editors auto-discover the file for anything under `scripts/`, so your helper
 scripts get autocomplete and `tsc` coverage on their own terms.
 
@@ -62,7 +62,8 @@ scripts get autocomplete and `tsc` coverage on their own terms.
 
 Any package a helper script needs is a dev-time dependency of the project, not a
 runtime dependency of your game. Add it to the root `package.json`
-`devDependencies` (`@types/bun` is already there in a scaffolded project):
+`devDependencies` (`bun-types` is already there in a scaffolded project, pinned
+exactly; a project upgraded from an earlier release may also list `@types/bun`):
 
 ```sh
 bun add -d fast-glob

@@ -30,7 +30,11 @@ to play it.
 `build` and `watch` skip every file `bun test` runs (`*.test.ts`, `*_test.ts`,
 `*.spec.ts`, `*_spec.ts`): it writes no Lua, joins no program the build
 type-checks, and gets no build diagnostic in the editor, so a test can sit next
-to the module it tests.
+to the module it tests. Start such a test with
+`/// <reference types="bun-types/test" />` so the project's own `tsc --noEmit`
+checks it against `bun:test` without Bun's globals reaching game code. A test
+that needs `node:*` or `Bun` goes under [`src/test/`](./init.md#two-modes)
+instead.
 
 They also skip every file under `src/test/`, the folder [`init`](./init.md#two-modes)
 scaffolds for tests and helpers that need Bun's runtime: a module there writes no

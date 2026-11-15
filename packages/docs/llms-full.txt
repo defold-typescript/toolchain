@@ -237,7 +237,7 @@ lockstep with those types
 * `@defold-typescript/tstl-plugin` for the live transpile diagnostics
 * `@defold-typescript/docs` for the guide and agent docs the managed `AGENTS.md` points to
 * `@biomejs/biome` for lint and format, pinned exactly to the version whose schema `biome.json` names
-* `@types/bun` for the `.vscode/` debug launcher
+* `bun-types`, pinned exactly, for `bun:test` files, the `src/test/` folder and the `.vscode/` debug launcher
 * `lua-types` for the ambient Lua standard library so `math`/`string`/`table`/… resolve
 * `typescript` pinned to the exact version TypeScript-to-Lua supports
 
@@ -6870,9 +6870,12 @@ root `include` pattern rebased onto the project folder, and its `exclude` restat
 every other root entry the same way, since inheriting the root's `exclude` would leave
 out its own folder. It sets `outDir: null` so a root `outDir` does not break it, and
 `plugins: []` so the editor plugin reports no build diagnostics on code `build` never
-compiles. `src/test/env.d.ts` adds Bun's types (`bun:test`, `node:*`, `Bun`) to that
-program only, so they never reach the code `build` compiles. Type-check the tests
-with `tsc --noEmit -p src/test/tsconfig.json`. `init` never overwrites either file, and
+compiles. `src/test/env.d.ts` references `bun-types`, the package `init` lists at an
+exact version, which adds Bun's types (`bun:test`, `node:*`, `Bun`) to that program
+only, so they never reach the code `build` compiles. Type-check the tests with
+`tsc --noEmit -p src/test/tsconfig.json`. A test next to its module instead starts with
+`/// <reference types="bun-types/test" />`, which adds `bun:test` alone, so the root
+`tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). `init` never overwrites either file, and
 leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
 change to the root `include` or `exclude` needs the same change in
 `src/test/tsconfig.json`.
@@ -7758,7 +7761,11 @@ to play it.
 `build` and `watch` skip every file `bun test` runs (`*.test.ts`, `*_test.ts`,
 `*.spec.ts`, `*_spec.ts`): it writes no Lua, joins no program the build
 type-checks, and gets no build diagnostic in the editor, so a test can sit next
-to the module it tests.
+to the module it tests. Start such a test with
+`/// <reference types="bun-types/test" />` so the project's own `tsc --noEmit`
+checks it against `bun:test` without Bun's globals reaching game code. A test
+that needs `node:*` or `Bun` goes under [`src/test/`](./init.md#two-modes)
+instead.
 
 They also skip every file under `src/test/`, the folder [`init`](./init.md#two-modes)
 scaffolds for tests and helpers that need Bun's runtime: a module there writes no
@@ -10787,8 +10794,9 @@ keep such scripts off the game's Lua build path:
   `/scripts` is outside that include, and outside the Defold-pinned main
   `tsconfig.json`.
 - **Runner and typing:** run with `bun scripts/foo.ts` (never `node`); `node:*`
-  builtins work under Bun and are typed by `@types/bun`. Add a
-  `scripts/tsconfig.json` with `"noEmit": true`, `"types": ["bun"]`, and
+  builtins work under Bun and are typed by `bun-types` (a project upgraded from an
+  earlier release may also list `@types/bun`). Add a
+  `scripts/tsconfig.json` with `"noEmit": true`, `"types": ["bun-types"]`, and
   `"include": ["**/*.ts"]` — no Defold pin. Script dependencies go in the root
   `package.json` `devDependencies`.
 
@@ -12070,7 +12078,7 @@ bun scripts/generate-levels.ts
 ```
 
 The `node:*` builtins — `node:fs`, `node:path`, `node:child_process`, and the
-rest — work under Bun unchanged; `@types/bun` types them. There is no reason to
+rest — work under Bun unchanged; `bun-types` types them. There is no reason to
 reach for the `node` binary, and doing so skips the TypeScript execution Bun
 gives you for free.
 
@@ -12100,14 +12108,14 @@ the Defold types here — these scripts are not Defold code:
 {
   "compilerOptions": {
     "noEmit": true,
-    "types": ["bun"]
+    "types": ["bun-types"]
   },
   "include": ["**/*.ts"]
 }
 ```
 
 `noEmit` because Bun runs the TypeScript directly — nothing is compiled to disk.
-`types: ["bun"]` swaps the Defold API surface for the Bun and `node:*` typings.
+`types: ["bun-types"]` swaps the Defold API surface for the Bun and `node:*` typings.
 Editors auto-discover the file for anything under `scripts/`, so your helper
 scripts get autocomplete and `tsc` coverage on their own terms.
 
@@ -12115,7 +12123,8 @@ scripts get autocomplete and `tsc` coverage on their own terms.
 
 Any package a helper script needs is a dev-time dependency of the project, not a
 runtime dependency of your game. Add it to the root `package.json`
-`devDependencies` (`@types/bun` is already there in a scaffolded project):
+`devDependencies` (`bun-types` is already there in a scaffolded project, pinned
+exactly; a project upgraded from an earlier release may also list `@types/bun`):
 
 ```sh
 bun add -d fast-glob

@@ -298,8 +298,9 @@ keep such scripts off the game's Lua build path:
   `/scripts` is outside that include, and outside the Defold-pinned main
   `tsconfig.json`.
 - **Runner and typing:** run with `bun scripts/foo.ts` (never `node`); `node:*`
-  builtins work under Bun and are typed by `@types/bun`. Add a
-  `scripts/tsconfig.json` with `"noEmit": true`, `"types": ["bun"]`, and
+  builtins work under Bun and are typed by `bun-types` (a project upgraded from an
+  earlier release may also list `@types/bun`). Add a
+  `scripts/tsconfig.json` with `"noEmit": true`, `"types": ["bun-types"]`, and
   `"include": ["**/*.ts"]` — no Defold pin. Script dependencies go in the root
   `package.json` `devDependencies`.
 
