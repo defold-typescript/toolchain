@@ -21,7 +21,7 @@
     }
   },
   "bin": {
-    "defold-typescript": "./dist/bin.js"
+    "defold-typescript": "dist/bin.js"
   },
   "files": [
     "dist",

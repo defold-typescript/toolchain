@@ -82,7 +82,7 @@ describe("@defold-typescript/cli publish surface", () => {
 
   test("bin points at the built dist entry", async () => {
     const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
-    expect(manifest.bin["defold-typescript"]).toBe("./dist/bin.js");
+    expect(manifest.bin["defold-typescript"]).toBe("dist/bin.js");
   });
 
   test("manifest opts into public publish access", async () => {

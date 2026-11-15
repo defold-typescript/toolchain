@@ -27,7 +27,7 @@
       "name": "@defold-typescript/cli",
       "version": "0.0.0",
       "bin": {
-        "defold-typescript": "./dist/bin.js",
+        "defold-typescript": "dist/bin.js",
       },
       "dependencies": {
         "@defold-typescript/docs": "workspace:*",
