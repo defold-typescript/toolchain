@@ -1098,8 +1098,9 @@ function rebaseOntoParent(pattern: string): string {
 
 // Reads an entry the way TypeScript does, not the way `build` does: resolved
 // against the project folder with `.` and `..` folded, and a last segment with
-// no `.`, `*` or `?` read as that folder and everything below it. The project
-// path is stripped before matching so a `[` or `{` in it stays literal.
+// no `.`, `*` or `?` read as that folder and everything below it. The leading
+// segments the entry shares with `<project>/test` are stripped before matching,
+// so a `[` or `{` in the project path or a parent folder stays literal.
 function reachesTestFolder(cwd: string, pattern: string): boolean {
   const root = path.posix.normalize(toPosixSeparators(cwd)).replace(/\/$/, "");
   const spec = toPosixSeparators(pattern);
@@ -1109,10 +1110,20 @@ function reachesTestFolder(cwd: string, pattern: string): boolean {
   if (!/[.*?]/.test(absolute.slice(absolute.lastIndexOf("/") + 1))) {
     absolute = `${absolute}/**/*`;
   }
-  if (absolute === root || absolute.startsWith(`${root}/`)) {
-    return compileIncludeGlob(absolute.slice(root.length + 1)).mayContain("test");
+  const entrySegments = absolute.split("/");
+  const targetSegments = `${root}/test`.split("/");
+  let shared = 0;
+  while (
+    shared < entrySegments.length &&
+    shared < targetSegments.length &&
+    entrySegments[shared] !== "**" &&
+    entrySegments[shared] === targetSegments[shared]
+  ) {
+    shared++;
   }
-  return compileIncludeGlob(absolute).mayContain(`${root}/test`);
+  return compileIncludeGlob(entrySegments.slice(shared).join("/")).mayContain(
+    targetSegments.slice(shared).join("/"),
+  );
 }
 
 // The test config extends the root rather than naming its own `types`, so it
