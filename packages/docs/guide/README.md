@@ -90,6 +90,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](./agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](./agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
 - [Helper scripts](./helper-scripts.md) — where build, codegen, and maintenance scripts live: a project-root `/scripts` folder run with Bun, typed by their own `scripts/tsconfig.json`, kept off the Lua build path and out of the Defold-typed `src/` surface.
+- [Test with Bun](./testing.md) — where a test goes (next to its module, or in `src/test/` when it needs Bun's runtime), how to write and type-check it, and how to test game logic without the engine.
 - [Terminal output](./terminal-output.md) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Project configuration

@@ -61,7 +61,7 @@ export function renderAgentsBlock(): string {
     "  they compile to `.lua`, which is expected and encouraged.",
     `- A \`bun:test\` file next to its module starts with \`${COLOCATED_TEST_REFERENCE}\` and`,
     "  imports only `bun:test` and game code; a test that needs `node:*` or `Bun` goes under",
-    `  \`${TEST_FOLDER_REL}/\`.`,
+    `  \`${TEST_FOLDER_REL}/\`; see \`node_modules/@defold-typescript/docs/guide/testing.md\`.`,
     "- Either self-typing form works: infer the state from `init(): T`, or name it explicitly",
     "  as `defineScript<T>(...)` / `defineGuiScript<T>(...)`. Both classify as the factory's",
     "  component kind; neither falls back to a `.lua` module.",

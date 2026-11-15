@@ -73,6 +73,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "debugging",
       "agent-runbooks",
       "helper-scripts",
+      "testing",
       "terminal-output",
     ],
   },
