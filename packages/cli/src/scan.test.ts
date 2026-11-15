@@ -258,6 +258,20 @@ describe("discoverSources", () => {
     ]);
   });
 
+  test("leaves out every file under src/test/, declarations included", () => {
+    mkdirSync(path.join(proj, "src", "test"), { recursive: true });
+    mkdirSync(path.join(proj, "src", "testing"), { recursive: true });
+    writeFileSync(path.join(proj, "src", "a.ts"), "export {};\n");
+    writeFileSync(path.join(proj, "src", "test", "helpers.ts"), "export {};\n");
+    writeFileSync(path.join(proj, "src", "test", "env.d.ts"), '/// <reference types="bun" />\n');
+    writeFileSync(path.join(proj, "src", "testing", "b.ts"), "export {};\n");
+    expect(discoverSources(proj, ["src/**/*.ts"])).toEqual([
+      "src/a.ts",
+      "src/main.ts",
+      "src/testing/b.ts",
+    ]);
+  });
+
   test("a link back to its own folder terminates and throws, naming two paths of one file", () => {
     linkDir(".", path.join(proj, "src", "loop"));
     expect(() => discoverSources(proj, ["src/**/*.ts"])).toThrow(

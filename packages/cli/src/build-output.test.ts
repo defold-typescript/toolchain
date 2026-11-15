@@ -167,6 +167,16 @@ describe("isTranspilerSource", () => {
     expect(isTranspilerSource("src/a.ts")).toBe(true);
   });
 
+  test("rejects every file under src/test/ and nothing beside it", () => {
+    expect(isTranspilerSource("src/test/helpers.ts")).toBe(false);
+    expect(isTranspilerSource("src/test/deep/b.ts")).toBe(false);
+    expect(isTranspilerSource("src\\test\\c.ts")).toBe(false);
+    expect(isTranspilerSource("./src/test/d.ts")).toBe(false);
+    expect(isTranspilerSource("src/testing/a.ts")).toBe(true);
+    expect(isTranspilerSource("src/tests/a.ts")).toBe(true);
+    expect(isTranspilerSource("src/game/test/a.ts")).toBe(true);
+  });
+
   test("normalizes backslash separators before matching", () => {
     expect(isTranspilerSource("src\\game\\hero.ts")).toBe(true);
     expect(isTranspilerSource("src\\game\\hero.ts.script")).toBe(false);

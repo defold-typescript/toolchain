@@ -17,6 +17,7 @@ import {
   selectScriptKind,
   selectScriptKindEntrypoint,
 } from "./script-kind";
+import { TEST_FOLDER_REL } from "./test-folder";
 
 // The kinds a wall may narrow against. Must stay in sync with
 // `KIND_MODULE_MANIFEST` (regen.ts). Also gates source-wall eligibility: a kind
@@ -390,7 +391,10 @@ export function directoryWallTsconfig(
   rootAliases: RootPathAliases = {},
 ): WallTsconfig {
   const depth = wall.dir.split("/").length;
-  const exclude = nestedExcludes(wall.dir, nestedWallDirs);
+  const exclude = nestedExcludes(
+    wall.dir,
+    isUnder(TEST_FOLDER_REL, wall.dir) ? [...nestedWallDirs, TEST_FOLDER_REL] : nestedWallDirs,
+  );
   if (pinnedSurface === null || !surfaceKinds.includes(wall.kind)) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,

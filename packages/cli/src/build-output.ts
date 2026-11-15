@@ -24,6 +24,7 @@ import {
 } from "./contained-fs";
 import { compileIncludeGlob } from "./include-glob";
 import { editorHiddenFolder, readDefignoreLines } from "./project-resource-paths";
+import { isTestFolderSource } from "./test-folder";
 
 export type { SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
@@ -45,7 +46,9 @@ export function toPosix(p: string, sep: string = path.sep): string {
 const TRANSPILER_SOURCE_RE = /\.(ts|tsx|cts|mts)$/;
 
 export function isTranspilerSource(rel: string): boolean {
-  return TRANSPILER_SOURCE_RE.test(toPosix(rel)) && !isBunTestSource(rel);
+  return (
+    TRANSPILER_SOURCE_RE.test(toPosix(rel)) && !isBunTestSource(rel) && !isTestFolderSource(rel)
+  );
 }
 
 export const RUNTIME_DEFAULT_DIR = "lib/defold_typescript";

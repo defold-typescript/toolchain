@@ -7756,6 +7756,10 @@ to play it.
 type-checks, and gets no build diagnostic in the editor, so a test can sit next
 to the module it tests.
 
+They also skip every file under `src/test/`, the folder for tests and helpers
+that need Bun's runtime: a module there writes no Lua and joins no program the
+build type-checks, so game code that imports one fails the build.
+
 The declarations [`resolve`](./resolve.md) installed behind the `"extensions"`
 and `libraries@<cliVersion>` entries on the tsconfig `types` list are part of the
 compile too, as type information only: a dependency's types check your code, and
@@ -8537,6 +8541,10 @@ the ancestor excludes that descendant from its program, so the descendant's kind
 subpath cannot widen the ancestor. Without the exclusion the two would
 *intersect* — the descendant's files would stay in the ancestor's program and
 inject their namespaces there, letting `gui.*` type-check inside a `script` wall.
+
+**The test folder.** A wall at `src` also excludes `test/**`, so the Bun tests
+and declarations under [`src/test/`](./build.md#what-it-does) never join its
+program. Running `wall src` rewrites an existing wall there into this shape.
 
 **Kind-neutral helpers.** A `.ts` with no lifecycle factory declares no kind, so
 it never makes a directory eligible and never blocks an ancestor from rolling up
