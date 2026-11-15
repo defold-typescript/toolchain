@@ -382,6 +382,34 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(false);
   });
 
+  test("a test bun runs beside the module it tests builds to nothing and joins no program", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/score.ts", "export function double(n: number): number {\n  return n * 2;\n}\n");
+    writeFile(
+      "src/score.test.ts",
+      [
+        '/// <reference types="bun-types/test" />',
+        'import { expect, test } from "bun:test";',
+        'import { double } from "./score";',
+        'test("doubles", () => {',
+        "  expect(double(Math.floor(1))).toBe(2);",
+        "});",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runBuild({ cwd });
+
+    expect(result.warnings).toEqual([]);
+    expect(result.written).toEqual(["src/score.lua"]);
+    expect(existsSync(path.join(cwd, "src/score.lua"))).toBe(true);
+    expect(
+      readdirSync(path.join(cwd, "src"), { recursive: true })
+        .map(String)
+        .filter((rel) => rel.includes("score.test")),
+    ).toEqual(["score.test.ts"]);
+  });
+
   test("resolves cross-file imports between src/ TypeScript files", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile(

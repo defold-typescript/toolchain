@@ -27,6 +27,11 @@ shared module must be built before the script importing it will run. Open the
 project in the [Defold editor](./defold-editor.md) (or run it headlessly, below)
 to play it.
 
+`build` and `watch` skip every file `bun test` runs (`*.test.ts`, `*_test.ts`,
+`*.spec.ts`, `*_spec.ts`): it writes no Lua, joins no program the build
+type-checks, and gets no build diagnostic in the editor, so a test can sit next
+to the module it tests.
+
 The declarations [`resolve`](./resolve.md) installed behind the `"extensions"`
 and `libraries@<cliVersion>` entries on the tsconfig `types` list are part of the
 compile too, as type information only: a dependency's types check your code, and
