@@ -247,6 +247,17 @@ describe("discoverSources", () => {
     ]);
   });
 
+  test("leaves out the files bun test runs and keeps declarations", () => {
+    for (const name of ["a.ts", "a.test.ts", "b_spec.ts", "types.d.ts"]) {
+      writeFileSync(path.join(proj, "src", name), "export {};\n");
+    }
+    expect(discoverSources(proj, ["src/**/*.ts"])).toEqual([
+      "src/a.ts",
+      "src/main.ts",
+      "src/types.d.ts",
+    ]);
+  });
+
   test("a link back to its own folder terminates and throws, naming two paths of one file", () => {
     linkDir(".", path.join(proj, "src", "loop"));
     expect(() => discoverSources(proj, ["src/**/*.ts"])).toThrow(

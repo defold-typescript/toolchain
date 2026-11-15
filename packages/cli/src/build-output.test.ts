@@ -162,6 +162,11 @@ describe("isTranspilerSource", () => {
     expect(isTranspilerSource("x.png")).toBe(false);
   });
 
+  test("rejects a file bun test runs beside the module it tests", () => {
+    expect(isTranspilerSource("src/a.test.ts")).toBe(false);
+    expect(isTranspilerSource("src/a.ts")).toBe(true);
+  });
+
   test("normalizes backslash separators before matching", () => {
     expect(isTranspilerSource("src\\game\\hero.ts")).toBe(true);
     expect(isTranspilerSource("src\\game\\hero.ts.script")).toBe(false);
