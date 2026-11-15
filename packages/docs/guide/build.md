@@ -32,6 +32,10 @@ to play it.
 type-checks, and gets no build diagnostic in the editor, so a test can sit next
 to the module it tests.
 
+They also skip every file under `src/test/`, the folder for tests and helpers
+that need Bun's runtime: a module there writes no Lua and joins no program the
+build type-checks, so game code that imports one fails the build.
+
 The declarations [`resolve`](./resolve.md) installed behind the `"extensions"`
 and `libraries@<cliVersion>` entries on the tsconfig `types` list are part of the
 compile too, as type information only: a dependency's types check your code, and

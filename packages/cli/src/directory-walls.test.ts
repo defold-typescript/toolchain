@@ -482,7 +482,13 @@ describe("directoryWallTsconfig", () => {
         "src/ui/hud",
         "src/logic",
       ]).exclude,
-    ).toEqual(["logic/**", "ui/hud/**"]);
+    ).toEqual(["logic/**", "test/**", "ui/hud/**"]);
+  });
+
+  test("a wall at src excludes the test folder", () => {
+    expect(
+      directoryWallTsconfig(wall("src", "script", "@defold-typescript/types/script")).exclude,
+    ).toEqual(["test/**"]);
   });
 
   test("no nested wall keeps the empty exclude", () => {

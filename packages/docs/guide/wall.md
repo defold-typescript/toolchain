@@ -96,6 +96,10 @@ subpath cannot widen the ancestor. Without the exclusion the two would
 *intersect* — the descendant's files would stay in the ancestor's program and
 inject their namespaces there, letting `gui.*` type-check inside a `script` wall.
 
+**The test folder.** A wall at `src` also excludes `test/**`, so the Bun tests
+and declarations under [`src/test/`](./build.md#what-it-does) never join its
+program. Running `wall src` rewrites an existing wall there into this shape.
+
 **Kind-neutral helpers.** A `.ts` with no lifecycle factory declares no kind, so
 it never makes a directory eligible and never blocks an ancestor from rolling up
 to a single kind. A helper runs in the script that calls it, so `wall --check`
