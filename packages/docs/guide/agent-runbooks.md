@@ -106,6 +106,10 @@ Unlike the address findings, it is always present on a successful build and is
 `[]` when nothing requires the bundle. It covers every output the build
 produced, including files this run left unchanged and so left out of `written`.
 
+`removed` lists the [runtime files](./build.md#the-runtime-folder) the build
+deleted because nothing requires them any more, sorted and project-relative. It
+is always present on a successful build and is `[]` when the build deleted none.
+
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
 `start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
@@ -829,7 +833,8 @@ default, moved by `package.json` `runtime-dir`): `lualib_bundle.lua` (when a
 source uses a TS runtime helper like `Object.keys` or spread, or when timers or
 `hsm/async` are used, since those require it), `timers.lua` (when timers are
 used), `hsm/<module>.lua` (per imported `hsm` module) and `ecs/index.lua` (when
-`@defold-typescript/types/ecs` is imported for values).
+`@defold-typescript/types/ecs` is imported for values). A build with no errors
+deletes the ones nothing needs any more and lists them in `removed`.
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the

@@ -7985,6 +7985,14 @@ files your program uses:
 | `lib/defold_typescript/hsm/<module>.lua` | imports that [`hsm`](./state-machines.md) module |
 | `lib/defold_typescript/ecs/<module>.lua` | imports `@defold-typescript/types/ecs` |
 
+A `build` with no errors deletes each of these files it did not write, with its
+map, and then any library folder that leaves empty. A file stays when it lacks
+the generated banner, or when a hand-written `.lua`, `.script`, `.gui_script`,
+`.render_script` or `.editor_script` file in the project names its `require`
+path in quotes, such as `require "lib.defold_typescript.lualib_bundle"`. `build`
+prints the deleted files on a second line. A failing build deletes nothing, and
+so does a `watch` rebuild; `watch` deletes them only in its first build.
+
 Under a configured `outDir` the folder sits inside it
 (`out/lua/lib/defold_typescript/`). Every generated `require` names the path its
 file lands at, so the requires are never yours to edit.
@@ -8092,7 +8100,8 @@ renamed, and hot-reloading as it does for any other source.
   the build on its errors. See [Run in the editor](#run-in-the-editor).
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array, the `lualibRequiredBy` list of outputs that require
-  `lualib_bundle`, and, when either address check found any, a structured
+  `lualib_bundle`, the `removed` list of runtime files the build deleted, and,
+  when either address check found any, a structured
   `unreachableAddresses` and `crossWorldAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
@@ -10622,6 +10631,10 @@ Unlike the address findings, it is always present on a successful build and is
 `[]` when nothing requires the bundle. It covers every output the build
 produced, including files this run left unchanged and so left out of `written`.
 
+`removed` lists the [runtime files](./build.md#the-runtime-folder) the build
+deleted because nothing requires them any more, sorted and project-relative. It
+is always present on a successful build and is `[]` when the build deleted none.
+
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
 `start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
@@ -11345,7 +11358,8 @@ default, moved by `package.json` `runtime-dir`): `lualib_bundle.lua` (when a
 source uses a TS runtime helper like `Object.keys` or spread, or when timers or
 `hsm/async` are used, since those require it), `timers.lua` (when timers are
 used), `hsm/<module>.lua` (per imported `hsm` module) and `ecs/index.lua` (when
-`@defold-typescript/types/ecs` is imported for values).
+`@defold-typescript/types/ecs` is imported for values). A build with no errors
+deletes the ones nothing needs any more and lists them in `removed`.
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the

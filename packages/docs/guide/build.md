@@ -234,6 +234,14 @@ files your program uses:
 | `lib/defold_typescript/hsm/<module>.lua` | imports that [`hsm`](./state-machines.md) module |
 | `lib/defold_typescript/ecs/<module>.lua` | imports `@defold-typescript/types/ecs` |
 
+A `build` with no errors deletes each of these files it did not write, with its
+map, and then any library folder that leaves empty. A file stays when it lacks
+the generated banner, or when a hand-written `.lua`, `.script`, `.gui_script`,
+`.render_script` or `.editor_script` file in the project names its `require`
+path in quotes, such as `require "lib.defold_typescript.lualib_bundle"`. `build`
+prints the deleted files on a second line. A failing build deletes nothing, and
+so does a `watch` rebuild; `watch` deletes them only in its first build.
+
 Under a configured `outDir` the folder sits inside it
 (`out/lua/lib/defold_typescript/`). Every generated `require` names the path its
 file lands at, so the requires are never yours to edit.
@@ -341,7 +349,8 @@ renamed, and hot-reloading as it does for any other source.
   the build on its errors. See [Run in the editor](#run-in-the-editor).
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array, the `lualibRequiredBy` list of outputs that require
-  `lualib_bundle`, and, when either address check found any, a structured
+  `lualib_bundle`, the `removed` list of runtime files the build deleted, and,
+  when either address check found any, a structured
   `unreachableAddresses` and `crossWorldAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).

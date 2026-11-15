@@ -199,6 +199,26 @@ describe("runWatch", () => {
     expect(code).toBe(0);
   });
 
+  test("the startup build names the runtime files it deleted", async () => {
+    const bundleRel = "lib/defold_typescript/lualib_bundle.lua";
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile(bundleRel, `return {}\n${GENERATED_BANNER}\n`);
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(existsSync(path.join(cwd, bundleRel))).toBe(false);
+    expect(out()).toContain(
+      `defold-typescript build: removed 1 unused runtime files: ${bundleRel}\n`,
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("single FS event triggers exactly one rebuild", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));

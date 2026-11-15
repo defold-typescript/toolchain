@@ -245,6 +245,27 @@ describe("createBuildSession", () => {
     );
   });
 
+  test("applyEvents never removes a runtime file, and the next buildAll does", () => {
+    const bundleRel = "lib/defold_typescript/lualib_bundle.lua";
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", "export const ks = Object.keys({ a: 1 });\n");
+    const session = createBuildSession({ cwd });
+    const first = session.buildAll();
+    expect(first.written).toContain(bundleRel);
+    expect(first.removed).toEqual([]);
+
+    writeIn(cwd, "src/main.ts", "export const answer = 42;\n");
+    const rebuild = session.applyEvents(["src/main.ts"], []);
+
+    expect(existsSync(path.join(cwd, bundleRel))).toBe(true);
+    expect(rebuild.removed).toEqual([]);
+
+    const restart = createBuildSession({ cwd }).buildAll();
+
+    expect(existsSync(path.join(cwd, bundleRel))).toBe(false);
+    expect(restart.removed).toEqual([bundleRel]);
+  });
+
   test("adding an ecs value import to a watched source writes the ecs module", () => {
     const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
     writeIn(
