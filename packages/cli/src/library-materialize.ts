@@ -13,7 +13,9 @@ import * as path from "node:path";
 import { readCliVersion } from "./cli-version";
 import { ensureContainedDir, removeContained, writeContainedFile } from "./contained-fs";
 import { formatJsonLikeBiome } from "./format-json";
+import { readJsoncObject } from "./jsonc-file";
 import {
+  editProjectJsonc,
   ensureGitignoreLine,
   MATERIALIZED_ROOT,
   namesSurfaceAxis,
@@ -210,7 +212,7 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
     if (!existsSync(tsconfigPath)) {
       return;
     }
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+    const tsconfig = readJsoncObject(tsconfigPath) as {
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
@@ -219,14 +221,14 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
     const kept = types.filter((entry) => !isLibrariesEntry(entry));
     if (kept.length !== types.length) {
       tsconfig.compilerOptions = { ...current, types: kept };
-      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
+      editProjectJsonc(cwd, "tsconfig.json", tsconfig);
     }
     return;
   }
   const entry = path.posix.basename(materializedDir);
 
   if (existsSync(tsconfigPath)) {
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+    const tsconfig = readJsoncObject(tsconfigPath) as {
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
@@ -253,7 +255,7 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
         typeRoots.push(MATERIALIZED_ROOT);
       }
       tsconfig.compilerOptions = { ...current, typeRoots, types: kept };
-      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
+      editProjectJsonc(cwd, "tsconfig.json", tsconfig);
     }
   }
 

@@ -14,13 +14,19 @@
 // one `typeRoots: [".defold-types"]`. The CLI `resolve` verb that orchestrates
 // resolve -> write -> reference stays the next slice.
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { ensureContainedDir, removeContained, writeContainedFile } from "./contained-fs";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import { formatJsonLikeBiome } from "./format-json";
+import { readJsoncObject } from "./jsonc-file";
 import { normalizeSourceId } from "./library-match";
-import { ensureGitignoreLine, MATERIALIZED_ROOT, retargetCoreTypes } from "./materialize";
+import {
+  editProjectJsonc,
+  ensureGitignoreLine,
+  MATERIALIZED_ROOT,
+  retargetCoreTypes,
+} from "./materialize";
 
 const EXTENSIONS_DIR = "extensions";
 
@@ -212,7 +218,7 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
     if (!existsSync(tsconfigPath)) {
       return;
     }
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+    const tsconfig = readJsoncObject(tsconfigPath) as {
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
@@ -221,14 +227,14 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
     const kept = types.filter((entry) => entry !== EXTENSIONS_DIR);
     if (kept.length !== types.length) {
       tsconfig.compilerOptions = { ...current, types: kept };
-      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
+      editProjectJsonc(cwd, "tsconfig.json", tsconfig);
     }
     return;
   }
   const entry = path.posix.basename(materializedDir);
 
   if (existsSync(tsconfigPath)) {
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+    const tsconfig = readJsoncObject(tsconfigPath) as {
       compilerOptions?: Record<string, unknown>;
       [key: string]: unknown;
     };
@@ -250,7 +256,7 @@ export function ensureExtensionTypesReference(cwd: string, materializedDir: stri
         typeRoots.push(MATERIALIZED_ROOT);
       }
       tsconfig.compilerOptions = { ...current, typeRoots, types };
-      writeContainedFile(cwd, "tsconfig.json", `${formatJsonLikeBiome(tsconfig)}\n`);
+      editProjectJsonc(cwd, "tsconfig.json", tsconfig);
     }
   }
 

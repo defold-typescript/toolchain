@@ -1,4 +1,4 @@
-import { setDefaultTimeout } from "bun:test";
+import { mock, setDefaultTimeout } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -24,6 +24,15 @@ setDefaultTimeout(30_000);
 // stable channel happens to be. `upstream-notice`'s own tests clear this for the
 // cases that exercise the feature.
 process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK = "1";
+
+// `init` compares the installed Bun with the `bun-types` pin and warns when
+// they differ. The suite's own Bun floats on `1.4` in CI and in `mise.toml`, so
+// a new Bun release would put that warning into every in-process `init` and
+// `upgrade` test. Every test that does not pass `installedBun` itself runs as if
+// no Bun were installed; the Bun checks' own tests inject the version they need.
+mock.module(path.resolve(import.meta.dir, "../packages/cli/src/installed-bun.ts"), () => ({
+  detectInstalledBun: () => null,
+}));
 
 // Defense in depth for a test that clears the opt-out: the cache lives under
 // `DEFOLD_TYPESCRIPT_CACHE`, so a per-run temp root keeps the default path

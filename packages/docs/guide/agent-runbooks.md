@@ -669,6 +669,21 @@ existing bytes because it may be customized; the path is absent from `written`.
 Delete it and run `defold-typescript setup-debug` only when replacing it is the
 intended action.
 
+The test layout adds more warnings, each a plain sentence ending in
+`node_modules/@defold-typescript/docs/guide/testing.md`, the same in the terminal
+and under `--json`, including through the hand-off:
+
+- A line starting `src/test/tsconfig.json:` names the settings the upgrade added
+  to an existing test config, the values it kept that differ from the scaffold's,
+  the `include` and `exclude` it replaced (before and after), or that the config
+  does not extend the root and was left alone. Read it; the edits are already made.
+- A line starting `tsconfig.json:` says `src/test` was added to the root `exclude`.
+- A line starting `Bun` names an installed Bun older than the CLI's `bun-types`
+  pin, or an exact project pin that differs from the installed Bun. Report it to
+  the user; never change the pin or run `bun upgrade` on your own.
+- A line starting `test/` or `tests/` names a root test folder holding Bun tests.
+  Moving those tests is the user's call.
+
 **The offline failure mode:** upgrading is the one command that needs the network.
 When the npm registry is unreachable the run fails — `ok` is `false` with a
 non-zero exit — instead of re-scaffolding against the version already on disk.

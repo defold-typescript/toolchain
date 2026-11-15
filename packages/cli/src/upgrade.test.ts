@@ -367,6 +367,23 @@ describe("runUpgrade", () => {
     expect(outcome.warnings.some((w) => w.includes("game"))).toBe(true);
   });
 
+  test("the in-process upgrade returns the test-config warning", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    mkdirSync(path.join(cwd, "src", "test"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "src", "test", "tsconfig.json"),
+      `${JSON.stringify({ extends: "../../tsconfig.json", compilerOptions: { noEmit: true, outDir: null } })}\n`,
+    );
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    const outcome = await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    expect(outcome.handedOff).toBe(false);
+    const warning = outcome.warnings.find((w) => w.startsWith("src/test/tsconfig.json:"));
+    expect(warning).toContain("resolveJsonModule");
+    expect(warning).toContain("node_modules/@defold-typescript/docs/guide/testing.md");
+  });
+
   test("an already-latest upgrade reports a customized launcher it preserved", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
@@ -387,7 +404,7 @@ describe("runUpgrade", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(
       path.join(cwd, "tsconfig.json"),
-      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"], exclude: ["src/test"] })}\n`,
     );
     mkdirSync(path.join(cwd, "game"), { recursive: true });
     writeFileSync(path.join(cwd, "game", "main.ts"), "// entry\n");

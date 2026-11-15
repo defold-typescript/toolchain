@@ -194,6 +194,30 @@ describe("ensureLibraryTypesReference", () => {
     return JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"));
   }
 
+  test("a root tsconfig with a comment and extends keeps both", () => {
+    const original = [
+      "// project root",
+      "{",
+      '  "extends": "./base.json",',
+      '  "compilerOptions": {',
+      '    "typeRoots": [".defold-types"],',
+      '    "types": [',
+      '      "defold-1.12.4", // the engine',
+      "    ],",
+      "  },",
+      "}",
+      "",
+    ].join("\n");
+    writeFileSync(path.join(cwd, "tsconfig.json"), original);
+    const entry = librariesDirName(readCliVersion());
+
+    ensureLibraryTypesReference(cwd, `.defold-types/${entry}`);
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(
+      original.replace("// the engine\n", `// the engine\n      "${entry}",\n`),
+    );
+  });
+
   test("appends libraries additively, preserving engine surfaceId and an extensions entry", () => {
     writeTsconfig({
       compilerOptions: {
