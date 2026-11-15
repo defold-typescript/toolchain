@@ -11,7 +11,11 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type TranspileProjectResult, transpileProject } from "@defold-typescript/transpiler";
+import {
+  isBunTestSource,
+  type TranspileProjectResult,
+  transpileProject,
+} from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 import { fenceTitle, isStepFence, lessonProjects, tsFences } from "./guide-steps";
 
@@ -49,22 +53,45 @@ export interface Fence {
 
 // A fence title names a file relative to `src/`: a `src/` title claims to quote
 // a docs/examples file (guide-source-parity.test.ts), and these fences quote none.
-// A `.test.ts` title names a Bun test file instead, relative to the project root.
+// A `.test.ts` title names a Bun test file at that same place: `lamp.test.ts` sits
+// next to its module, `test/lamp.test.ts` in the project's `src/test/` folder.
 export const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*(?:\.test)?\.ts$/;
 
 /**
  * Whether the fence written at `rel` is a Bun test file. It type-checks with `bun:test` in scope
- * and is never compiled to Lua: `build` would compile it only from under `src/`, where a test
- * does not belong.
+ * and is never compiled to Lua, since `build` skips every file `bun test` runs.
  */
 export function isBunTestFence(rel: string): boolean {
-  return rel.endsWith(".test.ts");
+  return isBunTestSource(rel);
 }
 
 // `bun:test` is an ambient module of `bun-types`, a direct devDependency of the repo root. Only
 // that one file joins a fence program: the rest of `bun-types` declares Node globals no game has.
 function bunTestDeclarations(): string {
   return createRequire(path.join(REPO_ROOT, "package.json")).resolve("bun-types/test.d.ts");
+}
+
+// The reference line a test next to its module carries. A fence project sits in a temp folder
+// with no `node_modules`, so the line resolves to the declarations the program already holds.
+const BUN_TEST_TYPE_REFERENCE = "bun-types/test";
+
+function fenceCompilerHost(options: ts.CompilerOptions): ts.CompilerHost {
+  const host = ts.createCompilerHost(options);
+  host.resolveTypeReferenceDirectiveReferences = (references, containingFile, redirected, opts) =>
+    references.map((reference) => {
+      const name = typeof reference === "string" ? reference : reference.fileName;
+      if (name === BUN_TEST_TYPE_REFERENCE) {
+        return {
+          resolvedTypeReferenceDirective: {
+            primary: false,
+            resolvedFileName: bunTestDeclarations(),
+            isExternalLibraryImport: true,
+          },
+        };
+      }
+      return ts.resolveTypeReferenceDirective(name, containingFile, opts, host, redirected);
+    });
+  return host;
 }
 
 // The info string's second token, as the docs site reads `original`: Shiki and
@@ -263,7 +290,8 @@ export function typeCheck(project: FenceProject): Map<string, string[]> {
     ...[...project.declarations.keys()].map((rel) => path.join(project.src, rel)),
     ...sourceRels.map((rel) => path.join(project.src, rel)),
   ];
-  const program = ts.createProgram(roots, compilerOptions(project.src));
+  const options = compilerOptions(project.src);
+  const program = ts.createProgram(roots, options, fenceCompilerHost(options));
   const byFile = new Map<string, string[]>();
   for (const d of ts.getPreEmitDiagnostics(program)) {
     const key =
