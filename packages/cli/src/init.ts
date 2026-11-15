@@ -27,7 +27,7 @@ import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { compareSemver } from "./semver";
-import { TEST_FOLDER_REL } from "./test-folder";
+import { namesTestFolder, TEST_FOLDER_REL } from "./test-folder";
 import { refreshVscodeDebugLauncher, writeVscodeLaunch } from "./vscode-debug-scaffold";
 import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -1102,7 +1102,8 @@ function rebaseOntoProjectRoot(pattern: string): string {
 // through `env.d.ts`, which the root `exclude` keeps out of the game program.
 // It also leaves out the editor plugin, whose build diagnostics mean nothing
 // for files `build` never compiles. Its own `exclude` restates the root's other
-// entries, since inheriting the root's would exclude the config's own folder.
+// entries, since inheriting the root's would exclude the config's own folder;
+// the dropped entry is that folder in any spelling (`./src/test`, `src/test/`).
 function writeTestTsconfig(
   cwd: string,
   include: readonly string[],
@@ -1126,7 +1127,7 @@ function writeTestTsconfig(
     extends: `${TEST_FOLDER_TO_ROOT}tsconfig.json`,
     compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true, plugins: [] },
     include: ["**/*.ts", ...include.map(rebaseOntoProjectRoot)],
-    exclude: rootExclude.filter((entry) => entry !== TEST_FOLDER_REL).map(rebaseOntoProjectRoot),
+    exclude: rootExclude.filter((entry) => !namesTestFolder(entry)).map(rebaseOntoProjectRoot),
   });
   written.push(TEST_TSCONFIG_REL);
   operations.push({ target: TEST_TSCONFIG_REL, status: "written" });
@@ -1235,7 +1236,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
   };
   const exclude = [...(pruneMainTsExclude(existing?.exclude, starter?.sourceRel) ?? [])];
   const writesTestPair = !existsSync(path.join(cwd, ...TEST_TSCONFIG_REL.split("/")));
-  if (writesTestPair && !exclude.includes(TEST_FOLDER_REL)) {
+  if (writesTestPair && !exclude.some(namesTestFolder)) {
     exclude.push(TEST_FOLDER_REL);
   }
   if (exclude.length > 0) {

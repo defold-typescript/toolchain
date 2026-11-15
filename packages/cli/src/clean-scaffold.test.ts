@@ -86,6 +86,13 @@ function editRootCompilerOptions(
   writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
 }
 
+function setRootExclude(cwd: string, exclude: readonly string[]): void {
+  const file = path.join(cwd, "tsconfig.json");
+  const config = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+  config.exclude = exclude;
+  writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
+}
+
 function run(cmd: string, args: string[], cwd: string): { code: number; output: string } {
   const proc = Bun.spawnSync([path.join(BIN_DIR, cmd), ...args], {
     cwd,
@@ -254,6 +261,35 @@ describe("scaffolded project is clean out of the box", () => {
           );
         }
         expect(code).toBe(0);
+      } finally {
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    TSC_TIMEOUT_MS,
+  );
+
+  test(
+    "an ill-typed test fails the test check under a ./src/test root exclude",
+    () => {
+      const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bun-dot-exclude-"));
+      try {
+        runInit({ cwd });
+        linkTypes(cwd);
+        linkBunTypes(cwd);
+        setRootExclude(cwd, ["./src/test"]);
+        rmSync(path.join(cwd, "src", "test"), { recursive: true, force: true });
+        runInit({ cwd, force: true });
+        writeBunTestFixtures(cwd);
+        writeFileSync(
+          path.join(cwd, "src", "test", "broken.test.ts"),
+          'export const n: number = "not a number";\n',
+        );
+
+        const { code, output } = run("tsc", ["--noEmit", "-p", TEST_TSCONFIG], cwd);
+        expect(code).not.toBe(0);
+        expect(output).toContain("broken.test.ts");
+        expect(output).toContain("TS2322");
+        expect(output).not.toContain("score.test.ts");
       } finally {
         rmSync(cwd, { recursive: true, force: true });
       }
