@@ -41,7 +41,9 @@ The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
 `AGENTS.md` block, and reconciles `tsconfig.json`, adding `noEmit: true` when the
-project sets none. If `.vscode/defold-debug.ts`
+project sets none. A project with no `test/tsconfig.json` gets the
+[Bun test config](./init.md#two-modes) `init` writes; an existing one is left as
+it is. If `.vscode/defold-debug.ts`
 already exists and its normalized checksum matches a generated launcher — including
 an unmodified legacy launcher whose line endings became CRLF — it is refreshed too.
 An absent launcher stays absent.

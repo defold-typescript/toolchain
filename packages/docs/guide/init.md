@@ -63,6 +63,20 @@ above or below the markers always survives. This is the same contract the
 standalone [`init-agents`](./init-agents.md) verb
 writes.
 
+Both modes also write `test/tsconfig.json` and `test/env.d.ts`, for Bun tests that
+import game code, **when `test/tsconfig.json` is absent**; [`upgrade`](./upgrade.md)
+adds them to a project that has none. `test/tsconfig.json` extends the root config
+and names no `types` of its own, so a test sees the same Defold types, `.d.ts`
+declarations and pinned surface as the game. It includes `test/` plus every root
+`include` pattern rebased onto the parent folder, and sets `outDir: null` so a root
+`outDir` does not break it. `test/env.d.ts` adds Bun's types (`bun:test`, `node:*`,
+`Bun`) to that program only, so they never reach the code `build` compiles.
+Type-check the tests with `tsc --noEmit -p test/tsconfig.json`. `init` never
+overwrites either file, so a later change to the root `include` needs the same
+change in `test/tsconfig.json`. When a root `include` pattern already reaches
+`test/`, `init` writes neither file and reports the pattern, since `build` would
+compile that folder to Lua.
+
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the
 managed blocks without disturbing your own entries. For `tsconfig.json` that means

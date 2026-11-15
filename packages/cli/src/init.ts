@@ -20,7 +20,9 @@ import {
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
+import { compileIncludeGlob } from "./include-glob";
 import { runInitAgents } from "./init-agents";
+import { isAbsolutePath, toPosixSeparators } from "./materialize";
 import { mergeMiseToml } from "./mise-scaffold";
 import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
@@ -1085,6 +1087,64 @@ function pruneMainTsExclude(
   return remaining.length > 0 ? (remaining as string[]) : undefined;
 }
 
+const TEST_TSCONFIG_REL = "test/tsconfig.json";
+const TEST_ENV_REL = "test/env.d.ts";
+const TEST_ENV_CONTENT = '/// <reference types="bun" />\n';
+
+function rebaseOntoParent(pattern: string): string {
+  const normalized = toPosixSeparators(pattern).replace(/^(\.\/)+/, "");
+  return isAbsolutePath(normalized) ? normalized : `../${normalized}`;
+}
+
+// The test config extends the root rather than naming its own `types`, so it
+// follows whatever surface `resolve` pins there, and Bun's types come in only
+// through `env.d.ts`, which no root pattern reaches.
+function writeTestTsconfig(
+  cwd: string,
+  include: readonly string[],
+  written: string[],
+  operations: InitOperation[],
+): void {
+  const skipBoth = (detail: string): void => {
+    for (const target of [TEST_TSCONFIG_REL, TEST_ENV_REL]) {
+      operations.push({ target, status: "skipped", detail });
+    }
+  };
+  const reaching = include.filter((pattern) => compileIncludeGlob(pattern).mayContain("test"));
+  if (reaching.length > 0) {
+    skipBoth(
+      `the root tsconfig.json include (${reaching.join(", ")}) reaches test/, so build would compile it and Bun's types would reach the game program`,
+    );
+    return;
+  }
+  const configPath = path.join(cwd, ...TEST_TSCONFIG_REL.split("/"));
+  if (existsSync(configPath)) {
+    skipBoth(`a ${TEST_TSCONFIG_REL} already exists`);
+    return;
+  }
+  mkdirSync(path.dirname(configPath), { recursive: true });
+  writeJson(configPath, {
+    extends: "../tsconfig.json",
+    compilerOptions: { noEmit: true, outDir: null, resolveJsonModule: true },
+    include: ["**/*.ts", ...include.map(rebaseOntoParent)],
+  });
+  written.push(TEST_TSCONFIG_REL);
+  operations.push({ target: TEST_TSCONFIG_REL, status: "written" });
+
+  const envPath = path.join(cwd, ...TEST_ENV_REL.split("/"));
+  if (existsSync(envPath)) {
+    operations.push({
+      target: TEST_ENV_REL,
+      status: "skipped",
+      detail: `a ${TEST_ENV_REL} already exists`,
+    });
+    return;
+  }
+  writeFileSync(envPath, TEST_ENV_CONTENT);
+  written.push(TEST_ENV_REL);
+  operations.push({ target: TEST_ENV_REL, status: "written" });
+}
+
 interface TsSurfaceOptions {
   readonly cwd: string;
   readonly written: string[];
@@ -1183,6 +1243,7 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
     target: "tsconfig.json",
     status: existing === undefined ? "written" : "merged",
   });
+  writeTestTsconfig(cwd, include, written, operations);
 
   // Decided once, before `package.json` is rewritten below: by the time
   // `writeBiome` runs, the pin would already name the new version and the pair
