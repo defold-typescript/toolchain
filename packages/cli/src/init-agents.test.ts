@@ -231,6 +231,7 @@ describe("runInitAgents", () => {
     ].map((match) => match[1] as string);
     expect(pages).toContain("pinning-defold-target.md");
     expect(pages).toContain("upgrading.md");
+    expect(pages).toContain("testing.md");
     for (const page of pages) {
       expect(existsSync(path.join(GUIDE_DIR, page))).toBe(true);
     }

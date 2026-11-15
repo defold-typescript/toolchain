@@ -65,3 +65,46 @@ describe("a Bun test fence", () => {
     SLOW,
   );
 });
+
+describe("a Bun test fence next to its module", () => {
+  const MODULE_FENCE: Fence = {
+    label: "count.ts",
+    rel: "count.ts",
+    body: "export function count(items: readonly number[]): number {\n  return items.length;\n}",
+  };
+  const COLOCATED_FENCE: Fence = {
+    label: "count.test.ts",
+    rel: "count.test.ts",
+    body: [
+      '/// <reference types="bun-types/test" />',
+      'import { expect, test } from "bun:test";',
+      'import { count } from "./count";',
+      "",
+      'test("counts", () => {',
+      "  expect(count([1, 2])).toBe(2);",
+      "});",
+    ].join("\n"),
+  };
+
+  test("is a valid fence title", () => {
+    const guide = '```ts title="count.test.ts"\nconst n = 1;\n```\n';
+    expect(badFenceTitles(guide)).toEqual([]);
+  });
+
+  test(
+    "type-checks with its bun-types/test reference line",
+    () => {
+      const fences = [MODULE_FENCE, COLOCATED_FENCE];
+      expect(failingFences(fences, project(fences))).toEqual({});
+    },
+    SLOW,
+  );
+
+  test(
+    "is left out of the Lua build while its module compiles",
+    () => {
+      expect(transpileErrors(project([MODULE_FENCE, COLOCATED_FENCE]))).toEqual([]);
+    },
+    SLOW,
+  );
+});

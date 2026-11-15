@@ -93,7 +93,7 @@ lockstep with those types
 * `@defold-typescript/tstl-plugin` for the live transpile diagnostics
 * `@defold-typescript/docs` for the guide and agent docs the managed `AGENTS.md` points to
 * `@biomejs/biome` for lint and format, pinned exactly to the version whose schema `biome.json` names
-* `bun-types`, pinned exactly, for `bun:test` files, the `src/test/` folder and the `.vscode/` debug launcher
+* `bun-types`, pinned exactly, for [`bun:test` files](./testing.md), the `src/test/` folder and the `.vscode/` debug launcher
 * `lua-types` for the ambient Lua standard library so `math`/`string`/`table`/… resolve
 * `typescript` pinned to the exact version TypeScript-to-Lua supports
 

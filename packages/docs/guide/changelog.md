@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **Breaking: `build` skips everything under `src/test/`**, so game code there moves out ([build](./build.md#what-it-does)).
-> - **`init` scaffolds `src/test/` and pins `bun-types`, and `build` skips test files**, which type-check beside their modules ([init](./init.md#two-modes), [build](./build.md#what-it-does)).
+> - **Bun tests sit next to their modules or in a scaffolded `src/test/`**, type-check without reaching game code, and stay out of the build ([Test with Bun](./testing.md)).
 > - **`build --json` adds `lualibRequiredBy`** ([runbooks](./agent-runbooks.md)).
 > - **Agents check `.gui` edits** ([build](./build.md#compile-in-the-editor)).
 > - **Walls clear `outDir`, the starter scene parses, and the debug launcher type-checks** ([wall](./wall.md#what-a-wall-is), [scene-types](./scene-types.md), [debugging](./debugging.md#re-running-it)).
@@ -25,8 +25,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Added
 
-- **`init` and `upgrade` write a test config for tests that need Bun's runtime:** `src/test/tsconfig.json` extends the root config and `src/test/env.d.ts` references `bun-types`, which both commands list at an exact version, so a `bun:test` file under `src/test/` that imports game code and uses `node:*` or `Bun` type-checks with `tsc --noEmit -p src/test/tsconfig.json` against the game's own types and pinned surface, with or without a root `outDir`. Writing them adds `src/test` to the root `exclude` unless an entry already names that folder in any spelling (`./src/test`, `src/test/`), so Bun's types stay out of the game program, and neither file is ever overwritten ([Init](./init.md#two-modes)).
-- **`build`, `watch` and the editor plugin skip the files `bun test` runs:** a `*.test.ts`, `*_test.ts`, `*.spec.ts` or `*_spec.ts` file under the source roots writes no Lua, joins no program the build type-checks, and gets no build diagnostic in the editor, so a test can sit next to the module it tests. Starting it with `/// <reference types="bun-types/test" />` lets the project's own `tsc --noEmit` check it without Bun's globals reaching game code; a test that needs `node:*` or `Bun` goes under `src/test/` ([Build](./build.md#what-it-does)).
+- **Bun tests type-check against the game's own types, without Bun's globals reaching game code, in either of two places:**
+  - **Next to the module it tests:** `build`, `watch` and the editor plugin skip every `*.test.ts`, `*_test.ts`, `*.spec.ts` or `*_spec.ts` file under the source roots, so it writes no Lua and gets no build diagnostic. Starting it with `/// <reference types="bun-types/test" />` lets the project's own `tsc --noEmit` check it ([Build](./build.md#what-it-does)).
+  - **In `src/test/`, for tests that need `node:*` or `Bun`:** `init` and `upgrade` write `src/test/tsconfig.json`, which extends the root config, and `src/test/env.d.ts`, which references `bun-types`, so `tsc --noEmit -p src/test/tsconfig.json` checks the folder with or without a root `outDir`. Writing them adds `src/test` to the root `exclude` unless an entry already names that folder in any spelling, and neither file is ever overwritten ([Init](./init.md#two-modes)).
+  - **The [Test with Bun](./testing.md) guide page** explains where a test goes, each `src/test/` setting and how to stub engine calls; the managed `AGENTS.md` block and the [Write a test](./agent-runbooks.md#write-a-test) runbook point to it.
 - **`build --json` reports which outputs require the TypeScript runtime helper bundle:** a successful result always carries `lualibRequiredBy`, the sorted output paths whose Lua requires `lualib_bundle`, including files this run left unchanged, so a project that avoids the bundle can check it without scanning its output folder ([Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
 ### Improved

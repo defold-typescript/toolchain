@@ -1444,9 +1444,10 @@ hsm door frame 330: /open -> /closed (after: /open, 3) [/closed]
 
 ## Test a machine with Bun
 
-`@defold-typescript/types/hsm` and its sub-modules also run under Bun, so a machine in a [plain module](#define-a-machine-in-a-plain-module) can be tested with `bun test`, with no Defold engine and no mock of the import. Keep test files out of `src/`: `build` compiles every `.ts` file there to Lua, and `bun:test` has no Lua module. A test imports the machine from its module under `src/`, or defines one itself:
+`@defold-typescript/types/hsm` and its sub-modules also run under Bun, so a machine in a [plain module](#define-a-machine-in-a-plain-module) can be tested with `bun test`, with no Defold engine and no mock of the import. A test that imports only `bun:test` and game code sits next to its module and starts with `/// <reference types="bun-types/test" />`, and one that needs Bun's runtime goes in `src/test/` ([Test with Bun](./testing.md)). A test imports the machine from its module, or defines one itself:
 
-```ts title="test/lamp.test.ts"
+```ts title="lamp.test.ts"
+/// <reference types="bun-types/test" />
 import { expect, test } from "bun:test";
 import { defineMachine } from "@defold-typescript/types/hsm";
 

@@ -83,7 +83,8 @@ only, so they never reach the code `build` compiles. Type-check the tests with
 `tsc --noEmit` checks it (see [`build`](./build.md#what-it-does)). `init` never overwrites either file, and
 leaves the root `exclude` as it is when `src/test/tsconfig.json` exists, so a later
 change to the root `include` or `exclude` needs the same change in
-`src/test/tsconfig.json`.
+`src/test/tsconfig.json`. [Test with Bun](./testing.md) explains each setting and
+where a test goes.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
 merge additively into anything you already have, so re-running `init` refreshes the

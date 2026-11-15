@@ -294,9 +294,9 @@ keep such scripts off the game's Lua build path:
 
 - **Location:** put the script in a project-root `/scripts` folder. The Defold
   build selects source by `tsconfig.include` (default `src/**/*.ts`) and ignores
-  `exclude`, so any `.ts` under `src/**` is transpiled to Lua and shipped —
-  `/scripts` is outside that include, and outside the Defold-pinned main
-  `tsconfig.json`.
+  `exclude`, so any `.ts` under `src/**` other than a test or a file in
+  `src/test/` is transpiled to Lua and shipped — `/scripts` is outside that
+  include, and outside the Defold-pinned main `tsconfig.json`.
 - **Runner and typing:** run with `bun scripts/foo.ts` (never `node`); `node:*`
   builtins work under Bun and are typed by `bun-types` (a project upgraded from an
   earlier release may also list `@types/bun`). Add a
@@ -306,6 +306,26 @@ keep such scripts off the game's Lua build path:
 
 See the [Helper scripts](./helper-scripts.md) guide for the full rationale and a
 copy-pasteable config.
+
+## Write a test
+
+A test is a `bun:test` file, never a helper script. To add one:
+
+1. **Choose the place by what the test imports.** Only `bun:test` and game code:
+   next to the module it tests. Anything from Bun's runtime (`node:*`, `Bun`,
+   `console`, `process`, a module outside the source roots): `src/test/`.
+2. **Name the file** `<module>.test.ts` (`*_test.ts`, `*.spec.ts` and
+   `*_spec.ts` work too); `build`, `watch` and the editor plugin skip it.
+3. **Type it.** A test next to its module starts with
+   `/// <reference types="bun-types/test" />`. A test in `src/test/` needs no
+   line: `src/test/env.d.ts` already types the folder.
+4. **Check it.** Run `bunx tsc --noEmit`,
+   `bunx tsc --noEmit -p src/test/tsconfig.json` and `bun test`; all three exit
+   `0`. A `node:fs`, `console`, `process` or `TS6059` error on a test next to
+   its module means it belongs in `src/test/`.
+
+[Test with Bun](./testing.md) covers both places, the `src/test/` config and
+how to stub engine calls.
 
 ## Surface the ratchet backlog
 
