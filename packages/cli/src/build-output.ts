@@ -19,6 +19,7 @@ import {
 import {
   assertContained,
   escapesProject,
+  fileIdentity,
   firstLinkOnPath,
   removeContained,
   writeContainedFile,
@@ -420,12 +421,33 @@ function addRuntimeDependencies(
   }
 }
 
+// `rels` without each path that reaches the same file as a path in `live`: a
+// disk that ignores case or normalizes Unicode reads two spellings as one file,
+// so a string compare alone would delete a live output through another name.
+function withoutLiveFiles(cwd: string, rels: readonly string[], live: readonly string[]): string[] {
+  if (rels.length === 0) {
+    return [];
+  }
+  const liveIdentities = new Set<string>();
+  for (const rel of live) {
+    const identity = fileIdentity(path.join(cwd, rel));
+    if (identity !== undefined) {
+      liveIdentities.add(identity);
+    }
+  }
+  return rels.filter((rel) => {
+    const identity = fileIdentity(path.join(cwd, rel));
+    return identity === undefined || !liveIdentities.has(identity);
+  });
+}
+
 /**
  * Remove each runtime file a build with no failures did not produce, with its
  * map, and each library folder that leaves empty. `live` is every path this
  * build owns: the runtime files it produced and each source and companion
- * output. A file stays when it lacks the generated banner, when it is in
- * `live`, or when a hand-written Lua or script file in the project requires it
+ * output. A file stays when it lacks the generated banner, when it is the file
+ * at a path in `live`, under any spelling the disk reads as that file, or when
+ * a hand-written Lua or script file in the project requires it
  * by name; a file kept for hand-written Lua also keeps every runtime file it
  * requires. Returns the removed files, sorted.
  */
@@ -435,8 +457,10 @@ export function pruneUnusedRuntimeOutputs(
   live: readonly string[],
 ): string[] {
   const owned = new Set(live);
-  const candidates = builtinRuntimeRels(config).filter(
-    (rel) => !owned.has(rel) && hasGeneratedBanner(cwd, rel),
+  const candidates = withoutLiveFiles(
+    cwd,
+    builtinRuntimeRels(config).filter((rel) => !owned.has(rel) && hasGeneratedBanner(cwd, rel)),
+    live,
   );
   if (candidates.length === 0) {
     return [];
@@ -486,10 +510,10 @@ export function pruneLegacyRuntimeOutputs(
     ...builtinRuntimeRels(config),
     ...liveSources.flatMap((rel) => outputRelsForSource(rel, config)),
   ]);
-  for (const rel of legacyRuntimeRels(config)) {
-    if (live.has(rel) || !hasGeneratedBanner(cwd, rel)) {
-      continue;
-    }
+  const stale = legacyRuntimeRels(config).filter(
+    (rel) => !live.has(rel) && hasGeneratedBanner(cwd, rel),
+  );
+  for (const rel of withoutLiveFiles(cwd, stale, [...live])) {
     removeContained(cwd, rel);
     removeContained(cwd, `${rel}.map`);
   }

@@ -32,6 +32,7 @@ import {
   timersModuleRel,
 } from "./build-output";
 import { createBuildSession } from "./build-session";
+import { TMP_FOLDS_CASE } from "./case-folding.test-support";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { scaffoldResolvedProject } from "./resolved-project-fixture";
 import { linkDir } from "./symlink.test-support";
@@ -295,6 +296,50 @@ describe("createBuildSession", () => {
     expect(result.written).not.toContain(occupantRel);
     expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
     expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+  });
+
+  describe.skipIf(!TMP_FOLDS_CASE)("on a disk that ignores letter case", () => {
+    test.each([
+      { name: "module", text: "export const tick = (): number => 1;\n" },
+      {
+        name: "script companion",
+        text: [
+          'import { defineScript } from "@defold-typescript/types";',
+          "export const tick = 1;",
+          "export default defineScript({ init() { print(tick); } });",
+          "",
+        ].join("\n"),
+      },
+    ])(
+      "buildAll keeps a source output a differently cased runtime path reaches ($name)",
+      ({ text }) => {
+        const occupantSource = "src/lib/defold_typescript/Timers.ts";
+        const occupantImport = 'import { tick } from "./lib/defold_typescript/Timers";';
+        const occupantRel = computeOutputRel(occupantSource, OUTDIR_CONFIG, "module");
+        writeIn(
+          cwd,
+          "tsconfig.json",
+          JSON.stringify({ compilerOptions: { outDir: "out/lua" }, include: ["src/**/*.ts"] }),
+        );
+        writeIn(cwd, occupantSource, text);
+        writeIn(
+          cwd,
+          "src/main.ts",
+          `${occupantImport}\nexport const ks = Object.keys({ a: tick });\n`,
+        );
+        const first = createBuildSession({ cwd }).buildAll();
+
+        expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+        expect(first.removed).toEqual([]);
+
+        writeIn(cwd, "src/main.ts", `${occupantImport}\nexport const t = tick;\n`);
+        const result = createBuildSession({ cwd }).buildAll();
+
+        expect(result.written).not.toContain(occupantRel);
+        expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+        expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+      },
+    );
   });
 
   test("adding an ecs value import to a watched source writes the ecs module", () => {

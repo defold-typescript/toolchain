@@ -35,6 +35,7 @@ import {
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
+import { TMP_FOLDS_CASE } from "./case-folding.test-support";
 import { decodeMappings } from "./console-source-map";
 import { dispatch } from "./dispatch";
 import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
@@ -2005,6 +2006,87 @@ describe("runBuild runtime folder", () => {
     expect(result.written).not.toContain(occupantRel);
     expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
     expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+  });
+
+  const CASED_OCCUPANT_SOURCE = "src/lib/defold_typescript/Timers.ts";
+  const CASED_OCCUPANT_IMPORT = 'import { tick } from "./lib/defold_typescript/Timers";';
+
+  describe.skipIf(!TMP_FOLDS_CASE)("on a disk that ignores letter case", () => {
+    test.each([
+      { name: "module", text: "export const tick = (): number => 1;\n" },
+      {
+        name: "script companion",
+        text: [
+          'import { defineScript } from "@defold-typescript/types";',
+          "export const tick = 1;",
+          "export default defineScript({ init() { print(tick); } });",
+          "",
+        ].join("\n"),
+      },
+    ])("keeps a source output a differently cased runtime path reaches ($name)", ({ text }) => {
+      const occupantRel = computeOutputRel(CASED_OCCUPANT_SOURCE, OUTDIR_CONFIG, "module");
+      writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+      writeFile(CASED_OCCUPANT_SOURCE, text);
+      writeFile(
+        "src/main.ts",
+        `${CASED_OCCUPANT_IMPORT}\nexport const ks = Object.keys({ a: tick });\n`,
+      );
+      const first = runBuild({ cwd });
+
+      expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+      expect(first.removed).toEqual([]);
+
+      writeFile("src/main.ts", `${CASED_OCCUPANT_IMPORT}\nexport const t = tick;\n`);
+      const result = runBuild({ cwd });
+
+      expect(result.written).not.toContain(occupantRel);
+      expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+      expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+    });
+
+    test("keeps a source output a differently cased legacy runtime path reaches", () => {
+      writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+      writeFile("src/Defold_Typescript_Timers.ts", "export const tick = 1;\n");
+      runBuild({ cwd });
+
+      const occupantRel = computeOutputRel(
+        "src/Defold_Typescript_Timers.ts",
+        OUTDIR_CONFIG,
+        "module",
+      );
+      expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+    });
+  });
+
+  describe.skipIf(TMP_FOLDS_CASE)("on a case-sensitive disk", () => {
+    test("removes a stale runtime file whose path differs from a source output only in case", () => {
+      const occupantRel = computeOutputRel(CASED_OCCUPANT_SOURCE, OUTDIR_CONFIG, "module");
+      writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+      writeFile(CASED_OCCUPANT_SOURCE, "export const tick = (): number => 1;\n");
+      writeFile(
+        "src/main.ts",
+        [
+          CASED_OCCUPANT_IMPORT,
+          'import { setTimeout } from "@defold-typescript/types/timers";',
+          "setTimeout(() => print(tick()), 250);",
+          "",
+        ].join("\n"),
+      );
+      runBuild({ cwd });
+
+      expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+      expect(existsSync(path.join(cwd, timersModuleRel(OUTDIR_CONFIG)))).toBe(true);
+
+      writeFile("src/main.ts", `${CASED_OCCUPANT_IMPORT}\nexport const t = tick;\n`);
+      const result = runBuild({ cwd });
+
+      expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+      expect(existsSync(path.join(cwd, timersModuleRel(OUTDIR_CONFIG)))).toBe(false);
+      expect(result.removed).toEqual([
+        lualibBundleRel(OUTDIR_CONFIG),
+        timersModuleRel(OUTDIR_CONFIG),
+      ]);
+    });
   });
 
   test("keeps the runtime files a runtime kept for hand-written Lua requires", () => {

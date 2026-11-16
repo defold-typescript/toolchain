@@ -7988,9 +7988,11 @@ files your program uses:
 A `build` with no errors deletes each of these files it did not write, with its
 map, and then any library folder that leaves empty. A file stays when it lacks
 the generated banner, when one of your sources or its companion compiles to that
-path, or when a hand-written `.lua`, `.script`, `.gui_script`, `.render_script`
-or `.editor_script` file in the project names its `require` path in quotes, such
-as `require "lib.defold_typescript.lualib_bundle"`; a file kept for hand-written
+file, under any spelling your disk reads as the same file (on macOS and Windows,
+which ignore letter case by default, `Timers.lua` is `timers.lua`), or when a
+hand-written `.lua`, `.script`, `.gui_script`, `.render_script` or
+`.editor_script` file in the project names its `require` path in quotes, such as
+`require "lib.defold_typescript.lualib_bundle"`; a file kept for hand-written
 Lua also keeps every runtime file it requires. `build` prints the deleted files
 on a second line. A failing build deletes nothing, and
 so does a `watch` rebuild; `watch` deletes them only in its first build.

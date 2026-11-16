@@ -8,10 +8,11 @@
 // and the check `resolve` runs on shipped types: a folder `resolve` would
 // reject or trim is never left behind.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
+import { fileIdentity } from "./contained-fs";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { printLibraryModules } from "./library/print-library";
 import {
@@ -95,15 +96,6 @@ async function curatedFiles(
 
 function byEntryPath(a: ShippedDeclarationFile, b: ShippedDeclarationFile): number {
   return a.entry < b.entry ? -1 : a.entry > b.entry ? 1 : 0;
-}
-
-// The file `file` reaches on disk, as the file system itself tells files apart,
-// so two names it routes to one file -- by ignoring case, by normalizing
-// Unicode, or as hard links -- share one identity. `bigint` because NTFS file
-// indexes exceed `Number.MAX_SAFE_INTEGER`.
-function fileIdentity(file: string): string | undefined {
-  const stat = statSync(file, { bigint: true, throwIfNoEntry: false });
-  return stat === undefined ? undefined : `${stat.dev}:${stat.ino}`;
 }
 
 // The files already in `<cwd>/types/` that `resolve` would read as shipped
