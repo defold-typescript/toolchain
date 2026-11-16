@@ -1975,6 +1975,64 @@ describe("runBuild runtime folder", () => {
     expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm"))).toBe(false);
     expect(result.removed).toEqual([asyncRel, BUNDLE_REL, timersRel]);
   });
+
+  const OCCUPANT_IMPORT = 'import { tick } from "./lib/defold_typescript/timers";';
+
+  test.each([
+    { name: "module", text: "export const tick = (): number => 1;\n" },
+    {
+      name: "script companion",
+      text: [
+        'import { defineScript } from "@defold-typescript/types";',
+        "export const tick = 1;",
+        "export default defineScript({ init() { print(tick); } });",
+        "",
+      ].join("\n"),
+    },
+  ])("keeps a source output that lands on a runtime path ($name)", ({ text }) => {
+    const occupantRel = timersModuleRel(OUTDIR_CONFIG);
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeFile("src/lib/defold_typescript/timers.ts", text);
+    writeFile("src/main.ts", `${OCCUPANT_IMPORT}\nexport const ks = Object.keys({ a: tick });\n`);
+    const first = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+    expect(first.removed).toEqual([]);
+
+    writeFile("src/main.ts", `${OCCUPANT_IMPORT}\nexport const t = tick;\n`);
+    const result = runBuild({ cwd });
+
+    expect(result.written).not.toContain(occupantRel);
+    expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+    expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+  });
+
+  test("keeps the runtime files a runtime kept for hand-written Lua requires", () => {
+    const timersRel = "lib/defold_typescript/timers.lua";
+    const asyncRel = "lib/defold_typescript/hsm/async.lua";
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      [
+        'import { sequence } from "@defold-typescript/types/hsm/async";',
+        'import { setTimeout } from "@defold-typescript/types/timers";',
+        'export const task = sequence<{}, { type: "GO" }>((_ctx, signal) => signal.wait(0.5));',
+        "setTimeout(() => print(1), 250);",
+        "",
+      ].join("\n"),
+    );
+    runBuild({ cwd });
+    writeFile("scripts/hand.lua", 'local timers = require "lib.defold_typescript.timers"\n');
+
+    writeFile("src/main.ts", PLAIN_SOURCE);
+    const result = runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, timersRel))).toBe(true);
+    expect(existsSync(path.join(cwd, BUNDLE_REL))).toBe(true);
+    expect(existsSync(path.join(cwd, asyncRel))).toBe(false);
+    expect(existsSync(path.join(cwd, `${asyncRel}.map`))).toBe(false);
+    expect(result.removed).toEqual([asyncRel]);
+  });
 });
 
 function captureStreams() {

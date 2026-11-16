@@ -215,7 +215,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     result: TranspileProjectResult,
     keys: readonly string[],
     pruneAlternatives = false,
-  ): { readonly written: string[]; readonly runtimeRels: RuntimeArtifactRels } {
+  ): {
+    readonly written: string[];
+    readonly runtimeRels: RuntimeArtifactRels;
+    readonly sourceOutputs: string[];
+  } {
     const failures = collectFailures(result.diagnostics);
     // Every held source, not only `keys`: a source left inside `outDir` fails
     // each rebuild until it moves.
@@ -404,7 +408,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     written.sort();
     throwIfFailures(failures, written);
-    return { written, runtimeRels };
+    const sourceOutputs = [...outputRelBySource].flatMap(([rel, outputRel]) => {
+      const companionRel = companionBySource[rel];
+      return companionRel === undefined ? [outputRel] : [outputRel, companionRel];
+    });
+    return { written, runtimeRels, sourceOutputs };
   }
 
   function buildAll(): BuildResult {
@@ -440,7 +448,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     // only the changed sources, so an unchanged source's output on disk may be
     // older than the program and still require a file this one does not.
     // `writeOutputs` has already thrown on any failure.
-    const removed = pruneUnusedRuntimeOutputs(cwd, config, producedRuntimeRels(built.runtimeRels));
+    const removed = pruneUnusedRuntimeOutputs(cwd, config, [
+      ...producedRuntimeRels(built.runtimeRels),
+      ...built.sourceOutputs,
+    ]);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
     return {
