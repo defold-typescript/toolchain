@@ -8,6 +8,7 @@ import {
   renameSync,
   rmSync,
   type Stats,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import * as path from "node:path";
@@ -204,6 +205,15 @@ export function removeContained(
   opts: Omit<RmOptions, "force"> = {},
 ): void {
   rmSync(assertContained(root, target), { force: true, ...opts });
+}
+
+// The file `file` reaches on disk, as the file system itself tells files apart,
+// so two names it routes to one file -- by ignoring case, by normalizing
+// Unicode, or as hard links -- share one identity. `bigint` because NTFS file
+// indexes exceed `Number.MAX_SAFE_INTEGER`.
+export function fileIdentity(file: string): string | undefined {
+  const stat = statSync(file, { bigint: true, throwIfNoEntry: false });
+  return stat === undefined ? undefined : `${stat.dev}:${stat.ino}`;
 }
 
 /** Create the folder `target` under `root` and its parents, once the path is contained. */

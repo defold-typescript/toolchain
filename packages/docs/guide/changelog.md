@@ -13,11 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`build` deletes the runtime files nothing requires** ([Build](./build.md#the-runtime-folder)).
+> - **`build` deletes the runtime files nothing requires** and keeps every file your sources compile to, under any letter case ([Build](./build.md#the-runtime-folder)).
 
 ### Fixed
 
-- **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file stays when it lacks the generated banner, when a source of yours compiles to its path, or when a hand-written Lua or script file requires it by name, and a file kept that way keeps the runtime files it requires. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
+- **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file stays when it lacks the generated banner, when a source of yours compiles to that file, including under a differently cased name on macOS and Windows, or when a hand-written Lua or script file requires it by name, and a file kept that way keeps the runtime files it requires. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
+- **On macOS and Windows, `build` and `watch` keep a source output whose path differs only in letter case from a runtime file an earlier version wrote at the output root,** such as `Defold_Typescript_Timers.lua` beside `defold_typescript_timers.lua`, instead of deleting it right after writing it ([Build](./build.md#the-runtime-folder)).
 
 ## v0.66.0
 

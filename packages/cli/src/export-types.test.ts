@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, relative, sep } from "node:path";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
+import { TMP_FOLDS_CASE } from "./case-folding.test-support";
 import { runExportTypes } from "./export-types";
 import { libraryFolderName } from "./library/library-data";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
@@ -392,15 +393,6 @@ describe("runExportTypes over an existing types folder", () => {
     }
     return cwd;
   }
-
-  // Whether the folder the tests write to treats names differing only in case
-  // as one file, observed rather than assumed from the platform: macOS and
-  // Windows runners fold case by default, ubuntu does not.
-  const TMP_FOLDS_CASE = (() => {
-    const dir = tmp();
-    writeFileSync(join(dir, "CASE"), "");
-    return existsSync(join(dir, "case"));
-  })();
 
   // Reads `cwd` back the way `resolve` reads a release archive of it: every
   // `written` file survives the selection, and the folder compiles.
