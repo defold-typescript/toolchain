@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`build` deletes unused runtime files** ([Build](./build.md#the-runtime-folder)).
+> - **`build` deletes the runtime files nothing requires** ([Build](./build.md#the-runtime-folder)).
 
 ### Fixed
 
-- **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file without the generated banner, or one a hand-written Lua or script file requires by name, stays. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
+- **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file stays when it lacks the generated banner, when a source of yours compiles to its path, or when a hand-written Lua or script file requires it by name, and a file kept that way keeps the runtime files it requires. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 
 ## v0.66.0
 

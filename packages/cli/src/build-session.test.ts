@@ -266,6 +266,37 @@ describe("createBuildSession", () => {
     expect(restart.removed).toEqual([bundleRel]);
   });
 
+  test.each([
+    { name: "module", text: "export const tick = (): number => 1;\n" },
+    {
+      name: "script companion",
+      text: [
+        'import { defineScript } from "@defold-typescript/types";',
+        "export const tick = 1;",
+        "export default defineScript({ init() { print(tick); } });",
+        "",
+      ].join("\n"),
+    },
+  ])("buildAll keeps a source output that lands on a runtime path ($name)", ({ text }) => {
+    const occupantImport = 'import { tick } from "./lib/defold_typescript/timers";';
+    const occupantRel = timersModuleRel(OUTDIR_CONFIG);
+    writeIn(
+      cwd,
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { outDir: "out/lua" }, include: ["src/**/*.ts"] }),
+    );
+    writeIn(cwd, "src/lib/defold_typescript/timers.ts", text);
+    writeIn(cwd, "src/main.ts", `${occupantImport}\nexport const ks = Object.keys({ a: tick });\n`);
+    createBuildSession({ cwd }).buildAll();
+
+    writeIn(cwd, "src/main.ts", `${occupantImport}\nexport const t = tick;\n`);
+    const result = createBuildSession({ cwd }).buildAll();
+
+    expect(result.written).not.toContain(occupantRel);
+    expect(existsSync(path.join(cwd, occupantRel))).toBe(true);
+    expect(result.removed).toEqual([lualibBundleRel(OUTDIR_CONFIG)]);
+  });
+
   test("adding an ecs value import to a watched source writes the ecs module", () => {
     const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
     writeIn(

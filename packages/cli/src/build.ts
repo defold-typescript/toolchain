@@ -373,10 +373,22 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
   pruneLegacyRuntimeOutputs(cwd, config, sources);
   // Only with no failures: a failed source's earlier output stays on disk and
-  // may still require a runtime file this build did not produce.
+  // may still require a runtime file this build did not produce. Every claimed
+  // source output counts, not only `written`, which leaves out unchanged files.
+  const liveSourceOutputs = writable.flatMap((rel) => {
+    const outputRel = outputBySource[rel];
+    const companionRel = companionBySource[rel];
+    return [
+      ...(outputRel !== undefined ? [outputRel] : []),
+      ...(companionRel !== undefined ? [companionRel] : []),
+    ];
+  });
   const removed =
     failures.size === 0
-      ? pruneUnusedRuntimeOutputs(cwd, config, producedRuntimeRels(runtimeRels))
+      ? pruneUnusedRuntimeOutputs(cwd, config, [
+          ...producedRuntimeRels(runtimeRels),
+          ...liveSourceOutputs,
+        ])
       : [];
 
   throwIfFailures(failures);

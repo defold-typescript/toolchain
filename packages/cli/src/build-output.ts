@@ -374,37 +374,77 @@ function requireNamesInHandWrittenLua(cwd: string, requireNames: readonly string
       if (!entry.isFile() || !HAND_WRITTEN_LUA_RE.test(entry.name)) continue;
       const text = readTextFile(path.join(cwd, child));
       if (text === undefined || carriesGeneratedBanner(text)) continue;
-      for (const name of requireNames) {
-        if (text.includes(`"${name}"`) || text.includes(`'${name}'`)) {
-          found.add(name);
-        }
-      }
+      quotedRequireNames(text, requireNames, found);
     }
   };
   visit("");
   return found;
 }
 
+// Add to `found` each of `requireNames` that `text` names in quotes.
+function quotedRequireNames(
+  text: string,
+  requireNames: readonly string[],
+  found: Set<string>,
+): void {
+  for (const name of requireNames) {
+    if (text.includes(`"${name}"`) || text.includes(`'${name}'`)) {
+      found.add(name);
+    }
+  }
+}
+
+// Grow `kept` with every candidate a kept candidate requires, until nothing
+// more is added. Generated runtime Lua already names each require by the
+// project's runtime path, so the quoted match finds every edge.
+function addRuntimeDependencies(
+  cwd: string,
+  kept: Set<string>,
+  candidates: readonly string[],
+): void {
+  let pending = [...kept];
+  while (pending.length > 0) {
+    const others = candidates.filter((rel) => !kept.has(rel));
+    const names = others.map(requirePathForRel);
+    const found = new Set<string>();
+    for (const rel of pending) {
+      const text = readTextFile(path.join(cwd, rel));
+      if (text !== undefined) {
+        quotedRequireNames(text, names, found);
+      }
+    }
+    pending = others.filter((rel) => found.has(requirePathForRel(rel)));
+    for (const rel of pending) {
+      kept.add(rel);
+    }
+  }
+}
+
 /**
  * Remove each runtime file a build with no failures did not produce, with its
- * map, and each library folder that leaves empty. A file stays when it lacks
- * the generated banner, or when a hand-written Lua or script file in the
- * project requires it by name. Returns the removed files, sorted.
+ * map, and each library folder that leaves empty. `live` is every path this
+ * build owns: the runtime files it produced and each source and companion
+ * output. A file stays when it lacks the generated banner, when it is in
+ * `live`, or when a hand-written Lua or script file in the project requires it
+ * by name; a file kept for hand-written Lua also keeps every runtime file it
+ * requires. Returns the removed files, sorted.
  */
 export function pruneUnusedRuntimeOutputs(
   cwd: string,
   config: BuildConfig,
-  produced: readonly string[],
+  live: readonly string[],
 ): string[] {
-  const live = new Set(produced);
+  const owned = new Set(live);
   const candidates = builtinRuntimeRels(config).filter(
-    (rel) => !live.has(rel) && hasGeneratedBanner(cwd, rel),
+    (rel) => !owned.has(rel) && hasGeneratedBanner(cwd, rel),
   );
   if (candidates.length === 0) {
     return [];
   }
   const required = requireNamesInHandWrittenLua(cwd, candidates.map(requirePathForRel));
-  const removed = candidates.filter((rel) => !required.has(requirePathForRel(rel)));
+  const kept = new Set(candidates.filter((rel) => required.has(requirePathForRel(rel))));
+  addRuntimeDependencies(cwd, kept, candidates);
+  const removed = candidates.filter((rel) => !kept.has(rel));
   for (const rel of removed) {
     removeContained(cwd, rel);
     removeContained(cwd, `${rel}.map`);
