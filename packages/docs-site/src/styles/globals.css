@@ -13,6 +13,14 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* The shared renderer offsets every jump target (headings, footnote marks) by
+ * `--topbar-height`. The bars that stay over the page here are Fumadocs' header
+ * and, below `xl`, its outline bar; Fumadocs keeps their combined height in
+ * `--fd-docs-row-3`. */
+#nd-docs-layout {
+  --topbar-height: var(--fd-docs-row-3);
+}
+
 /* Where Fumadocs' typography and the shared renderer's markup disagree. */
 .prose :is(h1, h2, h3, h4, h5, h6) a {
   text-decoration: none;

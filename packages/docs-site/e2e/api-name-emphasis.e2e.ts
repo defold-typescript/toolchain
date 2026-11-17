@@ -10,7 +10,7 @@ const weight = (locator: Locator) =>
 
 test("a signature heading is normal weight with bold names only", async ({ page }) => {
   await page.goto(PAGE);
-  const heading = page.locator("article.prose h3", { hasText: "socket.newtry(" }).first();
+  const heading = page.locator("[data-page-body] h3", { hasText: "socket.newtry(" }).first();
   const code = heading.locator(".api-signature").first();
   await expect(code).toBeVisible();
 

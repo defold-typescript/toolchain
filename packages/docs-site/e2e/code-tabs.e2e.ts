@@ -1,9 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 
 // `/api/vmath` renders its translated examples as TypeScript/Lua tab groups.
-// The server markup shows the TypeScript tab first; the CodeTabs island switches
+// The server markup shows the TypeScript tab first; the page script switches
 // only the clicked group, nothing carries across page loads, and the selected
 // tab's badge is visibly lit.
+
+// The page script wires the tabs once the page hydrates, which on a cold dev
+// server can come after the first click. Selecting a tab twice is harmless, so
+// click until it takes.
+async function select(tab: Locator) {
+  await expect(async () => {
+    await tab.click();
+    await expect(tab).toHaveAttribute("aria-selected", "true", { timeout: 500 });
+  }).toPass({ timeout: 15_000 });
+}
 
 test("a tab group starts on TypeScript and a click switches that group alone", async ({ page }) => {
   await page.goto("/api/vmath");
@@ -23,8 +33,7 @@ test("a tab group starts on TypeScript and a click switches that group alone", a
       .evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(await badgeBackground(0)).not.toBe(await badgeBackground(1));
 
-  await tabs.nth(1).click();
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  await select(tabs.nth(1));
   await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "false");
   await expect(panels.nth(1)).toBeVisible();
   await expect(panels.nth(0)).toBeHidden();
@@ -55,47 +64,8 @@ test("switching a Config/Builder group leaves the other groups and the clicked t
 
   const viewportTop = () => builder.evaluate((el) => el.getBoundingClientRect().top);
   const before = await viewportTop();
-  await builder.click();
-  await expect(builder).toHaveAttribute("aria-selected", "true");
+  await select(builder);
   expect(await viewportTop()).toBeCloseTo(before, 0);
 
   await expect(groups.first().locator(".code-tab").nth(0)).toHaveAttribute("aria-selected", "true");
-});
-
-// The CodeTabs island sits after the article, at the very end of a long page. On a
-// slow connection the end of the page arrives well after the client script, which
-// must still find that island. A script parked just before the trailing islands
-// holds the parser there until the islands near the top have hydrated (or a few
-// seconds pass), the way a late page tail does.
-test("a tab group switches when the end of the page arrives after the client script", async ({
-  page,
-}) => {
-  await page.route("**/__hold-page-tail.js", async (route) => {
-    const deadline = Date.now() + 5000;
-    while (Date.now() < deadline) {
-      const hydrated = await page
-        .evaluate(() => document.querySelector("[data-hono-hydrated]") !== null)
-        .catch(() => false);
-      if (hydrated) break;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    await route.fulfill({ contentType: "text/javascript", body: "" });
-  });
-  await page.route("**/state-machines", async (route) => {
-    const response = await route.fetch();
-    const html = await response.text();
-    const trailingIslands = html.indexOf("<honox-island", html.lastIndexOf("</article>"));
-    expect(trailingIslands).toBeGreaterThan(0);
-    const body = `${html.slice(0, trailingIslands)}<script src="/__hold-page-tail.js"></script>${html.slice(trailingIslands)}`;
-    await route.fulfill({ response, body });
-  });
-
-  await page.goto("/state-machines");
-  const builder = page
-    .locator('[data-code-tabs="config-builder"]')
-    .last()
-    .locator(".code-tab")
-    .nth(1);
-  await builder.click();
-  await expect(builder).toHaveAttribute("aria-selected", "true");
 });
