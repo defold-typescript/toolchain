@@ -1,5 +1,7 @@
 import { THEME_TOKENS } from "@defold-typescript/docs-render/theme-tokens";
+import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { ReactNode } from "react";
+import { TYPES_DIR } from "../../app/lib/api-content";
 import { Provider } from "../components/provider";
 import "../styles/globals.css";
 
@@ -18,7 +20,9 @@ export default async function RootElement({ children }: { children: ReactNode })
         <link rel="stylesheet" href={`${BASE_PATH}critical.css`} />
       </head>
       <body className="flex flex-col min-h-screen">
-        <Provider basePath={BASE_PATH}>{children}</Provider>
+        <Provider versionIds={apiVersions(TYPES_DIR).map((version) => version.id)}>
+          {children}
+        </Provider>
       </body>
     </html>
   );

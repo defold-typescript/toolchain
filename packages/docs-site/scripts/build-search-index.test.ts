@@ -1,6 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { rmSync } from "node:fs";
+import { afterAll, describe, expect, test } from "bun:test";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
@@ -20,6 +22,7 @@ import {
   resolveVersionWindow,
   windowCombinedSurface,
 } from "@defold-typescript/docs-render/version-window";
+import { staticClient } from "fumadocs-core/search/client/orama-static";
 import { libraryPageNames } from "../app/lib/__fixtures__/library-page-names";
 import { renderedHeadingIds } from "../app/lib/__fixtures__/rendered-heading-ids";
 import {
@@ -27,7 +30,7 @@ import {
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
 import { combinedSearchRecords } from "../app/lib/search-index";
-import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
+import { searchIndexOutputs, versionRoutePages, writeSearchIndexes } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
 
@@ -308,5 +311,33 @@ describe("searchIndexOutputs — every symbol-index member route is searchable",
       expect(expected).toBeGreaterThan(1000);
       expect(missing).toEqual([]);
     }
+  });
+});
+
+// The dialog downloads one written file and searches it in the browser, so each
+// file must be a loadable export that answers with its own version's routes.
+describe("writeSearchIndexes", () => {
+  const dir = mkdtempSync(join(tmpdir(), "search-indexes-"));
+  const written = writeSearchIndexes(dir);
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  test("writes every file searchIndexOutputs names", async () => {
+    const files = (await written).map((output) => output.file);
+    expect(files).toEqual(searchIndexOutputs().map((output) => output.file));
+    for (const file of files) expect(existsSync(join(dir, file))).toBe(true);
+  });
+
+  test("a version's file answers a member query with that version's route", async () => {
+    const newest = versionsWithDiskFixtures(TYPES_DIR)[0]?.id ?? "";
+    const file = `search-index-${newest}.json`;
+    const member = (await written)
+      .find((output) => output.file === file)
+      ?.records.find((record) => record.title === "go.animate");
+    const route = member?.route ?? "";
+    expect(route.startsWith(`/api/${newest}/go#`)).toBe(true);
+
+    const from = pathToFileURL(join(dir, file)).href;
+    const results = await staticClient({ from }).search("go.animate");
+    expect(results.map((result) => result.url)).toContain(route);
   });
 });

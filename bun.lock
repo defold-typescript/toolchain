@@ -83,6 +83,7 @@
         "@shikijs/transformers": "4.4.2",
         "comment-parser": "^1.4.9",
         "devicon": "^2.18.0",
+        "fumadocs-core": "^16.19.3",
         "hono": "^4.13.18",
         "markdown-it": "^14.3.3",
         "markdown-it-footnote": "^4.0.0",
