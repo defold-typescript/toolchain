@@ -41,13 +41,25 @@ function surfaceRecords(prefix: string): SearchRecord[] {
   ];
 }
 
+// A guide page whose one section is long, with the query far from its start.
+const GUIDE_RECORDS: SearchRecord[] = [
+  { route: "/guides/build", title: "Build", text: "Build the game." },
+  {
+    route: "/guides/build#publish",
+    title: "Publish",
+    text: `${"filler ".repeat(300)}run bun install first ${"filler ".repeat(300)}`,
+  },
+];
+
 const indexes = new Map<string, string>();
 for (const [file, prefix] of [
   ["search-index.json", "/api"],
   ["search-index-defold-1.12.0.json", "/api/defold-1.12.0"],
   ["search-index-defold-1.13.0.json", "/api/defold-1.13.0"],
 ] as const) {
-  const index = await exportSearchIndex(surfaceRecords(prefix));
+  const records = surfaceRecords(prefix);
+  if (file === "search-index.json") records.push(...GUIDE_RECORDS);
+  const index = await exportSearchIndex(records);
   indexes.set(withBase(`/${file}`), JSON.stringify(index));
 }
 
@@ -159,5 +171,33 @@ test("the search dialog finds a member through one typo", async () => {
   fireEvent.click(hit);
   await waitFor(() => expect(page.queryByRole("dialog")).toBeNull());
   expect(router.pushed.at(-1)).toBe("/api/go#go.animate");
+  view.unmount();
+}, 60_000);
+
+test("the search dialog shows a long text hit as the passage around the query", async () => {
+  router.path = "/guides/build";
+  const view = render(
+    <Provider versionIds={VERSION_IDS}>
+      <Probe />
+    </Provider>,
+  );
+  const page = within(document.body);
+
+  fireEvent.click(within(view.container).getByRole("button", { name: "Open search" }));
+  const dialog = within(await page.findByRole("dialog", {}, { timeout: 10_000 }));
+  fireEvent.change(dialog.getByRole("combobox"), { target: { value: "install" } });
+  const hit = await waitFor(
+    () => {
+      const option = dialog
+        .getAllByRole("option")
+        .find((element) => element.textContent?.includes("install"));
+      if (option === undefined) {
+        throw new Error("no install option yet");
+      }
+      return option;
+    },
+    { timeout: 10_000 },
+  );
+  expect(hit.textContent?.length).toBeLessThan(400);
   view.unmount();
 }, 60_000);

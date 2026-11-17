@@ -1,4 +1,5 @@
 "use client";
+import { searchExcerpt } from "@defold-typescript/docs-render/snippet";
 import { useStaticSearch } from "fumadocs-core/search/client/orama-static";
 import {
   SearchDialog,
@@ -11,11 +12,26 @@ import {
   SearchDialogOverlay,
 } from "fumadocs-ui/components/dialog/search";
 import type { DefaultSearchDialogProps } from "fumadocs-ui/components/dialog/search-default";
+import { useMemo } from "react";
 
 export type DocsSearchDialogProps = Pick<
   DefaultSearchDialogProps,
   "api" | "delayMs" | "open" | "onOpenChange"
 >;
+
+type SearchData = NonNullable<ReturnType<typeof useStaticSearch>["data"]>;
+
+// fumadocs-ui renders a text hit's whole content, which for a guide section or an
+// API member can run to thousands of characters. Each text hit shows the passage
+// around the query instead; without its parsed `hastContent` the list renders the
+// excerpt as plain text.
+function excerptItems(data: SearchData) {
+  return data.items.map((item) => {
+    if (item.type !== "text") return item;
+    const { hastContent: _parsed, ...record } = item;
+    return { ...record, content: searchExcerpt(record.content, data.query) };
+  });
+}
 
 // fumadocs-ui's default dialog passes no search options to its client, so the
 // site renders its own to ask for typo tolerance.
@@ -30,6 +46,8 @@ export default function DocsSearchDialog({
     ...(delayMs === undefined ? {} : { delayMs }),
     search: { tolerance: 1 },
   });
+  const { data } = search;
+  const items = useMemo(() => (data ? excerptItems(data) : null), [data]);
   return (
     <SearchDialog {...search} open={open} onOpenChange={onOpenChange}>
       <SearchDialogOverlay />
@@ -39,7 +57,7 @@ export default function DocsSearchDialog({
           <SearchDialogInput />
           <SearchDialogClose />
         </SearchDialogHeader>
-        <SearchDialogList />
+        <SearchDialogList items={items} />
       </SearchDialogContent>
     </SearchDialog>
   );

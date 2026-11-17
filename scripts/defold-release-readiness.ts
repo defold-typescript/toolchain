@@ -18,7 +18,7 @@ import {
   validateReleaseRouteManifest,
 } from "../packages/docs-site/app/lib/release-manifest.ts";
 import { releaseSection, releaseSections } from "../packages/docs-site/app/lib/upgrade-guide.ts";
-import { searchIndexOutputs } from "../packages/docs-site/scripts/build-search-index.ts";
+import { searchIndexFiles } from "../packages/docs-site/scripts/build-search-index.ts";
 import { symbolIndexOutputs } from "../packages/docs-site/scripts/build-symbol-index.ts";
 import { targetBindingOptions } from "../packages/types/scripts/binding-pin.ts";
 import {
@@ -692,7 +692,7 @@ export function collectDocs(root: string, release: string, baseline: string): Do
   // come from the release route manifest built over the real docs-site surfaces —
   // Combined is canonical, every version owns an exact `/api/defold-<version>/…`
   // family. Structural drift is caught by validating the manifest and comparing
-  // its index assignments against the pure generators' actual outputs (never the
+  // its index assignments against the files the pure generators emit (never the
   // ignored, build-time `public/*.json`). A malformed surface degrades to empty
   // families with a synthetic problem (the gate then fails closed) rather than
   // crashing.
@@ -730,7 +730,7 @@ export function collectDocs(root: string, release: string, baseline: string): Do
     const evidence = docsRouteEvidence({
       requiredVersionIds,
       manifest,
-      generatedSearchFiles: searchIndexOutputs({ typesDir }).map((o) => o.file),
+      generatedSearchFiles: searchIndexFiles({ typesDir }),
       generatedSymbolFiles: symbolIndexOutputs({ typesDir }).map((o) => o.file),
     });
     canonicalRoutes = evidence.canonicalRoutes;

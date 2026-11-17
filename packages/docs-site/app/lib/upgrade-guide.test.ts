@@ -179,9 +179,9 @@ function twoReleaseFixture(first: string, second: string): string {
 // `public/search-index*.json`. Covers the shared canonical index plus every
 // per-version family, so canonical, current, and historical guide links all
 // resolve without a prior docs build.
-function apiRoutes(): Set<string> {
+async function apiRoutes(): Promise<Set<string>> {
   const routes = new Set<string>();
-  for (const { records } of searchIndexOutputs()) {
+  for (const { records } of await searchIndexOutputs()) {
     for (const record of records) routes.add(record.route);
   }
   return routes;
@@ -513,8 +513,8 @@ describe("upgrading-defold-versions guide", () => {
     expect(unversioned).toEqual([]);
   });
 
-  test("carries no broken API links", () => {
-    const routes = apiRoutes();
+  test("carries no broken API links", async () => {
+    const routes = await apiRoutes();
     const targets = apiLinkTargets(guideBody);
     expect(targets.length).toBeGreaterThan(0);
     // A `?since=` query narrows the page a route serves; it names no route of its own.
