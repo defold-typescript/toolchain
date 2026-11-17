@@ -1,15 +1,15 @@
 "use client";
 import { withBase } from "@defold-typescript/docs-render/base";
+import type { DocsSearchDialogProps } from "@defold-typescript/docs-render/search-dialog";
 import { searchIndexFileForRoute } from "@defold-typescript/docs-render/search-route";
 import { RootProvider } from "fumadocs-ui/provider/waku";
 import { type ComponentProps, lazy, type ReactNode, useContext } from "react";
 import { Link, useRouter } from "waku";
-import type { DocsSearchDialogProps } from "./search-dialog";
 import { SurfaceHref } from "./surface-state";
 
 type LinkTarget = ComponentProps<typeof Link>["to"];
 
-const DocsSearchDialog = lazy(() => import("./search-dialog"));
+const DocsSearchDialog = lazy(() => import("@defold-typescript/docs-render/search-dialog"));
 
 // A dialog that stays mounted keeps the query and the results of the index it
 // last searched. Keying by the index URL gives each index its own dialog and

@@ -1,5 +1,4 @@
 "use client";
-import { searchExcerpt } from "@defold-typescript/docs-render/snippet";
 import { useStaticSearch } from "fumadocs-core/search/client/orama-static";
 import {
   SearchDialog,
@@ -13,6 +12,7 @@ import {
 } from "fumadocs-ui/components/dialog/search";
 import type { DefaultSearchDialogProps } from "fumadocs-ui/components/dialog/search-default";
 import { useMemo } from "react";
+import { searchExcerpt } from "./snippet";
 
 export type DocsSearchDialogProps = Pick<
   DefaultSearchDialogProps,
@@ -33,8 +33,8 @@ function excerptItems(data: SearchData) {
   });
 }
 
-// fumadocs-ui's default dialog passes no search options to its client, so the
-// site renders its own to ask for typo tolerance.
+// fumadocs-ui's default dialog passes no search options to its client, so both
+// sites render this one to ask for typo tolerance.
 export default function DocsSearchDialog({
   api,
   delayMs,

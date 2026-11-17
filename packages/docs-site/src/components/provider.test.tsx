@@ -1,12 +1,20 @@
-import { afterAll, expect, mock, spyOn, test } from "bun:test";
+import { afterAll, beforeAll, expect, mock, spyOn, test } from "bun:test";
 // A document must exist before React DOM and Radix load; see test-dom.ts.
-import "../test-dom";
+import "@defold-typescript/docs-render/test-dom";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
+import {
+  fireEvent,
+  registerDom,
+  render,
+  unregisterDom,
+  waitFor,
+  within,
+} from "@defold-typescript/docs-render/test-dom";
+import { SHARED_INDEX_RECORDS } from "@defold-typescript/docs-render/test-search-index";
 import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { type ComponentProps, useEffect } from "react";
-import { fireEvent, render, unregisterDom, waitFor, within } from "../test-dom";
 
 const VERSION_IDS = ["defold-1.12.0", "defold-1.13.0"];
 
@@ -41,24 +49,12 @@ function surfaceRecords(prefix: string): SearchRecord[] {
   ];
 }
 
-// A guide page whose one section is long, with the query far from its start.
-const GUIDE_RECORDS: SearchRecord[] = [
-  { route: "/guides/build", title: "Build", text: "Build the game." },
-  {
-    route: "/guides/build#publish",
-    title: "Publish",
-    text: `${"filler ".repeat(300)}run bun install first ${"filler ".repeat(300)}`,
-  },
-];
-
 const indexes = new Map<string, string>();
-for (const [file, prefix] of [
-  ["search-index.json", "/api"],
-  ["search-index-defold-1.12.0.json", "/api/defold-1.12.0"],
-  ["search-index-defold-1.13.0.json", "/api/defold-1.13.0"],
+for (const [file, records] of [
+  ["search-index.json", SHARED_INDEX_RECORDS],
+  ["search-index-defold-1.12.0.json", surfaceRecords("/api/defold-1.12.0")],
+  ["search-index-defold-1.13.0.json", surfaceRecords("/api/defold-1.13.0")],
 ] as const) {
-  const records = surfaceRecords(prefix);
-  if (file === "search-index.json") records.push(...GUIDE_RECORDS);
   const index = await exportSearchIndex(records);
   indexes.set(withBase(`/${file}`), JSON.stringify(index));
 }
@@ -73,6 +69,8 @@ async function serveIndex(input: RequestInfo | URL): Promise<Response> {
 }
 
 const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(serveIndex as typeof fetch);
+
+beforeAll(registerDom);
 
 afterAll(async () => {
   fetchSpy.mockRestore();

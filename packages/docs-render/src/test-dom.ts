@@ -26,7 +26,10 @@ const NATIVE_GLOBALS = [
   "MessageChannel",
 ] as const;
 
-if (!GlobalRegistrator.isRegistered) {
+export function registerDom(): void {
+  if (GlobalRegistrator.isRegistered) {
+    return;
+  }
   const native = Object.fromEntries(NATIVE_GLOBALS.map((name) => [name, globalThis[name]]));
   GlobalRegistrator.register();
   Object.assign(globalThis, native);
@@ -42,7 +45,10 @@ export async function unregisterDom(): Promise<void> {
 
 // React DOM and Radix each pick an implementation when they load and take a no-op without a
 // document, which leaves a Radix portal unmounted, so both load only once the document exists.
-// Fumadocs' dialog module loads the Radix dialog Fumadocs itself resolves, which the docs site
-// cannot import by name.
+// Fumadocs' dialog module loads the Radix dialog Fumadocs itself resolves, which neither docs site
+// can import by name.
+// This body runs once per process, and an earlier file's `unregisterDom` removes the document, so
+// each test file also calls `registerDom` before it renders.
+registerDom();
 await import("fumadocs-ui/components/dialog/search");
 export const { act, fireEvent, render, waitFor, within } = await import("@testing-library/react");
