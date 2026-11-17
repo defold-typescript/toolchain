@@ -1,12 +1,22 @@
 "use client";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { searchIndexFileForRoute } from "@defold-typescript/docs-render/search-route";
+import type { DefaultSearchDialogProps } from "fumadocs-ui/components/dialog/search-default";
 import { RootProvider } from "fumadocs-ui/provider/waku";
-import { type ComponentProps, type ReactNode, useContext } from "react";
+import { type ComponentProps, lazy, type ReactNode, useContext } from "react";
 import { Link, useRouter } from "waku";
 import { SurfaceHref } from "./surface-state";
 
 type LinkTarget = ComponentProps<typeof Link>["to"];
+
+const DefaultSearchDialog = lazy(() => import("fumadocs-ui/components/dialog/search-default"));
+
+// Fumadocs' static client keys its query callback on tag and locale only, so a
+// dialog that stays mounted keeps searching the index it opened with. Keying by
+// the index URL gives each index its own dialog and leaves the page mounted.
+function SearchDialog(props: DefaultSearchDialogProps) {
+  return <DefaultSearchDialog key={props.api} {...props} />;
+}
 
 // Fumadocs' own Waku link, rendering the href the docs layout maps it to, so a
 // sidebar link keeps the window the page's URL states.
@@ -44,7 +54,7 @@ export function Provider({
   return (
     <RootProvider
       theme={{ attribute: ["class", "data-theme"] }}
-      search={{ options: { type: "static", api } }}
+      search={{ SearchDialog, options: { type: "static", api } }}
       components={{ Link: SurfaceLink }}
     >
       {children}
