@@ -11,9 +11,8 @@ import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
-import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
 import { apiPages, siteDirs } from "./api-content";
+import { renderLibraryApiHtml } from "./library-routes";
 import {
   pointAtToolchainDocs,
   TOOLCHAIN_DOCS_URL,
@@ -86,17 +85,22 @@ describe("toolchain member links on library pages", () => {
     "every toolchain member link on a library page lands on a heading",
     async () => {
       const REAL_DIRS = siteDirs(SITE_DIR);
-      const app = new Hono();
-      app.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
       const linkPattern = new RegExp(
         `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
         "g",
       );
       const holders = new Map<string, Set<string>>();
       for (const page of apiPages(REAL_DIRS)) {
-        const res = await app.request(page.route);
-        expect(res.status).toBe(200);
-        for (const [, namespace, id] of (await res.text()).matchAll(linkPattern)) {
+        const [host = "", owner = "", repo = "", leaf = ""] = page.route.split("/").slice(2);
+        const rendered = await renderLibraryApiHtml(
+          { host, owner, repo, namespace: leaf },
+          REAL_DIRS,
+        );
+        expect({ route: page.route, rendered: rendered !== undefined }).toEqual({
+          route: page.route,
+          rendered: true,
+        });
+        for (const [, namespace, id] of (rendered?.html ?? "").matchAll(linkPattern)) {
           const key = `${namespace}#${id}`;
           const pagesHolding = holders.get(key) ?? new Set<string>();
           pagesHolding.add(page.namespace);

@@ -1,7 +1,7 @@
 {
   "name": "@defold-typescript/library-docs",
   "version": "0.0.0",
-  "description": "Static documentation site for the libraries in packages/library-types/data.",
+  "description": "Static documentation site for the libraries in packages/library-types/data, built with Waku and Fumadocs.",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -9,23 +9,29 @@
     "build-model": "bun scripts/build-model.ts",
     "build-indexes": "bun ../docs-render/scripts/write-critical-css.ts public && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts",
     "build": "bun run build-model && bun run build-indexes",
-    "build:site": "bun run build && vite build --mode client && vite build",
-    "dev": "bun run build && vite",
+    "build:site": "bun run build && bun --bun waku build",
+    "dev": "bun run build && bun --bun waku dev",
     "test": "bun test --timeout 30000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src"
   },
   "dependencies": {
     "@defold-typescript/docs-render": "workspace:*",
     "@defold-typescript/types": "workspace:*",
     "@phosphor-icons/core": "^2.1.1",
     "devicon": "^2.18.0",
+    "fumadocs-core": "^16.19.3",
+    "fumadocs-ui": "^16.19.3",
     "hono": "^4.13.18",
-    "honox": "^0.1.62"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-server-dom-webpack": "^19.3.1",
+    "waku": "1.0.0-rc.5"
   },
   "devDependencies": {
-    "@hono/vite-ssg": "^0.3.3",
     "@tailwindcss/vite": "^4.3.5",
     "@types/bun": "^1.4.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript-to-lua/language-extensions": "1.19.0",
     "tailwindcss": "^4.3.5",
     "typescript": "6.0.2",

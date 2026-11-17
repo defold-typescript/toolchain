@@ -5,6 +5,7 @@ import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { apiPages, libraryNavGroups, siteDirs, untypedListings } from "./api-content";
 import { guides, renderGuideMarkdown } from "./guides";
+import { libraryStaticPaths, renderLibraryGuideHtml } from "./library-routes";
 import { buildNav } from "./nav";
 
 // Root `bun test` runs from the repo root, so the site directories are passed in.
@@ -68,6 +69,17 @@ describe("guides", () => {
     expect(anchor).toBeDefined();
     const html = await renderGuideMarkdown(`[pins](./refreshing-library-pins.md#${anchor})`);
     expect(html).toContain(`href="/guides/refreshing-library-pins#${anchor}"`);
+  });
+
+  test("a guide page renders by its slug, and an unknown slug renders nothing", async () => {
+    const [guide] = guides(GUIDE_DIR);
+    const page = await renderLibraryGuideHtml(guide?.slug ?? "", GUIDE_DIR);
+    expect(page).toEqual({
+      title: guide?.title ?? "",
+      html: await renderGuideMarkdown(guide?.markdown ?? ""),
+    });
+    expect(await renderLibraryGuideHtml("not-a-guide", GUIDE_DIR)).toBeUndefined();
+    expect(libraryStaticPaths(REAL_DIRS, GUIDE_DIR).guides.sort()).toEqual(folderSlugs);
   });
 
   test("the sidebar lists every guide in a Guides group", () => {

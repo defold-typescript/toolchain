@@ -465,10 +465,25 @@ describe("library jobs", () => {
     expect(testAt).toBeGreaterThan(buildAt);
   });
 
-  test("library-docs runs that package's tests and builds its site", () => {
+  test("library-docs builds its site, then runs that package's tests", () => {
     const runs = jobRuns(ciJob("library-docs"));
-    expect(runs.some((cmd) => /\bbun test\b.*\.\/packages\/library-docs\b/.test(cmd))).toBe(true);
-    expect(runs).toContain("bun run --cwd packages/library-docs build:site");
+    const buildAt = runs.indexOf("bun run --cwd packages/library-docs build:site");
+    const testAt = runs.findIndex((cmd) => /\bbun test\b.*\.\/packages\/library-docs\b/.test(cmd));
+    expect(buildAt).toBeGreaterThanOrEqual(0);
+    expect(testAt).toBeGreaterThan(buildAt);
+  });
+
+  // Waku writes the static pages to `dist/public` and its server bundle beside
+  // them in `dist`; only the pages belong on the data repo's Pages branch.
+  test("the data-repo publish marks and pushes the built pages, not the server bundle", () => {
+    const steps = (workflowJobs("library-data-publish.yml").site?.steps ?? []) as Array<{
+      run?: string;
+      "working-directory"?: string;
+    }>;
+    const built = "packages/library-docs/dist/public";
+    expect(steps.map((step) => step.run ?? "")).toContain(`touch ${built}/.nojekyll`);
+    const push = steps.find((step) => step.run?.includes("git push"));
+    expect(push?.["working-directory"]).toBe(built);
   });
 
   test.skipIf(!posixBash)(

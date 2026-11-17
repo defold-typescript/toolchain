@@ -120,9 +120,9 @@ jobs:
           DOCS_BASE: /library-data/
       # Without this marker Pages runs Jekyll over the branch, which skips any file
       # whose name starts with `_`; the site is already built.
-      - run: touch packages/library-docs/dist/.nojekyll
+      - run: touch packages/library-docs/dist/public/.nojekyll
       - name: Push the site to the data repo's gh-pages branch as one commit
-        working-directory: packages/library-docs/dist
+        working-directory: packages/library-docs/dist/public
         env:
           TOKEN: ${{ secrets.LIBRARY_DATA_PUSH_TOKEN }}
         run: |

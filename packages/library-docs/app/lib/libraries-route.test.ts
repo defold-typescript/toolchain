@@ -1,15 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
-import { createLibrariesRoute } from "../routes/index";
 import { apiPages, siteDirs, untypedListings } from "./api-content";
+import {
+  type LibraryApiParams,
+  type LibraryIndexCard,
+  libraryIndexSections,
+  libraryStaticPaths,
+  renderLibraryApiHtml,
+} from "./library-routes";
 import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
-import { ssgParamPaths } from "./ssg-routes";
 
 // Root `bun test` runs from the repo root, so the package directory is passed in.
-const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
+const SITE_ROOT = join(import.meta.dir, "../..");
+const REAL_DIRS = siteDirs(SITE_ROOT);
+const GUIDE_DIR = join(SITE_ROOT, "guides");
 
 interface ManifestEntry {
   repo: string;
@@ -20,33 +25,25 @@ const manifest: ManifestEntry[] = JSON.parse(
   readFileSync(join(REAL_DIRS.dataDir, "defold-extensions.json"), "utf8"),
 ).libraries;
 
-const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-function cardAnchors(html: string, hrefPattern: string): string[] {
-  return [...html.matchAll(new RegExp(`<a href="${hrefPattern}"[^>]*>(.*?)</a>`, "gs"))].map(
-    (match) => match[1] ?? "",
-  );
-}
-
 const textOf = (html: string): string =>
   html
     .replace(/<[^>]+>/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-async function renderLibraries(): Promise<{ status: number; html: string }> {
-  const app = new Hono();
-  app.get("/", ...createLibrariesRoute(REAL_DIRS));
-  const res = await app.request("/");
-  return { status: res.status, html: await res.text() };
+// The params the `api/[host]/[owner]/[repo]/[namespace]` page receives for a path.
+function apiParams(path: string): LibraryApiParams {
+  const [host = "", owner = "", repo = "", namespace = ""] = path.split("/").slice(2);
+  return { host, owner, repo, namespace };
 }
 
-describe("Libraries index route composition", () => {
+describe("Libraries index sections", () => {
   const libraryPages = apiPages(REAL_DIRS);
+  const index = libraryIndexSections(REAL_DIRS);
+  const cards: LibraryIndexCard[] = index.sections.flatMap((section) => section.cards);
+  const cardsTo = (href: string): LibraryIndexCard[] => cards.filter((card) => card.href === href);
 
-  test("renders every untyped library as one icon-marked card linking its own page", async () => {
-    const { status, html } = await renderLibraries();
-    expect(status).toBe(200);
+  test("lists every untyped library as one icon-marked card linking its own page", () => {
     const listings = untypedListings(REAL_DIRS);
     expect(
       listings
@@ -60,72 +57,65 @@ describe("Libraries index route composition", () => {
         .sort(),
     );
     for (const listing of listings) {
-      const cards = cardAnchors(html, `[^"]*${escapeRegExp(listing.route)}`);
-      expect({ route: listing.route, cards: cards.length }).toEqual({
+      const linking = cardsTo(listing.route);
+      expect({ route: listing.route, cards: linking.length }).toEqual({
         route: listing.route,
         cards: 1,
       });
-      const inner = cards[0] ?? "";
-      expect(inner).toContain(listing.repo);
-      expect(inner).toContain(NO_TYPED_API_ICON);
-      expect(html).not.toContain(`href="${listing.url}"`);
+      const title = linking[0]?.titleHtml ?? "";
+      expect(title).toContain(listing.repo);
+      expect(title).toContain(NO_TYPED_API_ICON);
+      expect(cardsTo(listing.url)).toEqual([]);
     }
   });
 
-  test("files each Asset Portal listing's card under its GitHub owner, after defold (official)", async () => {
-    const { html } = await renderLibraries();
-    const sections = [...html.matchAll(/<section>\s*<h2>(.*?)<\/h2>(.*?)<\/section>/gs)].map(
-      (match) => ({ heading: textOf(match[1] ?? ""), body: match[2] ?? "" }),
+  test("files each Asset Portal listing's card under its GitHub owner, after defold (official)", () => {
+    const headings = index.sections.map((section) =>
+      [section.label, section.note].filter(Boolean).join(" "),
     );
-    expect(sections[0]?.heading).toBe("defold (official)");
+    expect(headings[0]).toBe("defold (official)");
     const portalListings = untypedListings(REAL_DIRS).filter((listing) => listing.portal);
     expect(portalListings.length).toBeGreaterThan(0);
     for (const listing of portalListings) {
-      const holders = sections
-        .map((section, index) => ({ ...section, index }))
-        .filter(
-          (section) => cardAnchors(section.body, `[^"]*${escapeRegExp(listing.route)}`).length > 0,
-        );
+      const holders = index.sections
+        .map((section, position) => ({ ...section, position }))
+        .filter((section) => section.cards.some((card) => card.href === listing.route));
       expect({
         route: listing.route,
-        owners: holders.map((section) => section.heading),
-        afterDefold: holders.every((section) => section.index > 0),
+        owners: holders.map((section) => section.label),
+        afterDefold: holders.every((section) => section.position > 0),
       }).toEqual({ route: listing.route, owners: [listing.owner], afterDefold: true });
     }
   });
 
-  test("renders every library API page as a card and no typed repo as a listing", async () => {
-    const { html } = await renderLibraries();
+  test("lists every library API page as a card and no typed repo as a listing", () => {
     expect(libraryPages.length).toBeGreaterThan(0);
     for (const page of libraryPages) {
-      const cards = cardAnchors(html, `[^"]*${escapeRegExp(page.route)}`);
-      expect({ route: page.route, cards: cards.length }).toEqual({ route: page.route, cards: 1 });
+      const linking = cardsTo(page.route);
+      expect({ route: page.route, cards: linking.length }).toEqual({ route: page.route, cards: 1 });
+      expect(textOf(linking[0]?.titleHtml ?? "")).toEndWith(page.namespace);
     }
     for (const entry of manifest.filter((e) => e.docs.length > 0)) {
-      expect(html).not.toContain(`href="${entry.repo}"`);
+      expect(cardsTo(entry.repo)).toEqual([]);
     }
   });
 
-  test("counts only documented library pages in the lead", async () => {
-    const { html } = await renderLibraries();
-    const n = libraryPages.length;
-    expect(html).toContain(`${n} namespace${n === 1 ? "" : "s"} documented`);
+  test("counts only documented library pages", () => {
+    expect(index.namespaceCount).toBe(libraryPages.length);
   });
 });
 
-describe("library API page routes", () => {
-  const app = new Hono();
-  const pattern = "/api/:host/:owner/:repo/:namespace";
-  app.get(pattern, ...createApiNamespaceRoute(REAL_DIRS));
-
+describe("library API pages", () => {
   test("a page renders at the route of its origin and declared namespace", async () => {
-    const res = await app.request("/api/github.com/defold/extension-spine/gui");
-    expect(res.status).toBe(200);
-    const heading = (await res.text()).match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
+    const route = "/api/github.com/defold/extension-spine/gui";
+    const page = await renderLibraryApiHtml(apiParams(route), REAL_DIRS);
+    const heading = page?.html.match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
     expect(textOf(heading)).toContain("extension-spine");
+    const source = apiPages(REAL_DIRS).find((entry) => entry.route === route);
+    expect(page?.title).toBe(`${source?.module.namespace} API`);
   });
 
-  test("the page key, a mixed-case segment, an unknown namespace, or a missing or wrong host answers 404", async () => {
+  test("the page key, a mixed-case segment, an unknown namespace, or a missing or wrong host renders nothing", async () => {
     for (const path of [
       "/api/github.com/defold/extension-spine/spine.gui",
       "/api/github.com/Defold/extension-spine/gui",
@@ -135,16 +125,20 @@ describe("library API page routes", () => {
       "/api/defold/extension-spine/gui",
       "/api/codeberg.org/defold/extension-spine/gui",
     ]) {
-      expect({ path, status: (await app.request(path)).status }).toEqual({ path, status: 404 });
+      const page = await renderLibraryApiHtml(apiParams(path), REAL_DIRS);
+      expect({ path, page }).toEqual({ path, page: undefined });
     }
   });
 
-  // That each of these paths answers 200 is the toolchain-links test's walk over
+  // That each of these paths renders is the toolchain-links test's walk over
   // every page route, which renders them all.
-  test("the static build requests exactly one path per library page route", async () => {
+  test("the static build requests exactly one path per library page route", () => {
     const expected = apiPages(REAL_DIRS)
       .map((page) => page.route)
       .sort();
-    expect(await ssgParamPaths(app, pattern)).toEqual(expected);
+    const built = libraryStaticPaths(REAL_DIRS, GUIDE_DIR)
+      .api.map((segments) => `/api/${segments.join("/")}`)
+      .sort();
+    expect(built).toEqual(expected);
   });
 });

@@ -201,6 +201,20 @@ describe("mountSidebarTooltips", () => {
     expect(tooltips()).toEqual(["Getting started"]);
   });
 
+  // A layout that renders the link itself (Fumadocs' sidebar) leaves only the
+  // label to the site, so the path rides on an element inside the link.
+  test("a row whose label holds a path element shows that path", () => {
+    const { aside } = setup();
+    cleanups.push(mountSidebarTooltips(aside));
+    const row = document.createElement("a");
+    row.href = "/api/github.com/insality/druid/druid";
+    row.innerHTML = '<span data-tooltip="insality/druid">druid</span>';
+    aside.querySelector("nav")?.append(row);
+
+    pointer(row, "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual(["insality/druid"]);
+  });
+
   test("a row added after mounting still shows its tip", () => {
     const { aside } = setup();
     cleanups.push(mountSidebarTooltips(aside));

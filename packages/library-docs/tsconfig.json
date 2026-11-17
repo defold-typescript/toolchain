@@ -18,6 +18,6 @@
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   },
-  "include": ["app", "scripts", "vite.config.ts"],
+  "include": ["app", "scripts"],
   "exclude": ["node_modules", "dist", ".generated"]
 }

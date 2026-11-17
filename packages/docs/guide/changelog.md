@@ -14,11 +14,12 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **`build` deletes the runtime files nothing requires** and keeps every file your sources compile to, under any letter case ([Build](./build.md#the-runtime-folder)).
-> - **The docs site has a new layout** with section tabs, the API version range picker in the sidebar and in-browser search that finds API members for the version you are reading ([API reference](/api)).
+> - **Both docs sites have a new layout** with in-browser search, and the toolchain site has section tabs and the API version range picker in the sidebar ([API reference](/api), [library docs](https://defold-typescript.github.io/library-data)).
 
 ### Improved
 
 - **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides, API and Libraries as tabs across the top and in a sidebar switcher, Changelog, GitHub and npm links in the sidebar, and the API version range picker at the top of the sidebar, whose saved range, or the `From` a link's `?since=` states, the sidebar links, their count pills and the change chips in the page outline follow on every page. A search dialog (`Ctrl+K` or `⌘K`) runs in the browser and finds guide pages and API members from the engine version of the page you are on; the `/search` page is gone for now, and each engine version's pages stay at `/api/<version>`.
+- **The [library docs site](https://defold-typescript.github.io/library-data) has the same Fumadocs layout,** with its guides and every library grouped by owner in the sidebar, the Toolchain docs and GitHub links beside them, and a search dialog that finds library members, untyped libraries and guides in the browser; its `/search` page is gone for now.
 
 ### Fixed
 
