@@ -16,6 +16,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/generated",
+      "!**/pages.gen.ts",
       "!packages/types/hsm",
       "!packages/types/ecs",
       "!**/extension-goldens",
