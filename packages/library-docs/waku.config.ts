@@ -19,8 +19,13 @@ const noExternal = ["@defold-typescript/types", "@defold-typescript/docs-render"
 // package pre-bundled in one environment but not another loads twice in the
 // browser. Fumadocs' provider and layout then hold different copies of its
 // framework context, the layout throws, and React clears the page. Serving the
-// Fumadocs packages unbundled keeps one copy.
-const optimizeDeps = { exclude: ["fumadocs-ui", "fumadocs-core"] };
+// Fumadocs packages unbundled keeps one copy. A CommonJS package they import
+// still needs pre-bundling: the search client's `micromark` imports `debug` in
+// dev, which the browser cannot load as an ES module.
+const optimizeDeps = {
+  exclude: ["fumadocs-ui", "fumadocs-core"],
+  include: ["fumadocs-core > micromark > debug"],
+};
 
 export default defineConfig({
   basePath: base,
