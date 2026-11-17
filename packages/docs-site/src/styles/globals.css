@@ -29,6 +29,29 @@ html {
   font-style: normal;
 }
 
+/* A card's title is an `h3`, which the shared renderer styles as a prose
+ * heading; Fumadocs' `not-prose` does not reach that rule. A card reads as a
+ * link instead: the body face, semibold, in the link accent, and the code face
+ * for an API namespace. */
+.prose [data-card] h3 {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.prose [data-card][data-mono] h3 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.prose [data-card] p {
+  font-weight: 400;
+}
+
 .prose blockquote p::before,
 .prose blockquote p::after {
   content: none;

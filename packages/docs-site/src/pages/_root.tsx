@@ -1,3 +1,5 @@
+import { withBase } from "@defold-typescript/docs-render/base";
+import { faviconLinks } from "@defold-typescript/docs-render/favicon";
 import { THEME_TOKENS } from "@defold-typescript/docs-render/theme-tokens";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { ReactNode } from "react";
@@ -23,6 +25,15 @@ export default async function RootElement({ children }: { children: ReactNode })
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: built from the repo's own functions */}
         <script dangerouslySetInnerHTML={{ __html: rangePrepaintScript(apiSurfaceConfig()) }} />
         <link rel="stylesheet" href={`${BASE_PATH}critical.css`} />
+        {faviconLinks().map((link) => (
+          <link
+            key={link.rel + link.href}
+            rel={link.rel}
+            type={link.type}
+            sizes={link.sizes}
+            href={withBase(link.href)}
+          />
+        ))}
       </head>
       <body className="flex flex-col min-h-screen">
         <Provider versionIds={apiVersions(TYPES_DIR).map((version) => version.id)}>

@@ -1,7 +1,7 @@
 import { withBase } from "@defold-typescript/docs-render/base";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { Card, Cards } from "fumadocs-ui/components/card";
-import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { DocsBody, DocsPage } from "fumadocs-ui/layouts/docs/page";
 import type { PageProps } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
 import { TYPES_DIR } from "../../../app/lib/api-content";
@@ -33,8 +33,8 @@ export default async function ApiParamRoute({ namespace: param }: PageProps<"/ap
     return (
       <DocsPage>
         <title>{`${title} | ${SITE_NAME}`}</title>
-        <DocsTitle>{title}</DocsTitle>
         <DocsBody>
+          <h1>{title}</h1>
           <Cards>
             {versionIndexEntries(page.version).map((entry) => (
               <Card
@@ -42,6 +42,7 @@ export default async function ApiParamRoute({ namespace: param }: PageProps<"/ap
                 title={entry.namespace}
                 description={entry.brief}
                 href={entry.href}
+                data-mono=""
               />
             ))}
           </Cards>

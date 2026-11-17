@@ -11,6 +11,8 @@ export interface NavLink {
   // Combined-only sidebar count pills (pre-rendered HTML), appended after the
   // label; stripped when the nav is rewritten onto an exact-version surface.
   badgeHtml?: string;
+  /** A group's one-line description in inline markdown, shown under its heading on the category landing. */
+  subtitle?: string;
 }
 
 export interface NavCategory {
@@ -94,8 +96,8 @@ function toNavLink(label: string, route: string, badgeHtml?: string): NavLink {
   };
 }
 
-function toNavGroup(label: string, children: NavLink[]): NavLink {
-  return { label, labelHtml: renderNavLabel(label), children };
+function toNavGroup(label: string, children: NavLink[], subtitle: string): NavLink {
+  return { label, labelHtml: renderNavLabel(label), children, subtitle };
 }
 
 function linkFor(page: GuidePage): NavLink {
@@ -125,7 +127,7 @@ export function buildNav(
           claimed.add(slug);
           children.push(linkFor(page));
         }
-        return toNavGroup(group.label, children);
+        return toNavGroup(group.label, children, group.subtitle);
       });
       return { id: spec.id, label: spec.label, route: "/guides", links };
     }
@@ -157,18 +159,31 @@ export function buildNav(
     }
   }
 
-  const groupSpecs: [string, Namespace[]][] = [
-    ["Globals", reference.globals],
-    ["Global types", reference.globalTypes],
-    ["Lua Standard", reference.luaStdlib],
-    ["Defold", reference.engine],
+  const groupSpecs: [string, Namespace[], string][] = [
+    ["Globals", reference.globals, "Prefixless globals that Defold exposes to every script."],
+    [
+      "Global types",
+      reference.globalTypes,
+      "Core value types (`Vector3`, `Quaternion`, `Hash`, …) that Defold exposes as ambient globals. Hand-curated from `@defold-typescript/types` rather than generated from the Defold reference documentation.",
+    ],
+    [
+      "Lua Standard",
+      reference.luaStdlib,
+      "Pure-Lua and LuaJIT surfaces (`base`, `bit`, …). Types are provided by the `lua-types` dependency and are not re-emitted by `@defold-typescript/types`.",
+    ],
+    [
+      "Defold",
+      reference.engine,
+      "Namespaces emitted by `@defold-typescript/types` from the pinned Defold reference documentation.",
+    ],
   ];
   const referenceLinks = groupSpecs
     .filter(([, namespaces]) => namespaces.length > 0)
-    .map(([label, namespaces]) =>
+    .map(([label, namespaces, subtitle]) =>
       toNavGroup(
         label,
         namespaces.map(({ label, route, badgeHtml }) => toNavLink(label, route, badgeHtml)),
+        subtitle,
       ),
     );
   categories.push({ id: "api", label: "API", route: "/api", links: referenceLinks });

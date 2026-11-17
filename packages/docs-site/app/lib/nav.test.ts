@@ -70,6 +70,29 @@ describe("buildNav", () => {
     expect(nav.find((c) => c.id === "get-started")?.route).toBe("/get-started");
   });
 
+  test("every guide and reference group carries the subtitle its landing shows", () => {
+    const nav = buildNav(realPages(), {
+      globals: GLOBALS,
+      globalTypes: GLOBAL_TYPES,
+      luaStdlib: LUA_STDLIB,
+      engine: ENGINE,
+    });
+    const guides = nav.find((c) => c.id === "guides")?.links ?? [];
+    expect(guides.find((group) => group.label === "CLI")?.subtitle).toBe(
+      "The command-line verbs you run day to day.",
+    );
+    const reference = nav.find((c) => c.id === "api")?.links ?? [];
+    expect(reference.map((group) => group.label)).toEqual([
+      "Globals",
+      "Global types",
+      "Lua Standard",
+      "Defold",
+    ]);
+    for (const group of [...guides, ...reference]) {
+      if (group.children) expect(group.subtitle?.length).toBeGreaterThan(0);
+    }
+  });
+
   test("reference links are three route-less group headers in order", () => {
     const reference = fullNav().find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual(["Globals", "Lua Standard", "Defold"]);

@@ -23,7 +23,13 @@ describe("deviconMono", () => {
     expect(deviconMono("linux/linux-plain", "x")).toContain('fill-rule="evenodd"');
   });
 
-  test("refuses a mark drawn with more than one shape", () => {
+  test("refuses a mark whose shapes carry their own colours", () => {
     expect(() => deviconMono("lua/lua-original", "x")).toThrow("lua/lua-original");
+  });
+
+  test("accepts a mark whose shapes all share one fill", () => {
+    const svg = deviconMono("github/github-original", "x");
+    expect(rootTag(svg)).toContain('fill="currentColor"');
+    expect(svg).not.toContain('fill="#');
   });
 });

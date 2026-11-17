@@ -25,6 +25,7 @@ import { NavPills } from "../components/nav-pills";
 
 export const SITE_NAME = "defold-typescript";
 export const REPO_URL = "https://github.com/defold-typescript/toolchain";
+export const NPM_URL = "https://www.npmjs.com/package/@defold-typescript/cli";
 
 export function apiPages(typesDir: string = TYPES_DIR) {
   return canonicalApiPages(typesDir);

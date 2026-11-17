@@ -208,6 +208,27 @@ describe("mountSidebarTooltips", () => {
     expect(tooltips()).toEqual(["Opened later"]);
   });
 
+  test("an icon link shows its accessible name, and a nameless link shows no tip", () => {
+    const { aside } = setup();
+    cleanups.push(mountSidebarTooltips(aside));
+    const nav = aside.querySelector("nav");
+    const icon = document.createElement("a");
+    icon.href = "https://github.com/defold-typescript/toolchain";
+    icon.setAttribute("aria-label", "GitHub");
+    icon.innerHTML = '<svg aria-hidden="true"></svg>';
+    const bare = document.createElement("a");
+    bare.href = "/bare";
+    bare.innerHTML = "<svg></svg> ";
+    nav?.append(icon, bare);
+
+    pointer(icon, "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual(["GitHub"]);
+    pointer(icon, "pointerleave", "mouse", false);
+
+    pointer(bare, "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual([]);
+  });
+
   test("a touch shows nothing, and cleanup removes the shown tip", () => {
     const { aside, guide } = setup();
     const cleanup = mountSidebarTooltips(aside);
