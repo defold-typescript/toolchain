@@ -3,7 +3,12 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { withBase } from "./base";
 import { renderMarkdown } from "./markdown";
 import type { SymbolEntry } from "./symbol-index";
-import { mountSidebarTooltips, mountSymbolTooltips, mountUiTooltips } from "./tooltip-mounts";
+import {
+  mountSidebarTooltips,
+  mountSidebarTooltipsById,
+  mountSymbolTooltips,
+  mountUiTooltips,
+} from "./tooltip-mounts";
 import { TooltipTrigger } from "./ui";
 
 // An API page as the renderer writes it: a mention of `go.animate` in the module
@@ -241,6 +246,86 @@ describe("mountSidebarTooltips", () => {
     cleanup();
     expect(tooltips()).toEqual([]);
     pointer(guide, "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual([]);
+  });
+});
+
+describe("mountSidebarTooltipsById", () => {
+  const SIDEBAR_ID = "nd-sidebar";
+
+  function aside(href: string, label: string): HTMLElement {
+    const node = document.createElement("aside");
+    node.id = SIDEBAR_ID;
+    node.innerHTML = `<a href="${href}">${label}</a>`;
+    return node;
+  }
+
+  function linkIn(node: HTMLElement): HTMLElement {
+    const link = node.querySelector<HTMLElement>("a");
+    if (!link) throw new Error("the sidebar markup carries no link");
+    return link;
+  }
+
+  // Observer callbacks run after the change that queued them.
+  function observed(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  test("a link in the sidebar that replaced the first one shows its tip", async () => {
+    const first = aside("/guide", "Getting started");
+    document.body.append(first);
+    cleanups.push(mountSidebarTooltipsById(document, SIDEBAR_ID));
+
+    first.remove();
+    await observed();
+    const replacement = aside("/install", "Install");
+    document.body.append(replacement);
+    await observed();
+
+    pointer(linkIn(replacement), "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual(["Install"]);
+  });
+
+  test("a tip showing when its sidebar leaves the document is removed", async () => {
+    const first = aside("/guide", "Getting started");
+    document.body.append(first);
+    cleanups.push(mountSidebarTooltipsById(document, SIDEBAR_ID));
+
+    pointer(linkIn(first), "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual(["Getting started"]);
+    first.remove();
+    await observed();
+
+    expect(tooltips()).toEqual([]);
+  });
+
+  test("a sidebar that appears after mounting shows its link's tip", async () => {
+    cleanups.push(mountSidebarTooltipsById(document, SIDEBAR_ID));
+
+    const late = aside("/guide", "Getting started");
+    document.body.append(late);
+    await observed();
+
+    pointer(linkIn(late), "pointerenter", "mouse", false);
+    expect(tooltips()).toEqual(["Getting started"]);
+  });
+
+  test("cleanup removes the shown tip and stops following replacements", async () => {
+    const first = aside("/guide", "Getting started");
+    document.body.append(first);
+    const cleanup = mountSidebarTooltipsById(document, SIDEBAR_ID);
+
+    pointer(linkIn(first), "pointerenter", "mouse", false);
+    expect(tooltips()).toHaveLength(1);
+    cleanup();
+    expect(tooltips()).toEqual([]);
+
+    first.remove();
+    const replacement = aside("/install", "Install");
+    document.body.append(replacement);
+    await observed();
+
+    pointer(linkIn(replacement), "pointerenter", "mouse", false);
     expect(tooltips()).toEqual([]);
   });
 });

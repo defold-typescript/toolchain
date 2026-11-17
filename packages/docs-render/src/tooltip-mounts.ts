@@ -402,3 +402,34 @@ export function mountSidebarTooltips(sidebar: Element): Cleanup {
     view.removeEventListener("scroll", hide, true);
   };
 }
+
+/**
+ * `mountSidebarTooltips` on whichever element carries `id`, for a layout that
+ * replaces its sidebar: Fumadocs renders a new `#nd-sidebar` each time the
+ * window widens past its breakpoint and none below it. When a different node,
+ * or none, carries the id, the previous mount is disposed, which also removes
+ * a tip that was showing over the sidebar that left.
+ */
+export function mountSidebarTooltipsById(doc: Document, id: string): Cleanup {
+  const view = doc.defaultView ?? window;
+  let current: Element | null = null;
+  let unmount: Cleanup | null = null;
+
+  const sync = () => {
+    const next = doc.getElementById(id);
+    if (next === current) return;
+    unmount?.();
+    current = next;
+    unmount = next ? mountSidebarTooltips(next) : null;
+  };
+
+  sync();
+  const observer = new view.MutationObserver(sync);
+  observer.observe(doc.body, { childList: true, subtree: true });
+  return () => {
+    observer.disconnect();
+    unmount?.();
+    current = null;
+    unmount = null;
+  };
+}
