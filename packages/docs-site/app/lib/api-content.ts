@@ -66,8 +66,8 @@ export function canonicalNamespaces(typesDir: string = TYPES_DIR): string[] {
 
 // Union namespaces of the Combined surface, for the version-selector's Combined
 // entry (namespace-preserving switch) and the sidebar.
-export function combinedNamespaces(): string[] {
-  return combinedSurface(TYPES_DIR).namespaces.map((ns) => ns.namespace);
+export function combinedNamespaces(typesDir: string = TYPES_DIR): string[] {
+  return combinedSurface(typesDir).namespaces.map((ns) => ns.namespace);
 }
 
 // SSG params for `/api/combined/<namespace>`: one entry per union namespace.
