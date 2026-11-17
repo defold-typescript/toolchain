@@ -14,15 +14,24 @@ const base = process.env.DOCS_BASE ?? "/";
 // build can load; bundling also applies `define`'s `__DOCS_BASE__` to its `base.ts`.
 const noExternal = ["@defold-typescript/docs-render"];
 
+// In dev, Vite pre-bundles dependencies per environment, and a client component
+// package pre-bundled in one environment but not another loads twice in the
+// browser. Fumadocs' provider and layout then hold different copies of its
+// framework context, the layout throws, and React clears the page. Serving the
+// Fumadocs packages unbundled keeps one copy.
+const optimizeDeps = { exclude: ["fumadocs-ui", "fumadocs-core"] };
+
 export default defineConfig({
   basePath: base,
   vite: {
     define: { __DOCS_BASE__: JSON.stringify(base) },
     resolve: { dedupe: ["waku"] },
     ssr: { noExternal },
+    optimizeDeps,
     environments: {
-      rsc: { resolve: { noExternal } },
-      ssr: { resolve: { noExternal } },
+      client: { optimizeDeps },
+      rsc: { resolve: { noExternal }, optimizeDeps },
+      ssr: { resolve: { noExternal }, optimizeDeps },
     },
     plugins: [tailwindcss()],
   },
