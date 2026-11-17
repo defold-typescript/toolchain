@@ -182,8 +182,12 @@ export function resolveApiSurfaceRedirect(
     if (!owned) return null;
   }
 
+  // A bound the URL states is carried even when it is the oldest version: left
+  // implicit, the target would fill `from` from storage instead.
+  const sinceMatch = /[?&]since=([^&]*)/.exec(search || "");
+  const stated = sinceMatch ? decodeURIComponent(sinceMatch[1] as string) : "";
   let target = `/api/${range.to}${namespace ? `/${namespace}` : ""}`;
-  if (range.from !== oldest) target += `?since=${range.from}`;
+  if (range.from !== oldest || ids.indexOf(stated) >= 0) target += `?since=${range.from}`;
   const full = `${base}${target}`;
   return full === pathname ? null : full;
 }
@@ -548,4 +552,34 @@ export function surfaceKey(
   const { to } = readStoredRange(pathname, "", storedValue, config);
   if (statesWindow(pathname, config)) return to;
   return to === config.defaultVersionId ? CANONICAL_SURFACE : to;
+}
+
+/**
+ * An in-site link carrying the `?since=` bound the current URL states. The
+ * sidebar trees are built once per version, so their links name only `to`; left
+ * alone, the next page would take its `from` from storage, or widen to the oldest
+ * version, and drop the bound the reader's URL stated. An explicit bound wins
+ * over storage, the oldest version included, so it is carried even where
+ * {@link rewriteApiNavForRange} would leave a full range implicit.
+ *
+ * Only links into the windowed API surface take it: the API index, a version's
+ * index and pages, and an engine namespace's canonical page. A guide, a
+ * version-independent API page, a link with its own query or hash, and every
+ * link on a URL stating no tracked `since` come back unchanged.
+ */
+export function carryStatedSince(href: string, search: string, config: ApiSurfaceConfig): string {
+  const sinceMatch = /[?&]since=([^&]*)/.exec(search);
+  const since = sinceMatch ? decodeURIComponent(sinceMatch[1] as string) : "";
+  if (!config.versionIds.includes(since) || /[?#]/.test(href)) return href;
+  let path = href;
+  if (config.base && path.startsWith(`${config.base}/`)) path = path.slice(config.base.length);
+  const seg = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  if (!path.startsWith("/") || seg[0] !== "api") return href;
+  const second = seg[1];
+  const windowed =
+    second === undefined ||
+    config.versionIds.includes(second) ||
+    (seg.length === 2 &&
+      Object.values(config.namespacesByVersion).some((namespaces) => namespaces.includes(second)));
+  return windowed ? `${href}?since=${since}` : href;
 }

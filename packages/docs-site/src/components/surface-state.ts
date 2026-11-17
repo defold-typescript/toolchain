@@ -47,6 +47,13 @@ export function useClientSurface(): ClientSurface | null {
 /** The active window's badge table key, `"<from>|<to>"`, read by the sidebar pills. */
 export const ActiveWindowKey = createContext("");
 
+/**
+ * Maps an in-site link to the href it renders on the current page, read by the
+ * Fumadocs `Link`. The docs layout supplies one that keeps the URL's `since`;
+ * outside it a link renders as given.
+ */
+export const SurfaceHref = createContext((href: string) => href);
+
 export function useActiveWindowKey(): string {
   return useContext(ActiveWindowKey);
 }

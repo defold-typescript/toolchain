@@ -76,7 +76,8 @@ release carries, and nothing else, as on [the 1.13.0 `go`
 page](/api/defold-1.13.0/go?since=defold-1.13.0). The unprefixed
 `/api/<namespace>` is the full range across every tracked release,
 `/api/<version>/<namespace>` is the range ending at that version, and appending
-`?since=<version>` states the lower bound explicitly. Without it the page starts
+`?since=<version>` states the lower bound explicitly, which the sidebar's API
+links then keep from page to page. Without it the page starts
 at the **From** you last picked, or at the oldest tracked release if you never
 picked one.
 

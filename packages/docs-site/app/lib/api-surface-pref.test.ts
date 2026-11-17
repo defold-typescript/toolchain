@@ -7,6 +7,7 @@ import {
   apiNavForPath,
   CANONICAL_SURFACE,
   canonicalLinkPath,
+  carryStatedSince,
   chooseRangeOption,
   readStoredRange,
   reconcileRangeSelector,
@@ -187,6 +188,18 @@ describe("resolveApiSurfaceRedirect — un-prefixed entry points steer to the st
       "/api/defold-1.12.4/go?since=defold-1.12.4",
     );
     expect(redirect("/api/go", "", "defold-1.12.4")).toBe("/api/defold-1.12.4/go");
+  });
+
+  test("a bound the URL states rides along, the oldest included, so storage cannot replace it", () => {
+    const stored = `defold-1.12.4|defold-1.12.4`;
+    expect(redirect("/api/go", `?since=${OLDEST}`, stored)).toBe(
+      `/api/defold-1.12.4/go?since=${OLDEST}`,
+    );
+    expect(redirect("/api", `?since=${OLDEST}`, stored)).toBe(`/api/defold-1.12.4?since=${OLDEST}`);
+    // An untracked bound states nothing, so the stored `from` fills it as before.
+    expect(redirect("/api/go", "?since=defold-0.9", stored)).toBe(
+      "/api/defold-1.12.4/go?since=defold-1.12.4",
+    );
   });
 
   test("an explicit versioned route is the reader's stated intent and is never overridden", () => {
@@ -811,5 +824,50 @@ describe("surfaceKey — which sidebar tree a page shows", () => {
     expect(surfaceKey("/api/go", `defold-1.12.4|${DEFAULT}`, CONFIG)).toBe(CANONICAL_SURFACE);
     expect(surfaceKey("/getting-started", null, CONFIG)).toBe(CANONICAL_SURFACE);
     expect(surfaceKey("/getting-started", "bogus", CONFIG)).toBe(CANONICAL_SURFACE);
+  });
+});
+
+describe("carryStatedSince — links keep the From the URL states", () => {
+  const since = "?since=defold-1.12.4";
+
+  test("links into the windowed API surface carry the stated bound", () => {
+    expect(carryStatedSince("/api/defold-1.12.4/model", since, CONFIG)).toBe(
+      "/api/defold-1.12.4/model?since=defold-1.12.4",
+    );
+    expect(carryStatedSince(`/api/${DEFAULT}`, since, CONFIG)).toBe(
+      `/api/${DEFAULT}?since=defold-1.12.4`,
+    );
+    expect(carryStatedSince("/api/go", since, CONFIG)).toBe("/api/go?since=defold-1.12.4");
+    expect(carryStatedSince("/api/legacy", since, CONFIG)).toBe("/api/legacy?since=defold-1.12.4");
+    expect(carryStatedSince("/api", since, CONFIG)).toBe("/api?since=defold-1.12.4");
+    expect(carryStatedSince("/toolchain/api/go", since, BASED)).toBe(
+      "/toolchain/api/go?since=defold-1.12.4",
+    );
+  });
+
+  test("a stated oldest bound is carried, since it overrides a stored one", () => {
+    expect(carryStatedSince(`/api/${DEFAULT}/go`, `?since=${OLDEST}`, CONFIG)).toBe(
+      `/api/${DEFAULT}/go?since=${OLDEST}`,
+    );
+  });
+
+  test("guides, version-independent pages and links with their own query or hash stay put", () => {
+    expect(carryStatedSince("/getting-started", since, CONFIG)).toBe("/getting-started");
+    expect(carryStatedSince("/api/Hash", since, CONFIG)).toBe("/api/Hash");
+    expect(carryStatedSince("/api/combined/go", since, CONFIG)).toBe("/api/combined/go");
+    expect(carryStatedSince("/api/go#go.get", since, CONFIG)).toBe("/api/go#go.get");
+    expect(carryStatedSince(`/api/${DEFAULT}/go?since=${OLDEST}`, since, CONFIG)).toBe(
+      `/api/${DEFAULT}/go?since=${OLDEST}`,
+    );
+    expect(carryStatedSince("https://example.com/api/go", since, CONFIG)).toBe(
+      "https://example.com/api/go",
+    );
+  });
+
+  test("a URL stating no tracked bound leaves every link alone", () => {
+    expect(carryStatedSince("/api/defold-1.12.4/go", "", CONFIG)).toBe("/api/defold-1.12.4/go");
+    expect(carryStatedSince("/api/defold-1.12.4/go", "?since=defold-0.9", CONFIG)).toBe(
+      "/api/defold-1.12.4/go",
+    );
   });
 });

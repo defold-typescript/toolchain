@@ -18,12 +18,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides and API as switchable sidebar sections, the API version range picker at the top of the sidebar, whose saved range the sidebar links and count pills follow on every page, and a search dialog (`Ctrl+K` or `⌘K`) that runs in the browser and finds guide pages and API members from the engine version of the page you are on. The `/search` page is gone for now, and each engine version's pages stay at `/api/<version>`.
+- **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides and API as switchable sidebar sections, the API version range picker at the top of the sidebar, whose saved range, or the `From` a link's `?since=` states, the sidebar links and count pills follow on every page, and a search dialog (`Ctrl+K` or `⌘K`) that runs in the browser and finds guide pages and API members from the engine version of the page you are on. The `/search` page is gone for now, and each engine version's pages stay at `/api/<version>`.
 
 ### Fixed
 
 - **A `build` with no errors deletes the runtime files nothing requires any more,** such as a `lualib_bundle.lua` an earlier failing build wrote, or `timers.lua` and `hsm/<module>.lua` once no source imports them; a file stays when it lacks the generated banner, when a source of yours compiles to that file, including under a differently cased name on macOS and Windows, or when a hand-written Lua or script file requires it by name, and a file kept that way keeps the runtime files it requires. `build` names the deleted files on a second line and `build --json` lists them in `removed`, while a failing build and a `watch` rebuild delete nothing ([Build](./build.md#the-runtime-folder), [Agent runbooks](./agent-runbooks.md#machine-readable-output)).
 - **On macOS and Windows, `build` and `watch` keep a source output whose path differs only in letter case from a runtime file an earlier version wrote at the output root,** such as `Defold_Typescript_Timers.lua` beside `defold_typescript_timers.lua`, instead of deleting it right after writing it ([Build](./build.md#the-runtime-folder)).
+- **An API reference URL whose `?since=` names the oldest tracked release keeps that `From`** when the docs site moves it onto your saved **To**, instead of replacing it with the **From** you last picked ([Reading the API reference over a range](./upgrading-defold-versions.md#reading-the-api-reference-over-a-range)).
 
 ## v0.66.0
 

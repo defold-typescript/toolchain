@@ -2,8 +2,30 @@
 import { withBase } from "@defold-typescript/docs-render/base";
 import { searchIndexFileForRoute } from "@defold-typescript/docs-render/search-route";
 import { RootProvider } from "fumadocs-ui/provider/waku";
-import type { ReactNode } from "react";
-import { useRouter } from "waku";
+import { type ComponentProps, type ReactNode, useContext } from "react";
+import { Link, useRouter } from "waku";
+import { SurfaceHref } from "./surface-state";
+
+type LinkTarget = ComponentProps<typeof Link>["to"];
+
+// Fumadocs' own Waku link, rendering the href the docs layout maps it to, so a
+// sidebar link keeps the window the page's URL states.
+function SurfaceLink({
+  href = "#",
+  prefetch = true,
+  ...props
+}: ComponentProps<"a"> & { prefetch?: boolean }) {
+  const toHref = useContext(SurfaceHref);
+  return (
+    <Link
+      to={toHref(href) as LinkTarget}
+      {...(prefetch ? { unstable_prefetchOnEnter: { mode: "once" } as const } : {})}
+      {...props}
+    >
+      {props.children}
+    </Link>
+  );
+}
 
 // Fumadocs styles key dark mode off the `dark` class; the shared renderer's
 // stylesheet keys it off `data-theme`. Setting both keeps the two in step.
@@ -23,6 +45,7 @@ export function Provider({
     <RootProvider
       theme={{ attribute: ["class", "data-theme"] }}
       search={{ options: { type: "static", api } }}
+      components={{ Link: SurfaceLink }}
     >
       {children}
     </RootProvider>
