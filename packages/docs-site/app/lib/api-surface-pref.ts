@@ -528,3 +528,24 @@ export function apiNavForPath(
   if (!statesWindow(pathname, config)) return categories;
   return rewriteApiNavForRange(categories, activeRangeForPath(pathname, search, config), config);
 }
+
+/** The key of the sidebar tree whose API links stay un-prefixed. */
+export const CANONICAL_SURFACE = "canonical";
+
+/**
+ * Which sidebar tree a page shows: the version an `/api/<version>/…` route
+ * names, else the stored window's `to` when it is not the default version, else
+ * the canonical tree. Every un-prefixed page follows the stored window, guides
+ * included, because a sidebar link navigates on the client, where the pre-paint
+ * redirect never runs: an un-prefixed link would land a reader with an older
+ * window on the default version's page.
+ */
+export function surfaceKey(
+  pathname: string,
+  storedValue: string | null,
+  config: ApiSurfaceConfig,
+): string {
+  const { to } = readStoredRange(pathname, "", storedValue, config);
+  if (statesWindow(pathname, config)) return to;
+  return to === config.defaultVersionId ? CANONICAL_SURFACE : to;
+}

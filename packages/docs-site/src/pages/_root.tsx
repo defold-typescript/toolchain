@@ -2,7 +2,9 @@ import { THEME_TOKENS } from "@defold-typescript/docs-render/theme-tokens";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { ReactNode } from "react";
 import { TYPES_DIR } from "../../app/lib/api-content";
+import { rangePrepaintScript } from "../../app/lib/range-prepaint";
 import { Provider } from "../components/provider";
+import { apiSurfaceConfig } from "../lib/site";
 import "../styles/globals.css";
 
 declare const __DOCS_BASE__: string;
@@ -17,6 +19,9 @@ export default async function RootElement({ children }: { children: ReactNode })
             writes (signatures, heading anchors). */}
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a constant from the repo */}
         <style dangerouslySetInnerHTML={{ __html: THEME_TOKENS }} />
+        {/* The reader's stored API window, applied before first paint. */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: built from the repo's own functions */}
+        <script dangerouslySetInnerHTML={{ __html: rangePrepaintScript(apiSurfaceConfig()) }} />
         <link rel="stylesheet" href={`${BASE_PATH}critical.css`} />
       </head>
       <body className="flex flex-col min-h-screen">

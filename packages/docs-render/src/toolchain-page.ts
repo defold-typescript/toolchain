@@ -4,23 +4,13 @@ import {
   apiReplacementResolver,
   apiSignatureSymbolLinks,
 } from "./api-page-render";
-import { type NamespaceBadgeCounts, namespaceBadgeCounts } from "./combined-surface";
+import { COUNT_KINDS, type NamespaceBadgeCounts, namespaceBadgeCounts } from "./combined-surface";
 import { renderMarkdown } from "./markdown";
 import { apiNamespaceOwner, canonicalApiPages, combinedSurface } from "./toolchain-surface";
 
 // The toolchain docs' canonical `/api/<ns>` page render, kept apart from the
 // surface in `toolchain-surface.ts` so a reader of the surface alone (the release
 // scripts) does not pull in the markdown renderer and its JSX components.
-
-export const COUNT_KINDS: {
-  readonly flag: keyof NamespaceBadgeCounts;
-  readonly kind: string;
-  readonly noun: string;
-}[] = [
-  { flag: "new", kind: "new", noun: "new" },
-  { flag: "changed", kind: "changed", noun: "changed" },
-  { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
-];
 
 // The count pills for a Combined namespace: one pill per non-zero category
 // showing its tally and category noun as visible text (`12 new`), the

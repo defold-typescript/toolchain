@@ -22,8 +22,8 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { navLeafBadgeHtml, navNamespaceBadges } from "./api-badges";
 import { type ApiSurfaceConfig, readStoredRange } from "./api-surface-pref";
+import { navLeafBadgeHtml, navNamespaceBadges } from "./nav-badges";
 import { applySinceFilter } from "./since-filter";
 
 // Newest first, matching the tracked axis every availability span is read against.

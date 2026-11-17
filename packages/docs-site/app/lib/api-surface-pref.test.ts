@@ -5,6 +5,7 @@ import {
   type ApiSurfaceRange,
   activeRangeForPath,
   apiNavForPath,
+  CANONICAL_SURFACE,
   canonicalLinkPath,
   chooseRangeOption,
   readStoredRange,
@@ -13,6 +14,7 @@ import {
   retargetRangeOptions,
   rewriteApiNavForRange,
   showApiSurfaceSelector,
+  surfaceKey,
 } from "./api-surface-pref";
 import type { NavCategory } from "./nav";
 
@@ -787,5 +789,27 @@ describe("canonicalLinkPath", () => {
 
   test("claims nothing when no default version is known", () => {
     expect(canonicalLinkPath("/api/defold-3.0.0/demo", config, undefined)).toBeNull();
+  });
+});
+
+describe("surfaceKey — which sidebar tree a page shows", () => {
+  test("a version-prefixed route shows that version's tree whatever is stored", () => {
+    expect(surfaceKey("/api/defold-1.12.4/go", null, CONFIG)).toBe("defold-1.12.4");
+    expect(surfaceKey("/api/defold-1.12.4", `${OLDEST}|${DEFAULT}`, CONFIG)).toBe("defold-1.12.4");
+    expect(surfaceKey(`/api/${DEFAULT}/go`, `${OLDEST}|defold-1.12.4`, CONFIG)).toBe(DEFAULT);
+  });
+
+  test("an un-prefixed page shows the stored window's `to` tree when it is not the default", () => {
+    const stored = `${OLDEST}|defold-1.12.4`;
+    expect(surfaceKey("/api/go", stored, CONFIG)).toBe("defold-1.12.4");
+    expect(surfaceKey("/api", stored, CONFIG)).toBe("defold-1.12.4");
+    expect(surfaceKey("/getting-started", stored, CONFIG)).toBe("defold-1.12.4");
+  });
+
+  test("an un-prefixed page shows the canonical tree for no stored window or one ending at the default", () => {
+    expect(surfaceKey("/api/go", null, CONFIG)).toBe(CANONICAL_SURFACE);
+    expect(surfaceKey("/api/go", `defold-1.12.4|${DEFAULT}`, CONFIG)).toBe(CANONICAL_SURFACE);
+    expect(surfaceKey("/getting-started", null, CONFIG)).toBe(CANONICAL_SURFACE);
+    expect(surfaceKey("/getting-started", "bogus", CONFIG)).toBe(CANONICAL_SURFACE);
   });
 });
