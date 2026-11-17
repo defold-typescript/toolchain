@@ -129,3 +129,35 @@ test("the search dialog queries the current route's index and remounts alone", a
 
   expect(probeMounts).toBe(1);
 }, 60_000);
+
+test("the search dialog finds a member through one typo", async () => {
+  router.path = "/guides/build";
+  const view = render(
+    <Provider versionIds={VERSION_IDS}>
+      <Probe />
+    </Provider>,
+  );
+  const page = within(document.body);
+
+  // Testing Library cleans up only in the file that loads it first, so an earlier
+  // test's tree can still be mounted here.
+  fireEvent.click(within(view.container).getByRole("button", { name: "Open search" }));
+  const dialog = within(await page.findByRole("dialog", {}, { timeout: 10_000 }));
+  fireEvent.change(dialog.getByRole("combobox"), { target: { value: "animte" } });
+  const hit = await waitFor(
+    () => {
+      const option = dialog
+        .getAllByRole("option")
+        .find((element) => element.textContent?.includes("go.animate"));
+      if (option === undefined) {
+        throw new Error("no go.animate option yet");
+      }
+      return option;
+    },
+    { timeout: 10_000 },
+  );
+  fireEvent.click(hit);
+  await waitFor(() => expect(page.queryByRole("dialog")).toBeNull());
+  expect(router.pushed.at(-1)).toBe("/api/go#go.animate");
+  view.unmount();
+}, 60_000);

@@ -36,5 +36,11 @@ export function toAdvancedIndexes(records: readonly SearchRecord[]): AdvancedInd
 
 // The file the browser's static search client downloads and loads.
 export function exportSearchIndex(records: readonly SearchRecord[]): Promise<unknown> {
-  return createSearchAPI("advanced", { indexes: toAdvancedIndexes(records) }).export();
+  // The static client loads the export into `create({ schema })`, which
+  // tokenizes a query in English, so indexing in the same language splits
+  // `gui.animate` into the words a query has.
+  return createSearchAPI("advanced", {
+    indexes: toAdvancedIndexes(records),
+    language: "english",
+  }).export();
 }

@@ -57,4 +57,20 @@ describe("exportSearchIndex", () => {
     const results = await staticClient({ from }).search("animate");
     expect(results.map((result) => result.url)).toContain("/api/go#go.animate");
   });
+
+  test("a bare member name finds members and prose that write it with its namespace", async () => {
+    const exported = await exportSearchIndex([
+      { route: "/api/gui", title: "gui API", text: "Graphical user interface" },
+      {
+        route: "/api/gui#gui.animate",
+        title: "gui.animate",
+        text: 'gui.animate(node: Opaque<"node">, property: string): void',
+      },
+      { route: "/animation", title: "Animation", text: "Call go.animate to tween a property." },
+    ]);
+    const from = `data:application/json,${encodeURIComponent(JSON.stringify(exported))}`;
+    const urls = (await staticClient({ from }).search("animate")).map((result) => result.url);
+    expect(urls).toContain("/api/gui#gui.animate");
+    expect(urls).toContain("/animation");
+  });
 });
