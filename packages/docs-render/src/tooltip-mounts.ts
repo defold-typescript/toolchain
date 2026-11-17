@@ -371,10 +371,15 @@ export function mountSidebarTooltips(sidebar: Element): Cleanup {
     if (event.type === "pointerenter" && (event as PointerEvent).pointerType !== "mouse") return;
     if (event.type === "focus" && lastWasTouch) return;
     // A row may name itself more fully than its label does — a library row
-    // carries its whole `owner/repo/namespace` path in `data-tooltip`. An icon
-    // link has no label text, so it is named by its `aria-label`.
+    // carries its whole `owner/repo/namespace` path in `data-tooltip`, on the
+    // link or, where a layout renders the link itself, on an element of its
+    // label. An icon link has no label text, so it is named by its `aria-label`.
     const text =
-      link.dataset.tooltip || link.textContent?.trim() || link.getAttribute("aria-label") || "";
+      link.dataset.tooltip ||
+      link.querySelector<HTMLElement>("[data-tooltip]")?.dataset.tooltip ||
+      link.textContent?.trim() ||
+      link.getAttribute("aria-label") ||
+      "";
     if (!text) return;
     const r = link.getBoundingClientRect();
     tip.textContent = text;

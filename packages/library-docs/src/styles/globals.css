@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+/* The rendered library and guide HTML carries the shared renderer's classes
+ * (Shiki dual themes, API badges, admonitions), so its stylesheet still applies. */
+@import "@defold-typescript/docs-render/styles.css";
+/* This site's own rules: the no-typed-API mark and the upstream badge hue. */
+@import "../../app/styles.css";
+
+@source "../../node_modules/fumadocs-ui/dist/**/*.js";
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* The shared renderer offsets every jump target (headings, footnote marks) by
+ * `--topbar-height`. The bars that stay over the page here are Fumadocs' header
+ * and, below `xl`, its outline bar; Fumadocs keeps their combined height in
+ * `--fd-docs-row-3`. */
+#nd-docs-layout {
+  --topbar-height: var(--fd-docs-row-3);
+}
+
+/* Where Fumadocs' typography and the shared renderer's markup disagree. */
+.prose :is(h1, h2, h3, h4, h5, h6) a {
+  text-decoration: none;
+}
+
+.prose pre code {
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.prose blockquote {
+  font-style: normal;
+}
+
+/* A card's title is an `h3`, which the shared renderer styles as a prose
+ * heading; Fumadocs' `not-prose` does not reach that rule. A card reads as a
+ * link instead: the code face, semibold, in the link accent. */
+.prose [data-card] h3 {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.prose [data-card] p {
+  font-weight: 400;
+}
+
+.prose blockquote p::before,
+.prose blockquote p::after {
+  content: none;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

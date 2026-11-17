@@ -55,7 +55,7 @@ describe("scopesOf", () => {
   test("library data and library docs together give both", () => {
     expect(
       scopesOf([
-        "packages/library-docs/vite.config.ts",
+        "packages/library-docs/waku.config.ts",
         "packages/library-types/data/0.55.0/a.json",
       ]),
     ).toEqual(["data", "library-docs"]);

@@ -2,9 +2,11 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { staticClient } from "fumadocs-core/search/client/orama-static";
 import { siteDirs } from "../app/lib/api-content";
 import type { LibraryDirs } from "../app/lib/api-surface-loader";
-import { searchIndexOutputs } from "./build-search-index";
+import { searchIndexOutputs, writeSearchIndexes } from "./build-search-index";
 import { symbolIndexOutputs } from "./build-symbol-index";
 
 const FIXTURE_ROOT = join(import.meta.dir, "..", "app", "lib", "__fixtures__", "library-display");
@@ -88,6 +90,21 @@ describe("searchIndexOutputs", () => {
     const all = records(dirsWithLinkOnlyPages);
     expect(all.some((record) => record.title === "demo.one.greet")).toBe(true);
     expect(all.filter((record) => /^https?:/.test(record.route))).toEqual([]);
+  });
+});
+
+describe("writeSearchIndexes", () => {
+  test("the written file answers a member query in the search dialog's client", async () => {
+    const out = mkdtempSync(join(tmpdir(), "library-search-out-"));
+    try {
+      await writeSearchIndexes(out, dirs, GUIDE_DIR);
+      const member = records(dirs).find((record) => record.title === "demo.one.greet");
+      const from = pathToFileURL(join(out, "search-index.json")).href;
+      const results = await staticClient({ from }).search("demo.one.greet");
+      expect(results.map((result) => result.url)).toContain(member?.route ?? "");
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
   });
 });
 

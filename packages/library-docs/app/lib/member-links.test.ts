@@ -8,11 +8,10 @@ import {
   memberAnchors,
   type SymbolEntry,
 } from "@defold-typescript/docs-render/symbol-index";
-import { Hono } from "hono";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
-import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
 import { apiPages, siteDirs } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
+import { renderLibraryApiHtml } from "./library-routes";
 
 // Root `bun test` runs from the repo root, so the package directory is passed in.
 const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
@@ -82,11 +81,11 @@ describe("a member key two libraries share", () => {
     dataDir: join(root, "data", "0.61.0"),
     modelDir: join(root, "api-doc"),
   };
-  const app = new Hono();
-  app.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(dirs));
-
   const greetLinks = async (page: ApiPage): Promise<string[]> => {
-    const html = await (await app.request(page.route)).text();
+    const [host = "", owner = "", repo = "", namespace = ""] = page.route.split("/").slice(2);
+    const rendered = await renderLibraryApiHtml({ host, owner, repo, namespace }, dirs);
+    if (!rendered) throw new Error(`${page.route} renders no page`);
+    const { html } = rendered;
     return [...html.matchAll(/<a href="([^"]*)" class="symbol-xref">demo\.one\.greet<\/a>/g)].map(
       (match) => match[1] ?? "",
     );

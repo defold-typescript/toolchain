@@ -4,23 +4,35 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { dependencyStep } from "@defold-typescript/docs-render/api-page-render";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[host]/[owner]/[repo]/[namespace]";
-import { createLibraryListingRoute } from "../routes/libraries/[host]/[owner]/[repo]";
 import { apiPages, libraryNavGroups, siteDirs, untypedListings } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
+import {
+  type LibraryApiParams,
+  type LibraryListingParams,
+  libraryStaticPaths,
+  renderLibraryApiHtml,
+  renderLibraryListingHtml,
+} from "./library-routes";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
-import { ssgRoutePaths } from "./ssg-routes";
 
 // Root `bun test` runs from the repo root, so the package directory is passed in.
-const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
+const SITE_ROOT = join(import.meta.dir, "../..");
+const REAL_DIRS = siteDirs(SITE_ROOT);
+const GUIDE_DIR = join(SITE_ROOT, "guides");
 
-const app = new Hono();
-app.get("/libraries/:host/:owner/:repo", ...createLibraryListingRoute(REAL_DIRS));
+// The params the `libraries/[host]/[owner]/[repo]` page receives for a path.
+function listingParams(path: string): LibraryListingParams {
+  const [host = "", owner = "", repo = ""] = path.split("/").slice(2);
+  return { host, owner, repo };
+}
 
-async function render(path: string): Promise<{ status: number; html: string }> {
-  const res = await app.request(path);
-  return { status: res.status, html: await res.text() };
+function apiParams(path: string): LibraryApiParams {
+  const [host = "", owner = "", repo = "", namespace = ""] = path.split("/").slice(2);
+  return { host, owner, repo, namespace };
+}
+
+async function render(path: string, dirs: LibraryDirs = REAL_DIRS): Promise<string | undefined> {
+  return (await renderLibraryListingHtml(listingParams(path), dirs))?.html;
 }
 
 const textOf = (html: string): string =>
@@ -38,15 +50,19 @@ describe("/libraries/:host/:owner/:repo listing pages", () => {
     expect(listings.some((listing) => listing.portal)).toBe(true);
   });
 
-  test("the static build emits exactly one page per manifest listing", async () => {
+  test("the static build emits exactly one page per manifest listing", () => {
     const expected = listings.map((listing) => listing.route).sort();
-    expect(await ssgRoutePaths(app)).toEqual(expected);
+    const built = libraryStaticPaths(REAL_DIRS, GUIDE_DIR)
+      .listings.map((segments) => `/libraries/${segments.join("/")}`)
+      .sort();
+    expect(built).toEqual(expected);
   });
 
   for (const listing of listings) {
     test(`${listing.route} renders its heading, lead, api kind, pinned repo link and nested setup steps`, async () => {
-      const { status, html } = await render(listing.route);
-      expect(status).toBe(200);
+      const page = await renderLibraryListingHtml(listingParams(listing.route), REAL_DIRS);
+      expect(page?.title).toBe(`${listing.owner}/${listing.repo}`);
+      const html = page?.html ?? "";
 
       const heading = html.match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
       expect(textOf(heading)).toBe(`${listing.owner}/${listing.repo}`);
@@ -122,26 +138,26 @@ describe("/libraries/:host/:owner/:repo listing pages", () => {
         `/libraries/${host}/${listing.owner}/${listing.repo}`.toLowerCase(),
       );
       const path = `/libraries/${host}/${listing.owner}/${listing.repo}`;
-      expect({ path, status: (await render(path)).status }).toEqual({ path, status: 404 });
+      expect({ path, html: await render(path) }).toEqual({ path, html: undefined });
     }
   });
 
   test("a Defold listing answers under its host, and not without one or under another", async () => {
-    expect((await render("/libraries/github.com/defold/asset-pbr")).status).toBe(200);
+    expect(await render("/libraries/github.com/defold/asset-pbr")).toBeString();
     for (const path of [
       "/libraries/defold/asset-pbr",
       "/libraries/codeberg.org/defold/asset-pbr",
     ]) {
-      expect({ path, status: (await render(path)).status }).toEqual({ path, status: 404 });
+      expect({ path, html: await render(path) }).toEqual({ path, html: undefined });
     }
   });
 
-  test("an unknown repo under defold is a 404", async () => {
-    expect((await render("/libraries/github.com/defold/not-a-repo")).status).toBe(404);
+  test("an unknown repo under defold renders nothing", async () => {
+    expect(await render("/libraries/github.com/defold/not-a-repo")).toBeUndefined();
   });
 
-  test("a listed repo under the wrong owner is a 404", async () => {
-    expect((await render("/libraries/github.com/britzl/asset-pbr")).status).toBe(404);
+  test("a listed repo under the wrong owner renders nothing", async () => {
+    expect(await render("/libraries/github.com/britzl/asset-pbr")).toBeUndefined();
   });
 });
 
@@ -181,12 +197,11 @@ describe("one owner and repo on two hosts", () => {
     expect(untypedListings(dirs).map((listing) => listing.route)).toEqual([LISTING]);
     expect(apiPages(dirs).map((page) => page.route)).toContain(PAGE);
 
-    const site = new Hono();
-    site.get("/libraries/:host/:owner/:repo", ...createLibraryListingRoute(dirs));
-    site.get("/api/:host/:owner/:repo/:namespace", ...createApiNamespaceRoute(dirs));
-    for (const path of [LISTING, PAGE]) {
-      expect({ path, status: (await site.request(path)).status }).toEqual({ path, status: 200 });
-    }
+    expect(await render(LISTING, dirs)).toBeString();
+    expect((await renderLibraryApiHtml(apiParams(PAGE), dirs))?.html).toBeString();
+    expect(libraryStaticPaths(dirs, GUIDE_DIR).listings).toEqual([
+      ["codeberg.org", "someone", "demolib"],
+    ]);
   });
 
   test("the Libraries tree holds both under the one owner", () => {

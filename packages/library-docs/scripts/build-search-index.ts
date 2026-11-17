@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { apiPages, siteDirs, untypedListings } from "../app/lib/api-content";
 import type { LibraryDirs } from "../app/lib/api-surface-loader";
@@ -10,9 +11,8 @@ import {
   listingSearchRecords,
 } from "../app/lib/search-index";
 
-// Served from public/ at a stable path. The search islands append a `?t=` query in
-// dev to defeat Safari's aggressive dev caching — a generated-asset `?url` import
-// 404s in honox's dev server, so plain public/ + fetch is the reliable path.
+// Served from public/ at a stable path, which the search dialog fetches under
+// the site base (see `src/components/provider.tsx`).
 const OUTPUT_DIR = join(import.meta.dir, "..", "public");
 
 export interface SearchIndexOutput {
@@ -38,10 +38,23 @@ export function searchIndexOutputs(
   ];
 }
 
+// Each file holds a Fumadocs search export rather than the raw records: the
+// search dialog's static client loads it into its search engine as is.
+export async function writeSearchIndexes(
+  outDir: string,
+  dirs: LibraryDirs = siteDirs(),
+  guideDir?: string,
+): Promise<SearchIndexOutput[]> {
+  const outputs = searchIndexOutputs(dirs, guideDir);
+  mkdirSync(outDir, { recursive: true });
+  for (const { file, records } of outputs) {
+    writeFileSync(join(outDir, file), JSON.stringify(await exportSearchIndex(records)));
+  }
+  return outputs;
+}
+
 if (import.meta.main) {
-  mkdirSync(OUTPUT_DIR, { recursive: true });
-  for (const { file, records } of searchIndexOutputs()) {
-    writeFileSync(join(OUTPUT_DIR, file), JSON.stringify(records));
+  for (const { file, records } of await writeSearchIndexes(OUTPUT_DIR)) {
     console.log(`${file}: ${records.length} records`);
   }
 }
