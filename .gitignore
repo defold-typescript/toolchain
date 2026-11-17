@@ -10,11 +10,12 @@ build/
 out/
 lib/
 *.tsbuildinfo
-# docs-site and library-docs app source lives in an app/lib/ dir, and the Waku docs site's in
+# docs-site and library-docs app source lives in an app/lib/ dir, and both Waku sites' in
 # src/lib/ — not build output, keep it tracked
 !packages/docs-site/app/lib/
 !packages/docs-site/src/lib/
 !packages/library-docs/app/lib/
+!packages/library-docs/src/lib/
 # the hsm-view client keeps shadcn's `cn` helper in client/lib/ — source, keep it tracked
 !packages/cli/client/lib/
 
