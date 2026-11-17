@@ -1,4 +1,4 @@
-// honox SSG runs on a static host with no server-side 30x, so a superseded route
+// The static build runs on a static host with no server-side 30x, so a superseded route
 // cannot answer with a real redirect. The smallest static-host-safe substitute is
 // a materialized stub per old route: an immediate `<meta http-equiv="refresh">`,
 // a `<link rel="canonical">` pointing at the new route, a `noindex` robots tag so

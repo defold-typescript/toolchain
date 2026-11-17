@@ -14,6 +14,11 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **`build` deletes the runtime files nothing requires** and keeps every file your sources compile to, under any letter case ([Build](./build.md#the-runtime-folder)).
+> - **The docs site has a new layout** with in-browser search ([API reference](/api)).
+
+### Improved
+
+- **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides and API as switchable sidebar sections and a search dialog (`Ctrl+K` or `⌘K`) that runs in the browser. Hover tooltips, the API version range picker and the `/search` page are gone for now; each engine version's pages stay at `/api/<version>`.
 
 ### Fixed
 
