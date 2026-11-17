@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "jsxImportSource": "react",
-    "types": ["vite/client"]
+    "types": ["vite/client", "bun"]
   },
   "include": [".", "../waku.config.ts"]
 }

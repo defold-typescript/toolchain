@@ -4,6 +4,12 @@ import {
   mountUiTooltips,
 } from "@defold-typescript/docs-render/tooltip-mounts";
 import { useEffect } from "react";
+import {
+  API_SURFACE_STORAGE_KEY,
+  type ApiSurfaceConfig,
+  readStoredRange,
+} from "../../app/lib/api-surface-pref";
+import { applySinceFilter } from "../../app/lib/since-filter";
 
 const COPY_SVG = `<svg class="code-clip-icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg>`;
 const CHECK_SVG = `<svg class="code-clip-check" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>`;
@@ -102,16 +108,38 @@ function mountHsmDemos(body: HTMLElement): () => void {
   };
 }
 
+// The pre-paint script applies the stored `from` on a full load only; a page
+// reached by client-side navigation gets its body here.
+function applyStoredFrom(body: HTMLElement, surface: ApiSurfaceConfig): void {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(API_SURFACE_STORAGE_KEY);
+  } catch {
+    return;
+  }
+  const range = readStoredRange(location.pathname, location.search, stored, surface);
+  if (range.from === surface.versionIds[surface.versionIds.length - 1]) return;
+  applySinceFilter(body, range, surface);
+}
+
 /**
  * The behavior the prerendered page HTML needs in the browser. Keyed by page at
  * the call site, so it runs again after each client-side navigation.
  * `versionIds` are the tracked API versions, so a versioned API page's symbol
- * tooltips read that version's index.
+ * tooltips read that version's index; `surface` maps the stored API window onto
+ * this page.
  */
-export function PageScripts({ versionIds }: { versionIds: readonly string[] }) {
+export function PageScripts({
+  versionIds,
+  surface,
+}: {
+  versionIds: readonly string[];
+  surface: ApiSurfaceConfig;
+}) {
   useEffect(() => {
     const body = document.querySelector<HTMLElement>(`[${PAGE_BODY_ATTR}]`);
     if (!body) return;
+    applyStoredFrom(body, surface);
     const cleanups = [
       addCopyButtons(body),
       wireCodeTabs(body),
@@ -122,6 +150,6 @@ export function PageScripts({ versionIds }: { versionIds: readonly string[] }) {
     return () => {
       for (const cleanup of cleanups) cleanup();
     };
-  }, [versionIds]);
+  }, [versionIds, surface]);
   return null;
 }

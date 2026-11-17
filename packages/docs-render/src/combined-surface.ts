@@ -541,6 +541,18 @@ export interface NamespaceBadgeCounts {
   readonly deprecated: number;
 }
 
+// The three categories in tally order: the namespace title pills and the
+// sidebar pills both write their markup from this list.
+export const COUNT_KINDS: {
+  readonly flag: keyof NamespaceBadgeCounts;
+  readonly kind: string;
+  readonly noun: string;
+}[] = [
+  { flag: "new", kind: "new", noun: "new" },
+  { flag: "changed", kind: "changed", noun: "changed" },
+  { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
+];
+
 /**
  * Tally the color-badge categories over a Combined namespace's entries: each
  * function or member adds to every category it carries (a changed-and-deprecated
