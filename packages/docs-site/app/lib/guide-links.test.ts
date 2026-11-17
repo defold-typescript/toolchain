@@ -12,9 +12,7 @@ import {
 } from "@defold-typescript/docs-render/toolchain-surface";
 import { versionsWithDiskFixtures } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
-import { versionedApiParams } from "./api-badges";
-import { canonicalNamespaces } from "./api-content";
-import { combinedRedirect } from "./api-redirect";
+import { apiRouteSet } from "./api-routes";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 
@@ -59,37 +57,15 @@ function isApiRoute(target: string): boolean {
 
 // Absolute routes have no on-disk counterpart under the guide directory, so the
 // file/anchor walk below cannot speak to them. They are checked instead against
-// the routes the site really emits — `/api/...` against `emittedApiRoutes`, the
+// the routes the site really emits — `/api/...` against `apiRouteSet`, the
 // rest against `staticRoutes` — and stay exempt when no route sets are supplied.
+// `apiRouteSet` is built from the same static paths the API route files hand
+// Waku, so a namespace that stops being built reds the links pointing at it
+// rather than shipping a 404.
 function isExempt(target: string, checkRoutes: boolean): boolean {
   if (/^https?:\/\//.test(target) || target.startsWith("mailto:")) return true;
   if (!target.startsWith("/")) return false;
   return !checkRoutes;
-}
-
-// Every `/api…` path the site materializes, assembled from the same production
-// enumerators the route files hand to `ssgParams` — so a namespace that stops
-// being emitted reds the links pointing at it rather than shipping a 404:
-//
-//   /api                                `routes/api.tsx`
-//   /api/<namespace>                    `routes/api/[namespace].tsx`
-//   /api/<version>                      same route, known-version-id branch
-//   /api/<version>/<namespace>          `routes/api/[version]/[namespace].tsx`
-//   /api/combined[/<namespace>]         the materialized redirect stubs
-//
-// A new *kind* of API route would have to be added here too; until it is, its
-// links read as unknown, which fails loudly instead of passing silently.
-export function emittedApiRoutes(typesDir: string): Set<string> {
-  const routes = new Set<string>(["/api", combinedRedirect().from]);
-  for (const namespace of canonicalNamespaces(typesDir)) {
-    routes.add(`/api/${namespace}`);
-    routes.add(combinedRedirect(namespace).from);
-  }
-  for (const version of versionsWithDiskFixtures(typesDir)) routes.add(`/api/${version.id}`);
-  for (const { version, namespace } of versionedApiParams(typesDir)) {
-    routes.add(`/api/${version}/${namespace}`);
-  }
-  return routes;
 }
 
 // Every `route#anchor` a symbol heading carries on the canonical and versioned
@@ -120,7 +96,7 @@ export function emittedApiAnchors(typesDir: string): Set<string> {
 // given `catchAllRoutes`: the pages that route's own `ssgParams` emits, read
 // through `ssgRoutePaths` so the set is what the static build writes. `api.tsx`
 // lands in this set too, but no `/api…` target is ever looked up in it: those
-// dispatch to `emittedApiRoutes`.
+// dispatch to `apiRouteSet`.
 export function staticRoutes(
   routesDir: string,
   guideDir: string,
@@ -257,7 +233,7 @@ function format(broken: Broken[]): string {
 
 // The production path highlights every fence on every guide page; several tests
 // read the same report, so it is rendered once.
-const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR);
+const API_ROUTES = apiRouteSet(REAL_TYPES_DIR);
 const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR);
 const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
 const API_ANCHORS = emittedApiAnchors(REAL_TYPES_DIR);
@@ -323,7 +299,7 @@ describe("docs/guide link and anchor resolution", () => {
     expect(api.some((t) => t.includes("?since="))).toBe(true);
   });
 
-  // The emitted set is what the routes hand `ssgParams`, so it has to carry every
+  // The emitted set is what the routes hand Waku as static paths, so it has to carry every
   // shape the guide links — asserted against the enumerators rather than a count,
   // which would drift with the corpus.
   test("the emitted route set spans the index, namespaces and versioned pages", () => {
