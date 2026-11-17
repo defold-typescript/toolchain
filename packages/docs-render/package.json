@@ -37,6 +37,7 @@
     "@capsizecss/core": "^4.1.3",
     "@capsizecss/metrics": "^4.4.0",
     "@capsizecss/unpack": "^4.0.1",
+    "@happy-dom/global-registrator": "^21.0.4",
     "@types/bun": "^1.4.4",
     "@types/markdown-it": "14.1.2",
     "@types/markdown-it-footnote": "^3.0.4",
