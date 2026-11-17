@@ -158,14 +158,12 @@ function fenceLanguageBadge(info: string, label?: string): string | undefined {
   const cacheKey = `${JSON.stringify(language.glyph)}\n${text}`;
   let badge = languageBadges.get(cacheKey);
   if (badge === undefined) {
-    badge = String(
-      Badge({
-        variant: "outline",
-        class: "code-badge",
-        icon: glyphSvg(language.glyph, "code-badge-icon"),
-        children: text,
-      }),
-    );
+    badge = Badge({
+      variant: "outline",
+      class: "code-badge",
+      icon: glyphSvg(language.glyph, "code-badge-icon"),
+      children: text,
+    });
     languageBadges.set(cacheKey, badge);
   }
   return badge;
@@ -180,7 +178,7 @@ interface FenceVariant {
 // A `<lang> <marker>` info string marks a fence as the second variant of the
 // snippet in the fence before it: `original` is the source of a translated
 // fence, `builder` the builder-statement spelling of a config. Each pair renders
-// as one tab group whose key names its tab set, and the CodeTabs island switches
+// as one tab group whose key names its tab set, and the page scripts switch
 // each group on its own; `labels` replaces the two tabs' language
 // names, and `language` is the `FENCE_LANGUAGES` label both fences must carry
 // to pair (`builder` requires TypeScript, the only language the builder
@@ -216,19 +214,17 @@ function platformBadge(name: string): string | undefined {
   if (!platform) return undefined;
   let badge = platformBadges.get(name);
   if (badge === undefined) {
-    badge = String(
-      TooltipTrigger({
-        content: platform.label,
-        class: "platform-badge",
-        children: Badge({
-          variant: platform.tone ?? "outline",
-          class: "platform-badge-icon",
-          icon: glyphSvg(platform.glyph, "platform-badge-glyph"),
-          role: "img",
-          "aria-label": platform.label,
-        }),
+    badge = TooltipTrigger({
+      content: platform.label,
+      class: "platform-badge",
+      children: Badge({
+        variant: platform.tone ?? "outline",
+        class: "platform-badge-icon",
+        icon: glyphSvg(platform.glyph, "platform-badge-glyph"),
+        role: "img",
+        "aria-label": platform.label,
       }),
-    );
+    });
     platformBadges.set(name, badge);
   }
   return badge;
@@ -474,14 +470,12 @@ export async function renderMarkdown(
           state.env,
         );
         const figure = new state.Token("html_block", "", 0);
-        figure.content = `${String(
-          SvgFigure({
-            svg,
-            caption,
-            src: params.src,
-            ...(params.maxWidth ? { maxWidth: params.maxWidth } : {}),
-          }),
-        )}\n`;
+        figure.content = `${SvgFigure({
+          svg,
+          caption,
+          src: params.src,
+          ...(params.maxWidth ? { maxWidth: params.maxWidth } : {}),
+        })}\n`;
         tokens.splice(i, 3, figure);
       }
     });
@@ -976,8 +970,8 @@ export async function renderMarkdown(
   // markup is captured intact. A paired fence and its variant render as one
   // `.code-tabs` group instead, keyed by the variant's tab set: the badges
   // (relabelled when the variant names its tabs) become the tabs, the first
-  // fence's panel shows and the variant's starts `hidden` until the CodeTabs
-  // island switches it.
+  // fence's panel shows and the variant's starts `hidden` until the page
+  // scripts switch it.
   const renderFence = md.renderer.rules.fence;
   if (renderFence) {
     md.renderer.rules.fence = (tokens, idx, options, env, self) => {

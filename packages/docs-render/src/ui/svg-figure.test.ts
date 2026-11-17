@@ -1,4 +1,3 @@
-/** @jsxImportSource hono/jsx */
 import { describe, expect, test } from "bun:test";
 import { parseHtml } from "../__fixtures__/mini-dom";
 import { SvgFigure } from "./svg-figure";
@@ -10,14 +9,12 @@ const TWO_PANELS =
   "</svg>";
 
 function render(svg: string, maxWidth?: string) {
-  const html = String(
-    <SvgFigure
-      svg={svg}
-      caption="Figure 2 — Cap"
-      src="img/a.svg"
-      {...(maxWidth ? { maxWidth } : {})}
-    />,
-  );
+  const html = SvgFigure({
+    svg,
+    caption: "Figure 2 — Cap",
+    src: "img/a.svg",
+    ...(maxWidth ? { maxWidth } : {}),
+  });
   const figure = parseHtml(html).querySelector('[data-slot="svg-figure"]');
   const panels = figure?.querySelector('[data-slot="svg-figure-panels"]');
   return { html, figure, svgs: panels?.querySelectorAll("svg") ?? [] };
@@ -65,7 +62,7 @@ describe("SvgFigure", () => {
   });
 
   test("names the figure once for assistive tech and captions it, escaping the text", () => {
-    const html = String(<SvgFigure svg={TWO_PANELS} caption={'a < b & "c"'} src="img/a.svg" />);
+    const html = SvgFigure({ svg: TWO_PANELS, caption: 'a < b & "c"', src: "img/a.svg" });
     const figure = parseHtml(html).querySelector('[data-slot="svg-figure"]');
     expect(figure?.querySelector('[role="img"]')?.getAttribute("aria-label")).toBe(
       "a &lt; b &amp; &quot;c&quot;",
@@ -78,6 +75,14 @@ describe("SvgFigure", () => {
     expect(render(TWO_PANELS, "300px").figure?.getAttribute("style")).toBe(
       "max-width: min(100%, 300px)",
     );
+  });
+
+  test("escapes the max width into the figure's style attribute", () => {
+    const { figure } = render(TWO_PANELS, '1px" onload="x <y> &');
+    expect(figure?.getAttribute("style")).toBe(
+      "max-width: min(100%, 1px&quot; onload=&quot;x &lt;y&gt; &amp;)",
+    );
+    expect(figure?.getAttribute("onload")).toBeNull();
   });
 
   test("throws naming the source when a panel has no usable viewBox", () => {

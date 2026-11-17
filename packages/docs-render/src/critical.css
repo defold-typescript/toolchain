@@ -440,7 +440,7 @@ header.topbar-critical .logo-mark {
   width: 100%;
   height: 100%;
 }
-/* The CodeCopy island wraps each <pre> in a `.code-body` on hydration. The pre
+/* The page scripts' `addCopyButtons` wraps each <pre> in a `.code-body`. The pre
    keeps its own margin (`.prose pre` 16.8px, or 0 inside a `.code-block`) and it
    collapses out through this zero-margin wrapper, so the block's box is
    unchanged — as long as the wrapper itself contributes no margin. When the

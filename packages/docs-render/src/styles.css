@@ -609,7 +609,7 @@
     height: 100%;
   }
 
-  /* Copy-to-clipboard button, injected per code block by the CodeCopy island,
+  /* Copy-to-clipboard button, injected per code block by `addCopyButtons`,
      which wraps each `<pre>` in a `position: relative` `.code-body` so the button
      pins to the top-right without scrolling with the code. The wrapper must
      reproduce the exact vertical box the bare `<pre>` had, or hydration reflows
@@ -1401,7 +1401,7 @@
  * Below `lg` the chrome goes mobile, mirroring the Claude API docs narrow
  * layout: the topbar grows so the topic nav wraps onto a second row, and the
  * left sidebar becomes an off-canvas drawer driven by `html[data-sidebar]`
- * (the `data-theme` cross-island precedent). Everything is scoped under the
+ * (following the `data-theme` precedent). Everything is scoped under the
  * `lg` breakpoint so the desktop layout and first paint are untouched. The
  * closed drawer is `visibility: hidden` rather than only translated off-canvas
  * so it is inert and reports hidden to assistive tech and to Playwright; it

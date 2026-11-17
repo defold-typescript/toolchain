@@ -16,7 +16,7 @@
     "noEmit": true,
     "types": ["bun"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "react"
   },
   "include": ["app", "scripts"],
   "exclude": ["node_modules", "dist", ".generated"]

@@ -6,10 +6,10 @@ import { labelTooltipPosition, tooltipPosition } from "./tooltip-position";
 import { TOOLTIP_TRIGGER_SLOT } from "./ui/tooltip-slot";
 
 // Hover tooltips over server-rendered markup, as plain DOM so both docs sites
-// call them: the HonoX islands from an effect, the Waku site from its page
-// scripts. Each mount owns one floating element, which sits in `document.body`
-// only while a tip shows, and returns a cleanup that removes every listener,
-// class and node it added, so a page that remounts on navigation leaks nothing.
+// call them from their page scripts. Each mount owns one floating element,
+// which sits in `document.body` only while a tip shows, and returns a cleanup
+// that removes every listener, class and node it added, so a page that
+// remounts on navigation leaks nothing.
 
 type Cleanup = () => void;
 

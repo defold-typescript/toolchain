@@ -47,7 +47,7 @@ interface SinceFilterRoot {
  * a wider `from` restores what a narrower one hid.
  *
  * The right-side "on this page" list is deliberately left alone: it is a
- * client-hydrated island that re-renders from server-supplied headings, so a
+ * client component that re-renders from server-supplied headings, so a
  * pre-paint edit to its DOM would simply be discarded. With JavaScript disabled
  * `?since=` is inert and the page shows the full range — acceptable degradation,
  * since `to` is routed and every selector option is a plain link.

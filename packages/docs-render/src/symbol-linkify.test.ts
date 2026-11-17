@@ -82,7 +82,7 @@ describe("linkifySymbolMentions", () => {
     expect(out).toBe('use hash("foo")');
   });
 
-  test("the rewritten link carries class=symbol-xref so the island can bind to it", () => {
+  test("the rewritten link carries class=symbol-xref so the symbol tooltips can bind to it", () => {
     const links = new Map([["go.set_position", "/api/go"]]);
     const out = linkifySymbolMentions("use go.set_position", links);
     expect(out).toBe('use <a href="/api/go" class="symbol-xref">go.set_position</a>');

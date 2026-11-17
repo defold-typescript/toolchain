@@ -35,7 +35,7 @@ const cleanups: (() => void)[] = [];
 
 beforeAll(async () => {
   apiHtml = await renderMarkdown(API_MARKDOWN, { highlightSignatureHeadings: true });
-  triggerHtml = String(TooltipTrigger({ content: "Restart machine", children: "R" }));
+  triggerHtml = TooltipTrigger({ content: "Restart machine", children: "R" });
   GlobalRegistrator.register();
 });
 
