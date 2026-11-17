@@ -18,10 +18,9 @@ import {
 // the repo root (where the test suite invokes it).
 const SCRIPTS_DIR = import.meta.dir;
 const TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "types");
-// Served from public/ at a stable path. The island appends a `?t=` query in
-// dev (see symbol-tooltip.tsx) to defeat Safari's aggressive dev caching — a
-// generated-asset `?url` import 404s in honox's dev server, so plain public/
-// + fetch is the reliable path.
+// Served from public/ at a stable path. The symbol tooltip mount appends a `?t=`
+// query in dev (see `tooltip-mounts.ts` in docs-render) to defeat Safari's
+// aggressive dev caching.
 const OUTPUT_DIR = join(SCRIPTS_DIR, "..", "public");
 
 export interface SymbolIndexOutput {

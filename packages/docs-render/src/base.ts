@@ -6,7 +6,7 @@
 // only where a value is emitted as a real URL into HTML or a fetch.
 //
 // `__DOCS_BASE__` is replaced at build time by Vite's `define` (see each site's
-// vite.config.ts) in BOTH the client and the honox server bundles — unlike
+// waku.config.ts) in BOTH the client and the server bundles — unlike
 // `import.meta.env.BASE_URL`, which the server bundle leaves empty. Outside Vite
 // (the Bun test runner) the token is undefined, so `typeof` keeps it safe and
 // the base resolves to `/`: every `withBase` call is then an identity on an

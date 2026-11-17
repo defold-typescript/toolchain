@@ -46,7 +46,7 @@ export interface LabelTooltipAnchor {
 const LABEL_GAP = 6;
 
 /**
- * Places a short label tooltip (the `ui/tooltip` island) centred above its
+ * Places a short label tooltip (for a `ui/tooltip` trigger) centred above its
  * trigger. `left` is clamped into `[MARGIN, innerWidth - tipWidth - MARGIN]` so
  * a trigger near either edge keeps the tip on screen; when the space above the
  * trigger (less the gap and margin) cannot hold the tip it flips below.

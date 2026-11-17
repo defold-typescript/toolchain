@@ -7,7 +7,6 @@
   "type": "module",
   "exports": {
     "./*": "./src/*.ts",
-    "./islands/*": "./src/islands/*.tsx",
     "./styles.css": "./src/styles.css",
     "./ui": "./src/ui/index.ts"
   },
@@ -21,14 +20,12 @@
     "@fontsource-variable/spline-sans-mono": "^5.3.0",
     "@fontsource/barlow": "^5.3.0",
     "@fontsource/ubuntu": "^5.3.0",
-    "@orama/orama": "^3.1.18",
     "@phosphor-icons/core": "^2.1.1",
     "@shikijs/markdown-it": "4.4.2",
     "@shikijs/transformers": "4.4.2",
     "comment-parser": "^1.4.9",
     "devicon": "^2.18.0",
     "fumadocs-core": "^16.19.3",
-    "hono": "^4.13.18",
     "markdown-it": "^14.3.3",
     "markdown-it-footnote": "^4.0.0",
     "shiki": "4.4.2"

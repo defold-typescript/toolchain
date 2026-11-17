@@ -21,7 +21,6 @@
     "devicon": "^2.18.0",
     "fumadocs-core": "^16.19.3",
     "fumadocs-ui": "^16.19.3",
-    "hono": "^4.13.18",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-server-dom-webpack": "^19.3.1",

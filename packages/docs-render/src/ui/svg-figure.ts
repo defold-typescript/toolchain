@@ -1,13 +1,11 @@
-/** @jsxImportSource hono/jsx */
-// Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
-
 import { imageMaxWidthStyle } from "../image-style";
+import { escapeHtml, htmlAttributes } from "./html";
 
 // An inlined guide figure. The component, not the SVG, owns the size: it caps
 // the figure on a wide page and lays each panel out as its own `<svg>`, so side-
 // by-side panels share a row while they fit and stack full width on a narrow
-// page. Markdown renderers stringify it with `String(<SvgFigure />)`, so the
-// component must stay synchronous.
+// page. Markdown renderers splice its HTML string into their output, so the
+// function must stay synchronous.
 export type SvgFigureProps = {
   /** The figure file's markup, starting at its root `<svg`. */
   svg: string;
@@ -73,23 +71,19 @@ function svgFigurePanels(svg: string, src: string): { kind: SvgFigureKind; panel
   };
 }
 
-export function SvgFigure({ svg, caption, src, maxWidth }: SvgFigureProps) {
+export function SvgFigure({ svg, caption, src, maxWidth }: SvgFigureProps): string {
   const { kind, panels } = svgFigurePanels(svg, src);
   const className = kind === "panels" ? "figure-svg" : `figure-svg figure-svg--${kind}`;
-  return (
-    <figure
-      data-slot="svg-figure"
-      class={className}
-      style={maxWidth ? imageMaxWidthStyle(maxWidth) : undefined}
-    >
-      <div
-        data-slot="svg-figure-panels"
-        class="figure-svg-panels"
-        role="img"
-        aria-label={caption}
-        dangerouslySetInnerHTML={{ __html: panels.join("") }}
-      />
-      <figcaption>{caption}</figcaption>
-    </figure>
-  );
+  const figure = htmlAttributes({
+    "data-slot": "svg-figure",
+    class: className,
+    style: maxWidth ? imageMaxWidthStyle(maxWidth) : undefined,
+  });
+  const panelsBox = htmlAttributes({
+    "data-slot": "svg-figure-panels",
+    class: "figure-svg-panels",
+    role: "img",
+    "aria-label": caption,
+  });
+  return `<figure${figure}><div${panelsBox}>${panels.join("")}</div><figcaption>${escapeHtml(caption)}</figcaption></figure>`;
 }

@@ -1,7 +1,4 @@
 "use client";
-/** @jsxImportSource react */
-// Pins the JSX dialect for `bun test`, which reads the package tsconfig's `hono/jsx`
-// rather than `src/tsconfig.json`.
 import type { HeadingMarker } from "@defold-typescript/docs-render/headings";
 import { useEffect, useState } from "react";
 
