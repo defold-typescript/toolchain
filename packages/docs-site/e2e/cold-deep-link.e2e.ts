@@ -1,17 +1,22 @@
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
 
 const NARROW = { width: 390, height: 844 };
+const WIDE = { width: 1440, height: 900 };
 
 // A cold load of `/page#heading` scrolls to the heading while the page is still
-// being parsed. Below `lg` the topbar wraps and grows taller than the `3.5rem`
-// fallback, so the measured `--topbar-height` must already be published by the
-// time the heading exists, or the heading lands behind the bar.
+// being parsed. Fumadocs' header (below `md`) and outline bar (below `xl`) stay
+// over the scrolled page, so the heading's offset must clear whichever of them
+// shows, or the heading lands behind them.
 const PAGE = "/build";
 
-async function topbarBottom(page: Page) {
-  const box = await page.locator("[data-topbar]").boundingBox();
-  if (!box) throw new Error("topbar has no bounding box");
-  return box.y + box.height;
+async function barsBottom(page: Page) {
+  let bottom = 0;
+  for (const bar of [page.locator("#nd-subnav"), page.locator("[data-toc-popover]")]) {
+    if (!(await bar.isVisible())) continue;
+    const box = await bar.boundingBox();
+    if (box) bottom = Math.max(bottom, box.y + box.height);
+  }
+  return bottom;
 }
 
 // The page scrolls smoothly, so a measurement taken the moment the hash changes
@@ -42,7 +47,7 @@ async function scrollableHeadingId(context: BrowserContext) {
   await page.goto(PAGE);
   const id = await page.evaluate(() => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    const reachable = [...document.querySelectorAll<HTMLElement>(".prose h2[id]")].filter(
+    const reachable = [...document.querySelectorAll<HTMLElement>("[data-page-body] h2[id]")].filter(
       (heading) => {
         const top = heading.getBoundingClientRect().top + window.scrollY;
         return top > window.innerHeight && top <= maxScroll;
@@ -55,40 +60,22 @@ async function scrollableHeadingId(context: BrowserContext) {
   return id;
 }
 
-test.describe("cold deep link — mobile", () => {
-  test.use({ viewport: NARROW });
+for (const [name, viewport] of [
+  ["mobile", NARROW],
+  ["desktop", WIDE],
+] as const) {
+  test.describe(`cold deep link — ${name}`, () => {
+    test.use({ viewport });
 
-  test("the topbar height is published before the target heading is parsed", async ({
-    context,
-  }) => {
-    const id = await scrollableHeadingId(context);
-    await context.addInitScript((targetId: string) => {
-      const record = window as unknown as { __topbarHeightAtTarget?: string };
-      const observer = new MutationObserver(() => {
-        if (!document.getElementById(targetId)) return;
-        record.__topbarHeightAtTarget =
-          document.documentElement.style.getPropertyValue("--topbar-height");
-        observer.disconnect();
-      });
-      observer.observe(document, { childList: true, subtree: true });
-    }, id);
+    test("the heading lands below the bars over the page", async ({ context }) => {
+      const id = await scrollableHeadingId(context);
+      const page = await context.newPage();
+      await page.goto(`${PAGE}#${id}`);
+      await scrollSettled(page);
 
-    const page = await context.newPage();
-    await page.goto(`${PAGE}#${id}`);
-    const height = await page.evaluate(
-      () => (window as unknown as { __topbarHeightAtTarget?: string }).__topbarHeightAtTarget,
-    );
-    expect(height).toMatch(/^\d+(\.\d+)?px$/);
+      const top = await topOf(page.locator(`[id="${id}"]`));
+      expect(top).toBeGreaterThan(await barsBottom(page));
+      expect(top).toBeLessThan(viewport.height);
+    });
   });
-
-  test("the heading lands below the topbar", async ({ context }) => {
-    const id = await scrollableHeadingId(context);
-    const page = await context.newPage();
-    await page.goto(`${PAGE}#${id}`);
-    await scrollSettled(page);
-
-    const top = await topOf(page.locator(`[id="${id}"]`));
-    expect(top).toBeGreaterThan(await topbarBottom(page));
-    expect(top).toBeLessThan(NARROW.height);
-  });
-});
+}

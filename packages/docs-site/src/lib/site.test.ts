@@ -1,12 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
+import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
+import type { TOCItemType } from "fumadocs-core/toc";
+import { createElement, Fragment } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { versionNamespaceAtom } from "../../app/lib/api-content";
 import { CANONICAL_SURFACE } from "../../app/lib/api-surface-pref";
 import { listGuidePages } from "../../app/lib/guide-loader";
-import { linkTabs, navCategories, surfaceTrees } from "./site";
+import { linkTabs, navCategories, surfaceTrees, toc } from "./site";
 
 const TYPES_DIR = join(import.meta.dir, "../../../types");
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
@@ -108,5 +112,50 @@ describe("linkTabs", () => {
   test("puts each category that leaves the site, and only those, in the top row", () => {
     const tabs = linkTabs(navCategories(TYPES_DIR, listGuidePages(GUIDE_DIR)));
     expect(tabs.map((tab) => tab.url)).toEqual([LIBRARY_DOCS_URL]);
+  });
+});
+
+const goHtml = await renderCanonicalApiPage("go", TYPES_DIR);
+if (goHtml === undefined) throw new Error("namespace go missing from the canonical surface");
+const goToc = toc(goHtml);
+
+function entry(items: TOCItemType[], url: string): TOCItemType {
+  const found = items.find((item) => item.url === url);
+  if (!found) throw new Error(`no outline entry links ${url}`);
+  return found;
+}
+
+const markupOf = (item: TOCItemType) =>
+  renderToStaticMarkup(createElement(Fragment, null, item.title));
+
+describe("toc", () => {
+  test("an overloaded symbol's entry reads its signature with the overload count, then its chips", () => {
+    const markup = markupOf(entry(goToc, "#goget"));
+    const signature = markup.match(
+      /^go\.get\(<span class="api-overload-count">\d+ overloads<\/span>\)/,
+    )?.[0];
+    expect(signature).toBeDefined();
+    const chips = markup.slice(signature?.length);
+    expect(chips.match(/class="api-badge-dot[^"]*"/g)).toEqual([
+      'class="api-badge-dot api-badge-dot--changed"',
+    ]);
+    expect(chips).toMatch(/^<span class="api-badge-dot api-badge-dot--changed"[^>]*>C<\/span>$/);
+    expect(chips).toContain('aria-label="Changed"');
+  });
+
+  test("a heading with no badge and no chips is its plain text", () => {
+    expect(entry(goToc, "#functions").title).toBe("Functions");
+  });
+
+  test("a chip the server emitted inactive starts hidden in the outline", () => {
+    const html =
+      '<h3 id="f"><code>f()</code><span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New" style="display:none">N</span><span class="api-badge-dot api-badge-dot--changed" aria-label="Changed" title="Changed">C</span></h3>';
+    const markup = markupOf(entry(toc(html), "#f"));
+    expect(markup).toMatch(
+      /<span class="api-badge-dot api-badge-dot--new"[^>]*display:none[^>]*>N/,
+    );
+    expect(markup).not.toMatch(
+      /<span class="api-badge-dot api-badge-dot--changed"[^>]*display:none[^>]*>C/,
+    );
   });
 });

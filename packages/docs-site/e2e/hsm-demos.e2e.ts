@@ -261,16 +261,6 @@ test("the restart is a glyph with a tooltip, and the speeds are a menu", async (
   await page.mouse.up();
   await expect(restart).toHaveCSS("top", "-1px");
 
-  // The header's theme toggle sets the shape and the height of a toolbar button.
-  const theme = page.getByRole("button", { name: /^Switch to (dark|light) theme$/ });
-  for (const property of ["height", "border-top-left-radius", "border-top-width"]) {
-    const expected = await theme.evaluate(
-      (node, name) => getComputedStyle(node)[name as never],
-      property,
-    );
-    await expect(restart).toHaveCSS(property, expected as string);
-  }
-
   // The clock's button is a glyph too, and its tooltip follows what the next press does.
   const pause = demo.getByRole("button", { name: "Pause time", exact: true });
   await expect(pause).toHaveText("");

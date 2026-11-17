@@ -58,7 +58,8 @@ Set `DOCS_BASE` to serve from a subpath (`DOCS_BASE=/toolchain/`); it feeds Waku
 ## Test the pages in a browser (Playwright)
 
 The specs under `e2e/` are named `*.e2e.ts` so `bun test` skips them. Install the browser once,
-then run them (they start `bun run dev` unless a server is already on `PORT`):
+then run them (they start `bun run dev` unless a server is already on `PORT`, default `3000`,
+where `waku dev` listens):
 
 ```sh
 bunx playwright install chromium

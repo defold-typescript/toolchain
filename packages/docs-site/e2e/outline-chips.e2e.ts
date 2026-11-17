@@ -1,12 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// The outline sits outside `.prose`, so only the real cascade shows whether its
-// chips pick up the colored chip rules, and only hydration plus a real hover
-// shows the tooltip and the window filter mirrored onto the outline.
+// The outline sits outside the page body, so only the real cascade shows whether
+// its chips pick up the colored chip rules, and only hydration shows the window
+// filter mirrored onto the outline.
 test.use({ viewport: { width: 1440, height: 900 } });
 
-const railEntry = (page: Page, id: string) =>
-  page.getByTestId("toc-rail").locator(`a[href="#${id}"]`);
+const railEntry = (page: Page, id: string) => page.locator("#nd-toc").locator(`a[href="#${id}"]`);
 const backgroundOf = (el: Element) => getComputedStyle(el).backgroundColor;
 
 // The in-body chip's color once the stylesheet has applied; dev injects styles
@@ -23,23 +22,6 @@ test("an outline entry shows its heading's colored chip", async ({ page }) => {
   const outlineChip = railEntry(page, "goget").locator(".api-badge-dot--changed");
   await expect(outlineChip).toBeVisible();
   await expect(outlineChip).toHaveCSS("background-color", await headingChipBackground(page));
-});
-
-test("the outline tooltip reads like the entry, in the heading's code font", async ({ page }) => {
-  await page.goto("/api/go");
-
-  await railEntry(page, "goget").hover();
-  const tip = page.getByRole("tooltip");
-  await expect(tip).toBeVisible();
-  await expect(tip.locator(".api-overload-count")).toHaveText("3 overloads");
-  const tipChip = tip.locator(".api-badge-dot--changed");
-  await expect(tipChip).toBeVisible();
-  await expect(tipChip).toHaveCSS("background-color", await headingChipBackground(page));
-  expect(await tip.textContent()).not.toContain("...");
-  await expect(tip).toHaveCSS(
-    "font-family",
-    await page.locator("#goget code").evaluate((el) => getComputedStyle(el).fontFamily),
-  );
 });
 
 test("a window that drops a heading's chip drops it from the outline too", async ({ page }) => {

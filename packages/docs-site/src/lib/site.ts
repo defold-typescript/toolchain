@@ -24,6 +24,7 @@ import { guidePages } from "../../app/lib/content";
 import type { GuidePage } from "../../app/lib/guide";
 import { buildNav, type NavCategory, type NavLink } from "../../app/lib/nav";
 import { NavPills } from "../components/nav-pills";
+import { OutlineChip } from "../components/outline-chip";
 
 export const SITE_NAME = "defold-typescript";
 export const REPO_URL = "https://github.com/defold-typescript/toolchain";
@@ -198,9 +199,27 @@ export function surfaceTrees(
   return trees;
 }
 
+// An outline entry reads like its heading: an overload heading's `N overloads`
+// badge in place of the `...` it stands for, followed by the heading's chips.
+function outlineTitle(heading: Heading): ReactNode {
+  const { badge, markers } = heading;
+  if (!badge && !markers) return heading.text;
+  const text = badge
+    ? [
+        heading.text.slice(0, badge.start),
+        createElement("span", { className: "api-overload-count" }, badge.label),
+        heading.text.slice(badge.end),
+      ]
+    : [heading.text];
+  const chips = (markers ?? []).map((marker) =>
+    createElement(OutlineChip, { headingId: heading.id, marker }),
+  );
+  return createElement(Fragment, null, ...text, ...chips);
+}
+
 export function toc(html: string): TOCItemType[] {
   return pageHeadings(html).map((heading: Heading) => ({
-    title: heading.text,
+    title: outlineTitle(heading),
     url: `#${heading.id}`,
     depth: heading.level,
   }));
