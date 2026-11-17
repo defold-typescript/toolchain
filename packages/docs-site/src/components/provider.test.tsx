@@ -1,0 +1,131 @@
+import { afterAll, expect, mock, spyOn, test } from "bun:test";
+// A document must exist before React DOM and Radix load; see test-dom.ts.
+import "../test-dom";
+import { withBase } from "@defold-typescript/docs-render/base";
+import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
+import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
+import { useSearchContext } from "fumadocs-ui/contexts/search";
+import { type ComponentProps, useEffect } from "react";
+import { fireEvent, render, unregisterDom, waitFor, within } from "../test-dom";
+
+const VERSION_IDS = ["defold-1.12.0", "defold-1.13.0"];
+
+const router = { path: "/guides/build", pushed: [] as string[] };
+
+function useRouter() {
+  return {
+    path: router.path,
+    push: async (url: string) => {
+      router.pushed.push(url);
+    },
+    reload: () => {},
+  };
+}
+
+function Link({ to, children, ...props }: ComponentProps<"a"> & { to: string }) {
+  return (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  );
+}
+
+mock.module("waku", () => ({ useRouter, Link }));
+mock.module("waku/router/client", () => ({ useRouter, Link }));
+const { Provider } = await import("./provider");
+
+function surfaceRecords(prefix: string): SearchRecord[] {
+  return [
+    { route: `${prefix}/go`, title: "go", text: "Game object API" },
+    { route: `${prefix}/go#go.animate`, title: "go.animate", text: "Animates a property" },
+  ];
+}
+
+const indexes = new Map<string, string>();
+for (const [file, prefix] of [
+  ["search-index.json", "/api"],
+  ["search-index-defold-1.12.0.json", "/api/defold-1.12.0"],
+  ["search-index-defold-1.13.0.json", "/api/defold-1.13.0"],
+] as const) {
+  const index = await exportSearchIndex(surfaceRecords(prefix));
+  indexes.set(withBase(`/${file}`), JSON.stringify(index));
+}
+
+// Any URL but the three index files answers 404, so a wrong fetch fails the search loudly.
+async function serveIndex(input: RequestInfo | URL): Promise<Response> {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  const body = indexes.get(url);
+  return body === undefined
+    ? new Response(`no fixture for ${url}`, { status: 404 })
+    : new Response(body, { headers: { "content-type": "application/json" } });
+}
+
+const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(serveIndex as typeof fetch);
+
+afterAll(async () => {
+  fetchSpy.mockRestore();
+  await unregisterDom();
+});
+
+let probeMounts = 0;
+
+function Probe() {
+  const { setOpenSearch } = useSearchContext();
+  useEffect(() => {
+    probeMounts += 1;
+  }, []);
+  return (
+    <button type="button" onClick={() => setOpenSearch(true)}>
+      Open search
+    </button>
+  );
+}
+
+test("the search dialog queries the current route's index and remounts alone", async () => {
+  const tree = () => (
+    <Provider versionIds={VERSION_IDS}>
+      <Probe />
+    </Provider>
+  );
+  const view = render(tree());
+  const page = within(document.body);
+
+  const navigate = (path: string) => {
+    router.path = path;
+    view.rerender(tree());
+  };
+
+  const searchAnimate = async (): Promise<string | undefined> => {
+    fireEvent.click(view.getByRole("button", { name: "Open search" }));
+    const dialog = within(await page.findByRole("dialog", {}, { timeout: 10_000 }));
+    fireEvent.change(dialog.getByRole("combobox"), { target: { value: "go.animate" } });
+    const hit = await waitFor(
+      () => {
+        const option = dialog
+          .getAllByRole("option")
+          .find((element) => element.textContent?.includes("go.animate"));
+        if (option === undefined) {
+          throw new Error("no go.animate option yet");
+        }
+        return option;
+      },
+      { timeout: 10_000 },
+    );
+    fireEvent.click(hit);
+    await waitFor(() => expect(page.queryByRole("dialog")).toBeNull());
+    return router.pushed.at(-1);
+  };
+
+  expect(await searchAnimate()).toBe("/api/go#go.animate");
+
+  navigate("/api/defold-1.12.0/go");
+  expect(await searchAnimate()).toBe("/api/defold-1.12.0/go#go.animate");
+
+  navigate("/api/defold-1.13.0/go");
+  expect(await searchAnimate()).toBe("/api/defold-1.13.0/go#go.animate");
+
+  navigate("/guides/build");
+  expect(await searchAnimate()).toBe("/api/go#go.animate");
+
+  expect(probeMounts).toBe(1);
+}, 60_000);
