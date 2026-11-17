@@ -237,7 +237,7 @@ describe("api routes — /api/combined compatibility redirects", () => {
 });
 
 describe("api routes — a synthetic third complete version needs no code change", () => {
-  test("adding a third materialized target yields its routes and a per-version index", () => {
+  test("adding a third materialized target yields its routes and a per-version index", async () => {
     const dir = mkdtempSync(join(tmpdir(), "api-routes-"));
     try {
       cpSync(FIXTURE_DIR, dir, { recursive: true });
@@ -283,7 +283,7 @@ describe("api routes — a synthetic third complete version needs no code change
       // The injectable generators, pointed at the synthetic types dir, emit real
       // per-version outputs for `next` — file AND contents, not merely a selected
       // filename. No committed `public/*.json` is read.
-      const searchOutputs = searchIndexOutputs({ typesDir: dir });
+      const searchOutputs = await searchIndexOutputs({ typesDir: dir });
       const nextSearch = searchOutputs.find((o) => o.file === "search-index-next.json");
       expect(nextSearch).toBeDefined();
       expect(nextSearch?.records.some((r) => r.route.startsWith("/api/next/"))).toBe(true);

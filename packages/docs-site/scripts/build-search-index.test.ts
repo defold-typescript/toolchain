@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +9,7 @@ import {
   type CombinedSurface,
   combinedApiPages,
 } from "@defold-typescript/docs-render/combined-surface";
+import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { apiVersionAxis } from "@defold-typescript/docs-render/toolchain-surface";
@@ -29,15 +30,29 @@ import {
   HISTORICAL_ONLY_NAMESPACE,
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
+import { renderGuidePage } from "../app/lib/content";
+import { listGuidePages } from "../app/lib/guide-loader";
 import { combinedSearchRecords } from "../app/lib/search-index";
-import { searchIndexOutputs, versionRoutePages, writeSearchIndexes } from "./build-search-index";
+import {
+  type SearchIndexOutput,
+  searchIndexFiles,
+  searchIndexOutputs,
+  versionRoutePages,
+  writeSearchIndexes,
+} from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
+const GUIDE_DIR = join(import.meta.dir, "..", "..", "docs", "guide");
 
 describe("searchIndexOutputs", () => {
-  const outputs = searchIndexOutputs();
-  const files = outputs.map((output) => output.file);
-  const shared = outputs.find((output) => output.file === "search-index.json");
+  let outputs: SearchIndexOutput[] = [];
+  let files: string[] = [];
+  let shared: SearchIndexOutput | undefined;
+  beforeAll(async () => {
+    outputs = await searchIndexOutputs();
+    files = outputs.map((output) => output.file);
+    shared = outputs.find((output) => output.file === "search-index.json");
+  });
 
   test("emits the shared Combined search-index.json with canonical API routes", () => {
     expect(files).toContain("search-index.json");
@@ -119,16 +134,15 @@ describe("searchIndexOutputs", () => {
 // so the artifact set stays linear in tracked versions. Threading the window into
 // the builder "for consistency" would multiply this set by the version count.
 describe("searchIndexOutputs — the window is not an artifact dimension", () => {
-  test("emits exactly one canonical index plus one per tracked version", () => {
+  test("emits exactly one canonical index plus one per tracked version", async () => {
     const expected = [
       "search-index.json",
       ...versionsWithDiskFixtures(TYPES_DIR).map((version) => `search-index-${version.id}.json`),
-    ];
-    expect(
-      searchIndexOutputs()
-        .map((output) => output.file)
-        .sort(),
-    ).toEqual(expected.sort());
+    ].sort();
+    const outputs = await searchIndexOutputs();
+    expect(outputs.map((output) => output.file).sort()).toEqual(expected);
+    // The release-readiness gate names the files without building their records.
+    expect(searchIndexFiles().sort()).toEqual(expected);
   });
 });
 
@@ -148,8 +162,12 @@ function missingCombinedRecords(
 }
 
 describe("searchIndexOutputs — the canonical index carries the full-range Combined surface", () => {
-  const outputs = searchIndexOutputs();
-  const canonical = outputs.find((output) => output.file === "search-index.json");
+  let outputs: SearchIndexOutput[] = [];
+  let canonical: SearchIndexOutput | undefined;
+  beforeAll(async () => {
+    outputs = await searchIndexOutputs();
+    canonical = outputs.find((output) => output.file === "search-index.json");
+  });
 
   test("every full-range Combined record appears verbatim in search-index.json", () => {
     const combined = loadCombinedSurface(TYPES_DIR);
@@ -184,10 +202,10 @@ describe("searchIndexOutputs — the canonical index carries the full-range Comb
     expect(missingCombinedRecords(narrowedRecords, combined).length).toBeGreaterThan(0);
   });
 
-  test("the canonical index keeps a namespace that exists at the oldest version alone", () => {
+  test("the canonical index keeps a namespace that exists at the oldest version alone", async () => {
     const dir = makeWindowedTypesDir();
     try {
-      const fixtureCanonical = searchIndexOutputs({ typesDir: dir }).find(
+      const fixtureCanonical = (await searchIndexOutputs({ typesDir: dir })).find(
         (output) => output.file === "search-index.json",
       );
       const routes = new Set(fixtureCanonical?.records.map((record) => record.route));
@@ -204,9 +222,18 @@ describe("searchIndexOutputs — the canonical index carries the full-range Comb
 // A search hit links to `<route>#<anchor>`, so every anchor an emitted record
 // carries must be a heading id the page at that route renders. Each page renders
 // with the options its `/api` route passes: an engine page with the Combined
-// availability markers, any other shared reference page plainly.
+// availability markers, any other shared reference page plainly. A guide page
+// renders through the same function its route uses.
 describe("searchIndexOutputs — every anchored record lands on a rendered heading", () => {
-  const outputs = searchIndexOutputs();
+  let outputs: SearchIndexOutput[] = [];
+  const guideIds = new Map<string, Set<string>>();
+  beforeAll(async () => {
+    outputs = await searchIndexOutputs();
+    for (const page of listGuidePages(GUIDE_DIR)) {
+      const html = await renderGuidePage(GUIDE_DIR, page);
+      guideIds.set(page.route, new Set(allPageHeadings(html).map((heading) => heading.id)));
+    }
+  });
   const sharedPages = loadVersionIndependentPages(TYPES_DIR);
   type RenderOptions = Parameters<typeof apiPageMarkdown>[2];
   const sharedRender = (page: ApiPage): [string, ApiPage, RenderOptions] => [page.route, page, {}];
@@ -214,7 +241,7 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
   async function unrenderedAnchors(
     file: string,
     pages: [string, ApiPage, RenderOptions][],
-  ): Promise<{ checked: number; missing: string[] }> {
+  ): Promise<{ checked: number; guideChecked: number; missing: string[] }> {
     const byRoute = new Map(pages.map(([route, page, opts]) => [route, { page, opts }]));
     const anchorsByRoute = new Map<string, string[]>();
     for (const record of outputs.find((output) => output.file === file)?.records ?? []) {
@@ -224,41 +251,51 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     }
     const missing: string[] = [];
     let checked = 0;
+    let guideChecked = 0;
     for (const [route, anchors] of anchorsByRoute) {
       const target = byRoute.get(route);
-      const ids = target ? await renderedHeadingIds(target.page, target.opts) : new Set<string>();
+      const guide = guideIds.get(route);
+      const ids = target
+        ? await renderedHeadingIds(target.page, target.opts)
+        : (guide ?? new Set<string>());
       for (const anchor of anchors) {
         checked += 1;
+        if (guide && !target) guideChecked += 1;
         if (!ids.has(anchor)) missing.push(`${route}#${anchor}`);
       }
     }
-    return { checked, missing };
+    return { checked, guideChecked, missing };
   }
 
-  test("search-index.json anchors resolve on the canonical pages", async () => {
-    const { checked, missing } = await unrenderedAnchors("search-index.json", [
+  test("search-index.json anchors resolve on the canonical and guide pages", async () => {
+    const { checked, guideChecked, missing } = await unrenderedAnchors("search-index.json", [
       ...combinedApiPages(loadCombinedSurface(TYPES_DIR)).map(
         (page): [string, ApiPage, RenderOptions] => [page.route, page, { combinedMarkers: true }],
       ),
       ...sharedPages.map(sharedRender),
     ]);
     expect(checked).toBeGreaterThan(1000);
+    expect(guideChecked).toBeGreaterThan(100);
     expect(missing).toEqual([]);
   });
 
-  test("the newest version index's anchors resolve on that version's pages", async () => {
+  test("the newest version index's anchors resolve on that version's and the guide's pages", async () => {
     const newest = versionsWithDiskFixtures(TYPES_DIR)[0]?.id ?? "";
     const window = resolveVersionWindow(apiVersionAxis(TYPES_DIR), newest, null);
     if (!window) throw new Error(`${newest} is not a tracked version`);
-    const { checked, missing } = await unrenderedAnchors(`search-index-${newest}.json`, [
-      ...versionRoutePages(TYPES_DIR, newest).map((page): [string, ApiPage, RenderOptions] => [
-        page.route,
-        page,
-        { combinedMarkers: true, window },
-      ]),
-      ...sharedPages.map(sharedRender),
-    ]);
+    const { checked, guideChecked, missing } = await unrenderedAnchors(
+      `search-index-${newest}.json`,
+      [
+        ...versionRoutePages(TYPES_DIR, newest).map((page): [string, ApiPage, RenderOptions] => [
+          page.route,
+          page,
+          { combinedMarkers: true, window },
+        ]),
+        ...sharedPages.map(sharedRender),
+      ],
+    );
     expect(checked).toBeGreaterThan(1000);
+    expect(guideChecked).toBeGreaterThan(100);
     expect(missing).toEqual([]);
   });
 });
@@ -268,7 +305,10 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
 // also be a search hit. Pages are indexed one at a time so two pages sharing a
 // qualified key never hide each other's route.
 describe("searchIndexOutputs — every symbol-index member route is searchable", () => {
-  const outputs = searchIndexOutputs();
+  let outputs: SearchIndexOutput[] = [];
+  beforeAll(async () => {
+    outputs = await searchIndexOutputs();
+  });
   const sharedPages = loadVersionIndependentPages(TYPES_DIR);
 
   function unsearchableRoutes(
@@ -323,7 +363,7 @@ describe("writeSearchIndexes", () => {
 
   test("writes every file searchIndexOutputs names", async () => {
     const files = (await written).map((output) => output.file);
-    expect(files).toEqual(searchIndexOutputs().map((output) => output.file));
+    expect(files).toEqual((await searchIndexOutputs()).map((output) => output.file));
     for (const file of files) expect(existsSync(join(dir, file))).toBe(true);
   });
 

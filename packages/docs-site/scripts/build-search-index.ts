@@ -1,7 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
-import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
@@ -11,6 +10,7 @@ import {
   versionsWithDiskFixtures,
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
+import { renderGuidePage } from "../app/lib/content";
 import { listGuidePages } from "../app/lib/guide-loader";
 import {
   apiSearchRecords,
@@ -50,6 +50,28 @@ export interface SearchIndexDeps {
   guideDir?: string;
 }
 
+const CANONICAL_FILE = "search-index.json";
+const versionFile = (versionId: string): string => `search-index-${versionId}.json`;
+
+// The files `searchIndexOutputs` emits, named without rendering the guide.
+export function searchIndexFiles(deps: SearchIndexDeps = {}): string[] {
+  const typesDir = deps.typesDir ?? TYPES_DIR;
+  return [CANONICAL_FILE, ...versionsWithDiskFixtures(typesDir).map(({ id }) => versionFile(id))];
+}
+
+// Rendering the whole guide takes seconds, and one process (the test suite) asks
+// for the outputs many times, so each guide directory renders once.
+const guideRecordsByDir = new Map<string, Promise<SearchRecord[]>>();
+
+function guideSearchRecords(guideDir: string): Promise<SearchRecord[]> {
+  let records = guideRecordsByDir.get(guideDir);
+  if (!records) {
+    records = buildSearchIndex(listGuidePages(guideDir), (page) => renderGuidePage(guideDir, page));
+    guideRecordsByDir.set(guideDir, records);
+  }
+  return records;
+}
+
 // The full set of search-index files a release emits: the shared canonical
 // `search-index.json` (guide + Combined engine records + version-independent
 // reference pages, all routed at `/api/<ns>`), plus one `search-index-<id>.json`
@@ -57,26 +79,22 @@ export interface SearchIndexDeps {
 // carries the shared version-independent reference records at their canonical
 // routes, so an in-page lookup resolves both. There is no
 // `search-index-combined.json`: Combined IS the shared canonical index now.
-export function searchIndexOutputs(deps: SearchIndexDeps = {}): SearchIndexOutput[] {
+export async function searchIndexOutputs(deps: SearchIndexDeps = {}): Promise<SearchIndexOutput[]> {
   const typesDir = deps.typesDir ?? TYPES_DIR;
-  const guideDir = deps.guideDir ?? GUIDE_DIR;
-  const guideRecords = buildSearchIndex(
-    listGuidePages(guideDir),
-    (page) => parseFrontmatter(readFileSync(join(guideDir, page.file), "utf8")).body,
-  );
+  const guideRecords = await guideSearchRecords(deps.guideDir ?? GUIDE_DIR);
   const sharedPages = loadVersionIndependentPages(typesDir);
   const shared: SearchRecord[] = [
     ...guideRecords,
     ...combinedSearchRecords(loadCombinedSurface(typesDir)),
     ...apiSearchRecords(sharedPages),
   ];
-  const outputs: SearchIndexOutput[] = [{ file: "search-index.json", records: shared }];
+  const outputs: SearchIndexOutput[] = [{ file: CANONICAL_FILE, records: shared }];
   for (const { version, records } of versionSearchIndexRecords(typesDir, guideRecords, {
     versions: versionsWithDiskFixtures(typesDir),
     pagesForVersion: versionRoutePages,
     sharedPages,
   })) {
-    outputs.push({ file: `search-index-${version}.json`, records });
+    outputs.push({ file: versionFile(version), records });
   }
   return outputs;
 }
@@ -87,7 +105,7 @@ export async function writeSearchIndexes(
   outDir: string,
   deps: SearchIndexDeps = {},
 ): Promise<SearchIndexOutput[]> {
-  const outputs = searchIndexOutputs(deps);
+  const outputs = await searchIndexOutputs(deps);
   mkdirSync(outDir, { recursive: true });
   for (const { file, records } of outputs) {
     writeFileSync(join(outDir, file), JSON.stringify(await exportSearchIndex(records)));

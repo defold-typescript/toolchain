@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildSnippet } from "./snippet";
+import { buildSnippet, searchExcerpt } from "./snippet";
 
 describe("buildSnippet", () => {
   test("centers the window on a mid-text match and wraps it in <mark>", () => {
@@ -52,5 +52,39 @@ describe("buildSnippet", () => {
     const text = "The Needle is here.";
     const { html } = buildSnippet(text, "needle", { context: 60 });
     expect(html).toContain("<mark>Needle</mark>");
+  });
+});
+
+describe("searchExcerpt", () => {
+  // 1,000 characters with `bun install` starting at 600.
+  const text = `${"lorem ".repeat(100)}bun install ${"ipsum ".repeat(64)}end.`;
+
+  test("centers a window on the query and marks both cut sides", () => {
+    expect(text.length).toBe(1000);
+    expect(text.indexOf("bun install")).toBe(600);
+    const excerpt = searchExcerpt(text, "install");
+    expect(excerpt).toContain("install");
+    expect(excerpt.startsWith("…")).toBe(true);
+    expect(excerpt.endsWith("…")).toBe(true);
+    expect(excerpt.length).toBeLessThanOrEqual(162);
+  });
+
+  test("falls back to a query word when the whole query does not occur", () => {
+    const words = `${"lorem ".repeat(100)}Animate the node ${"ipsum ".repeat(64)}end.`;
+    const excerpt = searchExcerpt(words, "gui.animate");
+    expect(excerpt.startsWith("…")).toBe(true);
+    const at = excerpt.indexOf("Animate");
+    expect(at).toBeGreaterThan(40);
+    expect(at).toBeLessThan(120);
+  });
+
+  test("takes the head when the query does not occur at all", () => {
+    expect(searchExcerpt(text, "animte")).toBe(`${text.slice(0, 160)}…`);
+  });
+
+  test("returns a short text whole, whitespace collapsed", () => {
+    expect(searchExcerpt("  Run\n\tbun   install  first. ", "install")).toBe(
+      "Run bun install first.",
+    );
   });
 });

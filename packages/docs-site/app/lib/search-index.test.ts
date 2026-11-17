@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
@@ -14,7 +14,7 @@ import {
   versionsWithDiskFixtures,
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
-import { searchIndexOutputs } from "../../scripts/build-search-index";
+import { type SearchIndexOutput, searchIndexOutputs } from "../../scripts/build-search-index";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import type { GuidePage } from "./guide";
 import {
@@ -76,66 +76,70 @@ const page = (file: string, isIndex = false): GuidePage => {
   return { file, slug, route: isIndex ? "/" : `/${slug}`, isIndex, includeInLlmsFull: true };
 };
 
-const CONTENTS: Record<string, string> = {
+// Rendered guide HTML, in the shape `renderGuidePage` emits: every heading carries
+// the id the page renders.
+const RENDERED: Record<string, string> = {
   "getting-started.md": [
-    "# Getting Started",
-    "",
-    "Install the package and run it.",
-    "",
-    "```ts",
-    "const secretCode = 1;",
-    "```",
-    "",
-    "Some **bold** prose and a [helpful link](https://example.com/page).",
-  ].join("\n"),
-  "README.md": "# Overview\n\nThe project index prose.\n",
-  "no-heading.md": "Just prose, no level-one heading here.\n",
+    '<h1 id="getting-started">Getting started</h1>',
+    "<p>Install the package.</p>",
+    '<h2 id="setup">Setup</h2>',
+    "<p>Run <code>bun install</code>.</p>",
+    "<pre><code>secretCode()</code></pre>",
+    "<svg><text>diagram</text></svg>",
+    '<h3 id="going-further">Going further</h3>',
+    "<p>Build it.</p>",
+    '<h4 id="deeper">Deeper</h4>',
+    "<p>More.</p>",
+  ].join(""),
+  "framed.md": [
+    '<h1 id="framed">Framed</h1>',
+    '<p><span class="admonition-title"><svg><path d="M0"/></svg><span>Tip</span></span>Keep it.</p>',
+    '<figure class="code-block"><figcaption class="code-title"><span>TypeScript</span>score.ts</figcaption>',
+    "<pre><code>score()</code></pre></figure>",
+    "<p>After.</p>",
+  ].join(""),
+  "README.md": '<h1 id="overview">Overview</h1><p>The project index prose.</p>',
+  "no-heading.md": "<p>Just prose, no level-one heading here.</p>",
 };
 
-const read = (p: GuidePage): string => CONTENTS[p.file] ?? "";
+const render = async (p: GuidePage): Promise<string> => RENDERED[p.file] ?? "";
 
-const only = (page: GuidePage) => {
-  const [record] = buildSearchIndex([page], read);
-  if (!record) throw new Error("expected exactly one record");
+const only = async (page: GuidePage) => {
+  const [record, ...rest] = await buildSearchIndex([page], render);
+  if (!record || rest.length > 0) throw new Error("expected exactly one record");
   return record;
 };
 
 describe("buildSearchIndex", () => {
-  test("returns one record per page with route, H1 title, and text", () => {
-    const record = only(page("getting-started.md"));
-    expect(record.route).toBe("/getting-started");
-    expect(record.title).toBe("Getting Started");
-    expect(record.text).toContain("Install the package");
+  test("splits a page into its intro record and one record per h2/h3 section", async () => {
+    expect(await buildSearchIndex([page("getting-started.md")], render)).toEqual([
+      { route: "/getting-started", title: "Getting started", text: "Install the package." },
+      {
+        route: "/getting-started#going-further",
+        title: "Going further",
+        text: "Build it. Deeper More.",
+      },
+      { route: "/getting-started#setup", title: "Setup", text: "Run bun install." },
+    ]);
   });
 
-  test("falls back to a humanized slug title when there is no H1", () => {
-    expect(only(page("no-heading.md")).title).toBe("No Heading");
+  test("leaves an admonition label and a titled code block out of the text", async () => {
+    expect((await only(page("framed.md"))).text).toBe("Keep it. After.");
   });
 
-  test("maps the README index page to route /", () => {
-    const record = only(page("README.md", true));
+  test("falls back to a humanized slug title when there is no H1", async () => {
+    expect((await only(page("no-heading.md"))).title).toBe("No Heading");
+  });
+
+  test("maps the README index page to route /", async () => {
+    const record = await only(page("README.md", true));
     expect(record.route).toBe("/");
     expect(record.title).toBe("Overview");
   });
 
-  test("excludes fenced code blocks from text", () => {
-    const { text } = only(page("getting-started.md"));
-    expect(text).not.toContain("secretCode");
-    expect(text).not.toContain("```");
-  });
-
-  test("reduces markdown markup to plain text", () => {
-    const { text } = only(page("getting-started.md"));
-    expect(text).toContain("bold");
-    expect(text).not.toContain("**");
-    expect(text).toContain("helpful link");
-    expect(text).not.toContain("https://example.com");
-    expect(text).not.toContain("](");
-  });
-
-  test("returns records in stable sorted order regardless of input order", () => {
+  test("returns records in stable sorted order regardless of input order", async () => {
     const pages = [page("getting-started.md"), page("README.md", true), page("no-heading.md")];
-    const records = buildSearchIndex(pages, read);
+    const records = await buildSearchIndex(pages, render);
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
   });
@@ -398,7 +402,10 @@ describe("combinedSearchRecords", () => {
 });
 
 describe("per-version search reads the pages its version route renders", () => {
-  const outputs = searchIndexOutputs({ typesDir: REAL_TYPES_DIR });
+  let outputs: SearchIndexOutput[] = [];
+  beforeAll(async () => {
+    outputs = await searchIndexOutputs({ typesDir: REAL_TYPES_DIR });
+  });
   // The record a version page's member heading owns: the page route plus the
   // member's anchor on that page.
   const memberText = (version: string, page: ApiPage, kind: string, name: string): string => {
