@@ -4,9 +4,10 @@ import {
   qualify,
   symbolNamespace,
 } from "@defold-typescript/docs-render/api-surface";
+import { docsSearchRecords } from "@defold-typescript/docs-render/docs-markdown";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
-import type { Guide } from "./guides";
+import { type Guide, processGuide } from "./guides";
 import type { LibraryListing } from "./nav";
 
 const flatten = (text: string): string => text.replace(/\s+/g, " ").trim();
@@ -93,13 +94,12 @@ export function apiSearchRecords(pages: ApiPage[]): SearchRecord[] {
     .sort((a, b) => a.route.localeCompare(b.route));
 }
 
-/** One record per guide, holding its prose. */
-export function guideSearchRecords(guides: Guide[]): SearchRecord[] {
-  return guides.map(({ route, title, markdown }) => ({
-    route,
-    title,
-    text: toPlainText(markdown),
-  }));
+/** Each guide's page record, then one record per section, so a hit opens its section. */
+export async function guideSearchRecords(guides: Guide[]): Promise<SearchRecord[]> {
+  const pages = await Promise.all(
+    guides.map(async (guide) => docsSearchRecords(guide.route, await processGuide(guide))),
+  );
+  return pages.flat();
 }
 
 /** One record per untyped library listing, holding what its page tells a reader. */

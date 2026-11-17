@@ -22,17 +22,17 @@ export interface SearchIndexOutput {
 
 // Library pages, listings and guides only: the link-only toolchain pages stay out,
 // since they are served by the toolchain docs and its own search.
-export function searchIndexOutputs(
+export async function searchIndexOutputs(
   dirs: LibraryDirs = siteDirs(),
   guideDir?: string,
-): SearchIndexOutput[] {
+): Promise<SearchIndexOutput[]> {
   return [
     {
       file: "search-index.json",
       records: [
         ...apiSearchRecords(apiPages(dirs)),
         ...listingSearchRecords(untypedListings(dirs)),
-        ...guideSearchRecords(guides(guideDir)),
+        ...(await guideSearchRecords(guides(guideDir))),
       ],
     },
   ];
@@ -45,7 +45,7 @@ export async function writeSearchIndexes(
   dirs: LibraryDirs = siteDirs(),
   guideDir?: string,
 ): Promise<SearchIndexOutput[]> {
-  const outputs = searchIndexOutputs(dirs, guideDir);
+  const outputs = await searchIndexOutputs(dirs, guideDir);
   mkdirSync(outDir, { recursive: true });
   for (const { file, records } of outputs) {
     writeFileSync(join(outDir, file), JSON.stringify(await exportSearchIndex(records)));

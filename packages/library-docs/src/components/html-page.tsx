@@ -4,7 +4,7 @@ import { PageScripts } from "./page-scripts";
 
 /**
  * One page whose body the shared renderer already turned into HTML (a library
- * API page, a listing or a guide). The HTML carries its own `h1`, so the page
+ * API page or a listing). The HTML carries its own `h1`, so the page
  * adds no title block; the table of contents comes from the same headings.
  */
 export function HtmlPage({ title, html }: { title: string; html: string }) {

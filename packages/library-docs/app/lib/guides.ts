@@ -1,6 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import {
+  type DocsMarkdown,
+  processDocsMarkdown,
+} from "@defold-typescript/docs-render/docs-markdown";
 
 export interface Guide {
   slug: string;
@@ -23,6 +26,6 @@ export function guides(dir: string = join(process.cwd(), "guides")): Guide[] {
 }
 
 // Our own text, so unlike a library page it skips `escapeUpstreamText`.
-export function renderGuideMarkdown(markdown: string): Promise<string> {
-  return renderMarkdown(markdown, { guideRoutePrefix: "/guides" });
+export function processGuide(guide: Guide): Promise<DocsMarkdown> {
+  return processDocsMarkdown(guide.markdown, { routePrefix: "/guides" });
 }

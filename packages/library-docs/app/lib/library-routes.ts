@@ -4,12 +4,13 @@ import {
   apiSignatureSymbolLinks,
 } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import type { DocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import { apiPages, libraryOrigins, linkPages, untypedListings } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
-import { guides, renderGuideMarkdown } from "./guides";
+import { guides, processGuide } from "./guides";
 import { listingPageMarkdown } from "./listing-page";
 import {
   type LibraryListing,
@@ -168,13 +169,19 @@ export async function renderLibraryListingHtml(
   return { title: `${listing.owner}/${listing.repo}`, html: `<h1>${heading}</h1>${body}` };
 }
 
-export async function renderLibraryGuideHtml(
+/** A guide's `<title>` stem and its processed Markdown, which carries its own `h1`. */
+export interface LibraryGuidePage {
+  title: string;
+  page: DocsMarkdown;
+}
+
+export async function renderLibraryGuide(
   slug: string,
   guideDir?: string,
-): Promise<LibraryPageHtml | undefined> {
+): Promise<LibraryGuidePage | undefined> {
   const guide = guides(guideDir).find((candidate) => candidate.slug === slug);
   if (!guide) return undefined;
-  return { title: guide.title, html: await renderGuideMarkdown(guide.markdown) };
+  return { title: guide.title, page: await processGuide(guide) };
 }
 
 function apiPageCardDescription(page: ApiPage): string {
