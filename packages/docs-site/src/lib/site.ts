@@ -1,9 +1,10 @@
-import { withBase } from "@defold-typescript/docs-render/base";
+import { isExternalUrl, withBase } from "@defold-typescript/docs-render/base";
 import {
   type BadgeCountTable,
   buildBadgeCountTable,
 } from "@defold-typescript/docs-render/combined-surface";
 import { type Heading, pageHeadings } from "@defold-typescript/docs-render/headings";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import {
   apiVersions,
   canonicalApiPages,
@@ -11,6 +12,7 @@ import {
 } from "@defold-typescript/docs-render/toolchain-surface";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
+import type { LayoutTab } from "fumadocs-ui/layouts/shared";
 import { createElement, Fragment, type ReactNode } from "react";
 import { TYPES_DIR, versionNamespaceAtom } from "../../app/lib/api-content";
 import {
@@ -82,6 +84,33 @@ export function navCategories(
       .filter((p) => p.category === "engine" && p.namespace !== "globals")
       .map(toNamespace),
   });
+}
+
+/**
+ * The top-row tabs for nav categories that leave this site (Libraries), which
+ * have no pages to put in the sidebar. Each carries the external-link mark and
+ * follows the section tabs.
+ */
+export function linkTabs(nav: NavCategory[] = navCategories()): LayoutTab[] {
+  return nav.flatMap((category) =>
+    category.links.length === 0 && category.route && isExternalUrl(category.route)
+      ? [
+          {
+            title: createElement(
+              Fragment,
+              null,
+              category.label,
+              createElement("span", {
+                className: "inline-flex",
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: the Phosphor asset from the repo's own dependency
+                dangerouslySetInnerHTML: { __html: EXTERNAL_LINK_ICON },
+              }),
+            ),
+            url: category.route,
+          },
+        ]
+      : [],
+  );
 }
 
 // An engine namespace leaf carries its count pills after the label.

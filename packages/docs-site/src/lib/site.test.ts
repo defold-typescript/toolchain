@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
 import { versionNamespaceAtom } from "../../app/lib/api-content";
 import { CANONICAL_SURFACE } from "../../app/lib/api-surface-pref";
 import { listGuidePages } from "../../app/lib/guide-loader";
-import { surfaceTrees } from "./site";
+import { linkTabs, navCategories, surfaceTrees } from "./site";
 
 const TYPES_DIR = join(import.meta.dir, "../../../types");
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
@@ -100,5 +101,12 @@ describe("surfaceTrees", () => {
       expect(otherApiLeaves(tree)).toEqual(otherApiLeaves(canonical));
     }
     expect(otherApiLeaves(canonical).length).toBeGreaterThan(0);
+  });
+});
+
+describe("linkTabs", () => {
+  test("puts each category that leaves the site, and only those, in the top row", () => {
+    const tabs = linkTabs(navCategories(TYPES_DIR, listGuidePages(GUIDE_DIR)));
+    expect(tabs.map((tab) => tab.url)).toEqual([LIBRARY_DOCS_URL]);
   });
 });

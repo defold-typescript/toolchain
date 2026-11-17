@@ -57,6 +57,15 @@ html {
   content: none;
 }
 
+/* Fumadocs hides the section tabs below `md`, leaving them only in the sidebar
+ * drawer; keep them under the header there too, inset like the header's title. */
+@media (width < 48rem) {
+  #nd-docs-layout > [class*="grid-area:tabs"] {
+    display: flex;
+    padding-inline: 1rem;
+  }
+}
+
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;

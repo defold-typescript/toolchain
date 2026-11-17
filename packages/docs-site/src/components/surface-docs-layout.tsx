@@ -1,6 +1,7 @@
 "use client";
 import type { Root } from "fumadocs-core/page-tree";
 import { DocsLayout, type DocsLayoutProps } from "fumadocs-ui/layouts/docs";
+import type { LayoutTab } from "fumadocs-ui/layouts/shared";
 import { useCallback, useMemo } from "react";
 import { useRouter } from "waku";
 import {
@@ -24,10 +25,13 @@ import { ActiveWindowKey, SurfaceHref, useClientSurface } from "./surface-state"
 export function SurfaceDocsLayout({
   trees,
   config,
+  linkTabs,
   ...props
 }: Omit<DocsLayoutProps, "tree"> & {
   trees: Record<string, Root>;
   config: ApiSurfaceConfig;
+  /** Tabs after the section tabs for categories that leave the site. */
+  linkTabs: LayoutTab[];
 }) {
   const { path } = useRouter();
   const surface = useClientSurface();
@@ -35,7 +39,7 @@ export function SurfaceDocsLayout({
   const stored = surface?.stored ?? null;
   const range = readStoredRange(path, search, stored, config);
   const tree = trees[surfaceKey(path, stored, config)] ?? (trees[CANONICAL_SURFACE] as Root);
-  const tabs = useMemo(() => sectionTabs(tree), [tree]);
+  const tabs = useMemo(() => [...sectionTabs(tree), ...linkTabs], [tree, linkTabs]);
   const href = useCallback(
     (link: string) => carryStatedSince(link, search, config),
     [search, config],
