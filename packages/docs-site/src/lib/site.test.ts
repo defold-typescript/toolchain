@@ -8,9 +8,17 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import { createElement, Fragment } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { versionNamespaceAtom } from "../../app/lib/api-content";
+import { apiRouteSet, apiStaticPaths } from "../../app/lib/api-routes";
 import { CANONICAL_SURFACE } from "../../app/lib/api-surface-pref";
 import { listGuidePages } from "../../app/lib/guide-loader";
-import { linkTabs, navCategories, surfaceTrees, toc } from "./site";
+import {
+  apiCanonicalHref,
+  apiSurfaceConfig,
+  linkTabs,
+  navCategories,
+  surfaceTrees,
+  toc,
+} from "./site";
 
 const TYPES_DIR = join(import.meta.dir, "../../../types");
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
@@ -170,5 +178,34 @@ describe("toc", () => {
     expect(markup).not.toMatch(
       /<span class="api-badge-dot api-badge-dot--changed"[^>]*display:none[^>]*>C/,
     );
+  });
+});
+
+describe("apiCanonicalHref", () => {
+  const { defaultVersionId } = apiSurfaceConfig(TYPES_DIR);
+  const routes = apiRouteSet(TYPES_DIR);
+
+  test("points only the default version's namespace pages at their bare route", () => {
+    const { versioned } = apiStaticPaths(TYPES_DIR);
+    expect(versioned.some(([version]) => version === defaultVersionId)).toBe(true);
+    expect(versioned.some(([version]) => version !== defaultVersionId)).toBe(true);
+    for (const [version, namespace] of versioned) {
+      const href = apiCanonicalHref(`/api/${version}/${namespace}`, TYPES_DIR);
+      expect(href).toBe(version === defaultVersionId ? `/api/${namespace}` : null);
+    }
+  });
+
+  test("points the default version's index at /api, and leaves other routes alone", () => {
+    expect(apiCanonicalHref(`/api/${defaultVersionId}`, TYPES_DIR)).toBe("/api");
+    expect(apiCanonicalHref("/build", TYPES_DIR)).toBeNull();
+    expect(apiCanonicalHref("/api/go", TYPES_DIR)).toBeNull();
+  });
+
+  test("names only routes the site builds", () => {
+    const candidates = ["/api", ...[...routes].filter((route) => route.startsWith("/api/"))];
+    for (const route of candidates) {
+      const href = apiCanonicalHref(route, TYPES_DIR);
+      if (href !== null) expect(routes.has(href)).toBe(true);
+    }
   });
 });
