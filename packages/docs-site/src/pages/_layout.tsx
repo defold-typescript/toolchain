@@ -1,6 +1,7 @@
 import { LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import type { ReactNode } from "react";
+import { SidebarTooltips } from "../components/sidebar-tooltips";
 import { pageTree, REPO_URL, SITE_NAME } from "../lib/site";
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -12,6 +13,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       links={[{ text: "Libraries", url: LIBRARY_DOCS_URL, external: true }]}
     >
       {children}
+      <SidebarTooltips />
     </DocsLayout>
   );
 }

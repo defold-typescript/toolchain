@@ -18,7 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides and API as switchable sidebar sections and a search dialog (`Ctrl+K` or `⌘K`) that runs in the browser and finds guide pages and API members, from the engine version of the page you are on. Hover tooltips, the API version range picker and the `/search` page are gone for now; each engine version's pages stay at `/api/<version>`.
+- **The docs site has a new layout built on [Fumadocs](https://fumadocs.dev),** with Get started, Guides and API as switchable sidebar sections and a search dialog (`Ctrl+K` or `⌘K`) that runs in the browser and finds guide pages and API members, from the engine version of the page you are on. The API version range picker and the `/search` page are gone for now; each engine version's pages stay at `/api/<version>`.
 
 ### Fixed
 
