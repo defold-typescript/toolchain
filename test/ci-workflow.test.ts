@@ -162,13 +162,13 @@ describe("docs site page build", () => {
     const manifests = workspaceManifests();
     expect(manifests.map((m) => m.name)).toContain("@defold-typescript/docs-site");
     const pageBuilds = manifests
-      .filter((m) => expandScript(m.scripts ?? {}, "build").includes("vite build"))
+      .filter((m) => /vite build|waku build/.test(expandScript(m.scripts ?? {}, "build")))
       .map((m) => m.name);
     expect(pageBuilds).toEqual([]);
 
     const ciSiteRuns = Object.entries(workflowJobs("ci.yml")).flatMap(([id, job]) =>
       jobRuns(job)
-        .filter((cmd) => /build:site|vite build/.test(cmd))
+        .filter((cmd) => /build:site|vite build|waku build/.test(cmd))
         .map((cmd) => `${id}: ${cmd}`),
     );
     expect(ciSiteRuns).toEqual(["library-docs: bun run --cwd packages/library-docs build:site"]);
@@ -185,8 +185,7 @@ describe("docs site page build", () => {
     expect(deploySiteRuns[0]?.match(SITE_BUILD)?.[1]).toBe(docsSite.name);
     const siteBuild = expandScript(docsSite.scripts ?? {}, "build:site");
     expect(siteBuild).toContain("bun run build-indexes");
-    expect(siteBuild).toContain("vite build --mode client");
-    expect(siteBuild).toMatch(/vite build(?!\s+--mode)/);
+    expect(siteBuild).toContain("waku build");
   });
 });
 

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import {
   apiLinkify,
@@ -1255,15 +1255,6 @@ describe("navLeafBadgeHtml (the sidebar leaf's pills, table -> markup)", () => {
 
   test("a namespace the table omits renders nothing", () => {
     expect(navLeafBadgeHtml(TABLE, "absent", "c|a")).toBe("");
-  });
-
-  test("the renderer builds the leaf pills through it", () => {
-    // `_renderer.tsx` composes the sidebar inside the jsx renderer, which no unit
-    // test can invoke; reverting to the inline `triple ?` tally is a one-line edit
-    // there, so the call site itself is what this asserts.
-    const renderer = readFileSync(join(import.meta.dir, "../routes/_renderer.tsx"), "utf8");
-    expect(renderer).toContain("navLeafBadgeHtml(surfaceConfig.badgeCounts,");
-    expect(renderer).not.toContain("navNamespaceBadges({ new: triple[0]");
   });
 });
 

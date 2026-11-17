@@ -1,18 +1,16 @@
 # @defold-typescript/docs-site
 
 Private documentation site for defold-typescript. It renders every `packages/docs/guide/*.md`
-to a Shiki-highlighted static HTML page using [HonoX](https://github.com/honojs/honox)
-and `@hono/vite-ssg`, deployable to Cloudflare Pages.
+page and the API reference to static HTML with [Waku](https://waku.gg) and
+[Fumadocs](https://fumadocs.dev), and deploys to GitHub Pages.
 
 This package is `private` and is never part of the coordinated npm release.
 
-The chrome is a top bar that groups the guide pages plus the API reference into
-Get started, Guides and API categories (the Tetris tutorial
-nests as the first subgroup inside Guides) and a Libraries tab that links to the
-[library docs site](https://defold-typescript.github.io/library-data), a per-category
-left sidebar, a right-side scroll-spy table of contents, and a flash-free dark/light
-theme toggle over self-hosted Inter / JetBrains Mono fonts. Tailwind v4 powers the
-design tokens and utility classes.
+Fumadocs supplies the layout: the sidebar with Get started, Guides and API as switchable
+sections, a Libraries link to the [library docs site](https://defold-typescript.github.io/library-data),
+the right-side table of contents, the dark/light switch and the search dialog. Page bodies
+still come from the shared renderer in `packages/docs-render`, so Shiki highlighting,
+symbol links and the API page markup are unchanged.
 
 ## Develop
 
@@ -26,97 +24,43 @@ bun --filter @defold-typescript/docs-site run dev
 bun --filter @defold-typescript/docs-site run build:site
 ```
 
-`bun run build:site` first runs `build-indexes`, which copies the shared
-`critical.css` into `public/`, calls `../docs-render/scripts/build-font-fallbacks.ts` to
-regenerate the metric-matched fallback faces, then
-`scripts/build-search-index.ts` to materialise the prose search index, then
-`scripts/build-symbol-index.ts`, and finally the two-pass Vite build (`--mode client` +
-SSG). The package's `build` script, which the root `bun run build` runs, stops after
-`build-indexes`: typecheck and the tests need its generated sources, not the pages. The
-static site is prerendered to `dist/`, one HTML file per
-guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
-...), the API index (`dist/api.html`), the Guides landing (`dist/guides.html`), and one
-per API namespace under `dist/api/`.
-Guide pages are served by the single dynamic `app/routes/[slug].tsx` route, whose
-`ssgParams` enumerates every non-index `packages/docs/guide/*.md` slug so each prerenders to
-`dist/<slug>.html` — no per-slug route files to keep in sync. The Guides tab itself is a
-static `app/routes/guides.tsx` landing page (it wins over `[slug].tsx` because no
-`guides.md` exists).
+`build:site` first runs `build-indexes` (critical CSS, guide images, font fallbacks,
+changelog dates, the search and symbol indexes, `llms.txt`), then `waku build`. Every page
+is prerendered, so `dist/public/` is a plain static site: one `index.html` per route
+(`dist/public/getting-started/index.html`, `dist/public/api/go/index.html`, ...), the
+client-navigation payloads under `RSC/`, and the search index at `api/search`.
 
-## Test the responsive chrome (Playwright)
+Set `DOCS_BASE` to serve from a subpath (`DOCS_BASE=/toolchain/`); it feeds Waku's
+`basePath` and the shared renderer's `__DOCS_BASE__` constant.
 
-The narrow-screen chrome — the topic nav wrapping to a second row and the left
-sidebar collapsing into an off-canvas drawer — is the one surface a real browser
-must assert, so it lives in an opt-in Playwright spec kept out of root `ci`
-(which stays browser-free). The spec is named `*.e2e.ts` so Bun's `bun test`
-runner never picks it up.
+## Deploy
 
-One-time, install the chromium browser binary:
-
-```sh
-bunx playwright install chromium
-```
-
-Then run the responsive spec (it boots `bun run dev` on port 5173 automatically):
-
-```sh
-bun --filter @defold-typescript/docs-site run test:e2e
-```
-
-## Deploy (Cloudflare Pages)
-
-`wrangler.jsonc` sets `pages_build_output_dir` to `dist`. After a build:
-
-```sh
-bunx wrangler pages deploy dist
-```
-
-CI automation for deploys is a later slice.
+`.github/workflows/deploy-docs.yml` builds with `DOCS_BASE=/<repo>/` and uploads
+`dist/public` to GitHub Pages.
 
 ## Layout
 
-- `app/lib/markdown.ts` — `renderMarkdown`: Markdown to HTML with a singleton Shiki
-  highlighter. Emits the **dual** `github-light` / `github-dark` themes so code blocks
-  re-theme cleanly when the page switches themes.
-- `app/lib/guide.ts` — `listGuidePages`: enumerate the guide files and their routes.
-- `app/lib/content.ts` — bridges the libs to the `packages/docs/guide/` directory.
-- `app/lib/nav.ts` — `buildNav` / `activeCategoryId`: group the guide pages plus
-  `/api` into the top-level nav categories.
-- `../docs-render/src/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a
-  rendered HTML body, used by the right-side TOC.
-- `../docs-render/src/toolchain-surface.ts` — load the Defold reference surface
-  from `packages/types/fixtures/`, shared with the library docs site, which links
-  into it; `../docs-render/src/toolchain-page.ts` renders one `/api/<ns>` page.
-  `app/lib/api-content.ts` holds the site's types dir and its route helpers.
-- `app/routes/_renderer.tsx` — the page shell: top bar, left sidebar, main content,
-  right TOC. Ships a tiny critical-CSS block in `<head>` so the page is laid out
-  correctly before the Tailwind stylesheet arrives (no FOUC logo splash).
-- `app/routes/index.tsx` (the guide `README.md` homepage) and `app/routes/[slug].tsx`
-  (one dynamic route prerendering every other guide page via `ssgParams`).
-- `app/routes/api.tsx` and `app/routes/api/[namespace].tsx` — the API index
-  and per-namespace reference pages.
-- `app/islands/` — the hydrated islands. HonoX hydrates only modules under this
-  folder, so each island shared with the library docs site is a two-line file here
-  that re-exports its component from `../docs-render/src/islands/`. Those include:
-  - `theme-toggle.tsx` — the dark/light switch (system fallback, localStorage, no
-    flash on reload).
-  - `sidebar-toggle.tsx` + `sidebar-state.ts` — the `<lg` sidebar-drawer toggle. The
-    island flips `html[data-sidebar]` (the `data-theme` cross-island precedent) and
-    CSS in `styles.css` reveals the off-canvas drawer; the pure open/close helpers
-    live in `sidebar-state.ts` and are unit-tested.
-  - `search.tsx` — the client-side prose search.
-  - `toc.tsx` — the right-side table of contents with scroll-spy.
+- `waku.config.ts` — base path, the `__DOCS_BASE__` define, Tailwind, and bundling the
+  TypeScript-source `docs-render` package.
+- `src/pages/_root.tsx` — the HTML shell: theme tokens, `critical.css`, the Fumadocs provider.
+- `src/pages/_layout.tsx` — the Fumadocs docs layout around every page.
+- `src/pages/index.tsx`, `src/pages/[slug].tsx` — the guide `README.md` and every other guide page.
+- `src/pages/get-started.tsx`, `src/pages/guides.tsx`, `src/pages/api/index.tsx` — section landing pages.
+- `src/pages/api/[namespace].tsx` — a canonical namespace page, a version's index, or the
+  `/api/combined` redirect; `src/pages/api/[version]/[namespace].tsx` — a namespace at one
+  engine version; `src/pages/api/combined/[namespace].tsx` — the old Combined redirects.
+- `src/pages/_api/api/search.ts` — the search index, written to a file at build time.
+- `src/lib/site.ts` — the sidebar tree (from `app/lib/nav.ts`), table of contents and search entries.
+- `src/components/page-scripts.tsx` — copy buttons, code tabs and the state machine demos.
+- `app/lib/` — content loading, navigation and API helpers, shared with the tests.
+- `app/styles.css` — the state machine demo styles.
 
-  `code-tabs.tsx` and `hsm-demos.tsx` are this site's own.
-- `app/styles.css` — Tailwind v4 entry: imports the shared
-  `../docs-render/src/styles.css` (the custom `.prose` styles, design tokens, and
-  Shiki theme variables both sites use), then holds this site's own state machine
-  demo rules. `../docs-render/src/critical.css` and `theme-tokens.ts` carry the
-  first-paint copies.
-- `scripts/build-search-index.ts` / `scripts/build-symbol-index.ts` — materialise the
-  prose search index and the API symbol index the `build` script consumes.
-- `../docs-render/scripts/build-font-fallbacks.ts` — reads the bundled Fontsource
-  `.woff2` files and emits per-weight metric-matched fallback faces + the `--font-*`
-  token stacks to `../docs-render/src/generated/` (consumed by the shared `styles.css`
-  and `theme-tokens.ts`, and by `app/routes/_renderer.tsx`), eliminating font-load
-  layout shift. Regenerate with `bun run --cwd packages/docs-render build-font-fallbacks`.
+## Test the pages in a browser (Playwright)
+
+The specs under `e2e/` are named `*.e2e.ts` so `bun test` skips them. Install the browser once,
+then run them (they start `bun run dev` unless a server is already on `PORT`):
+
+```sh
+bunx playwright install chromium
+bun --filter @defold-typescript/docs-site run test:e2e
+```

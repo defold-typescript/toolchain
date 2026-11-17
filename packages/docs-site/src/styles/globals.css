@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+/* The rendered guide and API HTML carries the shared renderer's classes (Shiki
+ * dual themes, API badges, admonitions), so its stylesheet still applies. */
+@import "@defold-typescript/docs-render/styles.css";
+/* This site's own rules: the state machine demos on the state machines tutorial. */
+@import "../../app/styles.css";
+
+@source "../../node_modules/fumadocs-ui/dist/**/*.js";
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Where Fumadocs' typography and the shared renderer's markup disagree. */
+.prose :is(h1, h2, h3, h4, h5, h6) a {
+  text-decoration: none;
+}
+
+.prose pre code {
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.prose blockquote {
+  font-style: normal;
+}
+
+.prose blockquote p::before,
+.prose blockquote p::after {
+  content: none;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

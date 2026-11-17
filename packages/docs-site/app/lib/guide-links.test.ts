@@ -23,7 +23,7 @@ const FIXTURES = join(import.meta.dir, "__fixtures__");
 // `api-content`'s own TYPES_DIR is cwd-relative, which resolves differently under
 // root `bun test` than under the docs-site build, so the dirs are passed in.
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_ROUTES_DIR = join(import.meta.dir, "../routes");
+const REAL_ROUTES_DIR = join(import.meta.dir, "../../src/pages");
 
 // Heading ids are read back out of the rendered page rather than recomputed
 // here: `markdown.ts`'s `slugify-headings` ruler is the only thing that decides
@@ -112,7 +112,7 @@ export function emittedApiAnchors(typesDir: string): Set<string> {
   return anchors;
 }
 
-// Honox routes flat, so `app/routes/*.tsx` is the static route table: each file
+// Waku routes by file, so the top level of `src/pages` is the static route table: each file
 // is the page at its own name, `index` is `/`, a leading `_` is a layout rather
 // than a page, and a bracketed name is a catch-all whose paths come from the
 // enumerator it hands `ssgParams` — for `[slug].tsx` that is `listGuidePages`,
@@ -352,7 +352,6 @@ describe("docs/guide link and anchor resolution", () => {
     expect(STATIC_ROUTES.has("/libraries")).toBe(false);
     expect(STATIC_ROUTES.has("/get-started")).toBe(true);
     expect(STATIC_ROUTES.has("/guides")).toBe(true);
-    expect(STATIC_ROUTES.has("/search")).toBe(true);
     expect(STATIC_ROUTES.has("/")).toBe(true);
     expect(STATIC_ROUTES.has("/resolve")).toBe(true);
     // The catch-all and the renderer are not paths anyone can navigate to.

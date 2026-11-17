@@ -1,17 +1,17 @@
 {
   "name": "@defold-typescript/docs-site",
   "version": "0.0.0",
-  "description": "Static documentation site for defold-typescript, rendering the guide to HTML.",
+  "description": "Static documentation site for defold-typescript, built with Waku and Fumadocs.",
   "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
     "build-indexes": "bun ../docs-render/scripts/write-critical-css.ts public && bun scripts/build-guide-images.ts && bun run --cwd ../docs-render build-font-fallbacks && bun scripts/build-changelog-dates.ts && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts && bun scripts/build-llms.ts",
     "build-llms": "bun scripts/build-llms.ts",
-    "dev": "bun run build-indexes && vite",
+    "dev": "bun run build-indexes && bun --bun waku dev",
     "build": "bun run build-indexes",
-    "build:site": "bun run build-indexes && vite build --mode client && vite build",
-    "typecheck": "tsc --noEmit",
+    "build:site": "bun run build-indexes && bun --bun waku build",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src",
     "test": "bun test",
     "test:e2e": "playwright test"
   },
@@ -21,17 +21,22 @@
     "@defold-typescript/types": "workspace:*",
     "@phosphor-icons/core": "^2.1.1",
     "devicon": "^2.18.0",
+    "fumadocs-core": "^16.19.3",
+    "fumadocs-ui": "^16.19.3",
     "hono": "^4.13.18",
-    "honox": "^0.1.62",
-    "markdown-it": "^14.3.3"
+    "markdown-it": "^14.3.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-server-dom-webpack": "^19.3.1",
+    "waku": "1.0.0-rc.5"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^21.0.4",
-    "@hono/node-server": "^1.19.19",
-    "@hono/vite-ssg": "^0.3.3",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
     "@types/markdown-it": "14.1.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "tailwindcss": "^4.3.5",
     "vite": "^8.3.8"
   }
