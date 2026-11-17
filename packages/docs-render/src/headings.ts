@@ -28,6 +28,13 @@ export interface AnyHeading {
   markers?: HeadingMarker[];
   /** True when the whole heading text sits in one `<code>` element (a signature). */
   code: boolean;
+  /**
+   * The heading's text as markup, for an outline that shows its syntax colors:
+   * each highlighted token keeps the span carrying its theme colors, the
+   * `data-toc-text` element stays as the element itself, and every other tag is
+   * dropped. Absent when the heading holds no highlighted code.
+   */
+  markup?: string;
 }
 
 export interface HeadingMarker {
@@ -70,6 +77,13 @@ const ARIA_LABEL_RE = /\saria-label="([^"]*)"/;
 const HIDDEN_STYLE_RE = /\sstyle="[^"]*display:\s*none/;
 const CHIP_GLYPH_RE = />([^<]*)<\/span>$/;
 const CODE_RE = /<code\b[^>]*>([\s\S]*?)<\/code>/g;
+// The permalink icon a heading anchor carries; its `<svg>` holds no `<span>`.
+const ANCHOR_ICON_RE = /<span class="heading-anchor-icon">[\s\S]*?<\/span>/g;
+const TAG_PARTS_RE = /<(\/?)([a-zA-Z][\w-]*)\b([^>]*)>/g;
+// A highlighted token: the span whose inline style carries its theme colors.
+const TOKEN_STYLE_RE = /\sstyle="([^"]*--shiki-[^"]*)"/;
+const TOC_TEXT_ATTR_RE = /\sdata-toc-text="/;
+const CLASS_RE = /\sclass="([^"]*)"/;
 const NAMED_ENTITY: Record<string, string> = {
   "&lt;": "<",
   "&gt;": ">",
@@ -136,6 +150,27 @@ function badgeOf(inner: string, untrimmed: string): HeadingBadge | undefined {
   };
 }
 
+// Links, the `<code>` wrapper and the permalink icon go, so the result nests
+// inside an outline link and takes the outline's own face; ids and data
+// attributes go with them, so nothing in the outline doubles a body element.
+function markupOf(inner: string): string | undefined {
+  if (!TOKEN_STYLE_RE.test(inner)) return undefined;
+  // One entry per open `<span>`: whether its tags were kept.
+  const kept: boolean[] = [];
+  return inner
+    .replace(ANCHOR_ICON_RE, "")
+    .replace(TAG_PARTS_RE, (_tag, closing: string, name: string, attrs: string) => {
+      if (name !== "span") return "";
+      if (closing) return kept.pop() ? "</span>" : "";
+      const style = attrs.match(TOKEN_STYLE_RE)?.[1];
+      const standIn = TOC_TEXT_ATTR_RE.test(attrs) ? attrs.match(CLASS_RE)?.[1] : undefined;
+      kept.push(style !== undefined || standIn !== undefined);
+      if (style !== undefined) return `<span style="${style}">`;
+      return standIn !== undefined ? `<span class="${standIn}">` : "";
+    })
+    .trim();
+}
+
 export function allPageHeadings(html: string): AnyHeading[] {
   const out: AnyHeading[] = [];
   for (const match of html.matchAll(HEADING_RE)) {
@@ -157,6 +192,8 @@ export function allPageHeadings(html: string): AnyHeading[] {
     if (badge) heading.badge = badge;
     const markers = markersOf(chipped);
     if (markers.length > 0) heading.markers = markers;
+    const markup = markupOf(inner);
+    if (markup) heading.markup = markup;
     out.push(heading);
   }
   return out;

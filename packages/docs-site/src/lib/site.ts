@@ -199,18 +199,27 @@ export function surfaceTrees(
   return trees;
 }
 
-// An outline entry reads like its heading: an overload heading's `N overloads`
-// badge in place of the `...` it stands for, followed by the heading's chips.
+// An outline entry reads like its heading: a signature in its syntax colors, an
+// overload heading's `N overloads` badge in place of the `...` it stands for,
+// followed by the heading's chips.
 function outlineTitle(heading: Heading): ReactNode {
-  const { badge, markers } = heading;
-  if (!badge && !markers) return heading.text;
-  const text = badge
+  const { badge, markers, markup } = heading;
+  if (!badge && !markers && !markup) return heading.text;
+  const text = markup
     ? [
-        heading.text.slice(0, badge.start),
-        createElement("span", { className: "api-overload-count" }, badge.label),
-        heading.text.slice(badge.end),
+        createElement("span", {
+          className: "shiki outline-signature",
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's own token spans, which already hold the badge
+          dangerouslySetInnerHTML: { __html: markup },
+        }),
       ]
-    : [heading.text];
+    : badge
+      ? [
+          heading.text.slice(0, badge.start),
+          createElement("span", { className: "api-overload-count" }, badge.label),
+          heading.text.slice(badge.end),
+        ]
+      : [heading.text];
   const chips = (markers ?? []).map((marker) =>
     createElement(OutlineChip, { headingId: heading.id, marker }),
   );

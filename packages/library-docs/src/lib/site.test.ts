@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { siteDirs } from "../../app/lib/api-content";
 import { type NavLink, OFFICIAL_NOTE } from "../../app/lib/nav";
 import { NO_TYPED_API_ICON } from "../../app/lib/no-typed-api-icon";
-import { navCategories, pageTree } from "./site";
+import { navCategories, pageTree, toc } from "./site";
 
 const SITE_ROOT = join(import.meta.dir, "../..");
 const nav = navCategories(siteDirs(SITE_ROOT), join(SITE_ROOT, "guides"));
@@ -57,5 +57,21 @@ describe("the library sidebar tree", () => {
     );
     expect(folders.some((name) => name.includes(OFFICIAL_NOTE))).toBe(true);
     expect(folders.some((name) => name.includes("Guides"))).toBe(true);
+  });
+});
+
+describe("toc", () => {
+  test("a signature heading's entry carries its token colors, and a plain heading's is its text", () => {
+    const NAME =
+      '<span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;font-weight:600">f</span>';
+    const CALL = '<span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8">()</span>';
+    const [plain, signature] = toc(
+      '<h2 id="functions"><a class="heading-anchor" href="#functions">Functions</a></h2>' +
+        `<h3 id="f"><a class="heading-anchor" href="#f"><code class="api-signature shiki">${NAME}${CALL}</code></a></h3>`,
+    );
+    expect(plain?.title).toBe("Functions");
+    expect(markup(signature?.title)).toBe(
+      `<span class="shiki outline-signature">${NAME}${CALL}</span>`,
+    );
   });
 });

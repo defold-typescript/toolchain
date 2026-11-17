@@ -37,6 +37,43 @@ html {
   font-style: normal;
 }
 
+/* Fumadocs marks each page outline entry `prose`, so the shared renderer's
+ * body rules would give it the article's size, color and child spacing, and
+ * every entry would read alike whether its section is on screen or not. An
+ * entry keeps the outline's own size and reads muted, and takes the link
+ * accent, as does the track beside it, while its section is on screen. */
+:is(#nd-toc, [data-toc-popover]) {
+  --color-fd-primary: var(--color-accent);
+}
+
+:is(#nd-toc, [data-toc-popover]) a.prose {
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--color-fd-muted-foreground);
+}
+
+:is(#nd-toc, [data-toc-popover]) a.prose:hover {
+  color: var(--color-fd-accent-foreground);
+}
+
+:is(#nd-toc, [data-toc-popover]) a.prose[data-active="true"] {
+  color: var(--color-fd-primary);
+}
+
+:is(#nd-toc, [data-toc-popover]) a.prose > * + * {
+  margin-top: 0;
+}
+
+/* A signature entry shows its heading's syntax colors, which the entry's own
+ * color cannot tint, so it fades instead while its section is off screen. */
+:is(#nd-toc, [data-toc-popover]) a.prose .outline-signature {
+  transition: opacity 0.15s ease;
+}
+
+:is(#nd-toc, [data-toc-popover]) a.prose:not([data-active="true"], :hover) .outline-signature {
+  opacity: 0.6;
+}
+
 /* A card's title is an `h3`, which the shared renderer styles as a prose
  * heading; Fumadocs' `not-prose` does not reach that rule. A card reads as a
  * link instead: the code face, semibold, in the link accent. */

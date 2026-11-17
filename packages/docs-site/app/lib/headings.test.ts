@@ -135,6 +135,33 @@ describe("allPageHeadings", () => {
     expect(heading !== undefined && "badge" in heading).toBe(false);
   });
 
+  test("a highlighted heading's markup keeps its token spans and its data-toc-text element, and drops every other tag", () => {
+    const html =
+      '<h3 id="fx"><span class="signature-split"><a class="heading-anchor" href="#fx"><code class="api-signature shiki">' +
+      '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">f(</span>' +
+      '<span class="api-overload-count" data-toc-text="...">2 overloads</span>' +
+      '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">): </span></code></a>' +
+      '<a class="signature-symbol-link" href="/api/hash"><code class="api-signature shiki">' +
+      '<span style="--shiki-light:#222222;--shiki-dark:#DDDDDD;font-weight:600">Hash&#x3C;T&#x3E;</span></code></a></span>' +
+      ' <span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New">N</span>' +
+      '<span class="api-symbol-span" data-span-oldest="1.12.4" aria-hidden="true"></span>' +
+      '<span class="heading-anchor-icon"><svg aria-hidden="true"><path d="M1 1"/></svg></span></h3>';
+    expect(allPageHeadings(html)[0]?.markup).toBe(
+      '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">f(</span>' +
+        '<span class="api-overload-count">2 overloads</span>' +
+        '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">): </span>' +
+        '<span style="--shiki-light:#222222;--shiki-dark:#DDDDDD;font-weight:600">Hash&#x3C;T&#x3E;</span>',
+    );
+  });
+
+  test("a heading with no highlighted token carries no markup", () => {
+    const [heading] = allPageHeadings(
+      '<h2 id="p"><a class="heading-anchor" href="#p">What <code>resolve</code> prints</a></h2>',
+    );
+    expect(heading?.text).toBe("What resolve prints");
+    expect(heading !== undefined && "markup" in heading).toBe(false);
+  });
+
   test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
     expect(pageHeadings(fullDepthHtml)).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
@@ -196,5 +223,27 @@ describe("pageHeadings over rendered /api pages (Combined surface, committed art
     expect(functions.length).toBeGreaterThan(0);
     expect(go[functionsAt]?.code).toBe(false);
     expect(functions.filter((h) => !h.code).map((h) => h.id)).toEqual([]);
+  });
+
+  test("every code heading on go carries markup of bare spans that reads as the heading, the badge in place of what it stands for", () => {
+    const code = go.filter((h) => h.code);
+    expect(code.some((h) => h.badge !== undefined)).toBe(true);
+    for (const h of code) {
+      const markup = h.markup ?? "";
+      const reads = h.badge
+        ? h.text.slice(0, h.badge.start) + h.badge.label + h.text.slice(h.badge.end)
+        : h.text;
+      expect({
+        id: h.id,
+        reads: allPageHeadings(`<h3>${markup}</h3>`)[0]?.text,
+        otherTags: markup.match(/<(?!\/?span\b)[^>]*>/g) ?? [],
+        otherAttributes: markup.match(/<span\s(?!style="|class="api-overload-count")[^>]*>/g) ?? [],
+      }).toEqual({ id: h.id, reads, otherTags: [], otherAttributes: [] });
+    }
+  });
+
+  test("the Functions heading, which holds no code, carries no markup", () => {
+    const functions = go.find((h) => h.level === 2 && h.text === "Functions");
+    expect(functions !== undefined && "markup" in functions).toBe(false);
   });
 });

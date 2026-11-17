@@ -129,10 +129,15 @@ const markupOf = (item: TOCItemType) =>
   renderToStaticMarkup(createElement(Fragment, null, item.title));
 
 describe("toc", () => {
-  test("an overloaded symbol's entry reads its signature with the overload count, then its chips", () => {
+  test("an overloaded symbol's entry reads its signature in its syntax colors with the overload count, then its chips", () => {
     const markup = markupOf(entry(goToc, "#goget"));
+    const TOKEN =
+      '<span style="--shiki-light:#[0-9A-F]{6};--shiki-dark:#[0-9A-F]{6}(;font-weight:600)?">';
     const signature = markup.match(
-      /^go\.get\(<span class="api-overload-count">\d+ overloads<\/span>\)/,
+      new RegExp(
+        `^<span class="shiki outline-signature">${TOKEN}go\\.</span>${TOKEN}get</span>${TOKEN}\\(</span>` +
+          `<span class="api-overload-count">\\d+ overloads</span>${TOKEN}\\)</span></span>`,
+      ),
     )?.[0];
     expect(signature).toBeDefined();
     const chips = markup.slice(signature?.length);
@@ -145,6 +150,14 @@ describe("toc", () => {
 
   test("a heading with no badge and no chips is its plain text", () => {
     expect(entry(goToc, "#functions").title).toBe("Functions");
+  });
+
+  test("an overload heading with no highlighted token reads its text with the overload count in place", () => {
+    const html =
+      '<h3 id="f"><code>f(<span class="api-overload-count" data-toc-text="...">2 overloads</span>)</code></h3>';
+    expect(markupOf(entry(toc(html), "#f"))).toBe(
+      'f(<span class="api-overload-count">2 overloads</span>)',
+    );
   });
 
   test("a chip the server emitted inactive starts hidden in the outline", () => {

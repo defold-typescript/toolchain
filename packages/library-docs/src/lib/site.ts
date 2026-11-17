@@ -52,9 +52,20 @@ export function pageTree(nav: NavCategory[]): Root {
   return { name: SITE_NAME, children };
 }
 
+// An outline entry reads like its heading: a signature in its syntax colors,
+// with an overload heading's `N overloads` badge where the heading shows it.
+function outlineTitle(heading: Heading): ReactNode {
+  if (!heading.markup) return heading.text;
+  return createElement("span", {
+    className: "shiki outline-signature",
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's own token spans
+    dangerouslySetInnerHTML: { __html: heading.markup },
+  });
+}
+
 export function toc(html: string): TOCItemType[] {
   return pageHeadings(html).map((heading: Heading) => ({
-    title: heading.text,
+    title: outlineTitle(heading),
     url: `#${heading.id}`,
     depth: heading.level,
   }));
