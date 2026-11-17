@@ -19,6 +19,7 @@ import {
   type ApiSurfaceConfig,
   apiNavForPath,
   CANONICAL_SURFACE,
+  canonicalLinkPath,
 } from "../../app/lib/api-surface-pref";
 import { guidePages } from "../../app/lib/content";
 import type { GuidePage } from "../../app/lib/guide";
@@ -69,6 +70,16 @@ export function apiSurfaceConfig(typesDir: string = TYPES_DIR): ApiSurfaceConfig
   };
   surfaceConfigs.set(typesDir, config);
   return config;
+}
+
+/**
+ * The canonical URL of an API route: a default-version page duplicates the bare
+ * `/api` route of the same name, so it points search engines there. `null` for
+ * every other route.
+ */
+export function apiCanonicalHref(route: string, typesDir: string = TYPES_DIR): string | null {
+  const config = apiSurfaceConfig(typesDir);
+  return canonicalLinkPath(withBase(route), config, config.defaultVersionId);
 }
 
 export function navCategories(
