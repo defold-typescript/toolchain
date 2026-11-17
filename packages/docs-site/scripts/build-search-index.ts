@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
+import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import {
@@ -24,10 +25,8 @@ import {
 const SCRIPTS_DIR = import.meta.dir;
 const TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "types");
 const GUIDE_DIR = join(SCRIPTS_DIR, "..", "..", "docs", "guide");
-// Served from public/ at a stable path. The search islands append a `?t=`
-// query in dev to defeat Safari's aggressive dev caching — a generated-asset
-// `?url` import 404s in honox's dev server, so plain public/ + fetch is the
-// reliable path.
+// Served from public/ at a stable path, which the search dialog fetches under
+// the site base (see `src/components/provider.tsx`).
 const OUTPUT_DIR = join(SCRIPTS_DIR, "..", "public");
 
 // The engine pages `/api/<id>/<ns>` renders for a version: its full-range window,
@@ -82,10 +81,22 @@ export function searchIndexOutputs(deps: SearchIndexDeps = {}): SearchIndexOutpu
   return outputs;
 }
 
+// Each file holds a Fumadocs search export rather than the raw records: the
+// static search client loads it into its search engine as is.
+export async function writeSearchIndexes(
+  outDir: string,
+  deps: SearchIndexDeps = {},
+): Promise<SearchIndexOutput[]> {
+  const outputs = searchIndexOutputs(deps);
+  mkdirSync(outDir, { recursive: true });
+  for (const { file, records } of outputs) {
+    writeFileSync(join(outDir, file), JSON.stringify(await exportSearchIndex(records)));
+  }
+  return outputs;
+}
+
 if (import.meta.main) {
-  mkdirSync(OUTPUT_DIR, { recursive: true });
-  for (const { file, records } of searchIndexOutputs()) {
-    writeFileSync(join(OUTPUT_DIR, file), JSON.stringify(records));
+  for (const { file, records } of await writeSearchIndexes(OUTPUT_DIR)) {
     console.log(`${file}: ${records.length} records`);
   }
 }
