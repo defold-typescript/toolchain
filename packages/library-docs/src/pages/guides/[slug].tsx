@@ -1,12 +1,12 @@
 import type { PageProps } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
-import { libraryStaticPaths, renderLibraryGuideHtml } from "../../../app/lib/library-routes";
-import { HtmlPage } from "../../components/html-page";
+import { libraryStaticPaths, renderLibraryGuide } from "../../../app/lib/library-routes";
+import { MarkdownPage } from "../../components/markdown-page";
 
 export default async function GuideRoute({ slug }: PageProps<"/guides/[slug]">) {
-  const page = await renderLibraryGuideHtml(slug);
-  if (!page) unstable_notFound();
-  return <HtmlPage title={page.title} html={page.html} />;
+  const guide = await renderLibraryGuide(slug);
+  if (!guide) unstable_notFound();
+  return <MarkdownPage title={guide.title} page={guide.page} />;
 }
 
 export async function getConfig() {

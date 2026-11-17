@@ -1,11 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { apiPages, libraryNavGroups, siteDirs, untypedListings } from "./api-content";
-import { guides, renderGuideMarkdown } from "./guides";
-import { libraryStaticPaths, renderLibraryGuideHtml } from "./library-routes";
+import { guides, processGuide } from "./guides";
+import { libraryStaticPaths, renderLibraryGuide } from "./library-routes";
 import { buildNav } from "./nav";
 
 // Root `bun test` runs from the repo root, so the site directories are passed in.
@@ -18,15 +17,26 @@ const folderSlugs = readdirSync(GUIDE_DIR)
   .map((file) => file.replace(/\.md$/, ""))
   .sort();
 
-const rendered = await Promise.all(
-  guides(GUIDE_DIR).map(async (guide) => ({
-    guide,
-    html: await renderGuideMarkdown(guide.markdown),
-  })),
+const processed = await Promise.all(
+  guides(GUIDE_DIR).map(async (guide) => ({ guide, page: await processGuide(guide) })),
 );
 
-const headingIds = (html: string): Set<string> =>
-  new Set(allPageHeadings(html).map((heading) => heading.id));
+interface HastNode {
+  type: string;
+  tagName?: string;
+  properties?: { href?: unknown };
+  children?: HastNode[];
+}
+
+const hrefs = (node: HastNode): string[] => [
+  ...(node.type === "element" && node.tagName === "a" && typeof node.properties?.href === "string"
+    ? [node.properties.href]
+    : []),
+  ...(node.children ?? []).flatMap(hrefs),
+];
+
+const tocIds = (toc: { url: string }[]): Set<string> =>
+  new Set(toc.map((item) => item.url.slice(1)));
 
 describe("guides", () => {
   test("every guide in the folder is listed at its /guides/<slug> route", () => {
@@ -44,9 +54,10 @@ describe("guides", () => {
       ...untypedListings(REAL_DIRS).map((listing) => listing.route),
       ...guides(GUIDE_DIR).map((guide) => guide.route),
     ]);
-    const dead = rendered.flatMap(({ guide, html }) =>
-      [...html.matchAll(/href="(\/[^"#]*)[^"]*"/g)]
-        .map((match) => match[1] as string)
+    const dead = processed.flatMap(({ guide, page }) =>
+      hrefs(page.hast)
+        .filter((href) => href.startsWith("/"))
+        .map((href) => href.replace(/#.*/, ""))
         .filter((route) => !routes.has(route))
         .map((route) => `${guide.slug}: ${route}`),
     );
@@ -54,31 +65,38 @@ describe("guides", () => {
   });
 
   test("every anchor on a guide link resolves to a heading that guide renders", () => {
-    const ids = new Map(rendered.map(({ guide, html }) => [guide.route, headingIds(html)]));
-    const dead = rendered.flatMap(({ guide, html }) =>
-      [...html.matchAll(/href="(\/guides\/[^"#]+)#([^"]+)"/g)]
+    const ids = new Map(processed.map(({ guide, page }) => [guide.route, tocIds(page.toc)]));
+    const dead = processed.flatMap(({ guide, page }) =>
+      hrefs(page.hast)
+        .map((href) => /^(\/guides\/[^#]+)#(.+)$/.exec(href))
+        .filter((match) => match !== null)
         .filter((match) => !ids.get(match[1] as string)?.has(match[2] as string))
-        .map((match) => `${guide.slug}: ${match[1]}#${match[2]}`),
+        .map((match) => `${guide.slug}: ${match[0]}`),
     );
     expect(dead).toEqual([]);
   });
 
   test("a link to another guide keeps its anchor under /guides/<slug>", async () => {
-    const target = rendered.find(({ guide }) => guide.slug === "refreshing-library-pins");
-    const anchor = allPageHeadings(target?.html ?? "").find((heading) => heading.level === 2)?.id;
+    const target = processed.find(({ guide }) => guide.slug === "refreshing-library-pins");
+    const anchor = target?.page.toc.find((item) => item.depth === 2)?.url.slice(1);
     expect(anchor).toBeDefined();
-    const html = await renderGuideMarkdown(`[pins](./refreshing-library-pins.md#${anchor})`);
-    expect(html).toContain(`href="/guides/refreshing-library-pins#${anchor}"`);
+    const page = await processGuide({
+      slug: "linking",
+      route: "/guides/linking",
+      title: "Linking",
+      markdown: `[pins](./refreshing-library-pins.md#${anchor})`,
+    });
+    expect(hrefs(page.hast)).toEqual([`/guides/refreshing-library-pins#${anchor}`]);
   });
 
   test("a guide page renders by its slug, and an unknown slug renders nothing", async () => {
     const [guide] = guides(GUIDE_DIR);
-    const page = await renderLibraryGuideHtml(guide?.slug ?? "", GUIDE_DIR);
-    expect(page).toEqual({
-      title: guide?.title ?? "",
-      html: await renderGuideMarkdown(guide?.markdown ?? ""),
+    if (!guide) throw new Error("no guides");
+    expect(await renderLibraryGuide(guide.slug, GUIDE_DIR)).toEqual({
+      title: guide.title,
+      page: await processGuide(guide),
     });
-    expect(await renderLibraryGuideHtml("not-a-guide", GUIDE_DIR)).toBeUndefined();
+    expect(await renderLibraryGuide("not-a-guide", GUIDE_DIR)).toBeUndefined();
     expect(libraryStaticPaths(REAL_DIRS, GUIDE_DIR).guides.sort()).toEqual(folderSlugs);
   });
 
@@ -92,13 +110,22 @@ describe("guides", () => {
     );
   });
 
-  test("search holds a record for each guide, titled by its heading", () => {
-    const records = searchIndexOutputs(REAL_DIRS, GUIDE_DIR).flatMap((output) => output.records);
-    for (const guide of guides(GUIDE_DIR)) {
+  test("search holds each guide's page record and one record per section below its title", async () => {
+    const records = (await searchIndexOutputs(REAL_DIRS, GUIDE_DIR)).flatMap(
+      (output) => output.records,
+    );
+    for (const { guide, page } of processed) {
       const record = records.find((candidate) => candidate.route === guide.route);
       expect(record?.title).toBe(guide.title);
       expect(record?.text.length).toBeGreaterThan(0);
+      expect(
+        records
+          .filter((candidate) => candidate.route.startsWith(`${guide.route}#`))
+          .map((candidate) => candidate.route),
+      ).toEqual(
+        page.toc.filter((item) => item.depth > 1).map((item) => `${guide.route}${item.url}`),
+      );
     }
-    expect(guides(GUIDE_DIR).length).toBe(folderSlugs.length);
+    expect(processed.length).toBe(folderSlugs.length);
   });
 });

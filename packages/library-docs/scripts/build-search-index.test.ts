@@ -57,37 +57,37 @@ const dirsWithLinkOnlyPages: LibraryDirs = { ...dirs, typesDir: TYPES_DIR };
 
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
-const records = (input: LibraryDirs) =>
-  searchIndexOutputs(input, GUIDE_DIR).flatMap((out) => out.records);
+const records = async (input: LibraryDirs) =>
+  (await searchIndexOutputs(input, GUIDE_DIR)).flatMap((out) => out.records);
 
 describe("searchIndexOutputs", () => {
-  test("writes one shared index file", () => {
-    expect(searchIndexOutputs(dirs, GUIDE_DIR).map((out) => out.file)).toEqual([
+  test("writes one shared index file", async () => {
+    expect((await searchIndexOutputs(dirs, GUIDE_DIR)).map((out) => out.file)).toEqual([
       "search-index.json",
     ]);
   });
 
-  test("a library member is found at its /api/<host>/<owner>/<repo>/<namespace> route", () => {
-    const member = records(dirs).find((record) => record.title === "demo.one.greet");
+  test("a library member is found at its /api/<host>/<owner>/<repo>/<namespace> route", async () => {
+    const member = (await records(dirs)).find((record) => record.title === "demo.one.greet");
     expect(member?.route).toStartWith("/api/github.com/someone/demolib/demo.one#");
     expect(member?.text).toContain("Say hello to the player");
   });
 
-  test("a library member is titled by the namespace its page documents", () => {
-    const member = records(siteDirs(join(import.meta.dir, ".."))).find(
+  test("a library member is titled by the namespace its page documents", async () => {
+    const member = (await records(siteDirs(join(import.meta.dir, "..")))).find(
       (record) => record.title === "gui.new_spine_node",
     );
     expect(member?.route).toStartWith("/api/github.com/defold/extension-spine/gui#");
   });
 
-  test("a listing is found at its /libraries/<host>/<owner>/<repo> route", () => {
-    const listing = records(dirs).find((record) => record.title === "someone/shader-pack");
+  test("a listing is found at its /libraries/<host>/<owner>/<repo> route", async () => {
+    const listing = (await records(dirs)).find((record) => record.title === "someone/shader-pack");
     expect(listing?.route).toBe("/libraries/github.com/someone/shader-pack");
     expect(listing?.text).toContain("A pack of toon shaders");
   });
 
-  test("a link-only toolchain page gets no record", () => {
-    const all = records(dirsWithLinkOnlyPages);
+  test("a link-only toolchain page gets no record", async () => {
+    const all = await records(dirsWithLinkOnlyPages);
     expect(all.some((record) => record.title === "demo.one.greet")).toBe(true);
     expect(all.filter((record) => /^https?:/.test(record.route))).toEqual([]);
   });
@@ -98,7 +98,7 @@ describe("writeSearchIndexes", () => {
     const out = mkdtempSync(join(tmpdir(), "library-search-out-"));
     try {
       await writeSearchIndexes(out, dirs, GUIDE_DIR);
-      const member = records(dirs).find((record) => record.title === "demo.one.greet");
+      const member = (await records(dirs)).find((record) => record.title === "demo.one.greet");
       const from = pathToFileURL(join(out, "search-index.json")).href;
       const results = await staticClient({ from }).search("demo.one.greet");
       expect(results.map((result) => result.url)).toContain(member?.route ?? "");
