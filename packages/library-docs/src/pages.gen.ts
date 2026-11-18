@@ -12,6 +12,8 @@ import type { getConfig as File_Index_getConfig } from './pages/index';
 // prettier-ignore
 import type { getConfig as File_LibrariesHostOwnerRepo_getConfig } from './pages/libraries/[host]/[owner]/[repo]';
 // prettier-ignore
+import type { getConfig as File_Search_getConfig } from './pages/search';
+// prettier-ignore
 import type { getConfig as File_Layout_getConfig } from './pages/_layout';
 
 // prettier-ignore
@@ -19,7 +21,8 @@ type Page =
 | ({ path: '/api/[host]/[owner]/[repo]/[namespace]' } & GetConfigResponse<typeof File_ApiHostOwnerRepoNamespace_getConfig>)
 | ({ path: '/guides/[slug]' } & GetConfigResponse<typeof File_GuidesSlug_getConfig>)
 | ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>)
-| ({ path: '/libraries/[host]/[owner]/[repo]' } & GetConfigResponse<typeof File_LibrariesHostOwnerRepo_getConfig>);
+| ({ path: '/libraries/[host]/[owner]/[repo]' } & GetConfigResponse<typeof File_LibrariesHostOwnerRepo_getConfig>)
+| ({ path: '/search' } & GetConfigResponse<typeof File_Search_getConfig>);
 
 // prettier-ignore
 type Layout =

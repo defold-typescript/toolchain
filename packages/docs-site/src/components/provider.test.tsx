@@ -3,7 +3,11 @@ import { afterAll, beforeAll, expect, mock, spyOn, test } from "bun:test";
 import "@defold-typescript/docs-render/test-dom";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { exportSearchIndex } from "@defold-typescript/docs-render/search-export";
-import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
+import {
+  type SearchRecord,
+  searchIndexFileForRoute,
+  searchPageHref,
+} from "@defold-typescript/docs-render/search-route";
 import {
   fireEvent,
   registerDom,
@@ -169,6 +173,33 @@ test("the search dialog finds a member through one typo", async () => {
   fireEvent.click(hit);
   await waitFor(() => expect(page.queryByRole("dialog")).toBeNull());
   expect(router.pushed.at(-1)).toBe("/api/go#go.animate");
+  view.unmount();
+}, 60_000);
+
+test("the search dialog links to the results page for the query and the route's index", async () => {
+  router.path = "/api/defold-1.13.0/go";
+  const view = render(
+    <Provider versionIds={VERSION_IDS}>
+      <Probe />
+    </Provider>,
+  );
+  const page = within(document.body);
+
+  fireEvent.click(within(view.container).getByRole("button", { name: "Open search" }));
+  const dialog = within(await page.findByRole("dialog", {}, { timeout: 10_000 }));
+  const resultsLinks = () =>
+    dialog
+      .queryAllByRole("link")
+      .map((link) => link.getAttribute("href") ?? "")
+      .filter((href) => href.startsWith(withBase("/search")));
+
+  fireEvent.change(dialog.getByRole("combobox"), { target: { value: "a" } });
+  expect(resultsLinks()).toEqual([]);
+
+  fireEvent.change(dialog.getByRole("combobox"), { target: { value: "animate" } });
+  expect(resultsLinks()).toEqual([
+    searchPageHref("animate", searchIndexFileForRoute("/api/defold-1.13.0/go", VERSION_IDS)),
+  ]);
   view.unmount();
 }, 60_000);
 
