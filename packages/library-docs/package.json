@@ -9,7 +9,7 @@
     "build-model": "bun scripts/build-model.ts",
     "build-indexes": "bun ../docs-render/scripts/write-critical-css.ts public && bun scripts/build-search-index.ts && bun scripts/build-symbol-index.ts",
     "build": "bun run build-model && bun run build-indexes",
-    "build:site": "bun run build && bun --bun waku build",
+    "build:site": "bun run build && bun --bun waku build && bun ../docs-render/scripts/check-font-preloads.ts dist/public",
     "dev": "bun run build && bun --bun waku dev",
     "test": "bun test --timeout 30000",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src"

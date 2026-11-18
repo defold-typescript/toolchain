@@ -10,13 +10,17 @@
  * and pairs them with Arial's regular or bold metrics (`>= 600` -> Arial Bold),
  * emitting an accurate override set per weight.
  *
- * Outputs two committed artifacts consumed by both docs sites' render path:
+ * Outputs three committed artifacts consumed by both docs sites' render path:
  *   - src/generated/fonts.css  — the @font-face fallbacks + the --font-* @theme
  *     tokens, @import-ed by src/styles.css.
  *   - src/generated/fonts.ts   — the same --font-* stack as a string plus the
- *     preload list, imported by src/theme-tokens.ts and each site's
- *     app/routes/_renderer.tsx so the inline <head> tokens and the
- *     <link rel="preload"> set stay in lockstep with this file.
+ *     preload list, imported by src/theme-tokens.ts and the post-build preload
+ *     check so the inline <head> tokens and the checked preload set stay in
+ *     lockstep with this file.
+ *   - src/generated/font-preloads.ts — a Vite `?url` import per preload file,
+ *     imported by each site's src/pages/_root.tsx so every <link rel="preload">
+ *     names the hashed URL the build emits. Bun cannot load `?url`, so no test
+ *     imports it.
  *
  * Regenerate after changing fonts or weights:
  * `bun run --cwd packages/docs-render build-font-fallbacks`.
@@ -83,7 +87,7 @@ const FAMILIES: FamilyConfig[] = [
   },
 ];
 
-/** Latin-subset primaries preloaded in <head>; must be woff2 filenames Vite keeps verbatim. */
+/** Latin-subset primaries preloaded in <head>; Vite hashes each name, so the head takes the built URL. */
 const PRELOAD_FONT_FILES = [
   "barlow-latin-400-normal.woff2",
   "barlow-latin-500-normal.woff2",
@@ -132,6 +136,28 @@ writeFileSync(
   join(outDir, "fonts.ts"),
   `${tsBanner}\n\nexport const FONT_TOKENS = \`\n${tokenLines.join("\n")}\`;\n\n` +
     `export const PRELOAD_FONT_FILES = ${JSON.stringify(PRELOAD_FONT_FILES, null, 2)} as const;\n`,
+);
+
+function familyPackage(file: string): string {
+  const family = FAMILIES.find((candidate) => candidate.faces.some((face) => face.file === file));
+  if (!family) throw new Error(`preload font ${file} belongs to no family in FAMILIES`);
+  return family.pkg;
+}
+
+function importName(file: string): string {
+  return file
+    .replace(/\.woff2$/, "")
+    .replace(/-([a-z0-9])/g, (_, next: string) => next.toUpperCase());
+}
+
+const preloadImports = PRELOAD_FONT_FILES.map(
+  (file) => `import ${importName(file)} from "${familyPackage(file)}/files/${file}?url";`,
+);
+writeFileSync(
+  join(outDir, "font-preloads.ts"),
+  `${tsBanner}\n/// <reference types="vite/client" />\n\n${preloadImports.join("\n")}\n\n` +
+    `export const FONT_PRELOAD_URLS: readonly string[] = [\n` +
+    `${PRELOAD_FONT_FILES.map((file) => `  ${importName(file)},`).join("\n")}\n];\n`,
 );
 
 console.log(`fonts.css: ${faceBlocks.length} fallback faces across ${FAMILIES.length} families`);

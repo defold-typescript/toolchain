@@ -10,7 +10,7 @@
     "build-llms": "bun scripts/build-llms.ts",
     "dev": "bun run build-indexes && bun --bun waku dev",
     "build": "bun run build-indexes",
-    "build:site": "bun run build-indexes && bun --bun waku build",
+    "build:site": "bun run build-indexes && bun --bun waku build && bun ../docs-render/scripts/check-font-preloads.ts dist/public",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src",
     "test": "bun test",
     "test:e2e": "playwright test"
