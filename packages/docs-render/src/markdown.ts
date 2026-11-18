@@ -12,13 +12,27 @@ import { type BundledLanguage, createHighlighter, type Highlighter, type ThemedT
 import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
+import {
+  ALERT_LABELS,
+  ALERT_MARKER,
+  type AlertType,
+  codeTitleFromInfo,
+  type FenceVariant,
+  fenceLanguage,
+  fenceVariant,
+  imageParamsFromSrc,
+  MORE_DEFAULT_SUMMARY,
+  MORE_MARKER,
+  platformBadge,
+  SHORT_COLUMN_CHARS,
+} from "./guide-syntax";
 import { BADGE_DOT_RE, slugify } from "./headings";
 import { imageMaxWidthStyle } from "./image-style";
 import { EXTERNAL_LINK_ICON } from "./phosphor";
-import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
+import { PLATFORM_MARKER } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
 import { signatureEmphasis } from "./signature-emphasis";
-import { Badge, SvgFigure, TooltipTrigger } from "./ui";
+import { Badge, SvgFigure } from "./ui";
 import { isSafeLink, restoreUpstreamMarkers } from "./upstream-text";
 
 /**
@@ -89,65 +103,7 @@ function withDeployBase(href: string): string {
   return href.startsWith("/") && !href.startsWith("//") ? withBase(href) : href;
 }
 
-// Image src fragments carry render hints the site strips before emitting the
-// URL: `max-width=420` caps the rendered width and a valueless `inline` asks for
-// the SVG markup itself rather than an `<img>` (see the inline-svg-figures rule).
-function imageParamsFromSrc(src: string): { src: string; maxWidth?: string; inline?: true } {
-  const hash = src.indexOf("#");
-  if (hash === -1) return { src };
-  const base = src.slice(0, hash);
-  const params = src.slice(hash + 1).split("&");
-  const rest: string[] = [];
-  let maxWidth: string | undefined;
-  let inline = false;
-  for (const param of params) {
-    const [rawKey, rawValue = ""] = param.split("=");
-    const key = decodeURIComponent(rawKey ?? "");
-    const value = decodeURIComponent(rawValue);
-    if (key === "max-width" || key === "maxWidth" || key === "mw") {
-      const normalized = /^\d+(?:\.\d+)?$/.test(value) ? `${value}px` : value;
-      if (/^\d+(?:\.\d+)?(?:px|rem|em|ch|%|vw)$/.test(normalized)) maxWidth = normalized;
-    } else if (param === "inline") {
-      inline = true;
-    } else {
-      rest.push(param);
-    }
-  }
-  const cleanSrc = `${base}${rest.length > 0 ? `#${rest.join("&")}` : ""}`;
-  return {
-    src: cleanSrc,
-    ...(maxWidth ? { maxWidth } : {}),
-    ...(inline ? { inline: true as const } : {}),
-  };
-}
-
-// A fence info string carries the language in its first token; Shiki reads only
-// that and ignores the rest. We borrow a `title="src/board.ts"` (or single-quoted)
-// suffix to caption the block with a filename chip.
-function codeTitleFromInfo(info: string): string | undefined {
-  const match = info.match(/\btitle=(?:"([^"]*)"|'([^']*)')/);
-  if (!match) return undefined;
-  const title = match[1] ?? match[2] ?? "";
-  return title.length > 0 ? title : undefined;
-}
-
-// Fence languages labelled with a language badge, keyed by the info string's
-// first token. Every other language renders exactly as Shiki emits it.
-export const FENCE_LANGUAGES: Record<string, { label: string; glyph: Glyph }> = {
-  lua: { label: "Lua", glyph: { set: "devicon", file: "lua/lua-plain" } },
-  ts: { label: "TypeScript", glyph: { set: "devicon", file: "typescript/typescript-plain" } },
-  typescript: {
-    label: "TypeScript",
-    glyph: { set: "devicon", file: "typescript/typescript-plain" },
-  },
-  tsx: { label: "TypeScript", glyph: { set: "devicon", file: "typescript/typescript-plain" } },
-};
-
 const languageBadges = new Map<string, string>();
-
-function fenceLanguage(info: string): { label: string; glyph: Glyph } | undefined {
-  return FENCE_LANGUAGES[info.trim().split(/\s+/)[0]?.toLowerCase() ?? ""];
-}
 
 // The badge shows the fence language's glyph and, unless `label` overrides it,
 // the language's name.
@@ -169,30 +125,6 @@ function fenceLanguageBadge(info: string, label?: string): string | undefined {
   return badge;
 }
 
-interface FenceVariant {
-  key: string;
-  labels?: readonly [string, string];
-  language?: string;
-}
-
-// A `<lang> <marker>` info string marks a fence as the second variant of the
-// snippet in the fence before it: `original` is the source of a translated
-// fence, `builder` the builder-statement spelling of a config. Each pair renders
-// as one tab group whose key names its tab set, and the page scripts switch
-// each group on its own; `labels` replaces the two tabs' language
-// names, and `language` is the `FENCE_LANGUAGES` label both fences must carry
-// to pair (`builder` requires TypeScript, the only language the builder
-// spelling exists in). Shiki and the badge read only the first token, so the
-// fence still highlights and badges as `<lang>`.
-const FENCE_VARIANTS = new Map<string, FenceVariant>([
-  ["original", { key: "typescript-lua" }],
-  ["builder", { key: "config-builder", labels: ["Config", "Builder"], language: "TypeScript" }],
-]);
-
-function fenceVariant(info: string): FenceVariant | undefined {
-  return FENCE_VARIANTS.get(info.trim().split(/\s+/)[1] ?? "");
-}
-
 function isTabbableFence(info: string): boolean {
   return fenceLanguageBadge(info) !== undefined && codeTitleFromInfo(info) === undefined;
 }
@@ -204,45 +136,6 @@ function codeTabIndex(token: Token | undefined): 0 | 1 | undefined {
 function codeTabGroup(token: Token | undefined): FenceVariant | undefined {
   return token?.meta?.codeTabs;
 }
-
-const platformBadges = new Map<string, string>();
-
-// A known `[icon:X]` marker as an icon-only badge inside a tooltip trigger that
-// names the platform; unknown names return undefined and stay literal text.
-function platformBadge(name: string): string | undefined {
-  const platform = platformIcon(name);
-  if (!platform) return undefined;
-  let badge = platformBadges.get(name);
-  if (badge === undefined) {
-    badge = TooltipTrigger({
-      content: platform.label,
-      class: "platform-badge",
-      children: Badge({
-        variant: platform.tone ?? "outline",
-        class: "platform-badge-icon",
-        icon: glyphSvg(platform.glyph, "platform-badge-glyph"),
-        role: "img",
-        "aria-label": platform.label,
-      }),
-    });
-    platformBadges.set(name, badge);
-  }
-  return badge;
-}
-
-// GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
-// becomes a styled callout; every other blockquote passes through unchanged.
-const ALERT_TYPES = ["note", "tip", "important", "warning", "caution"] as const;
-type AlertType = (typeof ALERT_TYPES)[number];
-const ALERT_MARKER = /^\[!(note|tip|important|warning|caution)\]/i;
-
-const ALERT_LABELS: Record<AlertType, string> = {
-  note: "Note",
-  tip: "Tip",
-  important: "Important",
-  warning: "Warning",
-  caution: "Caution",
-};
 
 function alertIcon(inner: string): string {
   return (
@@ -277,17 +170,6 @@ const ALERT_ICONS: Record<AlertType, string> = {
 function admonitionLabel(type: AlertType): string {
   return `<span class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></span>`;
 }
-
-// A `> [!MORE]` blockquote (case-insensitive marker) becomes a native
-// tap-to-reveal `<details>`; trailing same-line text is the `<summary>` label,
-// or this default when the marker stands alone. `MORE` is not an admonition —
-// the `github-alerts` ruler leaves it untouched and vice-versa.
-const MORE_MARKER = /^\[!more\]/i;
-const MORE_DEFAULT_SUMMARY = "More";
-
-// Longest visible cell text, in characters, a column may hold and still render
-// on one line.
-const SHORT_COLUMN_CHARS = 24;
 
 function cellTextLength(inline: Token | undefined): number {
   let length = 0;

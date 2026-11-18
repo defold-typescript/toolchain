@@ -58,4 +58,42 @@ describe("MarkdownBody", () => {
     const pre = /<pre\b[\s\S]*?<\/pre>/.exec(html)?.[0] ?? "";
     expect(textOf(pre)).toContain("bun run refresh-pins");
   });
+
+  const render = async (markdown: string): Promise<HTMLElement> => {
+    const { hast } = await processDocsMarkdown(markdown, { routePrefix: "" });
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(<MarkdownBody hast={hast} />);
+    return host;
+  };
+
+  test("an alert renders as Fumadocs' callout, titled by its label", async () => {
+    const host = await render("> [!TIP]\n> Pin it first.");
+    expect(host.querySelector("blockquote")).toBeNull();
+    const callout = host.firstElementChild;
+    expect(callout?.getAttribute("style")).toContain("--color-fd-idea");
+    expect([...(callout?.querySelectorAll("p") ?? [])].map((p) => p.textContent)).toEqual([
+      "Tip",
+      "Pin it first.",
+    ]);
+  });
+
+  test("a fence and its variant render as one tab list, the first tab selected", async () => {
+    const host = await render("```ts\nconst a = 1;\n```\n\n```ts builder\nbuild(a);\n```");
+    const lists = host.querySelectorAll('[role="tablist"]');
+    expect(lists).toHaveLength(1);
+    const triggers = [...host.querySelectorAll('[role="tab"]')];
+    expect(triggers.map((tab) => [tab.textContent, tab.getAttribute("aria-selected")])).toEqual([
+      ["Config", "true"],
+      ["Builder", "false"],
+    ]);
+    expect(host.textContent).toContain("const a = 1;");
+    expect(host.textContent).toContain("build(a);");
+  });
+
+  test("a raw anchor stays a plain link target", async () => {
+    const host = await render('<a id="kept"></a>');
+    const anchor = host.querySelector("#kept");
+    expect(anchor?.tagName).toBe("A");
+    expect(anchor?.hasAttribute("href")).toBe(false);
+  });
 });
