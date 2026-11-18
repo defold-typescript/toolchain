@@ -31,6 +31,7 @@
     "devicon": "^2.18.0",
     "fumadocs-core": "^16.19.3",
     "fumadocs-ui": "^16.19.3",
+    "hast-util-to-html": "^9.0.6",
     "markdown-it": "^14.3.3",
     "markdown-it-footnote": "^4.0.0",
     "react": "^19.3.1",

@@ -1,5 +1,14 @@
 import type { ApiAvailability, ApiSymbolIdentity } from "@defold-typescript/types";
 import {
+  availabilityMark,
+  BADGE_KINDS,
+  badgeChip,
+  chipHtml,
+  globalChip,
+  spanMarker,
+  upstreamChip,
+} from "./api-nodes";
+import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
@@ -223,16 +232,14 @@ function availabilityList(items: readonly AvailabilityItem[]): string {
   return [
     '<div class="api-availability" aria-label="Availability">',
     "",
-    ...items.map((item) => `- ${availabilityMark(item.category)} ${item.label}`),
+    ...items.map((item) => `- ${availabilityMarkHtml(item.category)} ${item.label}`),
     "",
     "</div>",
   ].join("\n");
 }
 
-function availabilityMark(category: AvailabilityItemCategory | undefined): string {
-  const kind = category ?? "none";
-  const glyph = BADGE_KINDS.find((b) => b.kind === category)?.glyph ?? "";
-  return `<span class="api-availability-mark api-availability-mark--${kind}" aria-hidden="true">${glyph}</span>`;
+function availabilityMarkHtml(category: AvailabilityItemCategory | undefined): string {
+  return chipHtml(availabilityMark(category));
 }
 
 // The `/api` or `/api/<version>` index route for a page: its route with the
@@ -243,17 +250,6 @@ function apiIndexRoute(route: string): string {
   return cut > 0 ? route.slice(0, cut) : route;
 }
 
-const BADGE_KINDS: {
-  readonly flag: keyof BadgeCategory;
-  readonly kind: string;
-  readonly label: string;
-  readonly glyph: string;
-}[] = [
-  { flag: "isNew", kind: "new", label: "New", glyph: "N" },
-  { flag: "isChanged", kind: "changed", label: "Changed", glyph: "C" },
-  { flag: "isDeprecated", kind: "deprecated", label: "Deprecated", glyph: "D" },
-];
-
 // The glanceable category markers for one symbol heading: one `<span>` per active
 // category, ordered new -> changed -> deprecated, each carrying a visible
 // `N`/`C`/`D` glyph so the category is distinguishable without perceiving color;
@@ -263,21 +259,8 @@ const BADGE_KINDS: {
 // bare signature. Returns `""` for a symbol with no category.
 function badgeDots(active: BadgeCategory, emitted: BadgeCategory = active): string {
   return BADGE_KINDS.filter((b) => emitted[b.flag])
-    .map((b) => {
-      const hidden = active[b.flag] ? "" : ' style="display:none"';
-      return `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}"${hidden}>${b.glyph}</span>`;
-    })
+    .map((b) => chipHtml(badgeChip(b.kind, { hidden: !active[b.flag] })))
     .join("");
-}
-
-// The category letters one window would give a symbol, or `-` for none. The
-// per-`from` fields of `data-span-cats` are written in this alphabet and the
-// pre-paint filter reads it back, so it is the client's whole view of the model.
-function categoryLetters(category: BadgeCategory): string {
-  const letters = BADGE_KINDS.filter((b) => category[b.flag])
-    .map((b) => b.glyph)
-    .join("");
-  return letters || "-";
 }
 
 // The category a form or function would carry at each candidate `from` on the
@@ -332,11 +315,8 @@ function symbolSpanMarker(
   present: readonly string[],
   categories: readonly BadgeCategory[],
 ): string {
-  const newest = present[0];
-  const oldest = present[present.length - 1];
-  if (!newest || !oldest) return "";
-  const cats = categories.map(categoryLetters).join("|");
-  return `<span class="api-symbol-span" data-span-oldest="${oldest}" data-span-newest="${newest}" data-span-cats="${cats}" aria-hidden="true"></span>`;
+  const marker = spanMarker(present, categories);
+  return marker ? chipHtml(marker) : "";
 }
 
 // One symbol, single column: the signature heading is the title, and the
@@ -387,8 +367,7 @@ export function defoldRefLine(ref: DefoldRef): string {
 // language. Independent of the availability categories above: a `library` page
 // carries no availability record at all, and this marker rides every page.
 function globalDot(symbol: ApiSymbol): string {
-  if (!symbol.global) return "";
-  return '<span class="api-badge-dot api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>';
+  return symbol.global ? chipHtml(globalChip()) : "";
 }
 
 // The heading marker for a symbol whose prose came from the library's upstream
@@ -396,8 +375,7 @@ function globalDot(symbol: ApiSymbol): string {
 // `globalDot`. The page's provenance block already names the repo and ref the text
 // came from, so the marker points at a source the reader can already see.
 function upstreamDot(symbol: ApiSymbol): string {
-  if (!symbol.docSource) return "";
-  return '<span class="api-badge-dot api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>';
+  return symbol.docSource ? chipHtml(upstreamChip()) : "";
 }
 
 // The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
@@ -732,7 +710,7 @@ export function apiPageMarkdown(
     return [
       '<li class="api-overload api-overload--revision">',
       "",
-      `${availabilityMark(category)} ${label} \`${code}\`${marker}`,
+      `${availabilityMarkHtml(category)} ${label} \`${code}\`${marker}`,
       "",
       "</li>",
     ].join("\n");

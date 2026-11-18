@@ -10,6 +10,9 @@
  * cut at H3 would list every release and topic but no symbol. Headings inside
  * `<pre>` blocks are ignored (they come from code).
  */
+import type { Element, ElementContent, Nodes as HastNodes } from "hast";
+import { toHtml } from "hast-util-to-html";
+
 export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface AnyHeading {
@@ -201,6 +204,160 @@ export function allPageHeadings(html: string): AnyHeading[] {
 
 export function pageHeadings(html: string): Heading[] {
   return allPageHeadings(html).filter((h): h is Heading => h.level >= 2 && h.level <= 4);
+}
+
+function classList(element: Element): string[] {
+  const value = element.properties.className;
+  return Array.isArray(value) ? value.map(String) : String(value ?? "").split(/\s+/);
+}
+
+const isChip = (element: Element): boolean => classList(element).includes("api-badge-dot");
+
+/**
+ * A rendered heading's text as the outline reads it: an element carrying
+ * `data-toc-text` reads as that text, and an `api-badge-dot` chip reads as
+ * nothing, so the text is the bare signature.
+ */
+export function hastOutlineText(node: HastNodes): string {
+  if (node.type === "text") return node.value;
+  if (node.type === "element") {
+    if (isChip(node)) return "";
+    const tocText = node.properties.dataTocText;
+    if (typeof tocText === "string") return tocText;
+  }
+  return "children" in node ? node.children.map(hastOutlineText).join("") : "";
+}
+
+function hastTextContent(node: HastNodes): string {
+  if (node.type === "text") return node.value;
+  return "children" in node ? node.children.map(hastTextContent).join("") : "";
+}
+
+function eachDescendant(node: HastNodes, visit: (element: Element) => void): void {
+  if (!("children" in node)) return;
+  for (const child of node.children) {
+    if (child.type === "element") visit(child);
+    eachDescendant(child, visit);
+  }
+}
+
+function hastBadge(heading: Element, untrimmed: string): HeadingBadge | undefined {
+  let before = "";
+  let standIn: Element | undefined;
+  const walk = (node: HastNodes): boolean => {
+    if (node.type === "text") before += node.value;
+    if (node.type === "element") {
+      if (isChip(node)) return false;
+      if (typeof node.properties.dataTocText === "string") {
+        standIn = node;
+        return true;
+      }
+    }
+    return "children" in node && node.children.some(walk);
+  };
+  heading.children.some(walk);
+  if (!standIn) return undefined;
+  const start = before.length - (untrimmed.length - untrimmed.trimStart().length);
+  return {
+    start,
+    end: start + String(standIn.properties.dataTocText).length,
+    label: hastTextContent(standIn).trim(),
+  };
+}
+
+function hastMarkers(heading: Element): HeadingMarker[] {
+  const markers: HeadingMarker[] = [];
+  eachDescendant(heading, (element) => {
+    if (!isChip(element)) return;
+    markers.push({
+      kind: classList(element).join(" ").match(BADGE_KIND_RE)?.[1] ?? "",
+      label: String(element.properties.ariaLabel ?? ""),
+      glyph: hastTextContent(element).trim(),
+      hidden: /display:\s*none/.test(String(element.properties.style ?? "")),
+    });
+  });
+  return markers;
+}
+
+const tokenStyle = (element: Element): string | undefined => {
+  const { style } = element.properties;
+  return typeof style === "string" && style.includes("--shiki-") ? style : undefined;
+};
+
+// The rules of `markupOf`: token spans keep their style, a `data-toc-text`
+// element keeps its class, chips and the permalink icon go, and every other
+// element gives way to its children.
+function keptMarkup(children: readonly ElementContent[]): ElementContent[] {
+  return children.flatMap((child): ElementContent[] => {
+    if (child.type === "text") return [child];
+    if (child.type !== "element") return [];
+    if (isChip(child) || classList(child).includes("heading-anchor-icon")) return [];
+    const kept = keptMarkup(child.children);
+    if (child.tagName !== "span") return kept;
+    const style = tokenStyle(child);
+    if (style !== undefined) {
+      return [{ type: "element", tagName: "span", properties: { style }, children: kept }];
+    }
+    if (typeof child.properties.dataTocText === "string") {
+      const { className } = child.properties;
+      return [{ type: "element", tagName: "span", properties: { className }, children: kept }];
+    }
+    return kept;
+  });
+}
+
+function hastMarkup(heading: Element): string | undefined {
+  let colored = false;
+  eachDescendant(heading, (element) => {
+    if (tokenStyle(element) !== undefined) colored = true;
+  });
+  return colored ? toHtml(keptMarkup(heading.children)).trim() : undefined;
+}
+
+function hastHeading(element: Element, level: HeadingLevel): AnyHeading | undefined {
+  const untrimmed = hastOutlineText(element);
+  const text = untrimmed.trim();
+  if (!text) return undefined;
+  const { id } = element.properties;
+  let code = false;
+  eachDescendant(element, (child) => {
+    if (child.tagName === "code" && hastOutlineText(child).trim() === text) code = true;
+  });
+  const heading: AnyHeading = {
+    text,
+    id: typeof id === "string" ? id : slugify(text),
+    level,
+    code,
+  };
+  const badge = hastBadge(element, untrimmed);
+  if (badge) heading.badge = badge;
+  const markers = hastMarkers(element);
+  if (markers.length > 0) heading.markers = markers;
+  const markup = hastMarkup(element);
+  if (markup) heading.markup = markup;
+  return heading;
+}
+
+/**
+ * The headings of a page rendered as hast, read by the rules `allPageHeadings`
+ * applies to rendered HTML, so an outline built from either reads the same.
+ */
+export function hastHeadings(tree: HastNodes): AnyHeading[] {
+  const out: AnyHeading[] = [];
+  const walk = (node: HastNodes): void => {
+    if (node.type === "element") {
+      if (node.tagName === "pre") return;
+      const level = /^h([1-6])$/.exec(node.tagName)?.[1];
+      if (level) {
+        const heading = hastHeading(node, Number(level) as HeadingLevel);
+        if (heading) out.push(heading);
+        return;
+      }
+    }
+    if ("children" in node) for (const child of node.children) walk(child);
+  };
+  walk(tree);
+  return out;
 }
 
 // GitHub parity: keep word characters (including `_`), strip the rest, and emit
