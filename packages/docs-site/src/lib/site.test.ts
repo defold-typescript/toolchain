@@ -142,16 +142,24 @@ describe("landingFooterItems", () => {
     return labels;
   }
 
+  function firstNavPage(links: NavLink[]): { name: string; url: string } | undefined {
+    for (const link of links) {
+      if (link.route) return { name: link.label, url: link.route };
+      const nested = firstNavPage(link.children ?? []);
+      if (nested) return nested;
+    }
+    return undefined;
+  }
+
   test("covers more than one landing", () => {
     expect(landings.length).toBeGreaterThan(1);
   });
 
   test("each landing's next page is the first page of its own section", () => {
     for (const category of landings) {
-      const { next } = landingFooterItems(category.id, nav);
-      const own = linkLabels(category.links);
-      expect(next).toBeDefined();
-      expect(own.get(next?.url ?? "")).toBe(next?.name);
+      const first = firstNavPage(category.links);
+      expect(first).toBeDefined();
+      expect(landingFooterItems(category.id, nav).next).toEqual(first);
     }
   });
 
