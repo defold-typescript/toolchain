@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, expect, spyOn, test } from "bun:test";
+import { afterAll, afterEach, expect, spyOn, test } from "bun:test";
 // A document must exist before React DOM loads; see test-dom.ts.
 import "./test-dom";
 import { withBase } from "./base";
@@ -37,9 +37,8 @@ async function serveIndex(input: RequestInfo | URL): Promise<Response> {
     : new Response(body, { headers: { "content-type": "application/json" } });
 }
 
+registerDom();
 const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(serveIndex as typeof fetch);
-
-beforeAll(registerDom);
 
 afterEach(() => {
   fetchSpy.mockClear();

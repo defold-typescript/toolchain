@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, mock, spyOn, test } from "bun:test";
+import { afterAll, expect, mock, spyOn, test } from "bun:test";
 // A document must exist before React DOM and Radix load; see test-dom.ts.
 import "@defold-typescript/docs-render/test-dom";
 import { withBase } from "@defold-typescript/docs-render/base";
@@ -53,9 +53,8 @@ async function serveIndex(input: RequestInfo | URL): Promise<Response> {
     : new Response(`no fixture for ${url}`, { status: 404 });
 }
 
+registerDom();
 const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(serveIndex as typeof fetch);
-
-beforeAll(registerDom);
 
 afterAll(async () => {
   fetchSpy.mockRestore();
