@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DocumentHead } from "./document-head";
 
-function renderHead(child?: ReactNode): Document {
+function renderHead(child?: ReactNode, fontPreloads: readonly string[] = []): Document {
   const html = renderToStaticMarkup(
     <html lang="en">
-      <DocumentHead basePath="/toolchain/">{child}</DocumentHead>
+      <DocumentHead basePath="/toolchain/" fontPreloads={fontPreloads}>
+        {child}
+      </DocumentHead>
       <body />
     </html>,
   );
@@ -45,5 +47,21 @@ describe("DocumentHead", () => {
     if (!child || !stylesheet) return;
     const FOLLOWING = 4;
     expect(child.compareDocumentPosition(stylesheet) & FOLLOWING).toBe(FOLLOWING);
+  });
+
+  test("preloads each font at its given URL with the attributes the stylesheet fetch matches", () => {
+    const hrefs = [
+      "/toolchain/assets/barlow-latin-400-normal-qiz4-Cze.woff2",
+      "/toolchain/assets/ubuntu-latin-700-normal-DlYwEzNn.woff2",
+    ];
+    const head = renderHead(undefined, hrefs).head;
+    const preloads = [...head.querySelectorAll('link[rel="preload"]')];
+    expect(preloads.length).toBe(2);
+    expect(preloads.map((link) => link.getAttribute("href"))).toEqual(hrefs);
+    for (const link of preloads) {
+      expect(link.getAttribute("as")).toBe("font");
+      expect(link.getAttribute("type")).toBe("font/woff2");
+      expect(link.hasAttribute("crossorigin")).toBe(true);
+    }
   });
 });

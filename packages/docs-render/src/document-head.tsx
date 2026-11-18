@@ -9,13 +9,27 @@ function underBase(basePath: string, path: string): string {
 /**
  * The `<head>` both docs sites render. `basePath` is the deploy subpath
  * (`/toolchain/` on GitHub Pages, `/` at a domain root); each asset link resolves
- * under it. `children` render after the theme tokens and before the stylesheet.
+ * under it. `fontPreloads` are the built font URLs, which already carry the base.
+ * `children` render after the theme tokens and before the stylesheet.
  */
-export function DocumentHead({ basePath, children }: { basePath: string; children?: ReactNode }) {
+export function DocumentHead({
+  basePath,
+  fontPreloads,
+  children,
+}: {
+  basePath: string;
+  fontPreloads: readonly string[];
+  children?: ReactNode;
+}) {
   return (
     <head>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
+      {/* A font preload is reused only when its mode and type match the
+          stylesheet's own fetch, which is always CORS. */}
+      {fontPreloads.map((href) => (
+        <link key={href} rel="preload" as="font" type="font/woff2" crossOrigin="" href={href} />
+      ))}
       {/* The shared renderer's type scale and color tokens, then its unlayered
           rules, which win over the layered typography for the markup it
           writes (signatures, heading anchors). */}
