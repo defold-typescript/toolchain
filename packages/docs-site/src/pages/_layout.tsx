@@ -1,5 +1,6 @@
 import { withBase } from "@defold-typescript/docs-render/base";
 import { deviconMono } from "@defold-typescript/docs-render/devicon";
+import { MountedSidebarFolder } from "@defold-typescript/docs-render/sidebar-folder";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { ReactNode } from "react";
 import { TYPES_DIR } from "../../app/lib/api-content";
@@ -80,6 +81,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <RangePicker versions={apiVersions(TYPES_DIR)} config={config} />
           </>
         ),
+        components: { Folder: MountedSidebarFolder },
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 import { withBase } from "@defold-typescript/docs-render/base";
 import { deviconMono } from "@defold-typescript/docs-render/devicon";
 import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
+import { MountedSidebarFolder } from "@defold-typescript/docs-render/sidebar-folder";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import type { ReactNode } from "react";
 import { TOOLCHAIN_DOCS_URL } from "../../app/lib/toolchain-links";
@@ -13,6 +14,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <DocsLayout
       tree={pageTree(navCategories())}
+      sidebar={{ components: { Folder: MountedSidebarFolder } }}
       nav={{
         title: (
           <>
