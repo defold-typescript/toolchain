@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as ts from "typescript";
 import { isFactoryOnlyImport, RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
+import { luaGlobalShadowMessage } from "./lua-global-shadows";
 import type { TranspileProjectResult } from "./project-output";
 import { runCallback, scriptChunk } from "./run-emitted-script.test-support";
 import { transpile, transpileProject } from "./transpile";
@@ -1480,7 +1481,17 @@ describe("resource property markers", () => {
       "",
     ].join("\n");
     const result = transpileProject({ files: { "main.ts": source } });
-    expect(result.diagnostics).toEqual([]);
+    // The local hides Defold's `resource`, which the shadow scan reports; no
+    // marker diagnostic joins it.
+    expect(result.diagnostics).toEqual([
+      {
+        file: "main.ts",
+        line: 3,
+        column: 7,
+        message: luaGlobalShadowMessage("resource"),
+        category: "warning",
+      },
+    ]);
   });
 
   test("an optional chain, which TSTL lowers through synthesized nodes, transpiles", () => {

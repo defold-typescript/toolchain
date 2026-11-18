@@ -17,6 +17,7 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  formatTranspileWarnings,
   isTranspilerSource,
   LUALIB_BUNDLE_LABEL,
   libraryModuleRels,
@@ -457,6 +458,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     return {
       written: built.written,
       warnings: [
+        ...formatTranspileWarnings(result.diagnostics),
         ...scanOrphanOutputs(cwd, sources, config),
         ...scanSceneResourceRefs(cwd),
         ...reachability.warnings,
@@ -498,7 +500,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const crossWorld = scanCrossWorld();
     return {
       written: built.written,
-      warnings: [...reachability.warnings, ...crossWorld.warnings],
+      warnings: [
+        ...formatTranspileWarnings(result.diagnostics),
+        ...reachability.warnings,
+        ...crossWorld.warnings,
+      ],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
       removed: [],

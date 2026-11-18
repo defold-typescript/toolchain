@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type * as ts from "typescript";
+import * as ts from "typescript";
+import { luaGlobalShadowMessage } from "./lua-global-shadows";
 import { getProgramDiagnostics } from "./program-diagnostics";
 import { createTranspileSession } from "./session";
 import { transpileProject } from "./transpile";
@@ -130,6 +131,23 @@ describe("getProgramDiagnostics", () => {
     const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]?.start).toBe(source.indexOf(needle));
+  });
+
+  test("warns on a file-level local that hides a Lua global, at its name", () => {
+    const source = "function next(): void {}\nexport const n = 1;\n";
+    const program = programFor(source);
+    const shadows = getProgramDiagnostics(program, program.getSourceFile("main.ts")).filter(
+      (d) => d.category === ts.DiagnosticCategory.Warning,
+    );
+    expect(shadows).toHaveLength(1);
+    expect(shadows[0]?.start).toBe(source.indexOf("next"));
+    expect(shadows[0]?.length).toBe("next".length);
+    expect(flatten(shadows[0]?.messageText ?? "")).toBe(luaGlobalShadowMessage("next"));
+  });
+
+  test("does not warn on an exported name that matches a Lua global", () => {
+    const program = programFor("export function next(): void {}\n");
+    expect(getProgramDiagnostics(program, program.getSourceFile("main.ts"))).toEqual([]);
   });
 
   test("DOM-only globals are excluded on both paths", () => {

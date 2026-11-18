@@ -110,11 +110,31 @@ function isLualibBundle(file: CollectableFile): boolean {
   return file.sourceFiles.length === 0 && file.outPath.endsWith(LUALIB_BUNDLE_NAME);
 }
 
+function toTranspileDiagnostic(
+  d: ts.Diagnostic,
+  userKeys: ReadonlySet<string>,
+): TranspileDiagnostic {
+  const fileName = d.file?.fileName;
+  const message = flattenDiagnosticMessage(d.messageText);
+  if (fileName === undefined || !userKeys.has(fileName)) {
+    return { message };
+  }
+  if (d.file === undefined || d.start === undefined) {
+    return { file: fileName, message };
+  }
+  const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
+  return { file: fileName, message, line: line + 1, column: character + 1 };
+}
+
+// `advisories` warn and never fail the build. They arrive apart from
+// `diagnostics` because TypeScript-to-Lua reports some of its own fatal
+// diagnostics in the Warning category.
 export function collectOutputs(
   transpiledFiles: readonly CollectableFile[],
   diagnostics: readonly ts.Diagnostic[],
   userKeys: ReadonlySet<string>,
   emittedCompanions: ReadonlyMap<string, string> = new Map(),
+  advisories: readonly ts.Diagnostic[] = [],
 ): TranspileProjectResult {
   const lua: Record<string, string> = {};
   const sourceMaps: Record<string, string> = {};
@@ -152,18 +172,13 @@ export function collectOutputs(
     }
   }
 
-  const collectedDiagnostics: TranspileDiagnostic[] = diagnostics.map((d) => {
-    const fileName = d.file?.fileName;
-    const message = flattenDiagnosticMessage(d.messageText);
-    if (fileName === undefined || !userKeys.has(fileName)) {
-      return { message };
-    }
-    if (d.file === undefined || d.start === undefined) {
-      return { file: fileName, message };
-    }
-    const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
-    return { file: fileName, message, line: line + 1, column: character + 1 };
-  });
+  const collectedDiagnostics: TranspileDiagnostic[] = [
+    ...diagnostics.map((d) => toTranspileDiagnostic(d, userKeys)),
+    ...advisories.map((d) => ({
+      ...toTranspileDiagnostic(d, userKeys),
+      category: "warning" as const,
+    })),
+  ];
 
   // A surviving marker is a build error, not a fallback: the alternative —
   // leaving the original require — fails silently at load time in Defold.
