@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import {
   apiVersionAxis,
@@ -12,6 +12,7 @@ import {
 } from "@defold-typescript/docs-render/toolchain-surface";
 import { versionsWithDiskFixtures } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
+import { toHtml } from "hast-util-to-html";
 import { apiRouteSet } from "./api-routes";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
@@ -24,9 +25,8 @@ const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_ROUTES_DIR = join(import.meta.dir, "../../src/pages");
 
 // Heading ids are read back out of the rendered page rather than recomputed
-// here: `markdown.ts`'s `slugify-headings` ruler is the only thing that decides
-// what a guide anchor resolves to (it slugifies, limits ids to h1-h4, and
-// suffixes duplicates). Re-deriving that mapping in the test would put a second
+// here: the docs pipeline's heading slugger is the only thing that decides what
+// a guide anchor resolves to (it slugifies and suffixes duplicates). Re-deriving that mapping in the test would put a second
 // model of production between an authored `#anchor` and the id it must match.
 const HEADING_ID_RE = /<h[1-6][^>]*\sid="([^"]+)"/g;
 
@@ -125,9 +125,15 @@ interface RouteSets {
 
 type Renderer = (dir: string, file: string) => Promise<string>;
 
-/** Markdown straight through the renderer, with none of the per-page transforms. */
-const bareRenderer: Renderer = (dir, file) =>
-  renderMarkdown(parseFrontmatter(readFileSync(join(dir, file), "utf8")).body);
+/** Markdown straight through the pipeline, with none of the per-page transforms. */
+const bareRenderer: Renderer = async (dir, file) =>
+  toHtml(
+    (
+      await processDocsMarkdown(parseFrontmatter(readFileSync(join(dir, file), "utf8")).body, {
+        routePrefix: "",
+      })
+    ).hast,
+  );
 
 // The site does not render every page the same way: the changelog gets its tag
 // dates and the index gets its `Overview` h1, and both change the ids those
@@ -135,10 +141,10 @@ const bareRenderer: Renderer = (dir, file) =>
 // check ids the reader never sees.
 function siteRenderer(dir: string): Renderer {
   const pages = new Map(listGuidePages(dir).map((page) => [page.file, page]));
-  return (renderDir, file) => {
+  return async (renderDir, file) => {
     const page = pages.get(file);
     if (!page) throw new Error(`no guide page for ${file}`);
-    return renderGuidePage(renderDir, page);
+    return toHtml((await renderGuidePage(renderDir, page)).hast);
   };
 }
 

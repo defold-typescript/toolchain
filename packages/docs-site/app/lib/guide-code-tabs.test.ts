@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import type { DocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import {
   type BuilderTwin,
   builderTwins,
@@ -26,7 +26,6 @@ const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const PAGE = "state-machines.md";
 const EXCERPT_SOURCE = join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
 const BUILDER_FENCE = /^(?:> ?)?```ts builder(?=\s)/gm;
-const CONFIG_BUILDER_GROUP = /\bdata-code-tabs="config-builder"/g;
 
 // The cheat-sheet's "Move after a delay" Builder pane, and a builder statement of another twin pair.
 const DELAY_BUILDER = 'm.state("/alive/alert")\n  .after(5)\n  .to("/alive/patrol");';
@@ -38,29 +37,49 @@ const markdown = readFileSync(join(GUIDE_DIR, PAGE), "utf8");
 const twins: readonly BuilderTwin[] = builderTwins(readFileSync(EXCERPT_SOURCE, "utf8"));
 
 let tempDir: string | undefined;
-let html = "";
-let editedHtml = "";
+let rendered: DocsMarkdown;
+let edited: DocsMarkdown;
 
 beforeAll(async () => {
-  html = await renderGuidePage(GUIDE_DIR, page);
+  rendered = await renderGuidePage(GUIDE_DIR, page);
   tempDir = mkdtempSync(join(tmpdir(), "defold-typescript-guide-tabs-"));
   writeFileSync(join(tempDir, PAGE), markdown.replace(DELAY_BUILDER, OTHER_PAIR_BUILDER));
-  editedHtml = await renderGuidePage(tempDir, page);
-  GlobalRegistrator.register();
+  edited = await renderGuidePage(tempDir, page);
 });
 
-afterAll(async () => {
-  await GlobalRegistrator.unregister();
+afterAll(() => {
   if (tempDir !== undefined) rmSync(tempDir, { recursive: true, force: true });
 });
 
-function tabPanes(rendered: string): TabPanes[] {
-  const root = document.createElement("div");
-  root.innerHTML = rendered;
-  return [...root.querySelectorAll('[data-code-tabs="config-builder"]')].map((group) => {
-    const panels = [...group.querySelectorAll(".code-tabs-panel")];
+type Nodes = DocsMarkdown["hast"] | DocsMarkdown["hast"]["children"][number];
+type Element = Extract<Nodes, { type: "element" }>;
+
+function elements(node: Nodes, tagName: string): Element[] {
+  const found = node.type === "element" && node.tagName === tagName ? [node] : [];
+  const children = "children" in node ? node.children : [];
+  return [...found, ...children.flatMap((child) => elements(child, tagName))];
+}
+
+function textOf(node: Nodes): string {
+  if (node.type === "text") return node.value;
+  return "children" in node ? node.children.map(textOf).join("") : "";
+}
+
+// The `CodeBlockTabs` groups whose triggers read Config then Builder.
+function configBuilderGroups(page: DocsMarkdown): Element[] {
+  return elements(page.hast, "CodeBlockTabs").filter(
+    (group) => elements(group, "CodeBlockTabsTrigger").map(textOf).join("|") === "Config|Builder",
+  );
+}
+
+function tabPanes(page: DocsMarkdown): TabPanes[] {
+  return configBuilderGroups(page).map((group) => {
+    const panels = elements(group, "CodeBlockTab");
     expect(panels).toHaveLength(2);
-    return { config: panels[0]?.textContent ?? "", builder: panels[1]?.textContent ?? "" };
+    return {
+      config: panels[0] ? textOf(panels[0]) : "",
+      builder: panels[1] ? textOf(panels[1]) : "",
+    };
   });
 }
 
@@ -68,11 +87,11 @@ describe("Config and Builder tabs on the State machines guide", () => {
   test("every ts builder fence renders as the Builder tab of a Config/Builder group", () => {
     const builders = markdown.match(BUILDER_FENCE) ?? [];
     expect(builders.length).toBeGreaterThan(0);
-    expect(html.match(CONFIG_BUILDER_GROUP) ?? []).toHaveLength(builders.length);
+    expect(configBuilderGroups(rendered)).toHaveLength(builders.length);
   });
 
   test("every Config/Builder group quotes one builder twin pair of the excerpt source", () => {
-    expect(unboundTabPanes(tabPanes(html), twins)).toEqual([]);
+    expect(unboundTabPanes(tabPanes(rendered), twins)).toEqual([]);
   });
 
   test("the gate can fail: a Builder pane quoting another twin pair is reported", () => {
@@ -81,7 +100,7 @@ describe("Config and Builder tabs on the State machines guide", () => {
     expect(twins.some((twin) => collapseWhitespace(twin.builder.body).includes(replaced))).toBe(
       true,
     );
-    const groups = tabPanes(editedHtml);
+    const groups = tabPanes(edited);
     expect(groups).toHaveLength((markdown.match(BUILDER_FENCE) ?? []).length);
     expect(unboundTabPanes(groups, twins)).toEqual([
       'config "after: { 5: \\"/alive/patrol\\" }" with builder "m.state(\\"/cooling\\").after(3).to(\\"/idle\\");": no builder twin quotes both',

@@ -822,7 +822,9 @@
   }
 
   .prose .footnote-ref a,
-  .prose .footnote-backref {
+  .prose .footnote-backref,
+  .prose a[data-footnote-ref],
+  .prose a[data-footnote-backref] {
     color: var(--color-accent);
     text-decoration: none;
   }
@@ -833,12 +835,15 @@
      the topbar covers whatever was jumped to. `--topbar-height` is published
      from the real header, so this tracks the taller mobile bar too. */
   .prose .footnote-ref a,
+  .prose a[data-footnote-ref],
   .prose .footnotes li {
     scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
   }
 
   .prose .footnote-ref a:hover,
-  .prose .footnote-backref:hover {
+  .prose .footnote-backref:hover,
+  .prose a[data-footnote-ref]:hover,
+  .prose a[data-footnote-backref]:hover {
     text-decoration: underline;
   }
 

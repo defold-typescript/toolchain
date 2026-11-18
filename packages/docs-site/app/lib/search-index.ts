@@ -9,7 +9,7 @@ import {
   type CombinedSurface,
   combinedNamespaceToApiPage,
 } from "@defold-typescript/docs-render/combined-surface";
-import { allPageHeadings } from "@defold-typescript/docs-render/headings";
+import { type DocsMarkdown, docsSearchRecords } from "@defold-typescript/docs-render/docs-markdown";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
 import { htmlToDocText } from "@defold-typescript/types";
@@ -143,10 +143,6 @@ export function versionSearchIndexRecords(
   }));
 }
 
-function humanize(slug: string): string {
-  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 export function toPlainText(markdown: string): string {
   return (
     markdown
@@ -169,50 +165,16 @@ export function toPlainText(markdown: string): string {
   );
 }
 
-// An `h2`/`h3` element carrying the id the page renders: where a guide section starts.
-const SECTION_HEADING = /<h([23])\b[^>]*\sid="[^"]*"[^>]*>[\s\S]*?<\/h\1>/gi;
-const FIRST_H1 = /<h1\b[^>]*>[\s\S]*?<\/h1>/i;
-// Code blocks with their titled frame, inline SVG, and an admonition's `Tip` label
-// carry no prose to search.
-const NOT_PROSE =
-  /<(pre|svg)\b[\s\S]*?<\/\1>|<figure class="code-block">[\s\S]*?<\/figure>|<span class="admonition-title">[\s\S]*?<\/span><\/span>/gi;
-// A block element runs into the next one's text once its tags are stripped.
-const BLOCK_END = /<\/(?:h[1-6]|li|dt|dd|t[dhr]|div|blockquote|figcaption)>/gi;
-
-function sectionText(html: string): string {
-  return toPlainText(htmlToDocText(html.replace(NOT_PROSE, " ").replace(BLOCK_END, "$& ")));
-}
-
-// A rendered guide page's records: the text before its first `h2`/`h3` at the
-// page route, then one record per `h2`/`h3` section at `<route>#<heading id>`.
-// Deeper headings stay inside their section.
-function guidePageRecords(page: GuidePage, html: string): SearchRecord[] {
-  const sections = [...html.matchAll(SECTION_HEADING)].flatMap((match) => {
-    const heading = allPageHeadings(match[0])[0];
-    return heading ? [{ heading, start: match.index, end: match.index + match[0].length }] : [];
-  });
-  const head = html.slice(0, sections[0]?.start ?? html.length);
-  const title =
-    allPageHeadings(html).find((heading) => heading.level === 1)?.text ??
-    humanize(page.isIndex ? "overview" : page.slug);
-  return [
-    { route: page.route, title, text: sectionText(head.replace(FIRST_H1, " ")) },
-    ...sections.map(({ heading, end }, i) => ({
-      route: `${page.route}#${heading.id}`,
-      title: heading.text,
-      text: sectionText(html.slice(end, sections[i + 1]?.start ?? html.length)),
-    })),
-  ];
-}
-
+// Each guide page's records: the text before its first section at the page
+// route, then one record per heading at `<route>#<heading id>`.
 export async function buildSearchIndex(
   pages: GuidePage[],
-  renderPage: (page: GuidePage) => Promise<string>,
+  processPage: (page: GuidePage) => Promise<DocsMarkdown>,
 ): Promise<SearchRecord[]> {
-  const rendered = await Promise.all(
-    pages.map(async (page) => guidePageRecords(page, await renderPage(page))),
+  const records = await Promise.all(
+    pages.map(async (page) => docsSearchRecords(page.route, await processPage(page))),
   );
-  return rendered.flat().sort((a, b) => a.route.localeCompare(b.route));
+  return records.flat().sort((a, b) => a.route.localeCompare(b.route));
 }
 
 /**

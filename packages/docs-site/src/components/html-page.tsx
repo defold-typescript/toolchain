@@ -5,8 +5,8 @@ import { apiSurfaceConfig, SITE_NAME, toc } from "../lib/site";
 import { PageScripts } from "./page-scripts";
 
 /**
- * One page whose body the shared renderer already turned into HTML (a guide page
- * or an API namespace). The HTML carries its own `h1`, so the page adds no title
+ * One page whose body the shared renderer already turned into HTML (an API
+ * namespace). The HTML carries its own `h1`, so the page adds no title
  * block; the table of contents comes from the same headings.
  */
 export function HtmlPage({ title, html }: { title: string; html: string }) {

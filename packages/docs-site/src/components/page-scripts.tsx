@@ -12,7 +12,7 @@ import {
 } from "../../app/lib/api-surface-pref";
 import { applySinceFilter } from "../../app/lib/since-filter";
 
-// Set on the page body by `HtmlPage`. A server component cannot import a plain
+// Set on the page body by `HtmlPage` and `MarkdownPage`. A server component cannot import a plain
 // value from a client module, so the two spell it out separately.
 const PAGE_BODY_ATTR = "data-page-body";
 
@@ -73,21 +73,24 @@ function applyStoredFrom(body: HTMLElement, surface: ApiSurfaceConfig): void {
  * the call site, so it runs again after each client-side navigation.
  * `versionIds` are the tracked API versions, so a versioned API page's symbol
  * tooltips read that version's index; `surface` maps the stored API window onto
- * this page.
+ * this page. A page whose code blocks bring their own copy button passes
+ * `copyButtons={false}`.
  */
 export function PageScripts({
   versionIds,
   surface,
+  copyButtons = true,
 }: {
   versionIds: readonly string[];
   surface: ApiSurfaceConfig;
+  copyButtons?: boolean;
 }) {
   useEffect(() => {
     const body = document.querySelector<HTMLElement>(`[${PAGE_BODY_ATTR}]`);
     if (!body) return;
     applyStoredFrom(body, surface);
     const cleanups = [
-      addCopyButtons(body),
+      ...(copyButtons ? [addCopyButtons(body)] : []),
       wireCodeTabs(body),
       mountHsmDemos(body),
       mountSymbolTooltips(body, { versionIds }),
@@ -96,6 +99,6 @@ export function PageScripts({
     return () => {
       for (const cleanup of cleanups) cleanup();
     };
-  }, [versionIds, surface]);
+  }, [versionIds, surface, copyButtons]);
   return null;
 }

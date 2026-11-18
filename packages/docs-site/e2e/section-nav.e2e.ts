@@ -47,7 +47,8 @@ test("the sidebar links to the changelog from any section", async ({ page }) => 
   await page.goto("/api/go");
   await page.locator("#nd-sidebar").getByRole("link", { name: "Changelog", exact: true }).click();
   await page.waitForURL(/\/changelog$/);
-  await expect(page.locator("h1")).toHaveText("Changelog");
+  // The heading also holds its copy-anchor button, labelled for screen readers.
+  await expect(page.locator("h1")).toHaveText(/^Changelog/);
 });
 
 test("the page carries the defold-typescript icon", async ({ page }) => {

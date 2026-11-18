@@ -9,6 +9,7 @@ import {
   loadApiSurfaceForVersion,
   versionsWithDiskFixtures,
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { toHtml } from "hast-util-to-html";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 
@@ -103,7 +104,7 @@ describe("authored symbol notes", () => {
         if (!page) throw new Error(`${name}'s note links /${slug}, which is no guide page`);
         checked++;
         if (fragment === undefined) continue;
-        const html = await renderGuidePage(GUIDE_DIR, page);
+        const html = toHtml((await renderGuidePage(GUIDE_DIR, page)).hast);
         if (!html.includes(`id="${fragment.slice(1)}"`)) {
           throw new Error(`${name}'s note links /${slug}${fragment}, which is no heading there`);
         }

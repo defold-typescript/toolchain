@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { withBase } from "@defold-typescript/docs-render/base";
 import { engineIndexBaseTable } from "@defold-typescript/types";
+import { toHtml } from "hast-util-to-html";
 import { buildLlmsFull, SITE_TARGET } from "../../scripts/build-llms";
 import { renderGuidePage } from "./content";
 import { expandGuideDirectives } from "./guide-directives";
@@ -14,7 +14,7 @@ const DIRECTIVE = "<!-- engine-index-base-table -->";
 async function renderReal(file: string): Promise<string> {
   const page = listGuidePages(GUIDE_DIR).find((p) => p.file === file);
   if (!page) throw new Error(`no guide page ${file}`);
-  return renderGuidePage(GUIDE_DIR, page);
+  return toHtml((await renderGuidePage(GUIDE_DIR, page)).hast);
 }
 
 function sectionAfter(html: string, heading: string): string {
@@ -45,9 +45,7 @@ describe("engine index base table in the guide", () => {
     const table = section.slice(section.indexOf("<table>"), section.indexOf("</table>"));
     const route = guideSymbolRoutes(GUIDE_DIR).get("b2d.fixture.get_density");
     expect(route).toBeDefined();
-    expect(table).toContain(
-      `<a href="${withBase(route ?? "")}"><code>b2d.fixture.get_density</code></a>`,
-    );
+    expect(table).toContain(`<a href="${route}"><code>b2d.fixture.get_density</code></a>`);
     expect(section).not.toContain("engine-index-base-table");
   });
 

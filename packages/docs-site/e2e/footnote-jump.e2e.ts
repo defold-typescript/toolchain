@@ -47,18 +47,18 @@ for (const [name, viewport] of [
 
     test("the marker jumps to a note clear of the bars, and back again", async ({ page }) => {
       await page.goto(PAGE_WITH_FOOTNOTE);
-      const marker = page.locator("[data-page-body] .footnote-ref a").first();
+      const marker = page.locator("[data-page-body] a[data-footnote-ref]").first();
       await marker.click();
-      await page.waitForFunction(() => window.location.hash.startsWith("#fn"));
+      await page.waitForFunction(() => window.location.hash.startsWith("#user-content-fn-"));
       await scrollSettled(page);
       const note = page.locator("[data-page-body] .footnotes li").first();
       const noteTop = await topOf(note);
       expect(noteTop).toBeGreaterThan(await barsBottom(page));
       expect(noteTop).toBeLessThan(viewport.height);
 
-      const backref = page.locator("[data-page-body] .footnote-backref").first();
+      const backref = page.locator("[data-page-body] a[data-footnote-backref]").first();
       await backref.click();
-      await page.waitForFunction(() => window.location.hash.startsWith("#fnref"));
+      await page.waitForFunction(() => window.location.hash.startsWith("#user-content-fnref-"));
       await scrollSettled(page);
       const markerTop = await topOf(marker);
       expect(markerTop).toBeGreaterThan(await barsBottom(page));
