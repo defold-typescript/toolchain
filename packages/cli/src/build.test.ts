@@ -20,7 +20,9 @@ import {
   computeOutputRel,
   ECS_LIBRARY,
   findEmittedRequires,
+  GO_PROPERTY_DIRECT_CALL_MESSAGE,
   HSM_LIBRARY,
+  luaGlobalShadowMessage,
   requirePathForRel,
   resolveLibrarySourceDir,
   type SceneComponentIndex,
@@ -110,6 +112,18 @@ const MAIN_SCRIPT =
 
 const EMPTY_SCRIPT =
   'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n';
+
+// `next` sits at line 3, column 10.
+const SHADOWING_SCRIPT = [
+  'import { defineScript } from "@defold-typescript/types";',
+  "",
+  "function next(): number {",
+  "  return 1;",
+  "}",
+  "",
+  "export default defineScript({ init: () => ({ n: next() }) });",
+  "",
+].join("\n");
 
 const GLOBAL_TABLE_DTS = [
   "/**",
@@ -2932,6 +2946,38 @@ describe("runBuild reports addresses naming a foreign world", () => {
 
     expect(result.crossWorldAddresses).toEqual([]);
     expect(result.warnings.some((w) => w.includes("mylevel"))).toBe(false);
+  });
+});
+
+describe("runBuild reports transpile advisories", () => {
+  test("a file-level local that hides a Lua global warns at its name and still builds", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", SHADOWING_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(result.warnings).toEqual([`src/main.ts:3:10: ${luaGlobalShadowMessage("next")}`]);
+  });
+
+  test("a direct go.property call warns, naming the file", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        "",
+        'go.property("speed", 450);',
+        "",
+        "export default defineScript({ init: () => ({}) });",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(result.warnings).toEqual([`src/main.ts: ${GO_PROPERTY_DIRECT_CALL_MESSAGE}`]);
   });
 });
 

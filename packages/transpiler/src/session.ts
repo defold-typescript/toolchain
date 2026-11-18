@@ -9,6 +9,7 @@ import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { AMBIENT_FILES, EDITOR_AMBIENT_FILES, isEditorSideSource } from "./kind-surfaces";
 import { createLifecycleErasure, type LifecycleErasure } from "./lifecycle-erasure";
 import { LUA_COMPILE_LIB } from "./lua-compile-lib";
+import { findLuaGlobalShadows } from "./lua-global-shadows";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { nativeGlobalModulesPlugin } from "./native-global-modules";
@@ -116,6 +117,7 @@ interface SideEmit {
   readonly program: ts.Program;
   readonly files: readonly CollectorFile[];
   readonly reported: readonly ts.Diagnostic[];
+  readonly shadows: readonly ts.Diagnostic[];
   readonly companions: ReadonlyMap<string, string>;
 }
 
@@ -283,7 +285,18 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
       new tstl.Transpiler().emit({ program, writeFile: collector.writeFile });
     }
 
-    return { program, files: collector.files, reported, companions: companionEmit.companions };
+    const shadows = [...userKeys].flatMap((name) => {
+      const sourceFile = program.getSourceFile(name);
+      return sourceFile === undefined ? [] : findLuaGlobalShadows(program, sourceFile);
+    });
+
+    return {
+      program,
+      files: collector.files,
+      reported,
+      shadows,
+      companions: companionEmit.companions,
+    };
   }
 
   // The user files the editor-side sources reach through their own imports and
@@ -389,7 +402,18 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
     const diagnostics = [
       ...ts.sortAndDeduplicateDiagnostics([...editorReported, ...(runtimeEmit?.reported ?? [])]),
     ];
-    return collectOutputs(files, diagnostics, userKeys, companions);
+    // The same chunk precedence as `files`: a file both sides emit reports the
+    // runtime side's shadows.
+    const editorShadows = (editorEmit?.shadows ?? []).filter(
+      ({ file }) =>
+        file !== undefined &&
+        editorReached.has(file.fileName) &&
+        !runtimeEmitted.has(file.fileName),
+    );
+    const shadows = [
+      ...ts.sortAndDeduplicateDiagnostics([...editorShadows, ...(runtimeEmit?.shadows ?? [])]),
+    ];
+    return collectOutputs(files, diagnostics, userKeys, companions, shadows);
   }
 
   return {

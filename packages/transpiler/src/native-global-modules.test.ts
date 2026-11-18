@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
+import { luaGlobalShadowMessage } from "./lua-global-shadows";
 import { GLOBAL_TABLE_REQUIRE_MARKER } from "./native-global-modules";
 import { collectOutputs } from "./project-output";
 import { transpileProject } from "./transpile";
@@ -164,7 +165,16 @@ describe("@globalTable import lowering", () => {
         ].join("\n"),
       },
     });
-    expect(result.diagnostics).toEqual([]);
+    // The binding hides Defold's `b2d`, which the shadow scan reports.
+    expect(result.diagnostics).toEqual([
+      {
+        file: "main.ts",
+        line: 1,
+        column: 13,
+        message: luaGlobalShadowMessage("b2d"),
+        category: "warning",
+      },
+    ]);
     expect(result.lua).toMatchSnapshot();
   });
 

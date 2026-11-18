@@ -14,6 +14,7 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  formatTranspileWarnings,
   LUALIB_BUNDLE_LABEL,
   libraryModuleRels,
   lualibBundleRel,
@@ -407,6 +408,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       ? scanCrossWorldAddresses({ program, worldsOf: scriptWorlds, table: loadUrlParameterTable() })
       : { warnings: [], entries: [] };
   const warnings = [
+    ...formatTranspileWarnings(result.diagnostics),
     ...scanOrphanOutputs(cwd, sources, config),
     ...scanSceneResourceRefs(cwd),
     ...reachability.warnings,

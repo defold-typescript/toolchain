@@ -605,6 +605,23 @@ export function collectFailures(
 }
 
 /**
+ * The advisory transpile diagnostics as `warnings` lines: `<file>:<line>:<column>: <message>`,
+ * or `<file>: <message>` when the diagnostic carries no position.
+ */
+export function formatTranspileWarnings(diagnostics: readonly TranspileDiagnostic[]): string[] {
+  return diagnostics
+    .filter((diag) => diag.category === "warning")
+    .map((diag) => {
+      const file = diag.file ?? PROJECT_BUCKET;
+      const where =
+        diag.line !== undefined && diag.column !== undefined
+          ? `${file}:${diag.line}:${diag.column}`
+          : file;
+      return `${where}: ${diag.message}`;
+    });
+}
+
+/**
  * Fails each source inside `outDir`: `tsc` leaves that folder out of the
  * program, so the editor never type-checks it. Case folds, so one project
  * fails the same way on every OS.

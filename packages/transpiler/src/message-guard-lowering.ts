@@ -9,7 +9,7 @@ import {
 } from "typescript-to-lua";
 
 const GUARD_MODULE = "@defold-typescript/types";
-const GUARD_NAME = "isMessage";
+export const GUARD_NAME = "isMessage";
 
 function resolvesToGuardExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
   let symbol = checker.getSymbolAtLocation(callee);

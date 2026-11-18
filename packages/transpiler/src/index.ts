@@ -31,6 +31,7 @@ export {
   findManagedBootstrap,
 } from "./debug-bootstrap";
 export { findEmittedRequires, LUALIB_REQUIRE_NAME, requiresLualib } from "./emitted-requires";
+export { GO_PROPERTY_DIRECT_CALL_MESSAGE } from "./go-property-direct-call";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
@@ -59,6 +60,7 @@ export {
   readLibrarySceneDocuments,
   rewriteGameProjectDependency,
 } from "./library-dependencies";
+export { luaGlobalShadowMessage } from "./lua-global-shadows";
 export { scanEmittedRequires } from "./lua-require-scan";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";

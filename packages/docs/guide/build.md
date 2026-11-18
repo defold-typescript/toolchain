@@ -154,6 +154,13 @@ but Bob's headless build accepts it and the game object fails at runtime. The
 warning names the scene file and the offending path; wrap the mesh in a `.model`
 (with a `materials` block) and point the component at the `.model`.
 
+Every build, and every [`watch`](./watch.md) rebuild, also prints the
+transpiler's own warnings, each as `<file>:<line>:<column>: <message>`, or
+`<file>: <message>` when it has no position: a
+[direct `go.property` call](./script-lifecycle.md#why-not-call-goproperty-yourself), and a
+[top-level name that hides a Lua or Defold global](./typescript-gotchas.md#a-file-level-name-can-hide-a-lua-or-defold-global),
+such as a helper named `select` or an `enum go`. Neither fails the build.
+
 A full build also checks every address literal your code posts to — `msg.post`,
 `go.get`, `go.animate` and every other slot the toolchain classifies as an
 address — against the component ids your scenes declare, and warns when the

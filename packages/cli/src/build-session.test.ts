@@ -18,6 +18,7 @@ import {
   computeOutputRel,
   ECS_LIBRARY,
   HSM_LIBRARY,
+  luaGlobalShadowMessage,
   requirePathForRel,
   type SceneComponentIndex,
 } from "@defold-typescript/transpiler";
@@ -74,6 +75,18 @@ const MAIN =
 const MAIN_NO_IMPORT =
   'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { vmath.vector3(0, 0, 0); } });\n';
 
+// `next` sits at line 3, column 10.
+const SHADOWING_SCRIPT = [
+  'import { defineScript } from "@defold-typescript/types";',
+  "",
+  "function next(): number {",
+  "  return 1;",
+  "}",
+  "",
+  "export default defineScript({ init: () => ({ n: next() }) });",
+  "",
+].join("\n");
+
 describe("createBuildSession", () => {
   test("buildAll writes the same Lua and maps as runBuild", () => {
     for (const root of [cwd, other]) {
@@ -98,6 +111,27 @@ describe("createBuildSession", () => {
         expect(readFileSync(map, "utf8")).toBe(readFileSync(refMap, "utf8"));
       }
     }
+  });
+
+  test("buildAll and an applyEvents rebuild warn on transpile advisories as runBuild does", () => {
+    for (const root of [cwd, other]) {
+      writeIn(root, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(root, "src/main.ts", SHADOWING_SCRIPT);
+    }
+    const shadowLine = `src/main.ts:3:10: ${luaGlobalShadowMessage("next")}`;
+
+    const reference = runBuild({ cwd: other });
+    const session = createBuildSession({ cwd });
+    const built = session.buildAll();
+
+    expect(reference.warnings).toEqual([shadowLine]);
+    expect(built.warnings).toEqual(reference.warnings);
+
+    writeIn(cwd, "src/main.ts", SHADOWING_SCRIPT.replace("n: next()", "n: next() + 1"));
+    const rebuilt = session.applyEvents(["src/main.ts"], []);
+
+    expect(rebuilt.written).toEqual(["src/main.ts.script"]);
+    expect(rebuilt.warnings).toEqual([shadowLine]);
   });
 
   test("buildAll writes the same global-alias Lua as runBuild for a @globalTable module", () => {

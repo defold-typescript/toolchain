@@ -20,7 +20,7 @@ import {
 } from "typescript-to-lua";
 
 const DISPATCH_MODULE = "@defold-typescript/types";
-const DISPATCH_NAME = "onMessage";
+export const DISPATCH_NAME = "onMessage";
 
 // The engine calls `on_message(self, message_id, message, sender)`; a handler's
 // own params (in order) alias onto the three value-bearing arguments. Each takes
