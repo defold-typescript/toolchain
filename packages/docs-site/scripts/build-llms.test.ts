@@ -12,6 +12,7 @@ import {
   versionsWithDiskFixtures,
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
+import { toHtml } from "hast-util-to-html";
 import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
 import { renderGuidePage } from "../app/lib/content";
 import { listGuidePages } from "../app/lib/guide-loader";
@@ -206,7 +207,7 @@ describe("package target — repo-local, cat-able links", () => {
       if (!page) continue;
       // Ids come from the site's own render, never a hand slugify, the same
       // way `guide-links.test.ts` resolves authored anchors.
-      const html = await renderGuidePage(GUIDE_DIR, page);
+      const html = toHtml((await renderGuidePage(GUIDE_DIR, page)).hast);
       const ids = new Set([...html.matchAll(/<h[1-6][^>]*\sid="([^"]+)"/g)].map((m) => m[1]));
       expect(ids.has(anchor)).toBe(true);
     }

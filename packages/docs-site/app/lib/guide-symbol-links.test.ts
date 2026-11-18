@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { withBase } from "@defold-typescript/docs-render/base";
 import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { toHtml } from "hast-util-to-html";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";
@@ -19,8 +19,10 @@ function routeOf(key: string): string {
   return route;
 }
 
+// The href is root-absolute without the deploy base: the link component that
+// renders it adds the base.
 function linkedCode(key: string, route: string = routeOf(key)): string {
-  return `<a href="${withBase(route)}"><code>${key}</code></a>`;
+  return `<a href="${route}"><code>${key}</code></a>`;
 }
 
 // Global types are version-independent pages, so they are absent from the
@@ -35,7 +37,7 @@ function globalTypeRoute(namespace: string): string {
 async function renderReal(file: string): Promise<string> {
   const page = listGuidePages(GUIDE_DIR).find((p) => p.file === file);
   if (!page) throw new Error(`no guide page ${file}`);
-  return renderGuidePage(GUIDE_DIR, page);
+  return toHtml((await renderGuidePage(GUIDE_DIR, page)).hast);
 }
 
 describe("symbol-named inline code in rendered guide pages", () => {
@@ -80,10 +82,12 @@ describe("symbol-named inline code in rendered guide pages", () => {
       "Linked: `go.get`, `hash`, `Hash`.",
     ].join("\n");
     const routes = guideSymbolRoutes(GUIDE_DIR);
-    const html = await renderMarkdown(source, { symbolCodeLinks: routes });
-    const plain = await renderMarkdown(source);
+    const html = toHtml(
+      (await processDocsMarkdown(source, { routePrefix: "", symbolCodeLinks: routes })).hast,
+    );
+    const plain = toHtml((await processDocsMarkdown(source, { routePrefix: "" })).hast);
 
-    const href = `href="${withBase(routeOf("go.get"))}"`;
+    const href = `href="${routeOf("go.get")}"`;
     expect(html.split(href).length - 1).toBe(1);
     expect(html).toContain(
       `Linked: ${linkedCode("go.get")}, ${linkedCode("hash")}, ${linkedCode("Hash", globalTypeRoute("Hash"))}`,

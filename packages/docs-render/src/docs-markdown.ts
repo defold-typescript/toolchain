@@ -119,11 +119,19 @@ export function pageToc(toc: TOCItemType[]): TOCItemType[] {
 // A blockquote's alert or disclosure marker, once its `>` is gone.
 const BLOCK_MARKER = new RegExp(`^\\[!(?:${[...ALERT_TYPES, "more"].join("|")})\\][ \\t]*`, "gim");
 
+// A code span, which keeps its text, or a raw HTML tag or comment, which renders
+// no text of its own.
+const CODE_SPAN_OR_HTML =
+  /(`+)[\s\S]*?(?<!`)\1(?!`)|<!--[\s\S]*?-->|<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/g;
+
 // Structured data is Markdown with its links and images already reduced to their
 // text. The inline marks left in it would show in a hit's passage, so they go;
 // an underscore inside a word stays, keeping `snake_case` names searchable.
+// `remarkStructure` slices the authored source, so raw HTML (an `<a id>` anchor)
+// arrives as its tags and goes too.
 function plainText(markdown: string): string {
   return markdown
+    .replace(CODE_SPAN_OR_HTML, (match) => (match.startsWith("`") ? match : " "))
     .replace(/`+/g, "")
     .replace(/[*~]+/g, "")
     .replace(/(?<![A-Za-z0-9])_+|_+(?![A-Za-z0-9])/g, "")

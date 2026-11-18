@@ -1,7 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
+import {
+  type DocsMarkdown,
+  processDocsMarkdown,
+} from "@defold-typescript/docs-render/docs-markdown";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { CHANGELOG_TAG_DATES } from "../generated/changelog-dates";
 import { applyChangelogTagDates } from "./changelog-dates";
 import type { GuidePage } from "./guide";
@@ -24,20 +27,23 @@ export function guidePages(): GuidePage[] {
 export const INDEX_HEADING = "Overview";
 
 /**
- * Render one guide page exactly as the site does, from an explicit guide
+ * Process one guide page exactly as the site does, from an explicit guide
  * directory. Which per-page transforms apply is decided here rather than in the
  * route, so anything checking a rendered page resolves the same ids the reader
  * sees.
  */
-export function renderGuidePage(dir: string, page: GuidePage): Promise<string> {
+export function renderGuidePage(dir: string, page: GuidePage): Promise<DocsMarkdown> {
   let body = expandGuideDirectives(
     parseFrontmatter(readFileSync(join(dir, page.file), "utf8")).body,
   );
   if (page.slug === "changelog") {
     body = applyChangelogTagDates(body, CHANGELOG_TAG_DATES);
   }
-  return renderMarkdown(body, {
-    ...(page.isIndex ? { firstHeading: INDEX_HEADING } : {}),
+  if (page.isIndex) {
+    body = body.replace(/^#\s+.+$/m, `# ${INDEX_HEADING}`);
+  }
+  return processDocsMarkdown(body, {
+    routePrefix: "",
     readInlineSvg: (src) => readGuideSvg(dir, src),
     symbolCodeLinks: guideSymbolRoutes(dir),
   });
@@ -54,6 +60,6 @@ function readGuideSvg(dir: string, src: string): string | undefined {
   return readFileSync(path, "utf8");
 }
 
-export function renderGuide(page: GuidePage): Promise<string> {
+export function renderGuide(page: GuidePage): Promise<DocsMarkdown> {
   return renderGuidePage(GUIDE_DIR, page);
 }

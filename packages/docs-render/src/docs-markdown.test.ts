@@ -384,6 +384,15 @@ describe("docsSearchRecords", () => {
     ]);
   });
 
+  test("raw HTML stays out of the text, and a tag inside a code span stays in", async () => {
+    const page = await guide(
+      ["# Pins", '<a id="x"></a>', "Press <kbd>Enter</kbd> on `<div>`.<!-- note -->"].join("\n\n"),
+    );
+    expect(docsSearchRecords("/pins", page)).toEqual([
+      { route: "/pins", title: "Pins", text: "Press Enter on <div>." },
+    ]);
+  });
+
   test("alert and disclosure markers stay out of the text", async () => {
     const page = await guide(
       ["# Pins", "> [!WARNING]\n> Mind the gap.", "> [!more] Why?\n> Because."].join("\n\n"),

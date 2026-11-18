@@ -9,7 +9,6 @@ import {
   type CombinedSurface,
   combinedApiPages,
 } from "@defold-typescript/docs-render/combined-surface";
-import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { apiVersionAxis } from "@defold-typescript/docs-render/toolchain-surface";
@@ -222,16 +221,16 @@ describe("searchIndexOutputs — the canonical index carries the full-range Comb
 // A search hit links to `<route>#<anchor>`, so every anchor an emitted record
 // carries must be a heading id the page at that route renders. Each page renders
 // with the options its `/api` route passes: an engine page with the Combined
-// availability markers, any other shared reference page plainly. A guide page
-// renders through the same function its route uses.
+// availability markers, any other shared reference page plainly. A guide page's
+// ids are its table of contents from the same function its route renders.
 describe("searchIndexOutputs — every anchored record lands on a rendered heading", () => {
   let outputs: SearchIndexOutput[] = [];
   const guideIds = new Map<string, Set<string>>();
   beforeAll(async () => {
     outputs = await searchIndexOutputs();
     for (const page of listGuidePages(GUIDE_DIR)) {
-      const html = await renderGuidePage(GUIDE_DIR, page);
-      guideIds.set(page.route, new Set(allPageHeadings(html).map((heading) => heading.id)));
+      const { toc } = await renderGuidePage(GUIDE_DIR, page);
+      guideIds.set(page.route, new Set(toc.map((item) => item.url.replace(/^#/, ""))));
     }
   });
   const sharedPages = loadVersionIndependentPages(TYPES_DIR);
@@ -241,10 +240,12 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
   async function unrenderedAnchors(
     file: string,
     pages: [string, ApiPage, RenderOptions][],
+    extraRecords: SearchRecord[] = [],
   ): Promise<{ checked: number; guideChecked: number; missing: string[] }> {
     const byRoute = new Map(pages.map(([route, page, opts]) => [route, { page, opts }]));
     const anchorsByRoute = new Map<string, string[]>();
-    for (const record of outputs.find((output) => output.file === file)?.records ?? []) {
+    const records = outputs.find((output) => output.file === file)?.records ?? [];
+    for (const record of [...records, ...extraRecords]) {
       const [route, anchor] = record.route.split("#");
       if (route === undefined || anchor === undefined) continue;
       anchorsByRoute.set(route, [...(anchorsByRoute.get(route) ?? []), anchor]);
@@ -277,6 +278,13 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     expect(checked).toBeGreaterThan(1000);
     expect(guideChecked).toBeGreaterThan(100);
     expect(missing).toEqual([]);
+  });
+
+  test("a guide record whose anchor no heading of the page carries is reported", async () => {
+    const stray = { route: "/build#no-such-heading", title: "Stray", text: "" };
+    expect(guideIds.has("/build")).toBe(true);
+    const { missing } = await unrenderedAnchors("search-index.json", [], [stray]);
+    expect(missing).toContain(stray.route);
   });
 
   test("the newest version index's anchors resolve on that version's and the guide's pages", async () => {

@@ -179,10 +179,6 @@ function cellTextLength(inline: Token | undefined): number {
   return length;
 }
 
-function replaceFirstHeading(markdown: string, heading: string): string {
-  return markdown.replace(/^#\s+.+$/m, `# ${heading}`);
-}
-
 // The TypeScript grammar names a `type` alias by one identifier, so a qualified
 // alias head (`type image.Type`) colors only its first segment. Each later segment
 // takes that segment's color, the way an `interface` head colors each of its own
@@ -225,7 +221,6 @@ function colorQualifiedAliasHead(tokens: ThemedToken[], text: string): ThemedTok
 export async function renderMarkdown(
   markdown: string,
   opts: {
-    firstHeading?: string;
     highlightSignatureHeadings?: boolean;
     signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget>;
     readInlineSvg?: (src: string) => string | undefined;
@@ -235,7 +230,6 @@ export async function renderMarkdown(
     guideRoutePrefix?: string;
   } = {},
 ): Promise<string> {
-  const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
   md.validateLink = isSafeLink;
@@ -890,7 +884,7 @@ export async function renderMarkdown(
     `<div class="table-scroll">\n${self.renderToken(tokens, idx, options)}`;
   md.renderer.rules.table_close = (tokens, idx, options, _env, self) =>
     `${self.renderToken(tokens, idx, options)}</div>\n`;
-  let html = md.render(source);
+  let html = md.render(markdown);
   // Deep-link global-type brand tokens in rendered signatures. Runs on the final
   // HTML, after the signature-recolor and heading-anchor rules, so the enclosing
   // anchors exist and the transform can split them into sibling links (never nest

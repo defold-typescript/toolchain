@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-// `/getting-started` carries fenced code blocks rendered as `pre.shiki`. The
-// Shiki neutralization rule (styles.css + critical.css) must neutralize only
-// the per-line `<span class="line">` wrappers, leaving the `<pre>` background
-// to `.prose pre { background: var(--color-code-bg) }`. These specs pin both
-// the restored block background and the surviving token color per theme.
+// `/getting-started` carries fenced code blocks rendered as Fumadocs code blocks:
+// a `figure.shiki` around the `<pre>`. The Shiki neutralization rule (styles.css
+// + critical.css) must neutralize only the per-line `<span class="line">`
+// wrappers, leaving the `<pre>` background to
+// `.prose pre { background: var(--color-code-bg) }`. These specs pin both the
+// restored block background and the surviving token color per theme.
 //
 // The `theme-init` head script reads `prefers-color-scheme` (no localStorage
 // seed is required) and sets `document.documentElement.dataset.theme` before
@@ -27,13 +28,13 @@ const BUN_TOKEN = {
   dark: "rgb(179, 146, 240)",
 } as const;
 
-// Pulls the computed `background-color` of the first `pre.shiki` plus the
+// Pulls the computed `background-color` of the first code block's `<pre>` plus the
 // computed `color`/`background-color` of the first `<span>` whose text is
 // exactly `bun` inside it. Returns trimmed CSS color strings.
 async function probe(page: import("@playwright/test").Page) {
   return page.evaluate(() => {
-    const pre = document.querySelector("pre.shiki") as HTMLElement | null;
-    if (!pre) throw new Error("no pre.shiki on the page");
+    const pre = document.querySelector("[data-page-body] figure.shiki pre") as HTMLElement | null;
+    if (!pre) throw new Error("no code block on the page");
     const preBg = getComputedStyle(pre).backgroundColor;
 
     let spanColor = "";
@@ -45,7 +46,7 @@ async function probe(page: import("@playwright/test").Page) {
         break;
       }
     }
-    if (!spanColor) throw new Error("no `bun` token span inside pre.shiki");
+    if (!spanColor) throw new Error("no `bun` token span inside the code block");
     return { preBg, spanColor, spanBg };
   });
 }
@@ -53,7 +54,7 @@ async function probe(page: import("@playwright/test").Page) {
 test.describe("light code block theme", () => {
   test.use({ colorScheme: "light" });
 
-  test("pre.shiki paints --color-code-bg and the token color survives", async ({ page }) => {
+  test("the code block paints --color-code-bg and the token color survives", async ({ page }) => {
     await page.goto("/getting-started");
     const { preBg, spanColor, spanBg } = await probe(page);
 
@@ -67,7 +68,7 @@ test.describe("light code block theme", () => {
 test.describe("dark code block theme", () => {
   test.use({ colorScheme: "dark" });
 
-  test("pre.shiki paints --color-code-bg and the token color survives", async ({ page }) => {
+  test("the code block paints --color-code-bg and the token color survives", async ({ page }) => {
     await page.goto("/getting-started");
     const { preBg, spanColor, spanBg } = await probe(page);
 

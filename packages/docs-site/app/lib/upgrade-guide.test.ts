@@ -8,6 +8,7 @@ import {
   slugify,
 } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { toHtml } from "hast-util-to-html";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { renderGuidePage } from "./content";
 import { groupGuidePages } from "./guide-groups";
@@ -34,12 +35,12 @@ const guidePage = listGuidePages(GUIDE_DIR).find((page) => page.slug === SLUG);
 if (!guidePage) throw new Error(`no guide page for ${SLUG}`);
 // One render of the real page through the exact path the site uses. Every anchor
 // claim below resolves against the ids a reader actually receives — the
-// `slugify-headings` ruler is the only thing that decides what a guide anchor is,
+// pipeline's heading slugger is the only thing that decides what a guide anchor is,
 // so re-deriving that mapping here would put a second model of production between
 // the page and its gate. That second model is what let a heading closed with
 // `###` pass: the line regex kept the closing hashes in the text and slugged them
 // to a different anchor than the one the renderer minted.
-const guideHtml = await renderGuidePage(GUIDE_DIR, guidePage);
+const guideHtml = toHtml((await renderGuidePage(GUIDE_DIR, guidePage)).hast);
 
 // The page holds one marked section per release. Every claim about a specific
 // release is asserted against that release's own section, mirroring how the

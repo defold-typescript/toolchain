@@ -51,14 +51,16 @@ test("a tab group starts on TypeScript and a click switches that group alone", a
 
 // The panes of a Config/Builder group differ in height. Switching one group leaves
 // the rest as they are, so nothing above the clicked tab resizes and it stays where
-// the reader's pointer is.
+// the reader's pointer is. A guide page renders each group as Fumadocs' code tabs.
 test("switching a Config/Builder group leaves the other groups and the clicked tab in place", async ({
   page,
 }) => {
   await page.goto("/state-machines");
-  const groups = page.locator('[data-code-tabs="config-builder"]');
+  const groups = page
+    .locator("[data-page-body] [role=tablist]")
+    .filter({ has: page.getByRole("tab", { name: "Builder", exact: true }) });
   const group = groups.last();
-  const builder = group.locator(".code-tab").nth(1);
+  const builder = group.getByRole("tab").nth(1);
   await expect(builder).toHaveText("Builder");
   await group.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
 
@@ -67,5 +69,5 @@ test("switching a Config/Builder group leaves the other groups and the clicked t
   await select(builder);
   expect(await viewportTop()).toBeCloseTo(before, 0);
 
-  await expect(groups.first().locator(".code-tab").nth(0)).toHaveAttribute("aria-selected", "true");
+  await expect(groups.first().getByRole("tab").nth(0)).toHaveAttribute("aria-selected", "true");
 });
