@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { renderCardSummary } from "../../app/lib/card-summary";
 import { guidePages } from "../../app/lib/content";
 import type { NavLink } from "../../app/lib/nav";
-import { apiPages, navCategories, SITE_NAME } from "../lib/site";
+import { apiPages, landingFooterItems, navCategories, SITE_NAME } from "../lib/site";
 
 // Inline markdown from the repo's own guide sources, rendered with links
 // flattened so it can sit inside a card's own link.
@@ -63,7 +63,8 @@ function LinkCards({
  * own heading and subtitle.
  */
 export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
-  const category = navCategories().find((c) => c.id === id);
+  const nav = navCategories();
+  const category = nav.find((c) => c.id === id);
   if (!category) return null;
   const summaries = cardSummaries();
   // API cards name namespaces, so they read in the code face.
@@ -77,6 +78,7 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
         url: `#${slug(group.label)}`,
         depth: 2,
       }))}
+      footer={{ items: landingFooterItems(id, nav) }}
     >
       <title>{`${category.label} | ${SITE_NAME}`}</title>
       {/* The title and intro sit in the prose body, as a guide page's own do, so

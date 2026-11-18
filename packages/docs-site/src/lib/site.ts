@@ -24,6 +24,7 @@ import {
 import { guidePages } from "../../app/lib/content";
 import type { GuidePage } from "../../app/lib/guide";
 import { buildNav, type NavCategory, type NavLink } from "../../app/lib/nav";
+import { buildPager } from "../../app/lib/pager";
 import { NavPills } from "../components/nav-pills";
 import { OutlineChip } from "../components/outline-chip";
 
@@ -96,6 +97,30 @@ export function navCategories(
       .filter((p) => p.category === "engine" && p.namespace !== "globals")
       .map(toNamespace),
   });
+}
+
+interface FooterItem {
+  name: string;
+  url: string;
+}
+
+/**
+ * The previous/next footer of a category landing. Fumadocs finds a page's
+ * neighbours in the page tree, where a landing route is no item, so the landing
+ * passes them in. Routes stay unprefixed: the footer renders them through the
+ * site's link, which adds the base.
+ */
+export function landingFooterItems(
+  categoryId: string,
+  nav: NavCategory[] = navCategories(),
+): { previous?: FooterItem; next?: FooterItem } {
+  const category = nav.find((c) => c.id === categoryId);
+  if (!category?.route) return {};
+  const { prev, next } = buildPager(nav, category.route);
+  const items: { previous?: FooterItem; next?: FooterItem } = {};
+  if (prev) items.previous = { name: prev.label, url: prev.route };
+  if (next) items.next = { name: next.label, url: next.route };
+  return items;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
+import { isExternalUrl, LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
@@ -11,9 +11,11 @@ import { versionNamespaceAtom } from "../../app/lib/api-content";
 import { apiRouteSet, apiStaticPaths } from "../../app/lib/api-routes";
 import { CANONICAL_SURFACE } from "../../app/lib/api-surface-pref";
 import { listGuidePages } from "../../app/lib/guide-loader";
+import type { NavCategory, NavLink } from "../../app/lib/nav";
 import {
   apiCanonicalHref,
   apiSurfaceConfig,
+  landingFooterItems,
   linkTabs,
   navCategories,
   surfaceTrees,
@@ -120,6 +122,60 @@ describe("linkTabs", () => {
   test("puts each category that leaves the site, and only those, in the top row", () => {
     const tabs = linkTabs(navCategories(TYPES_DIR, listGuidePages(GUIDE_DIR)));
     expect(tabs.map((tab) => tab.url)).toEqual([LIBRARY_DOCS_URL]);
+  });
+});
+
+describe("landingFooterItems", () => {
+  const guides = listGuidePages(GUIDE_DIR);
+  const nav = navCategories(TYPES_DIR, guides);
+  const builtRoutes = new Set([...guides.map((page) => page.route), ...apiRouteSet(TYPES_DIR)]);
+  // A category whose route leaves the site has no landing page here.
+  const landings = nav.filter((category) => category.route && !isExternalUrl(category.route));
+
+  function linkLabels(links: NavLink[]): Map<string, string> {
+    const labels = new Map<string, string>();
+    const visit = (link: NavLink) => {
+      if (link.route) labels.set(link.route, link.label);
+      for (const child of link.children ?? []) visit(child);
+    };
+    for (const link of links) visit(link);
+    return labels;
+  }
+
+  test("covers more than one landing", () => {
+    expect(landings.length).toBeGreaterThan(1);
+  });
+
+  test("each landing's next page is the first page of its own section", () => {
+    for (const category of landings) {
+      const { next } = landingFooterItems(category.id, nav);
+      const own = linkLabels(category.links);
+      expect(next).toBeDefined();
+      expect(own.get(next?.url ?? "")).toBe(next?.name);
+    }
+  });
+
+  test("the first landing has no previous page, and each other one goes back into the section before it", () => {
+    for (const category of landings) {
+      const { previous } = landingFooterItems(category.id, nav);
+      const index = nav.indexOf(category);
+      if (index === 0) {
+        expect(previous).toBeUndefined();
+        continue;
+      }
+      const before = linkLabels((nav[index - 1] as NavCategory).links);
+      expect(previous).toBeDefined();
+      expect(before.get(previous?.url ?? "")).toBe(previous?.name);
+    }
+  });
+
+  test("links only pages the site builds", () => {
+    for (const category of landings) {
+      const { previous, next } = landingFooterItems(category.id, nav);
+      for (const item of [previous, next]) {
+        if (item) expect(builtRoutes.has(item.url)).toBe(true);
+      }
+    }
   });
 });
 
