@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { glyphSvg } from "@defold-typescript/docs-render/glyph";
-import { FENCE_LANGUAGES } from "@defold-typescript/docs-render/markdown";
+import { FENCE_LANGUAGES } from "@defold-typescript/docs-render/guide-syntax";
 import { PLATFORM_ICONS } from "@defold-typescript/docs-render/platform-icons";
 
 describe("glyphSvg", () => {
