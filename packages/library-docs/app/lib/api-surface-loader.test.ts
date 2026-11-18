@@ -13,10 +13,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   apiLinkify,
-  apiPageMarkdown,
   dependencyStep,
+  renderApiPage,
 } from "@defold-typescript/docs-render/api-page-render";
 import { apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
+import type { Nodes } from "hast";
+import { toHtml } from "hast-util-to-html";
 import { siteDirs, untypedListings } from "./api-content";
 import {
   defoldListingsFromManifest,
@@ -301,8 +304,15 @@ describe("loadLibraryProvenance — pin kind", () => {
   });
 });
 
+// Every rendered list item in a page, as HTML.
+function listItems(node: Nodes): string[] {
+  const own = node.type === "element" && node.tagName === "li" ? [toHtml(node)] : [];
+  const nested = "children" in node ? node.children.flatMap(listItems) : [];
+  return [...own, ...nested];
+}
+
 describe("library pages — adopt step against the asset-portal register", () => {
-  test("gives every library page the adopt step for the pin kind the register records at its ref", () => {
+  test("gives every library page the adopt step for the pin kind the register records at its ref", async () => {
     const { entries } = JSON.parse(
       readFileSync(join(REAL_DIRS.dataDir, "asset-portal.json"), "utf8"),
     ) as { entries: { repo?: string; ref?: string; refKind?: "release" | "tag" | "commit" }[] };
@@ -315,14 +325,20 @@ describe("library pages — adopt step against the asset-portal register", () =>
       return entry ? [{ page, meta, refKind: entry.refKind }] : [];
     });
     expect(matched.length).toBeGreaterThan(0);
-    const mismatched = matched
-      .filter(
-        ({ page, meta, refKind }) =>
-          !apiPageMarkdown(page, apiLinkify([page])).includes(
-            dependencyStep(meta.authorUrl, refKind, meta.commit),
-          ),
-      )
-      .map(({ page, refKind }) => `${page.namespace} (${refKind ?? "release"})`);
+    const mismatched: string[] = [];
+    for (const { page, meta, refKind } of matched) {
+      const step = listItems(
+        (
+          await processDocsMarkdown(dependencyStep(meta.authorUrl, refKind, meta.commit), {
+            routePrefix: "",
+          })
+        ).hast,
+      );
+      const items = listItems((await renderApiPage(page, apiLinkify([page]))).hast);
+      if (step.length !== 1 || !items.includes(step[0] ?? "")) {
+        mismatched.push(`${page.namespace} (${refKind ?? "release"})`);
+      }
+    }
     expect(mismatched).toEqual([]);
   });
 });

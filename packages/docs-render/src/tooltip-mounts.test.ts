@@ -1,7 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { toHtml } from "hast-util-to-html";
+import type { Root } from "mdast";
+import { apiBlock, signatureCode } from "./api-nodes";
 import { withBase } from "./base";
-import { renderMarkdown } from "./markdown";
+import { parseMarkdownFragment, processApiTree } from "./docs-markdown";
 import type { SymbolEntry } from "./symbol-index";
 import {
   mountSidebarTooltips,
@@ -11,19 +14,20 @@ import {
 } from "./tooltip-mounts";
 import { TooltipTrigger } from "./ui";
 
-// An API page as the renderer writes it: a mention of `go.animate` in the module
+// An API page as the pipeline renders it: a mention of `go.animate` in the module
 // intro, then the symbol's own signature heading and body, which mentions it again.
-const API_MARKDOWN = [
-  "Use `go.animate` to tween a property.",
-  "",
-  "### `go.animate(url, property)`",
-  "",
-  '<div class="api-symbol-body">',
-  "",
-  "Calling `go.animate` again replaces the running tween.",
-  "",
-  "</div>",
-].join("\n");
+const API_TREE: Root = {
+  type: "root",
+  children: [
+    ...parseMarkdownFragment("Use `go.animate` to tween a property."),
+    { type: "heading", depth: 3, children: [signatureCode("go.animate(url, property)")] },
+    apiBlock(
+      "div",
+      { className: ["api-symbol-body"] },
+      parseMarkdownFragment("Calling `go.animate` again replaces the running tween."),
+    ),
+  ],
+};
 
 const INDEX: Record<string, SymbolEntry> = {
   "go.animate": { brief: "Animates a property", route: "/api/go#go.animate" },
@@ -34,7 +38,7 @@ let triggerHtml = "";
 const cleanups: (() => void)[] = [];
 
 beforeAll(async () => {
-  apiHtml = await renderMarkdown(API_MARKDOWN, { highlightSignatureHeadings: true });
+  apiHtml = toHtml((await processApiTree(API_TREE)).hast);
   triggerHtml = TooltipTrigger({ content: "Restart machine", children: "R" });
   GlobalRegistrator.register();
 });

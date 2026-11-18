@@ -1,14 +1,14 @@
 import type { PageProps } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
-import { libraryStaticPaths, renderLibraryApiHtml } from "../../../../../../app/lib/library-routes";
-import { HtmlPage } from "../../../../../components/html-page";
+import { libraryStaticPaths, renderLibraryApiPage } from "../../../../../../app/lib/library-routes";
+import { ApiMarkdownPage } from "../../../../../components/api-markdown-page";
 
 export default async function LibraryApiRoute(
   params: PageProps<"/api/[host]/[owner]/[repo]/[namespace]">,
 ) {
-  const page = await renderLibraryApiHtml(params);
+  const page = await renderLibraryApiPage(params);
   if (!page) unstable_notFound();
-  return <HtmlPage title={page.title} html={page.html} />;
+  return <ApiMarkdownPage {...page} />;
 }
 
 export async function getConfig() {

@@ -1,4 +1,4 @@
-import { type Heading, pageHeadings } from "@defold-typescript/docs-render/headings";
+import type { Heading } from "@defold-typescript/docs-render/headings";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { createElement, type ReactNode } from "react";
@@ -63,8 +63,9 @@ function outlineTitle(heading: Heading): ReactNode {
   });
 }
 
-export function toc(html: string): TOCItemType[] {
-  return pageHeadings(html).map((heading: Heading) => ({
+/** The outline of a page's H2 through H4 headings. */
+export function outline(headings: readonly Heading[]): TOCItemType[] {
+  return headings.map((heading) => ({
     title: outlineTitle(heading),
     url: `#${heading.id}`,
     depth: heading.level,

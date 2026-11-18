@@ -41,8 +41,9 @@ afterAll(async () => {
 });
 
 const { renderToStaticMarkup } = await import("react-dom/server");
-const { processDocsMarkdown } = await import("./docs-markdown");
-const { MarkdownBody } = await import("./markdown-body");
+const { signatureCode } = await import("./api-nodes");
+const { processApiTree, processDocsMarkdown } = await import("./docs-markdown");
+const { apiBodyComponents, MarkdownBody } = await import("./markdown-body");
 const { fireEvent, render: mount } = await import("./test-dom");
 const { compile } = await import("tailwindcss");
 
@@ -139,5 +140,30 @@ describe("MarkdownBody", () => {
     const anchor = host.querySelector("#kept");
     expect(anchor?.tagName).toBe("A");
     expect(anchor?.hasAttribute("href")).toBe(false);
+  });
+});
+
+describe("apiBodyComponents", () => {
+  test("a data-anchored heading renders its own permalink and no Fumadocs wrapper anchor", async () => {
+    const { hast } = await processApiTree({
+      type: "root",
+      children: [
+        { type: "heading", depth: 2, children: [{ type: "text", value: "Functions" }] },
+        { type: "heading", depth: 3, children: [signatureCode("go.get(id: string): Vector3")] },
+      ],
+    });
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <MarkdownBody hast={hast} components={apiBodyComponents} />,
+    );
+    const h3 = host.querySelector("h3");
+    const anchors = [...(h3?.querySelectorAll("a") ?? [])];
+    expect(anchors.map((a) => [a.className, a.getAttribute("href")])).toEqual([
+      ["heading-anchor", `#${h3?.id}`],
+    ]);
+    expect(h3?.querySelector("code.api-signature")).not.toBeNull();
+    expect(h3?.querySelector("button")).toBeNull();
+    const h2 = host.querySelector("h2");
+    expect(h2?.querySelector("a[data-card]")?.getAttribute("href")).toBe("#functions");
   });
 });

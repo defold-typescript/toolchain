@@ -1,15 +1,16 @@
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { DocsBody, DocsPage } from "fumadocs-ui/layouts/docs/page";
-import { SITE_NAME, toc } from "../lib/site";
+import { outline, SITE_NAME } from "../lib/site";
 import { PageScripts } from "./page-scripts";
 
 /**
- * One page whose body the shared renderer already turned into HTML (a library
- * API page or a listing). The HTML carries its own `h1`, so the page
- * adds no title block; the table of contents comes from the same headings.
+ * One page whose body the markdown-it renderer already turned into HTML. The
+ * HTML carries its own `h1`, so the page adds no title block; the table of
+ * contents comes from the same headings.
  */
 export function HtmlPage({ title, html }: { title: string; html: string }) {
   return (
-    <DocsPage toc={toc(html)}>
+    <DocsPage toc={outline(pageHeadings(html))}>
       <title>{`${title} | ${SITE_NAME}`}</title>
       <DocsBody>
         <article

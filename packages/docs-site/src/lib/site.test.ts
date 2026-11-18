@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { isExternalUrl, LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
+import {
+  hastHeadings,
+  outlineHeadings,
+  pageHeadings,
+} from "@defold-typescript/docs-render/headings";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
@@ -18,8 +23,8 @@ import {
   landingFooterItems,
   linkTabs,
   navCategories,
+  outline,
   surfaceTrees,
-  toc,
 } from "./site";
 
 const TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -187,9 +192,9 @@ describe("landingFooterItems", () => {
   });
 });
 
-const goHtml = await renderCanonicalApiPage("go", TYPES_DIR);
-if (goHtml === undefined) throw new Error("namespace go missing from the canonical surface");
-const goToc = toc(goHtml);
+const goPage = await renderCanonicalApiPage("go", TYPES_DIR);
+if (goPage === undefined) throw new Error("namespace go missing from the canonical surface");
+const goToc = outline(outlineHeadings(hastHeadings(goPage.hast)));
 
 function entry(items: TOCItemType[], url: string): TOCItemType {
   const found = items.find((item) => item.url === url);
@@ -200,7 +205,7 @@ function entry(items: TOCItemType[], url: string): TOCItemType {
 const markupOf = (item: TOCItemType) =>
   renderToStaticMarkup(createElement(Fragment, null, item.title));
 
-describe("toc", () => {
+describe("outline", () => {
   test("an overloaded symbol's entry reads its signature in its syntax colors with the overload count, then its chips", () => {
     const markup = markupOf(entry(goToc, "#goget"));
     const TOKEN =
@@ -227,7 +232,7 @@ describe("toc", () => {
   test("an overload heading with no highlighted token reads its text with the overload count in place", () => {
     const html =
       '<h3 id="f"><code>f(<span class="api-overload-count" data-toc-text="...">2 overloads</span>)</code></h3>';
-    expect(markupOf(entry(toc(html), "#f"))).toBe(
+    expect(markupOf(entry(outline(pageHeadings(html)), "#f"))).toBe(
       'f(<span class="api-overload-count">2 overloads</span>)',
     );
   });
@@ -235,7 +240,7 @@ describe("toc", () => {
   test("a chip the server emitted inactive starts hidden in the outline", () => {
     const html =
       '<h3 id="f"><code>f()</code><span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New" style="display:none">N</span><span class="api-badge-dot api-badge-dot--changed" aria-label="Changed" title="Changed">C</span></h3>';
-    const markup = markupOf(entry(toc(html), "#f"));
+    const markup = markupOf(entry(outline(pageHeadings(html)), "#f"));
     expect(markup).toMatch(
       /<span class="api-badge-dot api-badge-dot--new"[^>]*display:none[^>]*>N/,
     );

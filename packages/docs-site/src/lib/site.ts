@@ -3,7 +3,7 @@ import {
   type BadgeCountTable,
   buildBadgeCountTable,
 } from "@defold-typescript/docs-render/combined-surface";
-import { type Heading, pageHeadings } from "@defold-typescript/docs-render/headings";
+import type { Heading } from "@defold-typescript/docs-render/headings";
 import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import {
   apiVersions,
@@ -262,8 +262,9 @@ function outlineTitle(heading: Heading): ReactNode {
   return createElement(Fragment, null, ...text, ...chips);
 }
 
-export function toc(html: string): TOCItemType[] {
-  return pageHeadings(html).map((heading: Heading) => ({
+/** The outline of a page's H2 through H4 headings. */
+export function outline(headings: readonly Heading[]): TOCItemType[] {
+  return headings.map((heading) => ({
     title: outlineTitle(heading),
     url: `#${heading.id}`,
     depth: heading.level,

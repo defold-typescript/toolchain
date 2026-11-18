@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { apiLinkify, apiPageMarkdown } from "./api-page-render";
+import { toHtml } from "hast-util-to-html";
+import { type ApiPageOptions, apiLinkify, renderApiPage } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { compareSemverDesc } from "./combined-surface";
 import {
@@ -16,6 +17,13 @@ import {
 import { resolveVersionWindow } from "./version-window";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+
+// A page's rendered HTML, its prose linked across `pages`.
+const rendered = async (
+  page: ApiPage,
+  pages: ApiPage[],
+  options: ApiPageOptions = {},
+): Promise<string> => toHtml((await renderApiPage(page, apiLinkify(pages), options)).hast);
 const REAL_TYPES_DIR = join(import.meta.dir, "../../types");
 
 // A minimal page carrying only the fields the namespace-ownership union reads.
@@ -176,7 +184,7 @@ describe("windowedApiPages — the full-range window is the canonical surface", 
     expect(resolveVersionWindow(axis, defaultId as string, null)).toEqual(fullWindow);
   });
 
-  test("the marker layer is byte-identical between the canonical and windowed page", () => {
+  test("the marker layer is byte-identical between the canonical and windowed page", async () => {
     // Both routes render the availability markers, and both now emit the
     // per-`from` category fields the client reads. Comparing the marked render
     // is what keeps the declared canonical honest.
@@ -184,16 +192,16 @@ describe("windowedApiPages — the full-range window is the canonical surface", 
     const canonical = combinedApiPages(REAL_TYPES_DIR);
     const pick = (pages: ApiPage[]): ApiPage => pages.find((p) => p.namespace === "go") as ApiPage;
     const marked = (page: ApiPage) =>
-      apiPageMarkdown({ ...page, route: "/api/go" }, apiLinkify(canonical), {
+      rendered({ ...page, route: "/api/go" }, canonical, {
         combinedMarkers: true,
         window: fullWindow,
       });
-    const output = marked(pick(windowed));
+    const output = await marked(pick(windowed));
     expect(output).toContain("data-span-cats=");
-    expect(output).toBe(marked(pick(canonical)));
+    expect(output).toBe(await marked(pick(canonical)));
   });
 
-  test("a canonical namespace renders byte-identically through the window", () => {
+  test("a canonical namespace renders byte-identically through the window", async () => {
     const windowed = windowedApiPages(fullWindow, REAL_TYPES_DIR);
     const canonical = combinedApiPages(REAL_TYPES_DIR);
     // `go` is a large, representative engine namespace: many functions, curated
@@ -201,8 +209,8 @@ describe("windowedApiPages — the full-range window is the canonical surface", 
     const pick = (pages: ApiPage[]): ApiPage => pages.find((p) => p.namespace === "go") as ApiPage;
     const windowedPage = pick(windowed);
     expect(windowedPage).toBeDefined();
-    expect(apiPageMarkdown({ ...windowedPage, route: "/api/go" }, apiLinkify(canonical))).toBe(
-      apiPageMarkdown(pick(canonical), apiLinkify(canonical)),
+    expect(await rendered({ ...windowedPage, route: "/api/go" }, canonical)).toBe(
+      await rendered(pick(canonical), canonical),
     );
   });
 });

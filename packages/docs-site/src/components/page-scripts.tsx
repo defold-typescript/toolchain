@@ -12,8 +12,9 @@ import {
 } from "../../app/lib/api-surface-pref";
 import { applySinceFilter } from "../../app/lib/since-filter";
 
-// Set on the page body by `HtmlPage` and `MarkdownPage`. A server component cannot import a plain
-// value from a client module, so the two spell it out separately.
+// Set on the page body by `HtmlPage`, `MarkdownPage` and `ApiMarkdownPage`. A
+// server component cannot import a plain value from a client module, so the two
+// spell it out separately.
 const PAGE_BODY_ATTR = "data-page-body";
 
 // The tab groups are server markup (`[data-code-tabs]`: `.code-tab` buttons, then

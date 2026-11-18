@@ -1,14 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { apiPageTree, renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
 import {
   allPageHeadings,
   type Heading,
+  hastHeadings,
   pageHeadings,
   slugify,
 } from "@defold-typescript/docs-render/headings";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
 import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
 
 describe("slugify", () => {
@@ -172,20 +173,24 @@ describe("allPageHeadings", () => {
 });
 
 // biome-ignore lint/correctness/usePlaywrightValidDescribeCallback: bun:test awaits an async describe before collecting its tests.
-describe("pageHeadings over rendered /api pages (Combined surface, committed artifacts)", async () => {
+describe("hastHeadings over rendered /api pages (Combined surface, committed artifacts)", async () => {
   const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(
     combinedNamespaceToApiPage,
   );
-  const markdownOf = (page: (typeof pages)[number]) =>
-    apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
-  const headingsOf = async (markdown: string): Promise<Heading[]> =>
-    pageHeadings(await renderMarkdown(markdown, { highlightSignatureHeadings: true }));
+  const noLinks: SymbolLinker = (text) => [{ type: "text", value: text }];
+  const options = { combinedMarkers: true };
+  const headingsOf = async (page: (typeof pages)[number]): Promise<Heading[]> =>
+    hastHeadings((await renderApiPage(page, noLinks, options)).hast).filter(
+      (h): h is Heading => h.level >= 2 && h.level <= 4,
+    );
   const goPage = pages.find((p) => p.namespace === "go");
   if (!goPage) throw new Error("namespace go missing from the Combined surface");
-  const deprecatedPage = pages.find((p) => markdownOf(p).includes("api-badge-dot--deprecated"));
+  const deprecatedPage = pages.find((p) =>
+    JSON.stringify(apiPageTree(p, noLinks, options)).includes("api-badge-dot--deprecated"),
+  );
   if (!deprecatedPage) throw new Error("no Combined namespace carries a deprecated chip");
-  const go = await headingsOf(markdownOf(goPage));
-  const deprecated = await headingsOf(markdownOf(deprecatedPage));
+  const go = await headingsOf(goPage);
+  const deprecated = await headingsOf(deprecatedPage);
   const marked = [...go, ...deprecated].filter((h) => h.markers !== undefined);
 
   test("the pages exercise new, changed and deprecated chips", () => {

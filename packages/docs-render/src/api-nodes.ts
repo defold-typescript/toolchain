@@ -1,5 +1,4 @@
-import type { Element, ElementContent, Properties } from "hast";
-import { toHtml } from "hast-util-to-html";
+import type { ElementContent, Properties } from "hast";
 import type {
   ApiBlock,
   ApiChip,
@@ -96,15 +95,20 @@ function chip(properties: Properties, text = ""): ApiChip {
   };
 }
 
-/** A chip as the HTML string the markdown-it renderer writes into page Markdown. */
-export function chipHtml(node: ApiChip): string {
-  const element: Element = {
-    type: "element",
-    tagName: node.data.hName,
-    properties: node.data.hProperties,
-    children: node.data.hChildren,
+/**
+ * An element holding other elements and text with no Markdown of its own, such
+ * as the namespace count pills. Like a chip it reads as no text to the heading
+ * slugger and the toc.
+ */
+export function apiElement(
+  tagName: string,
+  properties: Properties,
+  children: ElementContent[],
+): ApiChip {
+  return {
+    type: "apiChip",
+    data: { hName: tagName, hProperties: properties, hChildren: children },
   };
-  return toHtml(element);
 }
 
 /**

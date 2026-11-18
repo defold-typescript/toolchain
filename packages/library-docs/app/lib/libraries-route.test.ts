@@ -7,7 +7,7 @@ import {
   type LibraryIndexCard,
   libraryIndexSections,
   libraryStaticPaths,
-  renderLibraryApiHtml,
+  renderLibraryApiPage,
 } from "./library-routes";
 import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 
@@ -108,9 +108,8 @@ describe("Libraries index sections", () => {
 describe("library API pages", () => {
   test("a page renders at the route of its origin and declared namespace", async () => {
     const route = "/api/github.com/defold/extension-spine/gui";
-    const page = await renderLibraryApiHtml(apiParams(route), REAL_DIRS);
-    const heading = page?.html.match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
-    expect(textOf(heading)).toContain("extension-spine");
+    const page = await renderLibraryApiPage(apiParams(route), REAL_DIRS);
+    expect(textOf(page?.heading ?? "")).toContain("extension-spine");
     const source = apiPages(REAL_DIRS).find((entry) => entry.route === route);
     expect(page?.title).toBe(`${source?.module.namespace} API`);
   });
@@ -125,7 +124,7 @@ describe("library API pages", () => {
       "/api/defold/extension-spine/gui",
       "/api/codeberg.org/defold/extension-spine/gui",
     ]) {
-      const page = await renderLibraryApiHtml(apiParams(path), REAL_DIRS);
+      const page = await renderLibraryApiPage(apiParams(path), REAL_DIRS);
       expect({ path, page }).toEqual({ path, page: undefined });
     }
   });

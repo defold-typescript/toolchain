@@ -29,7 +29,9 @@ import {
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
-import { slugify } from "./headings";
+import { slug } from "github-slugger";
+import type { ApiBlock, ApiChip, ListItem } from "mdast";
+import { apiBlock, overloadCount, signatureCode } from "./api-nodes";
 import { platformDocText } from "./platform-icons";
 
 /**
@@ -1013,38 +1015,67 @@ function formAvailability(
  * links its {@link overloadHeading} with the same `N overloads` count badge its
  * block heading carries, and nests one item per form under it, each
  * linking the same block with that form's {@link overloadFormCodes} entry. Each
- * points down to the detailed block (anchor = `slugify(functionAnchorText(group))`,
- * matching the `slugify-headings` markdown-it rule). Presentation-only — no new
- * heading, so the "On this page" TOC is unchanged. Returns `""` for an empty list
- * so the caller emits nothing.
+ * points down to the detailed block (anchor = `slug(functionAnchorText(group))`,
+ * the slug the pipeline gives that block's heading). Every item carries
+ * `api-overview-item`, the class the `?since=` filter's rows are rendered by.
+ * Presentation-only — no new heading, so the "On this page" TOC is unchanged.
+ * Returns `undefined` for an empty list so the caller emits nothing.
  */
 export function functionOverviewCards(
   symbols: ApiSymbol[],
   // The page's tracked axis, which pairs a function's forms into revision chains
   // so a card counts only live forms; `[]` pairs nothing.
   axis: readonly string[],
-  // Optional per-group marker HTML appended after the signature link in the same
-  // list item (Combined pages pass the `badgeDots` category glyphs). An empty
-  // return — and the default of no callback — leaves the row byte-unchanged.
-  markerFor?: (group: ApiSymbol[]) => string,
-): string {
-  if (symbols.length === 0) return "";
-  const rows = groupOverloadForms(symbols, axis).flatMap((group) => {
-    const text = functionAnchorText(group);
-    const anchor = slugify(text);
-    const count =
-      group.length > 1 ? ` <span class="api-overload-count">${group.length} overloads</span>` : "";
-    const row = `- [\`${text}\`${count}](#${anchor})${markerFor ? markerFor(group) : ""}`;
-    if (group.length === 1) return [row];
-    return [row, ...overloadFormCodes(group).map((code) => `  - [\`${code}\`](#${anchor})`)];
+  // Optional per-group chips appended after the signature link in the same list
+  // item (Combined pages pass the `badgeDots` category glyphs). No chips — and
+  // the default of no callback — leaves the row unchanged.
+  markerFor?: (group: ApiSymbol[]) => ApiChip[],
+): ApiBlock | undefined {
+  if (symbols.length === 0) return undefined;
+  const item = (children: ListItem["children"]): ListItem => ({
+    type: "listItem",
+    spread: false,
+    data: { hProperties: { className: ["api-overview-item"] } },
+    children,
   });
-  return [
-    '<div class="api-overview" aria-label="Function overview">',
-    "",
-    ...rows,
-    "",
-    "</div>",
-  ].join("\n");
+  const rows = groupOverloadForms(symbols, axis).map((group) => {
+    const text = functionAnchorText(group);
+    const url = `#${slug(text)}`;
+    const row = item([
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "link",
+            url,
+            children: [
+              signatureCode(text),
+              ...(group.length > 1 ? [overloadCount(group.length)] : []),
+            ],
+          },
+          ...(markerFor ? markerFor(group) : []),
+        ],
+      },
+    ]);
+    const [first] = group;
+    if (group.length === 1 || !first) return row;
+    // A form's code colors as part of its function's full signature.
+    const forms = overloadFormCodes(group).map((code) =>
+      item([
+        {
+          type: "paragraph",
+          children: [
+            { type: "link", url, children: [signatureCode(code, { prefix: first.name })] },
+          ],
+        },
+      ]),
+    );
+    row.children.push({ type: "list", ordered: false, spread: false, children: forms });
+    return row;
+  });
+  return apiBlock("div", { className: ["api-overview"], ariaLabel: "Function overview" }, [
+    { type: "list", ordered: false, spread: false, children: rows },
+  ]);
 }
 
 function normalizeTypes(types: string[]): string[] {

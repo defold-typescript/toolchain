@@ -1,5 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
+import { apiBlock, signatureCode, spanMarker } from "@defold-typescript/docs-render/api-nodes";
+import { processApiTree } from "@defold-typescript/docs-render/docs-markdown";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { toHtml } from "hast-util-to-html";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
@@ -26,15 +29,31 @@ const CONFIG: ApiSurfaceConfig = {
   badgeCounts: {},
 };
 
-// One symbol heading as the API renderer writes it: the marker names the newest
-// version the symbol is present in, and the body follows the heading.
-function symbol(id: string, newest: string): string {
-  return `<h3 id="${id}"><span data-span-newest="${newest}" data-span-cats="-|-|-"></span>${id}</h3><div class="api-symbol-body">${id} body</div>`;
+const NO_CATEGORY = { isNew: false, isChanged: false, isDeprecated: false };
+
+// One symbol heading as the API pipeline renders it: the marker names the newest
+// version the symbol is present in, and the body follows the heading. The
+// signature is the id, so the heading slugs to it.
+async function symbol(id: string, newest: string): Promise<string> {
+  const marker = spanMarker(
+    [newest],
+    CONFIG.versionIds.map(() => NO_CATEGORY),
+  );
+  const { hast } = await processApiTree({
+    type: "root",
+    children: [
+      { type: "heading", depth: 3, children: [signatureCode(id), ...(marker ? [marker] : [])] },
+      apiBlock("div", { className: ["api-symbol-body"] }, [
+        { type: "paragraph", children: [{ type: "text", value: `${id} body` }] },
+      ]),
+    ],
+  });
+  return toHtml(hast);
 }
 
 // Symbols newer and older than `MIDDLE` inside the page body, and one old symbol
 // outside it that the filter must leave alone.
-const PAGE = `<nav>${symbol("outside", OLDEST)}</nav><article data-page-body="">${symbol("removed", OLDEST)}${symbol("kept", MIDDLE)}${symbol("current", NEWEST)}</article>`;
+let PAGE = "";
 
 let replace: ReturnType<typeof spyOn>;
 let assign: ReturnType<typeof spyOn>;
@@ -60,7 +79,8 @@ function displayOf(id: string): string {
   return heading.style.display;
 }
 
-beforeAll(() => {
+beforeAll(async () => {
+  PAGE = `<nav>${await symbol("outside", OLDEST)}</nav><article data-page-body="">${await symbol("removed", OLDEST)}${await symbol("kept", MIDDLE)}${await symbol("current", NEWEST)}</article>`;
   GlobalRegistrator.register({ url: "http://localhost/" });
 });
 

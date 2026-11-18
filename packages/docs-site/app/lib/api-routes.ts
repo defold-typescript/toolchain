@@ -1,10 +1,10 @@
 import {
   apiLinkify,
-  apiPageMarkdown,
   apiReplacementResolver,
   apiSignatureSymbolLinks,
+  renderApiPage,
 } from "@defold-typescript/docs-render/api-page-render";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import type { RenderedPage } from "@defold-typescript/docs-render/docs-markdown";
 import {
   apiVersionAxis,
   apiVersions,
@@ -87,26 +87,21 @@ export function apiRouteSet(typesDir: string = TYPES_DIR): Set<string> {
 // One namespace as it stands at an exact engine version: the window from the
 // oldest tracked version up to `version`. `undefined` for a version off the axis
 // or a namespace that window does not hold.
-export async function renderVersionedApiHtml(
+export async function renderVersionedApiPage(
   version: string,
   namespace: string,
   typesDir: string = TYPES_DIR,
-): Promise<string | undefined> {
+): Promise<RenderedPage | undefined> {
   const window = resolveVersionWindow(apiVersionAxis(typesDir), version, null);
   if (!window) return undefined;
   const pages = windowedApiPages(window, typesDir);
   const page = pages.find((entry) => entry.namespace === namespace);
   if (!page) return undefined;
-  return renderMarkdown(
-    apiPageMarkdown(page, apiLinkify(pages), {
-      resolveReplacement: apiReplacementResolver(pages),
-      combinedMarkers: true,
-      window,
-    }),
-    {
-      highlightSignatureHeadings: true,
-      signatureSymbolLinks: apiSignatureSymbolLinks(canonicalApiPages(typesDir), page, pages),
-    },
+  return renderApiPage(
+    page,
+    apiLinkify(pages),
+    { resolveReplacement: apiReplacementResolver(pages), combinedMarkers: true, window },
+    { signatureSymbolLinks: apiSignatureSymbolLinks(canonicalApiPages(typesDir), page, pages) },
   );
 }
 

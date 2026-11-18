@@ -1,11 +1,14 @@
 import {
   apiLinkify,
-  apiPageMarkdown,
   apiSignatureSymbolLinks,
+  renderApiPage,
 } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
-import type { DocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import {
+  type DocsMarkdown,
+  processDocsMarkdown,
+  type RenderedPage,
+} from "@defold-typescript/docs-render/docs-markdown";
 import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import { apiPages, libraryOrigins, linkPages, untypedListings } from "./api-content";
@@ -39,10 +42,14 @@ export interface LibraryListingParams {
   repo: string;
 }
 
-/** A page's `<title>` stem and its body, which carries its own `h1`. */
-export interface LibraryPageHtml {
+/**
+ * A page's `<title>` stem, the inner HTML of its `h1` (the styled library path),
+ * and its body run through the docs pipeline.
+ */
+export interface LibraryPage {
   title: string;
-  html: string;
+  heading: string;
+  page: RenderedPage;
 }
 
 export interface LibraryStaticPaths {
@@ -126,10 +133,10 @@ export function libraryStaticPaths(dirs?: LibraryDirs, guideDir?: string): Libra
   };
 }
 
-export async function renderLibraryApiHtml(
+export async function renderLibraryApiPage(
   { host, owner, repo, namespace }: LibraryApiParams,
   dirs?: LibraryDirs,
-): Promise<LibraryPageHtml | undefined> {
+): Promise<LibraryPage | undefined> {
   const route = `/api/${host}/${owner}/${repo}/${namespace}`;
   const page = apiPages(dirs).find((entry) => entry.route === route);
   if (!page) return undefined;
@@ -138,35 +145,36 @@ export async function renderLibraryApiHtml(
   const lineage = libraryLineage(page.namespace, libraryOrigins(dirs));
   // A name several libraries (or a library and the engine) declare links only on
   // a page that declares it, to that page's own heading.
-  const body = await renderMarkdown(
-    apiPageMarkdown(page, apiLinkify(links, { current: page, ambiguous: "drop" }), {
-      // The heading is the styled path, so the markdown body omits its H1.
-      omitHeading: true,
-    }),
-    {
-      highlightSignatureHeadings: true,
-      signatureSymbolLinks: apiSignatureSymbolLinks(links, page, links, { ambiguous: "drop" }),
-    },
+  const body = await renderApiPage(
+    page,
+    apiLinkify(links, { current: page, ambiguous: "drop" }),
+    // The heading is the styled path, so the page body omits its H1.
+    { omitHeading: true },
+    { signatureSymbolLinks: apiSignatureSymbolLinks(links, page, links, { ambiguous: "drop" }) },
   );
   return {
     title: `${page.module.namespace} API`,
-    html: `<h1>${libraryPathHtml(lineage.owner, lineage.repo, page.namespace)}</h1>${body}`,
+    heading: libraryPathHtml(lineage.owner, lineage.repo, page.namespace),
+    page: body,
   };
 }
 
 // The page for a library that ships no `.script_api`: what it ships and how a
-// project uses it, in place of an API reference.
-export async function renderLibraryListingHtml(
+// project uses it, in place of an API reference. Its text comes from upstream,
+// so it runs through the shared chain that keeps that text inert.
+export async function renderLibraryListingPage(
   { host, owner, repo }: LibraryListingParams,
   dirs?: LibraryDirs,
-): Promise<LibraryPageHtml | undefined> {
+): Promise<LibraryPage | undefined> {
   const route = `/libraries/${host}/${owner}/${repo}`;
   const listing = untypedListings(dirs).find((candidate) => candidate.route === route);
   if (!listing) return undefined;
 
-  const body = await renderMarkdown(listingPageMarkdown(listing));
-  const heading = `${libraryPathHtml(listing.owner, listing.repo, "")} <span>${NO_TYPED_API_ICON}</span>`;
-  return { title: `${listing.owner}/${listing.repo}`, html: `<h1>${heading}</h1>${body}` };
+  return {
+    title: `${listing.owner}/${listing.repo}`,
+    heading: `${libraryPathHtml(listing.owner, listing.repo, "")} <span>${NO_TYPED_API_ICON}</span>`,
+    page: await processDocsMarkdown(listingPageMarkdown(listing), { routePrefix: "" }),
+  };
 }
 
 /** A guide's `<title>` stem and its processed Markdown, which carries its own `h1`. */

@@ -2,9 +2,9 @@
 // field type to the API entry that lists the alias members — the same entry the
 // signature heading above the breakdown links to.
 //
-// Unlike a signature, a type label sits in no enclosing anchor: `nameTypeLabel`
-// (see api-page-render) emits it as a bare `<code class="api-type">` whose inner
-// text is already HTML-escaped, so an `<a>` can nest *inside* the code and none
+// Unlike a signature, a type label sits in no enclosing anchor: markdown-it input
+// carries it as a bare `<code class="api-type">` whose inner text is already
+// HTML-escaped, so an `<a>` can nest *inside* the code and none
 // of the anchor-splitting the signature path needs applies here. Escaping at the
 // producer is also what makes the run scannable: the inner text holds no `<`
 // besides the `api-name` tags around bold parameter names, so one match per run

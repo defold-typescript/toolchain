@@ -1,4 +1,5 @@
 import { htmlToDocText } from "@defold-typescript/types";
+import { slug } from "github-slugger";
 import {
   type ApiPage,
   apiModuleSymbols,
@@ -7,7 +8,6 @@ import {
   qualify,
   symbolNamespace,
 } from "./api-surface";
-import { slugify } from "./headings";
 import { stripPlatformMarkers } from "./platform-icons";
 
 export interface SymbolEntry {
@@ -26,9 +26,9 @@ export interface SymbolEntry {
  * `<kind>:<name>` with the {@link apiModuleSymbols} kind. A function anchors at
  * its overload group's heading, which is the only heading an overloaded name
  * renders, and a function whose signature changed anchors at its current form;
- * every other member slugs its own signature. The symbol index and the search
- * index both route through this map, so a tooltip link and a search hit land on
- * the same heading.
+ * every other member slugs its own signature, with the slugger the docs pipeline
+ * mints heading ids with. The symbol index and the search index both route
+ * through this map, so a tooltip link and a search hit land on the same heading.
  */
 export function memberAnchors(page: ApiPage): Map<string, string> {
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
@@ -42,7 +42,7 @@ export function memberAnchors(page: ApiPage): Map<string, string> {
   for (const symbol of symbols) {
     anchors.set(
       `${symbol.kind}:${symbol.name}`,
-      slugify(
+      slug(
         (symbol.kind === "function" ? functionAnchors.get(symbol.name) : undefined) ??
           symbol.signature,
       ),
