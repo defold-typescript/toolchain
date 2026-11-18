@@ -1537,13 +1537,14 @@ export const stop = string.find("hello", "l")[1];
 
 The second line compiles to `select(2, string.find("hello", "l"))`, which calls the helper above instead of Lua's `select`.
 
-**Why.** A top-level name you do not export compiles to a Lua `local` that covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, or an import binding. TypeScriptToLua renames such a local only when it clashes with a short list of its own (`print`, `type`, `pairs`, `tostring`, `require` and a few more). `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...) keep their names, so the local hides the global for the rest of the file, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
+**Why.** A top-level name you do not export compiles to a Lua `local` that covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, or an import binding the file reads as a value. TypeScriptToLua renames such a local only when it clashes with a short list of its own (`print`, `type`, `pairs`, `tostring`, `require` and a few more). `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...) keep their names, so the local hides the global for the rest of the file, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
 
 **What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Nothing warns for:
 
 - an exported name, which TypeScriptToLua keeps on the module table;
 - a name inside a function body, which hides the global only inside that function, as it does in TypeScript;
 - a `const enum` or a `declare`, which emit nothing;
+- an import the build drops: one the file never reads as a value, or a `defineScript`-style factory import, which the build erases;
 - a file with no `import` or `export`, whose top-level names are globals rather than locals.
 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.

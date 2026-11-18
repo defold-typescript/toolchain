@@ -25,7 +25,7 @@ function positionOf(
 }
 
 const SHADOWING_MAIN = [
-  'import { label } from "./ui";',
+  'import { label, sound } from "./ui";',
   "",
   "function next(): void {}",
   "const select = (...xs: number[]) => xs.length;",
@@ -39,7 +39,7 @@ const SHADOWING_MAIN = [
   "",
 ].join("\n");
 
-const UI = "export const label = 1;\n";
+const UI = "export const label = 1;\nexport const sound = 1;\n";
 
 describe("file-level Lua global shadow warning", () => {
   test("warns once per top-level local that hides a Lua or Defold global, at its name", () => {
@@ -109,6 +109,35 @@ describe("file-level Lua global shadow warning", () => {
       expect(result.diagnostics).toEqual([]);
     },
   );
+
+  test.each([
+    ["an unused named import", 'import { label } from "./ui";\nexport const s = 1;\n'],
+    [
+      "a binding read only in a type position",
+      'import { label } from "./ui";\nexport const s: typeof label = 1;\n',
+    ],
+    ["an unused namespace import", 'import * as sound from "./ui";\nexport const s = 1;\n'],
+    ["an unused default import", 'import timer from "./ui";\nexport const s = 1;\n'],
+  ])("does not warn for an import binding TypeScript-to-Lua elides: %s", (_case, source) => {
+    const result = transpileProject({
+      files: { "main.ts": source, "ui.ts": "export const label = 1;\nexport default 1;\n" },
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  test.each([
+    [
+      "main.ts",
+      'import { defineScript as next } from "@defold-typescript/types";\nexport default next({ init: () => ({ n: 1 }) });\n',
+    ],
+    [
+      "tool.ts",
+      'import { defineEditorScript as next } from "@defold-typescript/types/editor-script";\nexport default next({ get_commands: () => [] });\n',
+    ],
+  ])("does not warn for a factory import the build erases: %s", (file, source) => {
+    const result = transpileProject({ files: { [file]: source } });
+    expect(result.diagnostics).toEqual([]);
+  });
 
   test("warns for a local that an export clause re-exports, since its emit stays a local", () => {
     const source = "function next(): void {}\nexport { next };\n";
