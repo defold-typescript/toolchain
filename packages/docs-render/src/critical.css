@@ -248,9 +248,6 @@ header.topbar-critical .logo-mark {
   opacity: 1;
   color: var(--color-accent);
 }
-.prose a.badge-link {
-  border-bottom: none;
-}
 .prose strong {
   font-weight: 600;
   color: var(--color-text);
@@ -330,101 +327,6 @@ header.topbar-critical .logo-mark {
   font-size: inherit;
   color: inherit;
 }
-/* Filename chip for `title="…"` fences; mirror of the layered rule in styles.css. */
-.prose .code-block {
-  margin: 1.2em 0;
-}
-.prose .code-title {
-  font-family: var(--font-mono);
-  font-size: var(--prose-code-title-size);
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
-  padding: 8px 16px;
-}
-.prose .code-block pre {
-  margin: 0;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-/* Lua/TypeScript language badge (`ui/badge`): inline before the path in a
-   caption; on an untitled block it overlaps the pre's top edge by half its
-   height, so the figure reserves that half and the pre keeps its full
-   radius. Mirror of the layered rules in styles.css. */
-.prose .code-block {
-  --code-badge-height: calc(1.25rem + 2px);
-}
-.prose .code-title .code-badge {
-  vertical-align: middle;
-  margin-inline-end: 8px;
-}
-.prose .code-badge-icon {
-  width: 100%;
-  height: 100%;
-}
-.prose .code-block--badged {
-  position: relative;
-  padding-top: calc(var(--code-badge-height) / 2);
-}
-.prose .code-block--badged > .code-badge {
-  position: absolute;
-  top: 0;
-  left: 12px;
-  z-index: 1;
-}
-.prose .code-block--badged pre {
-  border-radius: 8px;
-}
-/* TypeScript/Lua tab group: badges as tab buttons overlapping the top edge,
-   the selected one ringed and accent-filled. Mirror of the layered layout rules
-   and the unlayered tab-state rules in styles.css. */
-.prose .code-tabs {
-  --code-badge-height: calc(1.25rem + 2px);
-  position: relative;
-  margin: 1.2em 0;
-  padding-top: calc(var(--code-badge-height) / 2);
-}
-.prose .code-tabs-list {
-  position: absolute;
-  top: 0;
-  left: 12px;
-  z-index: 1;
-  display: flex;
-  gap: 6px;
-}
-.prose .code-tab {
-  display: inline-flex;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-.prose .code-tab:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-.prose .code-tabs-panel {
-  margin: 0;
-}
-.prose .code-tabs-panel pre {
-  border-radius: 8px;
-}
-.prose .code-tab[aria-selected="true"] .code-badge {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface));
-  color: var(--color-accent-strong);
-}
-.prose .code-tab[aria-selected="false"]:hover .code-badge {
-  border-color: var(--color-border-strong);
-  color: var(--color-text);
-}
 /* Platform marker badge (`ui/badge` in a `ui/tooltip` trigger): a square,
    icon-only chip sitting on the text baseline. Mirror of the layered rules in
    styles.css. */
@@ -439,20 +341,6 @@ header.topbar-critical .logo-mark {
 .prose .platform-badge-glyph {
   width: 100%;
   height: 100%;
-}
-/* The page scripts' `addCopyButtons` wraps each <pre> in a `.code-body`. The pre
-   keeps its own margin (`.prose pre` 16.8px, or 0 inside a `.code-block`) and it
-   collapses out through this zero-margin wrapper, so the block's box is
-   unchanged — as long as the wrapper itself contributes no margin. When the
-   wrapper IS a direct prose child it otherwise picks up the `.prose > * + *` owl
-   (1.1em at the 17px base = 18.7px), overriding the collapse and growing the
-   block; zero it so only the pre's margin shows. Must live here (unlayered): the
-   styles.css mirror is in @layer components and loses to this file's owl.
-   Do NOT zero `.code-body > pre` — a pre nested in a list produces a wrapper
-   that is not a direct prose child, gets no compensating margin, and would lose
-   its spacing entirely. */
-.prose > .code-body {
-  margin: 0;
 }
 .prose ul,
 .prose ol {
@@ -541,8 +429,8 @@ header.topbar-critical .logo-mark {
   max-width: none;
 }
 /* Mirrors app/styles.css: a hand-written HTML table whose last column holds
-   fenced code. The unlayered `.prose table` and `.code-block--badged` rules
-   above beat any layered override, so the fixed columns live here. */
+   fenced code. The unlayered `.prose table` rule above beats any layered
+   override, so the fixed columns live here. */
 .prose .code-table > table {
   table-layout: fixed;
   width: 100%;
@@ -562,15 +450,6 @@ header.topbar-critical .logo-mark {
 }
 .prose .code-table td > :last-child {
   margin-bottom: 0;
-}
-.prose .code-table .code-block {
-  margin: 0 0 8px;
-}
-.prose .code-table .code-block--badged {
-  padding-top: 0;
-}
-.prose .code-table .code-block--badged > .code-badge {
-  display: none;
 }
 .prose .api-overview {
   margin: 1.2em 0;
@@ -610,7 +489,7 @@ header.topbar-critical .logo-mark {
    app/styles.css: its unlayered `.prose a` / `.prose .api-overview a` outrank the
    layered copy regardless of specificity, so the split-signature seam flattening,
    the permalink-icon positioning context, and the brand deep-link's dotted
-   underline are duplicated here (as with `.badge-link`). Placed after the
+   underline are duplicated here (as with `a.heading-anchor`). Placed after the
    overview rules to win at equal specificity. */
 .prose .signature-split {
   position: relative;

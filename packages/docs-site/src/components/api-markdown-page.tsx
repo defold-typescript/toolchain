@@ -26,7 +26,6 @@ export function ApiMarkdownPage({ title, page }: { title: string; page: Rendered
           key={title}
           versionIds={apiVersions(TYPES_DIR).map((version) => version.id)}
           surface={{ ...apiSurfaceConfig(), badgeCounts: {} }}
-          copyButtons={false}
         />
       </DocsBody>
     </DocsPage>

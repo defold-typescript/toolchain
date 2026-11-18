@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { toHtml } from "hast-util-to-html";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
 import { buildNav, type NavLink } from "./nav";
@@ -45,9 +46,10 @@ describe("guide frontmatter integration", () => {
 
   test("the rendered body strips the frontmatter from a sample page", async () => {
     const raw = readFileSync(join(GUIDE_DIR, "wall.md"), "utf8");
-    const html = await renderMarkdown(parseFrontmatter(raw).body);
+    const { hast } = await processDocsMarkdown(parseFrontmatter(raw).body, { routePrefix: "" });
+    const html = toHtml(hast);
     expect(html).not.toContain("toc-title");
-    expect(html.trimStart().startsWith("---")).toBe(false);
+    expect(html.trimStart().startsWith("<hr")).toBe(false);
   });
 
   test("the sidebar renders an inline-code label from the ts-defold titles", () => {

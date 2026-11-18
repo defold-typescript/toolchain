@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderMarkdown } from "./markdown";
+import { toHtml } from "hast-util-to-html";
+import { processDocsMarkdown } from "./docs-markdown";
 import { isSafeLink } from "./upstream-text";
 
 describe("isSafeLink", () => {
@@ -21,7 +22,10 @@ describe("isSafeLink", () => {
   });
 
   test("the renderer refuses an unsafe target the escape never saw", async () => {
-    const html = await renderMarkdown("[a](ftp://x/y) [b][1]\n\n[1]: tel:123");
+    const { hast } = await processDocsMarkdown("[a](ftp://x/y) [b][1]\n\n[1]: tel:123", {
+      routePrefix: "",
+    });
+    const html = toHtml(hast);
     expect(html).not.toContain('href="ftp:');
     expect(html).not.toContain('href="tel:');
   });

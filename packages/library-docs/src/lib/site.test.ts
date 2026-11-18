@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { pageHeadings } from "@defold-typescript/docs-render/headings";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
+import { hastHeadings, outlineHeadings } from "@defold-typescript/docs-render/headings";
 import type { Item, Node } from "fumadocs-core/page-tree";
 import { createElement, Fragment, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -62,16 +63,15 @@ describe("the library sidebar tree", () => {
 });
 
 describe("outline", () => {
-  test("a signature heading's entry carries its token colors, and a plain heading's is its text", () => {
+  test("a signature heading's entry carries its token colors, and a plain heading's is its text", async () => {
     const NAME =
       '<span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;font-weight:600">f</span>';
     const CALL = '<span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8">()</span>';
-    const [plain, signature] = outline(
-      pageHeadings(
-        '<h2 id="functions"><a class="heading-anchor" href="#functions">Functions</a></h2>' +
-          `<h3 id="f"><a class="heading-anchor" href="#f"><code class="api-signature shiki">${NAME}${CALL}</code></a></h3>`,
-      ),
-    );
+    const html =
+      '<h2 id="functions"><a class="heading-anchor" href="#functions">Functions</a></h2>' +
+      `<h3 id="f"><a class="heading-anchor" href="#f"><code class="api-signature shiki">${NAME}${CALL}</code></a></h3>`;
+    const { hast } = await processDocsMarkdown(html, { routePrefix: "" });
+    const [plain, signature] = outline(outlineHeadings(hastHeadings(hast)));
     expect(plain?.title).toBe("Functions");
     expect(markup(signature?.title)).toBe(
       `<span class="shiki outline-signature">${NAME}${CALL}</span>`,

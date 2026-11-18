@@ -8,7 +8,8 @@
 import { expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
+import { toHtml } from "hast-util-to-html";
 import { isStepFence, stepLines, type TsFence, tsFences } from "../../../cli/src/guide-steps";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
@@ -24,6 +25,10 @@ const STEP_PAGES: [page: string, fences: TsFence[]][] = readdirSync(GUIDE_DIR)
     ),
   ])
   .filter(([, fences]) => fences.length > 0);
+
+async function renderFence(fence: string): Promise<string> {
+  return toHtml((await processDocsMarkdown(fence, { routePrefix: "" })).hast);
+}
 
 type Shown = readonly [mark: "++" | "--" | undefined, text: string];
 
@@ -54,7 +59,7 @@ test("the site shows every step fence line the way the lesson gate reads it", as
   expect(STEP_PAGES.map(([page]) => page)).toContain("state-machines-tutorial.md");
   for (const [page, fences] of STEP_PAGES) {
     for (const fence of fences) {
-      const html = await renderMarkdown(`\`\`\`ts${fence.info}\n${fence.body}\`\`\`\n`);
+      const html = await renderFence(`\`\`\`ts${fence.info}\n${fence.body}\`\`\`\n`);
       const read = stepLines(fence).map(({ text, mark }): Shown => [mark, text]);
       expect(shownLines(html), `${page}: step fence at page line ${fence.line}`).toEqual(read);
     }
@@ -63,7 +68,7 @@ test("the site shows every step fence line the way the lesson gate reads it", as
 
 test("the gate can fail: the site gives a marker alone on a line to the line after it", async () => {
   const body = "const a = 1;\n// [!code ++]\nconst b = 2;\n";
-  const html = await renderMarkdown(`\`\`\`ts step title="a.ts"\n${body}\`\`\`\n`);
+  const html = await renderFence(`\`\`\`ts step title="a.ts"\n${body}\`\`\`\n`);
   const read = stepLines({ info: ' step title="a.ts"', body, line: 1 }).map(
     ({ text, mark }): Shown => [mark, text],
   );

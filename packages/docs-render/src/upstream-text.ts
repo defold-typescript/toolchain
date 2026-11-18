@@ -1,10 +1,11 @@
 import type { ApiModule } from "@defold-typescript/types";
 
 // A private-use character stands in for every `<` of upstream text until the page
-// is rendered. `renderMarkdown` keeps `html: true`, because the page markdown writes
-// its own markup, so a `<` reaching it could open a tag wherever markdown-it did not
+// is rendered, and `rehypeUpstreamMarkers` puts each one back as text last. The
+// docs pipeline parses raw HTML into elements, because the page markdown writes
+// its own markup, so a `<` reaching it could open a tag wherever remark did not
 // read it as code. A scan for code spans and fences cannot settle that here: a
-// backtick left open on an earlier line, or a list item, changes what markdown-it
+// backtick left open on an earlier line, or a list item, changes what remark
 // calls code. With no `<` to read, the question never arises.
 const LESS_THAN = "\uE001";
 
@@ -20,8 +21,9 @@ export function isSafeLink(url: string): boolean {
 
 const INLINE_LINK = /!?\[([^\]]*)\]\(\s*<?((?:[^()\s>]|\([^()]*\))*)>?(?:\s+[^)]*)?\)/g;
 
-// Markdown ready for `renderMarkdown`: every `<` reads as text, in prose and code
-// alike, and a link with an unsafe target is reduced to its label.
+// Markdown ready for the docs pipeline: every `<` reads as text, in prose and code
+// alike, and an inline link with an unsafe target is reduced to its label;
+// `remarkSafeLinks` refuses the reference links this pattern cannot see.
 export function escapeUpstreamText(text: string): string {
   return text
     .replaceAll(LESS_THAN, "")
@@ -29,10 +31,6 @@ export function escapeUpstreamText(text: string): string {
       isSafeLink(target) ? link : label,
     )
     .replaceAll("<", LESS_THAN);
-}
-
-export function restoreUpstreamMarkers(html: string): string {
-  return html.replaceAll(LESS_THAN, "&lt;");
 }
 
 /** Rendered text with each `<` of upstream text back in place, for a text node. */

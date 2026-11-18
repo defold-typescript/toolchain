@@ -29,7 +29,7 @@ export function ApiMarkdownPage({
           <h1 dangerouslySetInnerHTML={{ __html: heading }} />
           <MarkdownBody hast={page.hast} components={apiBodyComponents} />
         </article>
-        <PageScripts key={title} copyButtons={false} />
+        <PageScripts key={title} />
       </DocsBody>
     </DocsPage>
   );

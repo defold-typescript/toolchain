@@ -38,7 +38,7 @@ import {
 import {
   hastHeadings,
   hastOutlineText,
-  pageHeadings,
+  outlineHeadings,
 } from "@defold-typescript/docs-render/headings";
 import { buildSymbolIndex, memberAnchors } from "@defold-typescript/docs-render/symbol-index";
 import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
@@ -264,9 +264,9 @@ function headingId(root: HastNodes, text: string): string {
   return String(heading.properties.id);
 }
 
-// The id of the heading that reads exactly `text` in rendered HTML.
-function headingIdIn(html: string, text: string): string {
-  const heading = pageHeadings(html).find((candidate) => candidate.text === text);
+// The id of the outline heading that reads exactly `text` on a rendered page.
+function headingIdIn(root: HastNodes, text: string): string {
+  const heading = outlineHeadings(hastHeadings(root)).find((candidate) => candidate.text === text);
   if (!heading) throw new Error(`no heading reads ${text}`);
   return heading.id;
 }
@@ -2278,19 +2278,25 @@ function opaqueBrandPage(): ApiPage {
   };
 }
 
+async function renderAliasHast(
+  pages: ApiPage[],
+  page: ApiPage,
+  aliasPages: ApiPage[] = pages,
+): Promise<HastRoot> {
+  return renderHast(
+    page,
+    noLink,
+    {},
+    { signatureSymbolLinks: apiSignatureSymbolLinks(pages, page, aliasPages) },
+  );
+}
+
 async function renderAliasSurface(
   pages: ApiPage[],
   page: ApiPage,
   aliasPages: ApiPage[] = pages,
 ): Promise<string> {
-  return toHtml(
-    await renderHast(
-      page,
-      noLink,
-      {},
-      { signatureSymbolLinks: apiSignatureSymbolLinks(pages, page, aliasPages) },
-    ),
-  );
+  return toHtml(await renderAliasHast(pages, page, aliasPages));
 }
 
 // The `<li>` whose name half is `name`, so an assertion names one slot rather
@@ -2327,14 +2333,15 @@ describe("constant union alias links in parameter, return and field types", () =
 
   test("a parameter type links its alias to an anchor the same page minted", async () => {
     const pages = surface();
-    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const tree = await renderAliasHast(pages, pages[0] as ApiPage);
+    const html = toHtml(tree);
     const href = slotBullet(html, "easing").match(
       /<a class="api-type-link" href="([^"]+)">gui\.Easing<\/a>/,
     )?.[1];
     expect(href).toBeString();
     const [route, anchor] = (href as string).split("#");
     expect(route).toBe("/api/gui");
-    expect(anchor).toBe(headingIdIn(html, ALIAS_EASING_ROW));
+    expect(anchor).toBe(headingIdIn(tree, ALIAS_EASING_ROW));
     expect(mintedAnchorIds(html).has(anchor as string)).toBe(true);
   });
 
@@ -2350,16 +2357,14 @@ describe("constant union alias links in parameter, return and field types", () =
 
   test("a return value and a nested object-literal field link the same way", async () => {
     const pages = surface();
-    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
-    const stateId = headingIdIn(
-      await renderAliasSurface(pages, pages[1] as ApiPage),
-      ALIAS_STATE_ROW,
-    );
+    const tree = await renderAliasHast(pages, pages[0] as ApiPage);
+    const html = toHtml(tree);
+    const stateId = headingIdIn(await renderAliasHast(pages, pages[1] as ApiPage), ALIAS_STATE_ROW);
     expect(slotBullet(html, "state")).toContain(
       `<a class="api-type-link" href="/api/graphics#${stateId}">graphics.State</a>`,
     );
     expect(slotBullet(html, "inner")).toContain(
-      `<a class="api-type-link" href="/api/gui#${headingIdIn(html, ALIAS_EASING_ROW)}">gui.Easing</a>`,
+      `<a class="api-type-link" href="/api/gui#${headingIdIn(tree, ALIAS_EASING_ROW)}">gui.Easing</a>`,
     );
   });
 
@@ -2436,7 +2441,7 @@ describe("versioned alias link targets", () => {
     const pages = versionedSurface();
     const html = await renderAliasSurface([opaqueBrandPage()], pages[0] as ApiPage, pages);
     const stateId = headingIdIn(
-      await renderAliasSurface([opaqueBrandPage()], pages[1] as ApiPage, pages),
+      await renderAliasHast([opaqueBrandPage()], pages[1] as ApiPage, pages),
       ALIAS_STATE_ROW,
     );
     expect(slotBullet(html, "state")).toContain(`href="${PREFIX}/graphics#${stateId}"`);

@@ -23,7 +23,6 @@ export function MarkdownPage({ title, page }: { title: string; page: DocsMarkdow
           key={title}
           versionIds={apiVersions(TYPES_DIR).map((version) => version.id)}
           surface={{ ...apiSurfaceConfig(), badgeCounts: {} }}
-          copyButtons={false}
         />
       </DocsBody>
     </DocsPage>

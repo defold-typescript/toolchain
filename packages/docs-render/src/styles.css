@@ -500,100 +500,6 @@
     color: inherit;
   }
 
-  /* A `title="src/board.ts"` fence renders a filename chip flush atop the block:
-     the figure owns the vertical rhythm and the pre drops its top radius/margin
-     so the two read as one unit. Mirrored in critical.css. */
-  .prose .code-block {
-    margin: 1.2em 0;
-  }
-
-  .prose .code-title {
-    font-family: var(--font-mono);
-    font-size: var(--prose-code-title-size);
-    color: var(--color-text-muted);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-bottom: 0;
-    border-radius: 8px 8px 0 0;
-    padding: 8px 16px;
-  }
-
-  .prose .code-block pre {
-    margin: 0;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-  }
-
-  /* Lua/TypeScript language badge (`ui/badge`): inline before the path in a
-     caption; on an untitled block it overlaps the pre's top edge by half its
-     height, so the figure reserves that half and the pre keeps its full
-     radius. Mirrored in critical.css. */
-  .prose .code-block {
-    --code-badge-height: calc(1.25rem + 2px);
-  }
-  .prose .code-title .code-badge {
-    vertical-align: middle;
-    margin-inline-end: 8px;
-  }
-  .prose .code-badge-icon {
-    width: 100%;
-    height: 100%;
-  }
-  .prose .code-block--badged {
-    position: relative;
-    padding-top: calc(var(--code-badge-height) / 2);
-  }
-  .prose .code-block--badged > .code-badge {
-    position: absolute;
-    top: 0;
-    left: 12px;
-    z-index: 1;
-  }
-  .prose .code-block--badged pre {
-    border-radius: 8px;
-  }
-
-  /* TypeScript/Lua tab group: the language badges become tab buttons that
-     overlap the top edge exactly like `.code-block--badged > .code-badge`, so
-     the group reserves the same half-badge padding and its panels drop the
-     figure margin. Selected-tab colors are unlayered below. Mirrored in
-     critical.css. */
-  .prose .code-tabs {
-    --code-badge-height: calc(1.25rem + 2px);
-    position: relative;
-    margin: 1.2em 0;
-    padding-top: calc(var(--code-badge-height) / 2);
-  }
-  .prose .code-tabs-list {
-    position: absolute;
-    top: 0;
-    left: 12px;
-    z-index: 1;
-    display: flex;
-    gap: 6px;
-  }
-  .prose .code-tab {
-    display: inline-flex;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: none;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-  }
-  .prose .code-tab:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
-  .prose .code-tabs-panel {
-    margin: 0;
-  }
-  .prose .code-tabs-panel pre {
-    border-radius: 8px;
-  }
-
   /* Platform marker badge (`ui/badge` in a `ui/tooltip` trigger): a square,
      icon-only chip sitting on the text baseline. Mirrored in critical.css. */
   .prose .platform-badge {
@@ -607,76 +513,6 @@
   .prose .platform-badge-glyph {
     width: 100%;
     height: 100%;
-  }
-
-  /* Copy-to-clipboard button, injected per code block by `addCopyButtons`,
-     which wraps each `<pre>` in a `position: relative` `.code-body` so the button
-     pins to the top-right without scrolling with the code. The wrapper must
-     reproduce the exact vertical box the bare `<pre>` had, or hydration reflows
-     the page. The pre keeps its own margin (16.8px, or 0 inside a `.code-block`)
-     and collapses it out through this zero-margin wrapper. The only wrinkle: a
-     wrapper that is a direct prose child otherwise inherits the `.prose > * + *`
-     owl (18.7px), overriding the collapse — so zero it. Do not zero the inner
-     pre: a pre nested in a list yields a wrapper that is not a direct prose
-     child, so it gets no compensating margin and would lose its spacing.
-     Authoritative copy is the unlayered mirror in critical.css (this @layer
-     components rule loses to that file's unlayered owl). */
-  .code-body {
-    position: relative;
-  }
-  .prose > .code-body {
-    margin: 0;
-  }
-  .code-clip {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.85rem;
-    height: 1.85rem;
-    padding: 0;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-surface);
-    color: var(--color-text-muted);
-    opacity: 0.35;
-    cursor: pointer;
-    transition:
-      opacity 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
-  }
-  .code-body:hover .code-clip {
-    opacity: 0.7;
-  }
-  .code-clip:hover,
-  .code-clip:focus-visible {
-    opacity: 1;
-    color: var(--color-text);
-    border-color: var(--color-border-strong);
-    outline: none;
-  }
-  .code-clip > svg {
-    display: block;
-    width: 1rem;
-    height: 1rem;
-  }
-  .code-clip .code-clip-check {
-    display: none;
-  }
-  .code-clip.is-clipped {
-    opacity: 1;
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-  }
-  .code-clip.is-clipped .code-clip-icon {
-    display: none;
-  }
-  .code-clip.is-clipped .code-clip-check {
-    display: block;
   }
 
   .prose ul,
@@ -730,78 +566,6 @@
 
   .prose blockquote > :last-child {
     margin-bottom: 0;
-  }
-
-  .prose .admonition {
-    --admonition-color: var(--color-accent);
-    margin: 1.2em 0;
-    padding: 0.8em 1em;
-    border-left: 3px solid var(--admonition-color);
-    border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--admonition-color) 7%, var(--color-bg));
-    color: var(--color-text);
-  }
-
-  .prose .admonition > :first-child {
-    margin-top: 0;
-  }
-
-  .prose .admonition > :last-child {
-    margin-bottom: 0;
-  }
-
-  .prose .admonition-tip {
-    --admonition-color: #1a7f37;
-  }
-
-  .prose .admonition-important {
-    --admonition-color: #8250df;
-  }
-
-  .prose .admonition-warning {
-    --admonition-color: var(--color-warning);
-  }
-
-  .prose .admonition-caution {
-    --admonition-color: #cf222e;
-  }
-
-  /* Inline: the label leads the first paragraph or heading of the body, so the
-     icon, the kind and the opening words share one line. `nowrap` keeps the
-     icon with its word when that line wraps. */
-  .prose .admonition-title {
-    font-weight: 600;
-    color: var(--admonition-color);
-    white-space: nowrap;
-    margin-right: 0.5em;
-  }
-
-  /* Preflight resets `svg` to `display: block`, which would drop the icon onto
-     a line of its own now that the label is inline. Flow it with the text. */
-  .prose .admonition-title svg {
-    display: inline-block;
-    width: 1.1em;
-    height: 1.1em;
-    vertical-align: -0.18em;
-    margin-right: 0.3em;
-  }
-
-  /* Body whose first block cannot host an inline label (a list, a code fence,
-     a table) keeps it on a line of its own. */
-  .prose .admonition-lead {
-    margin: 0 0 0.4em;
-  }
-
-  [data-theme="dark"] .prose .admonition-tip {
-    --admonition-color: #3fb950;
-  }
-
-  [data-theme="dark"] .prose .admonition-important {
-    --admonition-color: #a371f7;
-  }
-
-  [data-theme="dark"] .prose .admonition-caution {
-    --admonition-color: #f85149;
   }
 
   /* GitHub-flavored footnotes: a muted rule separates the notes from the page
@@ -921,14 +685,14 @@
   }
 
   /* Set at render time on every cell of a short-content column (see
-     markdown.ts), so a long neighbouring column cannot squeeze it. */
+     `remarkTableBalance`), so a long neighbouring column cannot squeeze it. */
   .prose .cell-nowrap {
     white-space: nowrap;
   }
 
   /* Inside a table, a code span breaks only between spans, never mid-identifier:
-     its full width counts toward the column's minimum, and the `.table-scroll`
-     wrapper takes any overflow on narrow screens. Authoritative copy is the
+     its full width counts toward the column's minimum, and the table's
+     scrolling wrapper takes any overflow on narrow screens. Authoritative copy is the
      unlayered mirror in critical.css, which beats this layered rule. */
   .prose :is(td, th) code {
     overflow-wrap: normal;
@@ -948,8 +712,7 @@
   /* A hand-written HTML table whose last column holds fenced code (the State
      machines cheat sheet). Fixed columns keep a long code line from widening
      the table and squeezing the text columns: the block scrolls inside its own
-     cell instead. The page writes the `.table-scroll` wrapper itself, because
-     only a Markdown table gets one at render time. */
+     cell instead. The page writes the `.table-scroll` wrapper itself. */
   .prose .code-table > table {
     table-layout: fixed;
     width: 100%;
@@ -974,19 +737,6 @@
 
   .prose .code-table td > :last-child {
     margin-bottom: 0;
-  }
-
-  .prose .code-table .code-block {
-    margin: 0 0 8px;
-  }
-
-  /* Every snippet in the table is TypeScript, so the badge says nothing. */
-  .prose .code-table .code-block--badged {
-    padding-top: 0;
-  }
-
-  .prose .code-table .code-block--badged > .code-badge {
-    display: none;
   }
 
   .prose .api-overview {
@@ -1031,8 +781,9 @@
   }
 
   /* A brand token (`Opaque`) inside a rendered signature is split into its own
-     deep-link anchor (see signature-brand-links.ts) and wrapped, with the
-     re-emitted permalink/jump fragments, in a `.signature-split` span. That span
+     deep-link anchor (see `splitSignatureAnchors` in api-plugins.ts) and
+     wrapped, with the re-emitted permalink/jump fragments, in a
+     `.signature-split` span. That span
      is the positioning context for the heading permalink icon — a partial
      re-emitted `heading-anchor` would offset the icon mid-signature — so pin its
      `position` here and neutralize the fragments' `position: relative`. Flatten
@@ -1041,7 +792,7 @@
      Shiki token color and gets a dotted underline so it reads as a link. Placed
      after the overview rules to win at equal specificity over their
      `border-bottom: 0`; the `.prose a` base border is unlayered in critical.css,
-     so these overrides are mirrored there too (as with `.badge-link`). */
+     so these overrides are mirrored there too (as with `a.heading-anchor`). */
   .prose .signature-split {
     position: relative;
   }
@@ -1167,17 +918,8 @@
     border-radius: 3px;
   }
 
-  /* Badge links are chips, not prose links — drop the `.prose a` underline.
-     The `.badge-link` class is added in markdown.ts to any link wrapping an
-     image. The matching override must ALSO live (unlayered) in critical.css:
-     its unlayered `.prose a` outranks this layered rule regardless of
-     specificity, exactly as for `.prose a.heading-anchor`. */
-  .prose a.badge-link {
-    border-bottom: none;
-  }
-
-  /* External-link out icon (Phosphor duotone), appended inside `a.external` by
-     markdown.ts and beside an external top bar link by each site's top bar.
+  /* External-link out icon (Phosphor duotone), appended beside an external top
+     bar link by each site's top bar.
      Tailwind Preflight resets `svg` to `display: block`, so flow it inline with a
      hair of space; opacity softens it against the link text. */
   .external-icon {
@@ -1531,22 +1273,3 @@
   }
 }
 
-/*
- * Tab state for the TypeScript/Lua tab group. The tab's badge carries the
- * `ui/badge` outline variant's utility classes, and `@layer utilities` beats
- * `@layer components`, so these color overrides must be unlayered. The selected
- * badge takes an accent border plus a 1px ring drawn with box-shadow (the badge
- * box keeps its size, so switching tabs never shifts layout) and an opaque
- * accent-tinted fill, since it overlaps the code block's top edge. Mirrored in
- * critical.css.
- */
-.prose .code-tab[aria-selected="true"] .code-badge {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface));
-  color: var(--color-accent-strong);
-}
-.prose .code-tab[aria-selected="false"]:hover .code-badge {
-  border-color: var(--color-border-strong);
-  color: var(--color-text);
-}
