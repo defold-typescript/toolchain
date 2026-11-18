@@ -30,20 +30,22 @@ function M:log(level, message, context)
 
 	if message then
 		-- The caller is 3 levels up: user code -> logger:info -> logger:log
-		local caller_info = debug.getinfo(3, "Sl")
+		local is_caller_needed = config.IS_FORMAT_FUNCTION
+			or (config.IS_FORMAT_LOGGER and self.name == config.AUTO_NAME)
+		local caller_info = is_caller_needed and debug.getinfo(3, "Sl") or nil
 		local log_message = formatter.format(self, level, message, context, caller_info)
 
-		if config.IS_MOBILE then
-			print(log_message)
-		else
-			io.stdout:write(log_message, "\n")
-			io.stdout:flush()
+		if config.IS_CONSOLE then
+			M._write_console(log_message)
 		end
 
 		file_writer.on_log(self, log_message)
 
 		for index = 1, #callbacks do
-			callbacks[index](self, level, message, context, log_message)
+			local callback = callbacks[index]
+			if callback then
+				callback(self, level, message, context, log_message)
+			end
 		end
 	end
 
@@ -106,6 +108,11 @@ end
 ---@param force_logger_level_in_debug string|nil Debug builds only, values: FATAL, ERROR, WARN, INFO, DEBUG, TRACE
 ---@return logger
 function M.get_logger(logger_name, force_logger_level_in_debug)
+	if force_logger_level_in_debug and not config.LEVEL_PRIORITY[force_logger_level_in_debug] then
+		M:error("Unknown logger level, it is ignored", force_logger_level_in_debug)
+		force_logger_level_in_debug = nil
+	end
+
 	local instance = {
 		name = logger_name or formatter.get_default_logger_name(debug.getinfo(2, "S")),
 		level = config.IS_DEBUG and force_logger_level_in_debug or config.GAME_LOG_LEVEL,
@@ -142,7 +149,8 @@ end
 
 
 ---Set the log file for all loggers, in addition to the console and the personal logger files.
----The path is always relative (`/logs/game.log`): project folder in the editor, save folder on a device.
+---The path is always relative (`/logs/game.log`): project folder in the editor, save folder otherwise.
+---Save folder has no nested dirs (`sys.get_save_file`), so `/` is replaced with `_` (`logs_game.log`).
 ---Pass nil to disable
 ---@param path string|nil
 ---@return string|nil resolved_path
@@ -159,7 +167,8 @@ end
 
 
 ---Write this logger messages to a `<logger_name>.log` file next to the calling script.
----Editor and desktop builds only, since it requires the project folder
+---Needs `game.project` in the working directory, so it only works when the game is
+---started from the project root: the editor, or a desktop build launched from there
 ---@return string|nil resolved_path
 function M:set_file_nearby()
 	return file_writer.set_file_nearby(self, debug.getinfo(2, "S"))
@@ -177,6 +186,19 @@ end
 ---Further log messages will not reopen the files until `set_file` / `set_file_nearby` is called again
 function M.final()
 	file_writer.final()
+end
+
+
+---Mobile writes through `print` (logcat, Xcode), desktop and HTML5 through stdout
+---@private
+---@param log_message string
+function M._write_console(log_message)
+	if config.IS_MOBILE then
+		print(log_message)
+	else
+		io.stdout:write(log_message, "\n")
+		io.stdout:flush()
+	end
 end
 
 

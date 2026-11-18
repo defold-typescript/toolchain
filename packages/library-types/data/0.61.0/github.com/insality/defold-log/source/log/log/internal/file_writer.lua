@@ -35,23 +35,21 @@ local function close_handler(path)
 end
 
 
----Create the parent folder for a file path. Desktop only, on the devices
----the save folder already exists and there is no shell to call
+---Create the parent folder for a file path. Desktop only: mobile and HTML5
+---have no shell mkdir, and the save folder itself already exists
 ---@param filepath string
 local function ensure_parent_dir(filepath)
 	local dir = filepath:match("(.+)[/\\][^/\\]+$")
-	if not dir or config.IS_MOBILE then
+	if not dir or not config.CAN_MKDIR then
 		return
 	end
 
-	-- Quotes would break the shell command; strip them from the path
-	dir = dir:gsub('"', "")
-
 	if config.SYSTEM_NAME == "Windows" then
+		dir = dir:gsub('"', "")
 		-- Windows mkdir creates the intermediate folders on its own
 		os.execute('mkdir "' .. dir:gsub("/", "\\") .. '" 2>nul')
-	else
-		os.execute('mkdir -p "' .. dir .. '"')
+	elseif not dir:find("'", 1, true) then
+		os.execute("mkdir -p '" .. dir .. "'")
 	end
 end
 
@@ -86,8 +84,9 @@ local function write_to_file(path, log_message)
 end
 
 
----Resolve a relative log path: project folder in the editor, save folder on a device.
+---Resolve a relative log path: project folder in the editor, save folder otherwise.
 ---The leading `/` is optional Defold sugar and is stripped.
+---`sys.get_save_file` does not create nested folders, so `/` is replaced with `_` (`logs_game.log`).
 ---@param path string
 ---@return string|nil
 local function resolve_path(path)
@@ -98,12 +97,19 @@ local function resolve_path(path)
 	local relative = path:gsub("^/+", "")
 	local project_path = M.get_current_project_folder()
 
-	return project_path and (project_path .. "/" .. relative) or sys.get_save_file(config.APP_NAME, relative)
+	if project_path then
+		return project_path .. "/" .. relative
+	end
+
+	-- Defold save path is a single file in the app folder, no subdirs
+	relative = relative:gsub("[/\\]+", "_")
+	return sys.get_save_file(config.APP_NAME, relative)
 end
 
 
----Get the project folder. Editor and desktop builds only: it takes the shell
----working directory and checks that game.project is there
+---Get the project folder: the shell working directory, if it contains game.project.
+---True in the editor and when a bundled desktop build is started from the project
+---root. Mobile and HTML5 always return nil.
 ---@return string|nil
 function M.get_current_project_folder()
 	if project_folder ~= nil then
@@ -112,7 +118,7 @@ function M.get_current_project_folder()
 
 	project_folder = false
 
-	if io.popen and not html5 then
+	if io.popen and not config.IS_HTML5 and not config.IS_MOBILE then
 		local file = io.popen(config.SYSTEM_NAME == "Windows" and "cd" or "pwd")
 		local pwd = file and file:read("*l")
 		if file then
@@ -173,7 +179,9 @@ function M.get_file()
 end
 
 
----Write this logger messages to a `<logger_name>.log` file next to the calling script
+---Write this logger messages to a `<logger_name>.log` file next to the calling script.
+---Needs the project folder, so it only works when the game is started from the
+---project root: the editor, or a desktop build launched from there. Returns nil otherwise
 ---@param logger logger Logger instance
 ---@param debuginfo debuginfo|nil Caller debug info
 ---@return string|nil resolved_path
@@ -191,6 +199,9 @@ function M.set_file_nearby(logger, debuginfo)
 	if not name or name == "" or name == config.AUTO_NAME then
 		name = formatter.get_default_logger_name(debuginfo)
 	end
+
+	-- The logger name is a display string, keep it from turning into a path
+	name = name:gsub('[/\\:*?"<>|]+', "_")
 
 	LOGGER_FILES[logger] = string.format("%s/%s/%s.log", project_path, folder_path, name)
 	return LOGGER_FILES[logger]
