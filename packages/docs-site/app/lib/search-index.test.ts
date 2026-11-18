@@ -96,6 +96,26 @@ const SOURCES: Record<string, string> = {
   ].join("\n\n"),
   "framed.md": ["# Framed", "Intro.", "## Hint", "> [!TIP] Keep it."].join("\n\n"),
   "anchors.md": ["# Anchors", "## Target", '<a id="x"></a>', "Prose."].join("\n\n"),
+  "quoted-fences.md": [
+    "# Quoted fences",
+    "Intro.",
+    "## Quoted",
+    [
+      "> Before `quotedSym`.",
+      '> ```lua title="quoted-meta.lua"',
+      "> quotedCode()",
+      "> ```",
+      "> After the fence.",
+    ].join("\n"),
+    "## Disclosure",
+    [
+      "> [!MORE] Full script — `more.ts`",
+      '> ```ts title="more-meta.ts"',
+      "> moreCode()",
+      "> ```",
+      "> Then the note.",
+    ].join("\n"),
+  ].join("\n\n"),
   "README.md": "# Overview\n\nThe project index prose.",
 };
 
@@ -115,6 +135,22 @@ describe("buildSearchIndex", () => {
   test("leaves an alert's marker and title out of the text", async () => {
     const records = await buildSearchIndex([page("framed.md")], processPage);
     expect(records.find((record) => record.route === "/framed#hint")?.text).toBe("Keep it.");
+  });
+
+  test("keeps a quote's and a disclosure's prose but none of their fences", async () => {
+    expect(await buildSearchIndex([page("quoted-fences.md")], processPage)).toEqual([
+      { route: "/quoted-fences", title: "Quoted fences", text: "Intro." },
+      {
+        route: "/quoted-fences#disclosure",
+        title: "Disclosure",
+        text: "Full script — more.ts Then the note.",
+      },
+      {
+        route: "/quoted-fences#quoted",
+        title: "Quoted",
+        text: "Before quotedSym. After the fence.",
+      },
+    ]);
   });
 
   test("a paragraph holding only raw HTML adds no text", async () => {

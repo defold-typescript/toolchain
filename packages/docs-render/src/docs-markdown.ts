@@ -5,6 +5,7 @@ import {
   remarkGfm,
   remarkHeading,
   remarkStructure,
+  remarkStructureDefaultOptions,
   type StructuredData,
 } from "fumadocs-core/mdx-plugins";
 import type { TOCItemType } from "fumadocs-core/toc";
@@ -68,6 +69,8 @@ function remarkGuideLinks(routePrefix: string) {
   return (tree: MdastRoot): void => walk(tree);
 }
 
+const STRUCTURE_TYPES = remarkStructureDefaultOptions.types.filter((type) => type !== "blockquote");
+
 /**
  * Markdown to hast, with the page's table of contents and its structured search
  * data. Heading ids are the ones github.com gives the same `.md`, so a link
@@ -76,7 +79,9 @@ function remarkGuideLinks(routePrefix: string) {
  * The guide syntax plugins run after `remarkHeading` and `remarkStructure`, so
  * the toc and the search data read the authored text: `remarkStructure` slices
  * the source rather than reading the tree, so no plugin order would keep a
- * marker out of the search data. Raw HTML in the page is parsed into elements.
+ * marker out of the search data. A blockquote is not collected whole, so the
+ * search data takes its paragraphs and tables but never its fences' code and
+ * info strings. Raw HTML in the page is parsed into elements.
  */
 export async function processDocsMarkdown(
   markdown: string,
@@ -86,7 +91,7 @@ export async function processDocsMarkdown(
     .use(remarkGfm)
     .use(remarkGuideLinks, opts.routePrefix)
     .use(remarkHeading, { customId: false })
-    .use(remarkStructure)
+    .use(remarkStructure, { types: STRUCTURE_TYPES })
     .use(remarkGuideAlerts)
     .use(remarkGuideMore)
     .use(remarkCodeTabs)
