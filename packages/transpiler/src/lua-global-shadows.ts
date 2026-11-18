@@ -1,6 +1,9 @@
 import * as ts from "typescript";
+import type { EmitResolver, TypeCheckerWithEmitResolver } from "typescript-to-lua";
 import * as tstl from "typescript-to-lua";
 import { isUnsafeName } from "typescript-to-lua/dist/transformation/utils/safe-names.js";
+import { isEditorFactoryOnlyImport } from "./editor-script-erasure";
+import { isFactoryOnlyImport } from "./lifecycle-erasure";
 import { DISPATCH_NAME } from "./message-dispatch-lowering";
 import { GUARD_NAME as MESSAGE_GUARD_NAME } from "./message-guard-lowering";
 import { GUARD_NAME as PHYSICS_EVENT_GUARD_NAME } from "./physics-event-guard-lowering";
@@ -41,8 +44,11 @@ function bindingIdentifiers(name: ts.BindingName, into: ts.Identifier[]): void {
 
 // The names a top-level statement turns into a chunk-wide Lua `local`. An
 // `export` modifier puts the name on the module table instead, and `declare`,
-// a `const enum` and a bodiless overload emit nothing.
-function fileLevelLocals(statement: ts.Statement): ts.Identifier[] {
+// a `const enum` and a bodiless overload emit nothing. An import binding counts
+// only when TypeScript-to-Lua emits it: its emit resolver must report the
+// binding referenced, and the statement must not be a factory import the
+// erasure plugins drop whole.
+function fileLevelLocals(statement: ts.Statement, resolver: EmitResolver): ts.Identifier[] {
   if (
     hasModifier(statement, ts.SyntaxKind.ExportKeyword) ||
     hasModifier(statement, ts.SyntaxKind.DeclareKeyword)
@@ -67,17 +73,22 @@ function fileLevelLocals(statement: ts.Statement): ts.Identifier[] {
       names.push(statement.name);
     }
   } else if (ts.isImportDeclaration(statement)) {
+    if (isFactoryOnlyImport(statement) || isEditorFactoryOnlyImport(statement)) {
+      return [];
+    }
     const clause = statement.importClause;
     if (clause !== undefined && !clause.isTypeOnly) {
-      if (clause.name !== undefined) {
+      if (clause.name !== undefined && resolver.isReferencedAliasDeclaration(clause)) {
         names.push(clause.name);
       }
       const bindings = clause.namedBindings;
       if (bindings !== undefined && ts.isNamespaceImport(bindings)) {
-        names.push(bindings.name);
+        if (resolver.isReferencedAliasDeclaration(bindings)) {
+          names.push(bindings.name);
+        }
       } else if (bindings !== undefined) {
         for (const element of bindings.elements) {
-          if (!element.isTypeOnly) {
+          if (!element.isTypeOnly && resolver.isReferencedAliasDeclaration(element)) {
             names.push(element.name);
           }
         }
@@ -118,9 +129,10 @@ export function findLuaGlobalShadows(
     return [];
   }
   const checker = program.getTypeChecker();
+  const resolver = (checker as TypeCheckerWithEmitResolver).getEmitResolver(sourceFile);
   const diagnostics: ts.Diagnostic[] = [];
   for (const statement of sourceFile.statements) {
-    for (const identifier of fileLevelLocals(statement)) {
+    for (const identifier of fileLevelLocals(statement, resolver)) {
       const name = identifier.text;
       if (isUnsafeName(name, { luaTarget: tstl.LuaTarget.Lua51 }) || LOWERED_GLOBALS.has(name)) {
         continue;

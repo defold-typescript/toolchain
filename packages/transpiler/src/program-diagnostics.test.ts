@@ -26,9 +26,9 @@ const WINDOW_SOURCE = [
 // shadowed by added Defold types).
 const DOM_ONLY_SOURCE = "export const t = document.title;";
 
-function programFor(source: string): ts.Program {
+function programFor(source: string, extra: Record<string, string> = {}): ts.Program {
   const session = createTranspileSession();
-  session.update({ "main.ts": source });
+  session.update({ "main.ts": source, ...extra });
   const program = session.getProgram();
   if (!program) {
     throw new Error("session produced no program");
@@ -148,6 +148,32 @@ describe("getProgramDiagnostics", () => {
   test("does not warn on an exported name that matches a Lua global", () => {
     const program = programFor("export function next(): void {}\n");
     expect(getProgramDiagnostics(program, program.getSourceFile("main.ts"))).toEqual([]);
+  });
+
+  test("does not warn on a factory import the build erases", () => {
+    const program = programFor(
+      'import { defineScript as next } from "@defold-typescript/types";\nexport default next({ init: () => ({ n: 1 }) });\n',
+    );
+    expect(getProgramDiagnostics(program, program.getSourceFile("main.ts"))).toEqual([]);
+  });
+
+  test("does not warn on an import the file never reads as a value", () => {
+    const program = programFor('import { label } from "./ui";\nexport const s = 1;\n', {
+      "ui.ts": "export const label = 1;\n",
+    });
+    expect(getProgramDiagnostics(program, program.getSourceFile("main.ts"))).toEqual([]);
+  });
+
+  test("warns on an import the file reads that hides a Lua global, at its name", () => {
+    const source = 'import { label } from "./ui";\nexport const s = label;\n';
+    const program = programFor(source, { "ui.ts": "export const label = 1;\n" });
+    const shadows = getProgramDiagnostics(program, program.getSourceFile("main.ts")).filter(
+      (d) => d.category === ts.DiagnosticCategory.Warning,
+    );
+    expect(shadows).toHaveLength(1);
+    expect(shadows[0]?.start).toBe(source.indexOf("label"));
+    expect(shadows[0]?.length).toBe("label".length);
+    expect(flatten(shadows[0]?.messageText ?? "")).toBe(luaGlobalShadowMessage("label"));
   });
 
   test("DOM-only globals are excluded on both paths", () => {
