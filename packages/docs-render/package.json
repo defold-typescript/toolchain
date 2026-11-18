@@ -11,6 +11,7 @@
     "./markdown-body": "./src/markdown-body.tsx",
     "./search-dialog": "./src/search-dialog.tsx",
     "./search-results": "./src/search-results.tsx",
+    "./sidebar-folder": "./src/sidebar-folder.tsx",
     "./styles.css": "./src/styles.css",
     "./ui": "./src/ui/index.ts"
   },
