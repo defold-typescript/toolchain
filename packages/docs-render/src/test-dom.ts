@@ -48,7 +48,9 @@ export async function unregisterDom(): Promise<void> {
 // Fumadocs' dialog module loads the Radix dialog Fumadocs itself resolves, which neither docs site
 // can import by name.
 // This body runs once per process, and an earlier file's `unregisterDom` removes the document, so
-// each test file also calls `registerDom` before it renders.
+// each test file also calls `registerDom` before it renders, and before it spies on a global:
+// unregistering puts back each global as registering found it, so a spy installed first outlives
+// its own `mockRestore` and answers every later file's call with `undefined`.
 registerDom();
 await import("fumadocs-ui/components/dialog/search");
 export const { act, fireEvent, render, waitFor, within } = await import("@testing-library/react");

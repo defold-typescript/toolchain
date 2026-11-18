@@ -43,6 +43,8 @@ afterAll(async () => {
 const { renderToStaticMarkup } = await import("react-dom/server");
 const { processDocsMarkdown } = await import("./docs-markdown");
 const { MarkdownBody } = await import("./markdown-body");
+const { fireEvent, render: mount } = await import("./test-dom");
+const { compile } = await import("tailwindcss");
 
 const SAMPLE_WITH_FENCE = ["## Refresh a pin", "Run it.", "```sh\nbun run refresh-pins\n```"].join(
   "\n\n",
@@ -88,6 +90,48 @@ describe("MarkdownBody", () => {
     ]);
     expect(host.textContent).toContain("const a = 1;");
     expect(host.textContent).toContain("build(a);");
+  });
+
+  test("each tab group shows only its selected snippet, and a trigger swaps that group's", async () => {
+    const { hast } = await processDocsMarkdown(
+      [
+        "```ts\nconst a = 1;\n```",
+        "```ts builder\nbuild(a);\n```",
+        "Then translate it.",
+        "```ts\nconst b = 2;\n```",
+        "```lua original\nlocal b = 2\n```",
+      ].join("\n\n"),
+      { routePrefix: "" },
+    );
+    const { container, unmount } = mount(<MarkdownBody hast={hast} />);
+    const candidates = [...container.querySelectorAll("*")].flatMap((node) => [...node.classList]);
+    const style = document.createElement("style");
+    style.textContent = (await compile("@tailwind utilities;")).build(candidates);
+    document.head.append(style);
+    try {
+      const groups = [...container.querySelectorAll('[role="tablist"]')].map(
+        (list) => list.parentElement as HTMLElement,
+      );
+      const visibleSnippets = (): string[][] =>
+        groups.map((group) =>
+          [...group.querySelectorAll<HTMLElement>('[role="tabpanel"]')]
+            .filter((panel) => !panel.hidden && getComputedStyle(panel).display !== "none")
+            .map((panel) => panel.querySelector("pre")?.textContent ?? ""),
+        );
+
+      expect(groups).toHaveLength(2);
+      expect(visibleSnippets()).toEqual([["const a = 1;"], ["const b = 2;"]]);
+
+      const builder = [...(groups[0]?.querySelectorAll('[role="tab"]') ?? [])].find(
+        (tab) => tab.textContent === "Builder",
+      );
+      if (!builder) throw new Error("the first group has no Builder trigger");
+      fireEvent.mouseDown(builder);
+      expect(visibleSnippets()).toEqual([["build(a);"], ["const b = 2;"]]);
+    } finally {
+      style.remove();
+      unmount();
+    }
   });
 
   test("a raw anchor stays a plain link target", async () => {

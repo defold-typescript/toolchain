@@ -395,7 +395,15 @@ export function rehypeGuideComponents() {
             ),
           ),
           ...blocks.map((block, index) =>
-            element("CodeBlockTab", { value: String(index), forceMount: true }, [block]),
+            element(
+              "CodeBlockTab",
+              {
+                value: String(index),
+                forceMount: true,
+                className: ["data-[state=inactive]:hidden"],
+              },
+              [block],
+            ),
           ),
         ];
       }
