@@ -14,7 +14,14 @@ import type { Nodes as MdastNodes, Root as MdastRoot } from "mdast";
 import rehypeRaw from "rehype-raw";
 import { remark } from "remark";
 import remarkRehype from "remark-rehype";
+import type { PluggableList } from "unified";
 import { VFile } from "vfile";
+import {
+  rehypeApiLinks,
+  rehypeApiSignatures,
+  rehypeUpstreamMarkers,
+  remarkSafeLinks,
+} from "./api-plugins";
 import {
   rehypeGuideComponents,
   remarkCodeMeta,
@@ -28,11 +35,16 @@ import {
 } from "./guide-plugins";
 import { ALERT_TYPES } from "./guide-syntax";
 import type { SearchRecord } from "./search-route";
+import type { SignatureSymbolTarget } from "./signature-brand-links";
 
-/** A Markdown page run through the docs pipeline, ready to render and to index. */
-export interface DocsMarkdown {
+/** A page run through the docs pipeline, ready to render. */
+export interface RenderedPage {
   hast: Root;
   toc: TOCItemType[];
+}
+
+/** A Markdown page run through the docs pipeline, ready to render and to index. */
+export interface DocsMarkdown extends RenderedPage {
   structuredData: StructuredData;
 }
 
@@ -71,6 +83,42 @@ function remarkGuideLinks(routePrefix: string) {
 
 const STRUCTURE_TYPES = remarkStructureDefaultOptions.types.filter((type) => type !== "blockquote");
 
+// The plugins every docs page runs, from its Markdown tree to the hast
+// `MarkdownBody` renders. A page's own rehype plugins (`page`) run after the
+// shared ones and before the upstream `<` is put back, which runs last.
+function docsChain(opts: DocsMarkdownOptions, page: PluggableList = []): PluggableList {
+  return [
+    remarkGfm,
+    remarkSafeLinks,
+    [remarkGuideLinks, opts.routePrefix],
+    [remarkHeading, { customId: false }],
+    [remarkStructure, { types: STRUCTURE_TYPES }],
+    remarkGuideAlerts,
+    remarkGuideMore,
+    remarkCodeTabs,
+    remarkCodeMeta,
+    [remarkGuideImages, { readInlineSvg: opts.readInlineSvg }],
+    remarkPlatformBadges,
+    [remarkSymbolCodeLinks, opts.symbolCodeLinks],
+    remarkTableBalance,
+    [remarkRehype, { allowDangerousHtml: true }],
+    rehypeRaw,
+    [
+      rehypeCode,
+      {
+        themes: { light: "github-light", dark: "github-dark" },
+        transformers: [
+          ...(rehypeCodeDefaultOptions.transformers ?? []),
+          transformerMetaHighlight(),
+        ],
+      },
+    ],
+    rehypeGuideComponents,
+    ...page,
+    rehypeUpstreamMarkers,
+  ];
+}
+
 /**
  * Markdown to hast, with the page's table of contents and its structured search
  * data. Heading ids are the ones github.com gives the same `.md`, so a link
@@ -87,33 +135,44 @@ export async function processDocsMarkdown(
   markdown: string,
   opts: DocsMarkdownOptions,
 ): Promise<DocsMarkdown> {
-  const processor = remark()
-    .use(remarkGfm)
-    .use(remarkGuideLinks, opts.routePrefix)
-    .use(remarkHeading, { customId: false })
-    .use(remarkStructure, { types: STRUCTURE_TYPES })
-    .use(remarkGuideAlerts)
-    .use(remarkGuideMore)
-    .use(remarkCodeTabs)
-    .use(remarkCodeMeta)
-    .use(remarkGuideImages, { readInlineSvg: opts.readInlineSvg })
-    .use(remarkPlatformBadges)
-    .use(remarkSymbolCodeLinks, opts.symbolCodeLinks)
-    .use(remarkTableBalance)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeRaw)
-    .use(rehypeCode, {
-      themes: { light: "github-light", dark: "github-dark" },
-      transformers: [...(rehypeCodeDefaultOptions.transformers ?? []), transformerMetaHighlight()],
-    })
-    .use(rehypeGuideComponents);
+  const processor = remark().use(docsChain(opts));
   const file = new VFile(markdown);
-  const hast = (await processor.run(processor.parse(file), file)) as Root;
+  const hast = (await processor.run(processor.parse(file), file)) as unknown as Root;
   return {
     hast,
     toc: file.data.toc ?? [],
     structuredData: file.data.structuredData ?? { headings: [], contents: [] },
   };
+}
+
+/** Markdown parsed as the docs pipeline parses it, for a page assembled as a tree. */
+export function parseDocsMarkdown(markdown: string): MdastRoot {
+  return remark().use(remarkGfm).parse(markdown);
+}
+
+/** How `processApiTree` resolves a page's links, figures, code spans and signature tokens. */
+export interface ApiTreeOptions extends Partial<DocsMarkdownOptions> {
+  /** A signature or type token -> the route, or the route and heading text, it links to. */
+  signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget> | undefined;
+}
+
+/**
+ * An API page built as an mdast tree, run through the docs pipeline and then the
+ * API plugins, which color its signatures. Its search records come from its
+ * symbols rather than its text, so the chain skips `remarkStructure`.
+ */
+export async function processApiTree(
+  tree: MdastRoot,
+  opts: ApiTreeOptions = {},
+): Promise<RenderedPage> {
+  const chain = docsChain({ ...opts, routePrefix: opts.routePrefix ?? "" }, [
+    rehypeApiSignatures,
+    [rehypeApiLinks, { signatureSymbolLinks: opts.signatureSymbolLinks }],
+  ]).filter((entry) => (Array.isArray(entry) ? entry[0] : entry) !== remarkStructure);
+  const processor = remark().use(chain);
+  const file = new VFile();
+  const hast = (await processor.run(tree, file)) as unknown as Root;
+  return { hast, toc: file.data.toc ?? [] };
 }
 
 /** The page outline: the page title is the page's own heading, so it stays out. */

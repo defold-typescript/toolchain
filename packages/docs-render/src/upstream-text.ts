@@ -35,6 +35,11 @@ export function restoreUpstreamMarkers(html: string): string {
   return html.replaceAll(LESS_THAN, "&lt;");
 }
 
+/** Rendered text with each `<` of upstream text back in place, for a text node. */
+export function restoreUpstreamText(text: string): string {
+  return text.replaceAll(LESS_THAN, "<");
+}
+
 const PROSE_KEYS = new Set(["brief", "description", "doc", "examples", "deprecated", "docSource"]);
 
 function walkStrings(

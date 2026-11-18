@@ -8,7 +8,7 @@ import {
 import MarkdownIt from "markdown-it";
 import type Token from "markdown-it/lib/token.mjs";
 import footnotePlugin from "markdown-it-footnote";
-import { type BundledLanguage, createHighlighter, type Highlighter, type ThemedToken } from "shiki";
+import type { BundledLanguage } from "shiki";
 import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
@@ -31,29 +31,17 @@ import { imageMaxWidthStyle } from "./image-style";
 import { EXTERNAL_LINK_ICON } from "./phosphor";
 import { PLATFORM_MARKER } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
-import { signatureEmphasis } from "./signature-emphasis";
+import {
+  DARK_THEME,
+  getHighlighter,
+  LIGHT_THEME,
+  runStyle,
+  type SignatureRun,
+  signatureTokens,
+  spliceRuns,
+} from "./signature-tokens";
 import { Badge, SvgFigure } from "./ui";
 import { isSafeLink, restoreUpstreamMarkers } from "./upstream-text";
-
-/**
- * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
- * the dual-theme payload as CSS variables (--shiki-light, --shiki-dark,
- * --shiki-light-bg, --shiki-dark-bg) and the stylesheet in
- * `app/styles.css` flips which set is active based on the page theme.
- */
-const LIGHT_THEME = "github-light";
-const DARK_THEME = "github-dark";
-
-// Grammars the guide content actually fences: ts/json/jsonc/ini/sh (bash alias),
-// plus lua for Defold's primary output language. Unknown fences fall back to plain text.
-const LANGS = ["ts", "lua", "bash", "json", "jsonc", "ini"];
-
-let highlighterPromise: Promise<Highlighter> | undefined;
-
-function getHighlighter(): Promise<Highlighter> {
-  highlighterPromise ??= createHighlighter({ themes: [LIGHT_THEME, DARK_THEME], langs: LANGS });
-  return highlighterPromise;
-}
 
 function escapeAttr(text: string): string {
   return text
@@ -177,45 +165,6 @@ function cellTextLength(inline: Token | undefined): number {
     if (child.type === "text" || child.type === "code_inline") length += child.content.length;
   }
   return length;
-}
-
-// The TypeScript grammar names a `type` alias by one identifier, so a qualified
-// alias head (`type image.Type`) colors only its first segment. Each later segment
-// takes that segment's color, the way an `interface` head colors each of its own
-// segments and leaves the dots plain.
-function colorQualifiedAliasHead(tokens: ThemedToken[], text: string): ThemedToken[] {
-  const head = /^type ([\w$]+)((?:\.[\w$]+)+)/.exec(text);
-  const first = head?.[1];
-  const tail = head?.[2];
-  if (first === undefined || tail === undefined) return tokens;
-  const firstStart = "type ".length;
-  const segments = [...tail.matchAll(/[\w$]+/g)].map((m) => {
-    const start = firstStart + first.length + (m.index ?? 0);
-    return { start, end: start + m[0].length };
-  });
-  let offset = 0;
-  const placed = tokens.map((token) => {
-    const start = offset;
-    offset += token.content.length;
-    return { token, start, end: offset };
-  });
-  const nameStyle = placed.find(({ start, end }) => start <= firstStart && firstStart < end)?.token
-    .htmlStyle;
-  if (nameStyle === undefined) return tokens;
-  const bounds = segments.flatMap(({ start, end }) => [start, end]);
-  return placed.flatMap(({ token, start, end }) => {
-    const cuts = [start, ...bounds.filter((cut) => cut > start && cut < end), end];
-    return cuts.slice(1).map((to, k) => {
-      const from = cuts[k] ?? start;
-      const inName = segments.some((segment) => segment.start <= from && to <= segment.end);
-      return {
-        ...token,
-        content: token.content.slice(from - start, to - start),
-        offset: token.offset + (from - start),
-        ...(inName ? { htmlStyle: nameStyle } : {}),
-      };
-    });
-  });
 }
 
 export async function renderMarkdown(
@@ -657,71 +606,19 @@ export async function renderMarkdown(
       replace?: { start: number; end: number; html: string } | undefined;
     } = {},
   ): string => {
-    const themes = { light: LIGHT_THEME, dark: DARK_THEME };
-    const prefix = opts.prefix ?? "";
+    const runs = signatureTokens(highlighter, content, opts.prefix);
+    // Escaped as Shiki's own HTML output escapes text.
+    const spans = (list: readonly SignatureRun[]): string =>
+      list
+        .map(
+          (run) =>
+            `<span style="${runStyle(run)}">${run.text.replace(/&/g, "&#x26;").replace(/</g, "&#x3C;")}</span>`,
+        )
+        .join("");
     const { replace } = opts;
-    const emphasis = signatureEmphasis(prefix + content).map(({ start, end }) => ({
-      start: start - prefix.length,
-      end: end - prefix.length,
-    }));
-    const edges = emphasis.flatMap(({ start, end }) => [start, end]);
-    const { tokens } = highlighter.codeToTokens(prefix + content, {
-      lang: "ts",
-      themes,
-      defaultColor: false,
-    });
-    // `codeToHtml` folds a whitespace-only token into the token after it; do the
-    // same so a fragment's spaces carry the colors its full signature gives them.
-    const flat = colorQualifiedAliasHead(tokens.flat(), prefix + content);
-    const merged: typeof flat = [];
-    let carry = "";
-    for (const [index, token] of flat.entries()) {
-      if (/^\s+$/.test(token.content) && index < flat.length - 1) carry += token.content;
-      else {
-        merged.push(carry ? { ...token, content: carry + token.content } : token);
-        carry = "";
-      }
-    }
-    let spans = "";
-    let replaced = false;
-    let end = -prefix.length;
-    for (const token of merged) {
-      const start = end;
-      end += token.content.length;
-      const style = Object.entries(token.htmlStyle ?? {})
-        .map(([key, value]) => `${key}:${value}`)
-        .join(";");
-      const emit = (from: number, to: number) => {
-        const a = Math.max(from, start, 0);
-        const b = Math.min(to, end);
-        const cuts = [a, ...edges.filter((edge) => edge > a && edge < b), b];
-        for (let k = 0; k + 1 < cuts.length; k++) {
-          const x = cuts[k] ?? 0;
-          const y = cuts[k + 1] ?? 0;
-          if (x >= y) continue;
-          // Escaped as Shiki's own HTML output escapes text.
-          const text = token.content
-            .slice(x - start, y - start)
-            .replace(/&/g, "&#x26;")
-            .replace(/</g, "&#x3C;");
-          const bold = emphasis.some((range) => range.start <= x && y <= range.end);
-          const weighted = bold ? [style, "font-weight:600"].filter(Boolean).join(";") : style;
-          spans += `<span style="${weighted}">${text}</span>`;
-        }
-      };
-      if (!replace) {
-        emit(0, end);
-        continue;
-      }
-      emit(0, replace.start);
-      if (!replaced && end > replace.start) {
-        spans += replace.html;
-        replaced = true;
-      }
-      emit(replace.end, end);
-    }
-    if (replace && !replaced) spans += replace.html;
-    return `<code class="api-signature shiki">${spans}</code>`;
+    if (!replace) return `<code class="api-signature shiki">${spans(runs)}</code>`;
+    const { before, after } = spliceRuns(runs, replace.start, replace.end);
+    return `<code class="api-signature shiki">${spans(before)}${replace.html}${spans(after)}</code>`;
   };
   // The function name a signature starts with: its text up to the call list.
   const signatureName = (code: string): string => {
