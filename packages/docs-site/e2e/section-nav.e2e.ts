@@ -38,14 +38,26 @@ test("the section tabs reach every section from a landing page and mark the curr
   await page.waitForURL(/\/api$/);
   await expect(tab(page, "API")).toHaveClass(/text-fd-primary/);
 
+  await tab(page, "Get started").click();
+  // Get started opens on the Overview, the site's index, not on its landing page.
+  await page.waitForURL((url) => url.pathname === "/");
+  await expect(tab(page, "Get started")).toHaveClass(/text-fd-primary/);
+
   await page.goto("/build");
   await expect(tab(page, "Guides")).toHaveClass(/text-fd-primary/);
   expect(hydration).toEqual([]);
 });
 
-test("the sidebar links to the changelog from any section", async ({ page }) => {
+test("the sidebar links to the changelog only in the Get started section", async ({ page }) => {
+  const changelog = (page: Page) =>
+    page.locator("#nd-sidebar").getByRole("link", { name: "Changelog", exact: true });
   await page.goto("/api/go");
-  await page.locator("#nd-sidebar").getByRole("link", { name: "Changelog", exact: true }).click();
+  await expect(changelog(page)).toHaveCount(0);
+  await page.goto("/build");
+  await expect(changelog(page)).toHaveCount(0);
+
+  await page.goto("/getting-started");
+  await changelog(page).click();
   await page.waitForURL(/\/changelog$/);
   // The heading also holds its copy-anchor button, labelled for screen readers.
   await expect(page.locator("h1")).toHaveText(/^Changelog/);

@@ -19,13 +19,15 @@ function pageUrls(nodes: Node[], into: Set<string>): Set<string> {
  * its own tabs only for the sections on the current page's tree path, so they
  * vanish on a landing page and on the home page; these list every section on
  * every page, and each is active on its landing page and every page its sidebar
- * lists.
+ * lists. `entries` names, by section title, a page the tab opens in place of
+ * the landing page.
  */
-export function sectionTabs(tree: Root): LayoutTab[] {
+export function sectionTabs(tree: Root, entries: Record<string, string> = {}): LayoutTab[] {
   return tree.children.flatMap((node) => {
     if (node.type !== "folder" || !node.root) return [];
     const urls = pageUrls(node.children, new Set(node.index ? [node.index.url] : []));
-    const url = node.index?.url ?? urls.values().next().value;
+    const entry = typeof node.name === "string" ? entries[node.name] : undefined;
+    const url = entry ?? node.index?.url ?? urls.values().next().value;
     return url ? [{ title: node.name, url, urls }] : [];
   });
 }

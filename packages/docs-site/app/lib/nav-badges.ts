@@ -49,3 +49,28 @@ export function navLeafBadgeHtml(
     : { new: 0, changed: 0, deprecated: 0 };
   return navNamespaceBadges(counts, reachableBadgeCounts(row));
 }
+
+// The count pills on an API landing card, read at the active window: the
+// namespace page title's pills (`.prose .api-badge-*`), each showing its tally
+// and category noun (`12 new`), since a card has room for the words. A category
+// the window counts none of renders no pill, and a namespace with none renders
+// nothing.
+export function cardBadgeHtml(
+  table: BadgeCountTable,
+  namespace: string,
+  activeKey: string,
+): string {
+  const triple = table[namespace]?.[activeKey];
+  if (!triple) return "";
+  const counts: NamespaceBadgeCounts = {
+    new: triple[0],
+    changed: triple[1],
+    deprecated: triple[2],
+  };
+  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map((c) => {
+    const label = `${counts[c.flag]} ${c.noun}`;
+    return `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${label} symbols">${label}</span>`;
+  });
+  if (pills.length === 0) return "";
+  return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
+}

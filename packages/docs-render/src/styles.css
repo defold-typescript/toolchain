@@ -215,10 +215,10 @@
  * The Shiki output swaps its theme via the `data-theme` attribute on the
  * <html> element. We pin the Shiki spans to the per-theme variable pair, and
  * force Shiki's per-line `<span class="line">` background to transparent so
- * the surrounding `.prose pre` background shows through (those wrappers would
- * otherwise double-paint a background under every single line). The `<pre>`
- * itself is intentionally not neutralized — its background comes from
- * `.prose pre { background: var(--color-code-bg) }`.
+ * the code block's background shows through (those wrappers would otherwise
+ * double-paint a background under every single line). The block's background
+ * is the Fumadocs code block figure's, set to `--color-code-bg` by the
+ * `.prose figure.shiki` rule below.
  */
 @layer base {
   .shiki span:not(.line):not(.api-overload-count) {
@@ -480,16 +480,21 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
   }
 
+  /* Every `<pre>` renders inside Fumadocs' code block: a `figure.shiki` that
+     draws the frame, scrolls, pads each line and places the copy button. The
+     `<pre>` only sets the type; a box of its own would sit inside the frame
+     with a band of the figure's color above and below it. The figure paints
+     with Fumadocs' card color (secondary inside code tabs), pointed here at the
+     code background. Mirrored in critical.css. */
   .prose pre {
     font-family: var(--font-mono);
     font-size: var(--prose-pre-size);
     line-height: 1.55;
-    background: var(--color-code-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 14px 16px;
-    overflow-x: auto;
-    margin: 1.2em 0;
+  }
+
+  .prose figure.shiki {
+    --color-fd-card: var(--color-code-bg);
+    --color-fd-secondary: var(--color-code-bg);
   }
 
   .prose pre code {

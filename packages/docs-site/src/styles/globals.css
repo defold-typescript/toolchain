@@ -15,10 +15,32 @@ html {
 
 /* The shared renderer offsets every jump target (headings, footnote marks) by
  * `--topbar-height`. The bars that stay over the page here are Fumadocs' header
- * and, below `xl`, its outline bar; Fumadocs keeps their combined height in
- * `--fd-docs-row-3`. */
+ * on a phone or the section tabs from `md` up, and, below `xl`, its outline bar;
+ * Fumadocs keeps their combined height in `--fd-docs-row-3`. */
 #nd-docs-layout {
   --topbar-height: var(--fd-docs-row-3);
+}
+
+/* From `md` up, where Fumadocs hides its own header, the section tabs are the
+ * header: they stay at the top while the page scrolls and take the header's
+ * height variable, which Fumadocs adds into the rows the outline bar sticks
+ * below. The page outline sticks to the top row, so it moves below the tabs by
+ * hand. The height is the tabs' own: top padding, one tab and the bottom border. */
+@media (width >= 48rem) {
+  #nd-docs-layout {
+    --fd-header-height: 2.5625rem;
+  }
+
+  #nd-docs-layout > [class*="grid-area:tabs"] {
+    position: sticky;
+    top: var(--fd-docs-row-1);
+    height: var(--fd-header-height);
+  }
+
+  #nd-toc {
+    top: var(--fd-docs-row-2);
+    height: calc(var(--fd-docs-height) - var(--fd-docs-row-2));
+  }
 }
 
 /* Where Fumadocs' typography and the shared renderer's markup disagree. */
@@ -91,6 +113,12 @@ html {
 .prose [data-card][data-mono] h3 {
   font-family: var(--font-mono);
   font-size: 13px;
+}
+
+/* An engine namespace card's count pills read as words (`12 new`), so they
+ * take the body face rather than the namespace name's code face. */
+.prose [data-card][data-mono] .api-badge-count {
+  font-family: var(--font-sans);
 }
 
 .prose [data-card] p {

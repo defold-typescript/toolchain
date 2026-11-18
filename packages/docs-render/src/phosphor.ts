@@ -26,3 +26,7 @@ export function phosphorDuotone(name: string, className: string): string {
 
 // Phosphor `arrow-square-out` (duotone), marking a link that leaves the docs site.
 export const EXTERNAL_LINK_ICON = phosphorDuotone("arrow-square-out", "external-icon");
+
+// Phosphor `arrow-bend-up-right` (duotone), marking a sidebar shortcut to a page
+// another section lists.
+export const SHORTCUT_ICON = phosphorDuotone("arrow-bend-up-right", "shortcut-icon");

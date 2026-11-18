@@ -1,7 +1,7 @@
 "use client";
 import type { Root } from "fumadocs-core/page-tree";
 import { DocsLayout, type DocsLayoutProps } from "fumadocs-ui/layouts/docs";
-import type { LayoutTab } from "fumadocs-ui/layouts/shared";
+import { isLayoutTabActive, type LayoutTab, type LinkItemType } from "fumadocs-ui/layouts/shared";
 import { useCallback, useMemo } from "react";
 import { useRouter } from "waku";
 import {
@@ -26,12 +26,19 @@ export function SurfaceDocsLayout({
   trees,
   config,
   linkTabs,
+  sectionEntries,
+  sectionLinks,
+  links,
   ...props
 }: Omit<DocsLayoutProps, "tree"> & {
   trees: Record<string, Root>;
   config: ApiSurfaceConfig;
   /** Tabs after the section tabs for categories that leave the site. */
   linkTabs: LayoutTab[];
+  /** By section title, the page its tab opens in place of its landing page. */
+  sectionEntries?: Record<string, string>;
+  /** By section title, links shown before `links` only while that section is active. */
+  sectionLinks?: Record<string, LinkItemType[]>;
 }) {
   const { path } = useRouter();
   const surface = useClientSurface();
@@ -39,7 +46,11 @@ export function SurfaceDocsLayout({
   const stored = surface?.stored ?? null;
   const range = readStoredRange(path, search, stored, config);
   const tree = trees[surfaceKey(path, stored, config)] ?? (trees[CANONICAL_SURFACE] as Root);
-  const tabs = useMemo(() => [...sectionTabs(tree), ...linkTabs], [tree, linkTabs]);
+  const sections = useMemo(() => sectionTabs(tree, sectionEntries), [tree, sectionEntries]);
+  const tabs = useMemo(() => [...sections, ...linkTabs], [sections, linkTabs]);
+  const section = sections.findLast((tab) => isLayoutTabActive(tab, path))?.title;
+  const own = typeof section === "string" ? sectionLinks?.[section] : undefined;
+  const allLinks = useMemo(() => [...(own ?? []), ...(links ?? [])], [own, links]);
   const href = useCallback(
     (link: string) => carryStatedSince(link, search, config),
     [search, config],
@@ -47,7 +58,7 @@ export function SurfaceDocsLayout({
   return (
     <ActiveWindowKey value={`${range.from}|${range.to}`}>
       <SurfaceHref value={href}>
-        <DocsLayout {...props} tree={tree} tabs={tabs} />
+        <DocsLayout {...props} tree={tree} tabs={tabs} links={allLinks} />
       </SurfaceHref>
     </ActiveWindowKey>
   );

@@ -1,3 +1,4 @@
+import type { BadgeCountTable } from "@defold-typescript/docs-render/combined-surface";
 import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import { Card, Cards } from "fumadocs-ui/components/card";
@@ -6,7 +7,14 @@ import type { ReactNode } from "react";
 import { renderCardSummary } from "../../app/lib/card-summary";
 import { guidePages } from "../../app/lib/content";
 import type { NavLink } from "../../app/lib/nav";
-import { apiPages, landingFooterItems, navCategories, SITE_NAME } from "../lib/site";
+import {
+  apiPages,
+  apiSurfaceConfig,
+  landingFooterItems,
+  navCategories,
+  SITE_NAME,
+} from "../lib/site";
+import { CardPills } from "./nav-pills";
 
 // Inline markdown from the repo's own guide sources, rendered with links
 // flattened so it can sit inside a card's own link.
@@ -29,14 +37,28 @@ function cardSummaries(): Map<string, ReactNode> {
   return summaries;
 }
 
+// An engine namespace card's title carries its count pills after the name.
+function cardTitle(link: NavLink, badgeCounts: BadgeCountTable): ReactNode {
+  const row = badgeCounts[link.label];
+  if (!row) return link.label;
+  return (
+    <>
+      {link.label}
+      <CardPills namespace={link.label} row={row} />
+    </>
+  );
+}
+
 function LinkCards({
   links,
   summaries,
   mono,
+  badgeCounts,
 }: {
   links: NavLink[];
   summaries: Map<string, ReactNode>;
   mono: boolean;
+  badgeCounts: BadgeCountTable;
 }) {
   return (
     <Cards>
@@ -45,7 +67,7 @@ function LinkCards({
           ? [
               <Card
                 key={link.route}
-                title={link.label}
+                title={cardTitle(link, badgeCounts)}
                 description={summaries.get(link.route)}
                 href={link.route}
                 data-mono={mono ? "" : undefined}
@@ -67,8 +89,10 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
   const category = nav.find((c) => c.id === id);
   if (!category) return null;
   const summaries = cardSummaries();
-  // API cards name namespaces, so they read in the code face.
+  // API cards name namespaces, so they read in the code face, and an engine
+  // namespace's card shows its count pills as its sidebar entry does.
   const mono = id === "api";
+  const badgeCounts = mono ? apiSurfaceConfig().badgeCounts : {};
   const flat = category.links.filter((link) => !link.children);
   const groups = category.links.filter((link) => link.children);
   return (
@@ -86,7 +110,9 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
       <DocsBody>
         <h1>{category.label}</h1>
         <p>{lead}</p>
-        {flat.length > 0 && <LinkCards links={flat} summaries={summaries} mono={mono} />}
+        {flat.length > 0 && (
+          <LinkCards links={flat} summaries={summaries} mono={mono} badgeCounts={badgeCounts} />
+        )}
         {groups.map((group) => (
           <section key={group.label}>
             <h2 id={slug(group.label)}>{group.label}</h2>
@@ -95,7 +121,12 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
                 <InlineMarkdown source={group.subtitle} />
               </p>
             ) : null}
-            <LinkCards links={group.children ?? []} summaries={summaries} mono={mono} />
+            <LinkCards
+              links={group.children ?? []}
+              summaries={summaries}
+              mono={mono}
+              badgeCounts={badgeCounts}
+            />
           </section>
         ))}
       </DocsBody>

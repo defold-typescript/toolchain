@@ -38,6 +38,21 @@ describe("sectionTabs", () => {
     expect(activeTab(CANONICAL_SURFACE, "/api/Hash")).toBe("API");
   });
 
+  test("a section's entry page replaces its landing as the tab's link, and the tab stays active on both", () => {
+    const tabs = sectionTabs(trees[CANONICAL_SURFACE] ?? { name: "", children: [] }, {
+      "Get started": "/",
+    });
+    expect(tabs.map((tab) => [tab.title, tab.url])).toEqual([
+      ["Get started", "/"],
+      ["Guides", "/guides"],
+      ["API", "/api"],
+    ]);
+    const getStarted = tabs[0];
+    if (!getStarted) throw new Error("no Get started tab");
+    expect(isLayoutTabActive(getStarted, "/")).toBe(true);
+    expect(isLayoutTabActive(getStarted, "/get-started")).toBe(true);
+  });
+
   test("a version's API tab stays on that version", () => {
     if (!older) throw new Error("fewer than two tracked versions");
     const api = sectionTabs(trees[older] ?? { name: "", children: [] }).find(

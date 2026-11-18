@@ -309,16 +309,17 @@ header.topbar-critical .logo-mark {
   background: color-mix(in srgb, var(--color-accent) 18%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
+/* The `<pre>` sits inside Fumadocs' code block figure, which draws the frame;
+   the figure's card and secondary colors point at the code background. Mirror
+   of the layered rules in styles.css. */
 .prose pre {
   font-family: var(--font-mono);
   font-size: var(--prose-pre-size);
   line-height: 1.55;
-  background: var(--color-code-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  overflow-x: auto;
-  margin: 1.2em 0;
+}
+.prose figure.shiki {
+  --color-fd-card: var(--color-code-bg);
+  --color-fd-secondary: var(--color-code-bg);
 }
 .prose pre code {
   background: transparent;
@@ -546,9 +547,8 @@ header.topbar-critical .logo-mark {
 }
 
 /* Shiki token spans pinned to the per-theme variable pair, with the per-line
- * `<span class="line">` background forced transparent so the surrounding
- * `.prose pre` background shows through. The `<pre>` itself is intentionally
- * not neutralized — keep in sync with `app/styles.css`.
+ * `<span class="line">` background forced transparent so the code block
+ * figure's background shows through — keep in sync with `app/styles.css`.
  */
 .shiki span:not(.line):not(.api-overload-count) {
   color: var(--shiki-light, currentColor);

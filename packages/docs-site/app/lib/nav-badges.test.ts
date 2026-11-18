@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { BadgeCountTable } from "@defold-typescript/docs-render/combined-surface";
-import { navLeafBadgeHtml, navNamespaceBadges } from "./nav-badges";
+import { cardBadgeHtml, navLeafBadgeHtml, navNamespaceBadges } from "./nav-badges";
 
 describe("navNamespaceBadges (sidebar count pills)", () => {
   test("an all-zero namespace renders nothing", () => {
@@ -106,5 +106,26 @@ describe("navLeafBadgeHtml (the sidebar leaf's pills, table -> markup)", () => {
 
   test("a namespace the table omits renders nothing", () => {
     expect(navLeafBadgeHtml(TABLE, "absent", "c|a")).toBe("");
+  });
+});
+
+describe("cardBadgeHtml (API landing card pills)", () => {
+  const TABLE: BadgeCountTable = {
+    demo: { "c|a": [2, 1, 0], "b|a": [0, 0, 0] },
+  };
+
+  test("labeled pills for the active window's non-zero categories", () => {
+    expect(cardBadgeHtml(TABLE, "demo", "c|a")).toBe(
+      '<span class="api-badge-counts" aria-label="Availability summary">' +
+        '<span class="api-badge-count api-badge-count--new" aria-label="2 new symbols">2 new</span>' +
+        '<span class="api-badge-count api-badge-count--changed" aria-label="1 changed symbols">1 changed</span>' +
+        "</span>",
+    );
+  });
+
+  test("a window with no counts, one the row omits, and an absent namespace render nothing", () => {
+    expect(cardBadgeHtml(TABLE, "demo", "b|a")).toBe("");
+    expect(cardBadgeHtml(TABLE, "demo", "a|a")).toBe("");
+    expect(cardBadgeHtml(TABLE, "absent", "c|a")).toBe("");
   });
 });
