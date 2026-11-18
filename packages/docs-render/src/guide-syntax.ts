@@ -2,12 +2,11 @@ import { glyphSvg } from "./glyph";
 import { type Glyph, platformIcon } from "./platform-icons";
 import { Badge, TooltipTrigger } from "./ui";
 
-// The guide syntax both Markdown renderers read: the markdown-it rules in
-// `markdown.ts` and the remark plugins in `guide-plugins.ts`.
+// The guide syntax the remark plugins in `guide-plugins.ts` read.
 
 // Image src fragments carry render hints the site strips before emitting the
 // URL: `max-width=420` caps the rendered width and a valueless `inline` asks for
-// the SVG markup itself rather than an `<img>` (see the inline-svg-figures rule).
+// the SVG markup itself rather than an `<img>` (see `remarkGuideImages`).
 export function imageParamsFromSrc(src: string): {
   src: string;
   maxWidth?: string;

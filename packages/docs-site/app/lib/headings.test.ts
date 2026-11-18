@@ -2,11 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { apiPageTree, renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import {
-  allPageHeadings,
+  type AnyHeading,
   type Heading,
   hastHeadings,
-  pageHeadings,
+  outlineHeadings,
   slugify,
 } from "@defold-typescript/docs-render/headings";
 import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
@@ -32,49 +33,22 @@ describe("slugify", () => {
   });
 });
 
-describe("pageHeadings", () => {
-  test("decodes hex entities Shiki emits for inline-highlighted signature text", () => {
-    const headings = pageHeadings('<h3 id="x">Opaque&#x3C;"node"&#x3E;</h3>');
-    expect(headings).toHaveLength(1);
-    expect(headings[0]?.text).toBe('Opaque<"node">');
-  });
+// Raw HTML parsed by the pipeline's `rehype-raw`, the parser every page's
+// headings go through, then read the way both sites read a page's headings.
+async function headingsIn(html: string): Promise<AnyHeading[]> {
+  return hastHeadings((await processDocsMarkdown(html, { routePrefix: "" })).hast);
+}
 
-  test("decodes decimal entities", () => {
-    const headings = pageHeadings("<h3>a &#60; b &#62; c</h3>");
-    expect(headings).toHaveLength(1);
-    expect(headings[0]?.text).toBe("a < b > c");
-  });
-
-  test("decodes named entities (and decodes &amp; last so it never double-decodes)", () => {
-    const headings = pageHeadings("<h3>a &lt; b &gt; c &amp; d &quot;e&quot; &#39;f&#39;</h3>");
-    expect(headings).toHaveLength(1);
-    expect(headings[0]?.text).toBe(`a < b > c & d "e" 'f'`);
-  });
-
-  test("strips tags, decodes entities, and preserves the explicit heading id", () => {
-    const html =
-      '<h3 id="gui-get_node"><a href="#gui-get_node"><span>gui.get_node(id: string | Hash): Opaque&#x3C;"node"&#x3E;</span></a></h3>';
-    const headings = pageHeadings(html);
-    expect(headings).toHaveLength(1);
-    expect(headings[0]?.text).toBe('gui.get_node(id: string | Hash): Opaque<"node">');
-    expect(headings[0]?.id).toBe("gui-get_node");
-  });
-
-  test("decodes &amp; exactly once across a heading full of encoded entities", () => {
-    const headings = pageHeadings("<h3>Record&#x3C;string, any&#x3E; &amp; Foo</h3>");
-    expect(headings).toHaveLength(1);
-    expect(headings[0]?.text).toBe("Record<string, any> & Foo");
-  });
-
+describe("outlineHeadings", () => {
   // The upgrade guide nests each release's per-symbol notes at h4 beneath one
   // `## Defold <version>` heading. A TOC that stops at h3 lists the release and
   // its topics but none of the symbols a reader is actually looking for.
-  test("extracts an h4 heading as a third tier, in document order", () => {
+  test("extracts an h4 heading as a third tier, in document order", async () => {
     const html =
       '<h2 id="defold-1131">Defold 1.13.1</h2>' +
       '<h3 id="added-lua-apis">Added Lua APIs</h3>' +
       '<h4 id="collectionproxyload">collectionproxy.load</h4>';
-    expect(pageHeadings(html)).toEqual([
+    expect(outlineHeadings(await headingsIn(html))).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
       { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
       { text: "collectionproxy.load", id: "collectionproxyload", level: 4, code: false },
@@ -82,7 +56,7 @@ describe("pageHeadings", () => {
   });
 });
 
-describe("allPageHeadings", () => {
+describe("hastHeadings", () => {
   const fullDepthHtml =
     '<h1 id="upgrading-defold-versions">Upgrading Defold versions</h1>' +
     '<h2 id="defold-1131">Defold 1.13.1</h2>' +
@@ -91,8 +65,8 @@ describe("allPageHeadings", () => {
     '<h5><a href="#x"><span>Opaque&#x3C;"node"&#x3E;</span></a></h5>' +
     '<h6 id="minted-deep">Deep note</h6>';
 
-  test("returns h1 through h6 in document order, with tags stripped, entities decoded, and an explicit id preferred over the slug fallback outside h2..h4", () => {
-    expect(allPageHeadings(fullDepthHtml)).toEqual([
+  test("returns h1 through h6 in document order, an explicit id preferred over the slug fallback outside h2..h4", async () => {
+    expect(await headingsIn(fullDepthHtml)).toEqual([
       { text: "Upgrading Defold versions", id: "upgrading-defold-versions", level: 1, code: false },
       { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
       { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
@@ -102,10 +76,10 @@ describe("allPageHeadings", () => {
     ]);
   });
 
-  test("an element carrying data-toc-text contributes that value instead of its text, and is kept as the heading's badge", () => {
+  test("an element carrying data-toc-text contributes that value instead of its text, and is kept as the heading's badge", async () => {
     const html =
       '<h3 id="fx"><code><span>f(</span><span class="api-overload-count" data-toc-text="...">2 overloads</span><span>): number</span></code></h3>';
-    expect(allPageHeadings(html)).toEqual([
+    expect(await headingsIn(html)).toEqual([
       {
         text: "f(...): number",
         id: "fx",
@@ -116,10 +90,10 @@ describe("allPageHeadings", () => {
     ]);
   });
 
-  test("the badge offset counts decoded characters after the leading whitespace is trimmed", () => {
+  test("the badge offset counts characters after the leading whitespace is trimmed", async () => {
     const html =
       '<h3 id="gx"> <code><span>g&#x3C;T&#x3E;(</span><span class="api-overload-count" data-toc-text="...">3 &#x3C;overloads&#x3E;</span><span>)</span></code></h3>';
-    expect(allPageHeadings(html)).toEqual([
+    expect(await headingsIn(html)).toEqual([
       {
         text: "g<T>(...)",
         id: "gx",
@@ -130,13 +104,13 @@ describe("allPageHeadings", () => {
     ]);
   });
 
-  test("a heading with no data-toc-text element carries no badge", () => {
-    const [heading] = allPageHeadings('<h3 id="plain"><code>f(): number</code></h3>');
+  test("a heading with no data-toc-text element carries no badge", async () => {
+    const [heading] = await headingsIn('<h3 id="plain"><code>f(): number</code></h3>');
     expect(heading?.text).toBe("f(): number");
     expect(heading !== undefined && "badge" in heading).toBe(false);
   });
 
-  test("a highlighted heading's markup keeps its token spans and its data-toc-text element, and drops every other tag", () => {
+  test("a highlighted heading's markup keeps its token spans and its data-toc-text element, and drops every other tag", async () => {
     const html =
       '<h3 id="fx"><span class="signature-split"><a class="heading-anchor" href="#fx"><code class="api-signature shiki">' +
       '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">f(</span>' +
@@ -147,24 +121,24 @@ describe("allPageHeadings", () => {
       ' <span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New">N</span>' +
       '<span class="api-symbol-span" data-span-oldest="1.12.4" aria-hidden="true"></span>' +
       '<span class="heading-anchor-icon"><svg aria-hidden="true"><path d="M1 1"/></svg></span></h3>';
-    expect(allPageHeadings(html)[0]?.markup).toBe(
+    expect((await headingsIn(html))[0]?.markup).toBe(
       '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">f(</span>' +
         '<span class="api-overload-count">2 overloads</span>' +
         '<span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">): </span>' +
-        '<span style="--shiki-light:#222222;--shiki-dark:#DDDDDD;font-weight:600">Hash&#x3C;T&#x3E;</span>',
+        '<span style="--shiki-light:#222222;--shiki-dark:#DDDDDD;font-weight:600">Hash&#x3C;T></span>',
     );
   });
 
-  test("a heading with no highlighted token carries no markup", () => {
-    const [heading] = allPageHeadings(
+  test("a heading with no highlighted token carries no markup", async () => {
+    const [heading] = await headingsIn(
       '<h2 id="p"><a class="heading-anchor" href="#p">What <code>resolve</code> prints</a></h2>',
     );
     expect(heading?.text).toBe("What resolve prints");
     expect(heading !== undefined && "markup" in heading).toBe(false);
   });
 
-  test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
-    expect(pageHeadings(fullDepthHtml)).toEqual([
+  test("outlineHeadings over the same headings keeps the h2..h4 table-of-contents bound", async () => {
+    expect(outlineHeadings(await headingsIn(fullDepthHtml))).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },
       { text: "Added Lua APIs", id: "added-lua-apis", level: 3, code: false },
       { text: "collectionproxy.load", id: "collectionproxyload", level: 4, code: false },
@@ -230,7 +204,7 @@ describe("hastHeadings over rendered /api pages (Combined surface, committed art
     expect(functions.filter((h) => !h.code).map((h) => h.id)).toEqual([]);
   });
 
-  test("every code heading on go carries markup of bare spans that reads as the heading, the badge in place of what it stands for", () => {
+  test("every code heading on go carries markup of bare spans that reads as the heading, the badge in place of what it stands for", async () => {
     const code = go.filter((h) => h.code);
     expect(code.some((h) => h.badge !== undefined)).toBe(true);
     for (const h of code) {
@@ -240,7 +214,7 @@ describe("hastHeadings over rendered /api pages (Combined surface, committed art
         : h.text;
       expect({
         id: h.id,
-        reads: allPageHeadings(`<h3>${markup}</h3>`)[0]?.text,
+        reads: (await headingsIn(`<h3>${markup}</h3>`))[0]?.text,
         otherTags: markup.match(/<(?!\/?span\b)[^>]*>/g) ?? [],
         otherAttributes: markup.match(/<span\s(?!style="|class="api-overload-count")[^>]*>/g) ?? [],
       }).toEqual({ id: h.id, reads, otherTags: [], otherAttributes: [] });

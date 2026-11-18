@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import type { Element, Nodes } from "hast";
-import { toHtml } from "hast-util-to-html";
 import type { Heading, PhrasingContent, Root, RootContent } from "mdast";
 import {
   apiTypeCode,
@@ -15,7 +14,7 @@ import {
   upstreamChip,
 } from "./api-nodes";
 import { parseMarkdownFragment, processApiTree, processDocsMarkdown } from "./docs-markdown";
-import { allPageHeadings, hastHeadings } from "./headings";
+import { hastHeadings } from "./headings";
 import { getHighlighter, runStyle, signatureTokens } from "./signature-tokens";
 import { escapeUpstreamText } from "./upstream-text";
 
@@ -375,6 +374,5 @@ describe("hastHeadings", () => {
     expect(markup).toContain('<span class="api-overload-count">3 overloads</span>');
     expect(markup).toMatch(/<span style="[^"]*--shiki-light:[^"]*">fn<\/span>/);
     expect(markup).not.toMatch(/<a\b|<code\b|heading-anchor|api-badge-dot|<svg/);
-    expect(hastHeadings(page.hast)).toEqual(allPageHeadings(toHtml(page.hast)));
   });
 });

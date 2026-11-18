@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import {
-  allPageHeadings,
   type Heading,
-  pageHeadings,
+  hastHeadings,
+  outlineHeadings,
   slugify,
 } from "@defold-typescript/docs-render/headings";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import type { Element, Nodes, Root } from "hast";
 import { toHtml } from "hast-util-to-html";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { renderGuidePage } from "./content";
@@ -40,13 +41,39 @@ if (!guidePage) throw new Error(`no guide page for ${SLUG}`);
 // the page and its gate. That second model is what let a heading closed with
 // `###` pass: the line regex kept the closing hashes in the text and slugged them
 // to a different anchor than the one the renderer minted.
-const guideHtml = toHtml((await renderGuidePage(GUIDE_DIR, guidePage)).hast);
+const guideTree = (await renderGuidePage(GUIDE_DIR, guidePage)).hast;
+
+interface RenderedSection {
+  version: string;
+  tree: Root;
+}
+
+// The rendered page split the way `releaseSections` splits the source: the
+// markers survive rendering as comments at the root, and a section is the run of
+// root nodes after one that production reads as a marker.
+function renderedSections(tree: Root): RenderedSection[] {
+  const sections: RenderedSection[] = [];
+  for (const node of tree.children) {
+    const [marker] = node.type === "comment" ? releaseSections(toHtml(node)) : [];
+    if (marker) sections.push({ version: marker.version, tree: { type: "root", children: [] } });
+    else sections.at(-1)?.tree.children.push(node);
+  }
+  return sections;
+}
+
+function renderedSection(tree: Root, version: string): Root {
+  return (
+    renderedSections(tree).find((s) => s.version === version)?.tree ?? {
+      type: "root",
+      children: [],
+    }
+  );
+}
 
 // The page holds one marked section per release. Every claim about a specific
 // release is asserted against that release's own section, mirroring how the
 // readiness gate scopes its evidence — a heading parked in an older section
-// must not satisfy the current release. The markers are html_blocks on their own
-// line, so the same splitter reads the rendered page as well as the source.
+// must not satisfy the current release.
 const releaseBody = releaseSection(guideBody, RELEASE) ?? "";
 // The hop a baseline project actually makes spans every release after the
 // baseline up to the current one, so migration coverage is asserted over their
@@ -61,7 +88,12 @@ function spanOf(source: string): string {
     .join("\n");
 }
 const spanBody = spanOf(guideBody);
-const spanHtml = spanOf(guideHtml);
+const spanTree: Root = {
+  type: "root",
+  children: renderedSections(guideTree)
+    .filter((s) => s.version !== BASELINE)
+    .flatMap((s) => s.tree.children),
+};
 const liveUpdateBody = releaseSection(guideBody, LIVE_UPDATE_RELEASE) ?? "";
 
 interface AvailabilityRecord {
@@ -110,8 +142,10 @@ function qualifiedName(record: AvailabilityRecord): string {
 // One benign divergence class stays a contract rather than code: these headings
 // are plain text, and a heading wrapping a markdown link (whose id would slug the
 // target too) must not be introduced.
-function disambiguatedAnchors(html: string): Heading[] {
-  return pageHeadings(html).filter((h) => h.level !== 3 && h.id !== slugify(h.text));
+function disambiguatedAnchors(tree: Root): Heading[] {
+  return outlineHeadings(hastHeadings(tree)).filter(
+    (h) => h.level !== 3 && h.id !== slugify(h.text),
+  );
 }
 
 // Every slug that names a symbol this guide documents, page-wide: the typed
@@ -134,10 +168,10 @@ function symbolSlugs(): Set<string> {
 // to move where; empty when the section nests correctly. Read full-depth: a
 // heading outside the table of contents' h2..h4 window is at the wrong level, not
 // absent, and the narrow reader would drop it instead of rejecting it.
-function headingHierarchyDefects(html: string, symbols: Set<string>): string[] {
+function headingHierarchyDefects(tree: Root, symbols: Set<string>): string[] {
   const defects: string[] = [];
-  for (const { version, body } of releaseSections(html)) {
-    const [wrapper, ...rest] = allPageHeadings(body);
+  for (const { version, tree: section } of renderedSections(tree)) {
+    const [wrapper, ...rest] = hastHeadings(section);
     if (wrapper?.level !== 2 || wrapper.text !== `Defold ${version}`) {
       defects.push(
         wrapper
@@ -157,7 +191,7 @@ function headingHierarchyDefects(html: string, symbols: Set<string>): string[] {
 
 // Two release sections shaped exactly as the page shapes them, so a fixture
 // exercises the same renderer path as the real guide. Blank lines around each
-// marker keep it its own html_block, which is what `releaseSections` looks for.
+// marker keep it its own HTML block, which is what `releaseSections` looks for.
 function twoReleaseFixture(first: string, second: string): string {
   return [
     "<!-- release: 1.13.0 -->",
@@ -173,6 +207,20 @@ function twoReleaseFixture(first: string, second: string): string {
     second,
     "",
   ].join("\n");
+}
+
+async function render(markdown: string): Promise<Root> {
+  return (await processDocsMarkdown(markdown, { routePrefix: "" })).hast;
+}
+
+function elementsNamed(tree: Nodes, tagName: string): Element[] {
+  const found: Element[] = [];
+  const walk = (node: Nodes): void => {
+    if (node.type === "element" && node.tagName === tagName) found.push(node);
+    if ("children" in node) for (const child of node.children) walk(child);
+  };
+  walk(tree);
+  return found;
 }
 
 // The full route set the guide may link, built from the pure search-index
@@ -206,37 +254,38 @@ describe("upgrading-defold-versions guide", () => {
   // heading already owns that anchor, leaving this one's permalink and TOC entry
   // pointing at the wrong release's note.
   test("no stable anchor on the rendered page has been disambiguated", () => {
-    expect(pageHeadings(guideHtml).filter((h) => h.level === 4).length).toBeGreaterThan(0);
-    expect(disambiguatedAnchors(guideHtml).map((h) => `${h.id} (${h.text})`)).toEqual([]);
+    expect(hastHeadings(guideTree).filter((h) => h.level === 4).length).toBeGreaterThan(0);
+    expect(disambiguatedAnchors(guideTree).map((h) => `${h.id} (${h.text})`)).toEqual([]);
   });
 
-  // `pageHeadings` falls back to `slugify(text)` when a heading carries no `id`, so
+  // `hastHeadings` falls back to `slugify(text)` when a heading carries no `id`, so
   // an unminted heading reads as undisambiguated. Assert the attribute itself, or
   // narrowing the ruler's depth bound would silently empty the check above.
-  test("every per-symbol heading carries a minted id in the rendered html", () => {
-    const opens = [...guideHtml.matchAll(/<h4(\s+[^>]*)?>/g)].map((m) => m[1] ?? "");
-    expect(opens.length).toBeGreaterThan(0);
-    expect(opens.filter((attrs) => !/\sid="[^"]+"/.test(attrs))).toEqual([]);
+  test("every per-symbol heading carries a minted id on the rendered page", () => {
+    const h4 = elementsNamed(guideTree, "h4");
+    expect(h4.length).toBeGreaterThan(0);
+    const unminted = h4.filter((h) => typeof h.properties.id !== "string" || !h.properties.id);
+    expect(unminted.map((h) => toHtml(h))).toEqual([]);
   });
 
   test("a symbol heading repeated across releases is rejected, closing hashes and all", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture("#### liveupdate.add_mount", "#### liveupdate.add_mount ####"),
     );
-    expect(disambiguatedAnchors(html).map((h) => h.id)).toEqual(["liveupdateadd_mount-1"]);
+    expect(disambiguatedAnchors(tree).map((h) => h.id)).toEqual(["liveupdateadd_mount-1"]);
   });
 
   test("distinct symbol headings across releases are accepted", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture("#### liveupdate.add_mount", "#### liveupdate.remove_mount"),
     );
-    expect(disambiguatedAnchors(html)).toEqual([]);
+    expect(disambiguatedAnchors(tree)).toEqual([]);
   });
 
   test("a heading-like line inside a fence is not a heading", async () => {
     const fenced = ["```md", "#### liveupdate.add_mount", "```"].join("\n");
-    const html = await renderMarkdown(twoReleaseFixture("#### liveupdate.add_mount", fenced));
-    expect(disambiguatedAnchors(html)).toEqual([]);
+    const tree = await render(twoReleaseFixture("#### liveupdate.add_mount", fenced));
+    expect(disambiguatedAnchors(tree)).toEqual([]);
   });
 
   // Group anchors are navigation-only, so they may repeat *across* releases but
@@ -245,8 +294,8 @@ describe("upgrading-defold-versions guide", () => {
   // the second occurrence inside a release already carries a distinct `-1` id.
   test("no two group headings inside one release resolve to the same slug", () => {
     const offenders: string[] = [];
-    for (const { version, body } of releaseSections(guideHtml)) {
-      const slugs = pageHeadings(body)
+    for (const { version, tree } of renderedSections(guideTree)) {
+      const slugs = outlineHeadings(hastHeadings(tree))
         .filter((h) => h.level === 3)
         .map((h) => slugify(h.text));
       for (const [i, slug] of slugs.entries()) {
@@ -260,10 +309,10 @@ describe("upgrading-defold-versions guide", () => {
   // next bump to author: one `## Defold <version>` owning each release's notes,
   // rather than a flat run of version-prefixed siblings.
   test("each release section opens with exactly one `Defold <version>` h2", () => {
-    const sections = releaseSections(guideHtml);
+    const sections = renderedSections(guideTree);
     expect(sections.length).toBeGreaterThan(0);
-    for (const { version, body } of sections) {
-      const h2 = pageHeadings(body).filter((h) => h.level === 2);
+    for (const { version, tree } of sections) {
+      const h2 = outlineHeadings(hastHeadings(tree)).filter((h) => h.level === 2);
       expect(h2.map((h) => h.text)).toEqual([`Defold ${version}`]);
     }
   });
@@ -273,8 +322,7 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   test("a patch release's per-symbol notes render at h4 with bare-symbol ids", () => {
-    const body = releaseSection(guideHtml, PATCH_NOTES_RELEASE) ?? "";
-    const ids = pageHeadings(body)
+    const ids = outlineHeadings(hastHeadings(renderedSection(guideTree, PATCH_NOTES_RELEASE)))
       .filter((h) => h.level === 4)
       .map((h) => h.id);
     expect(ids).toContain("collectionproxyload");
@@ -291,36 +339,36 @@ describe("upgrading-defold-versions guide", () => {
   test("every release section on the rendered page nests wrapper, topic and symbol", () => {
     const symbols = symbolSlugs();
     expect(symbols.size).toBeGreaterThan(0);
-    expect(releaseSections(guideHtml).length).toBeGreaterThan(0);
-    expect(headingHierarchyDefects(guideHtml, symbols)).toEqual([]);
+    expect(renderedSections(guideTree).length).toBeGreaterThan(0);
+    expect(headingHierarchyDefects(guideTree, symbols)).toEqual([]);
   });
 
   test("a topic heading demoted to h4 is rejected", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture(
         "#### Added Lua APIs\n\n#### collectionproxy.load",
         "### Changed Lua API signatures\n\n#### gui.set",
       ),
     );
-    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+    expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
       '1.13.0: "Added Lua APIs" is h4, expected h3',
     ]);
   });
 
   test("a symbol note promoted to h3 is rejected", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture(
         "### Added Lua APIs\n\n### collectionproxy.load",
         "### Changed Lua API signatures\n\n#### gui.set",
       ),
     );
-    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+    expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
       '1.13.0: "collectionproxy.load" is h3, expected h4',
     ]);
   });
 
   test("a release wrapper demoted to h3 is rejected", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       [
         "<!-- release: 1.13.0 -->",
         "",
@@ -332,7 +380,7 @@ describe("upgrading-defold-versions guide", () => {
         "",
       ].join("\n"),
     );
-    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+    expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
       '1.13.0: "Defold 1.13.0" is h3, expected the section to open with an h2 wrapper',
     ]);
   });
@@ -344,13 +392,13 @@ describe("upgrading-defold-versions guide", () => {
       ["#", 1],
       ["#####", 5],
     ] as const) {
-      const html = await renderMarkdown(
+      const tree = await render(
         twoReleaseFixture(
           `${hashes} Added Lua APIs\n\n#### collectionproxy.load`,
           "### Changed Lua API signatures\n\n#### gui.set",
         ),
       );
-      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
         `1.13.0: "Added Lua APIs" is h${level}, expected h3`,
       ]);
     }
@@ -361,13 +409,13 @@ describe("upgrading-defold-versions guide", () => {
       ["#####", 5],
       ["######", 6],
     ] as const) {
-      const html = await renderMarkdown(
+      const tree = await render(
         twoReleaseFixture(
           `### Added Lua APIs\n\n${hashes} collectionproxy.load`,
           "### Changed Lua API signatures\n\n#### gui.set",
         ),
       );
-      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
         `1.13.0: "collectionproxy.load" is h${level}, expected h4`,
       ]);
     }
@@ -381,7 +429,7 @@ describe("upgrading-defold-versions guide", () => {
       ["#", 1],
       ["######", 6],
     ] as const) {
-      const html = await renderMarkdown(
+      const tree = await render(
         [
           "<!-- release: 1.13.0 -->",
           "",
@@ -393,7 +441,7 @@ describe("upgrading-defold-versions guide", () => {
           "",
         ].join("\n"),
       );
-      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([
         `1.13.0: "Defold 1.13.0" is h${level}, expected the section to open with an h2 wrapper`,
       ]);
     }
@@ -402,24 +450,24 @@ describe("upgrading-defold-versions guide", () => {
   // Widening the reader must not resurrect heading-like text from inside `<pre>`.
   test("a heading-like line inside a fence is not a heading at an out-of-range level", async () => {
     const fenced = ["```md", "###### liveupdate.add_mount", "```"].join("\n");
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture("### Changed Lua API signatures\n\n#### liveupdate.add_mount", fenced),
     );
-    expect(allPageHeadings(html).some((h) => h.level === 6)).toBe(false);
-    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([]);
+    expect(hastHeadings(tree).some((h) => h.level === 6)).toBe(false);
+    expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([]);
   });
 
   // The latitude the gate must keep: topics are structure, so the same topic
   // heading legitimately opens a group under every release that needs it. A check
   // reaching for page-wide topic uniqueness would red the real page.
   test("one topic heading repeating across releases over distinct symbols is accepted", async () => {
-    const html = await renderMarkdown(
+    const tree = await render(
       twoReleaseFixture(
         "### Changed Lua API signatures\n\n#### liveupdate.add_mount",
         "### Changed Lua API signatures\n\n#### gui.set",
       ),
     );
-    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([]);
+    expect(headingHierarchyDefects(tree, symbolSlugs())).toEqual([]);
   });
   test("is registered in the Guides navigation under Project configuration", () => {
     const groups = groupGuidePages(listGuidePages(GUIDE_DIR));
@@ -447,7 +495,7 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   test("every removed/deprecated catalog symbol has a stable guide anchor or a no-action entry", () => {
-    const anchors = new Set(pageHeadings(spanHtml).map((h) => h.id));
+    const anchors = new Set(outlineHeadings(hastHeadings(spanTree)).map((h) => h.id));
     // An explicit no-action list: `<!-- no-action: <qualified> -->` classifies a
     // removed/deprecated symbol that needs no migration, without minting a heading.
     // Read from the source, where the marker is authored.
@@ -527,8 +575,7 @@ describe("upgrading-defold-versions guide", () => {
   // transition — the `name` parameter widened to accept a hash — not as removed
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
-    const liveUpdateHtml = releaseSection(guideHtml, LIVE_UPDATE_RELEASE) ?? "";
-    const groups = pageHeadings(liveUpdateHtml)
+    const groups = outlineHeadings(hastHeadings(renderedSection(guideTree, LIVE_UPDATE_RELEASE)))
       .filter((h) => h.level === 3)
       .map((h) => h.text);
     expect(groups).toContain("Changed Lua API signatures");
@@ -615,10 +662,10 @@ describe("releaseSections", () => {
     expect(releaseSection(twoReleases, "1.13.2")).toBeNull();
   });
 
-  // The markers survive rendering as their own html_blocks, which is what lets the
-  // rendered page be split by the same function that splits the source.
+  // The markers survive rendering as comments on their own line, which is what lets
+  // the rendered page be split by the same function that splits the source.
   test("splits a rendered page as well as its source", async () => {
-    const html = await renderMarkdown(twoReleaseFixture("#### a.one", "#### b.two"));
+    const html = toHtml(await render(twoReleaseFixture("#### a.one", "#### b.two")));
     expect(releaseSections(html).map((s) => s.version)).toEqual(["1.13.0", "1.13.1"]);
     expect(releaseSections(html)[0]?.body).toContain("a.one");
     expect(releaseSections(html)[0]?.body).not.toContain("b.two");

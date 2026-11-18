@@ -57,8 +57,8 @@ function rewriteLinks(text: string): string {
 // Convert a `/** … */` JSDoc block above a value-type interface into Markdown:
 // the summary, then each `@remarks`/`@example` body as its own paragraph, marker
 // dropped. The result is already Markdown — fences, lists, and inline code stay
-// raw — and is rendered directly by the docs-site `markdown-it` pipeline (see
-// `apiPageMarkdown`), never through the HTML-oriented `htmlToDocText`.
+// raw — and is parsed as it stands into the API page tree (see `apiPageTree`),
+// never through the HTML-oriented `htmlToDocText`.
 export function jsdocToMarkdown(block: string): string {
   const [parsed] = parseComment(block, COMMENT_PARSE_OPTIONS);
   if (!parsed) return "";

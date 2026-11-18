@@ -107,6 +107,22 @@ describe("processDocsMarkdown", () => {
     expect(String(pre?.properties.style)).toContain("--shiki-dark");
     expect(pre ? textOf(pre) : "").toContain("const x = 1;");
   });
+
+  test("a fence's [!code ...] comments mark their lines and leave the code", async () => {
+    const { hast } = await processDocsMarkdown(
+      "```ts\nconst a = 1; // [!code highlight]\nconst b = 2; // [!code --]\nconst c = 3;\n```",
+      { routePrefix: "" },
+    );
+    const [code] = byTag(hast, "code");
+    const lines = (code?.children ?? []).flatMap((line) =>
+      line.type === "element" ? [{ classes: classes(line), text: textOf(line).trim() }] : [],
+    );
+    expect(lines).toEqual([
+      { classes: ["line", "highlighted"], text: "const a = 1;" },
+      { classes: ["line", "diff", "remove"], text: "const b = 2;" },
+      { classes: ["line"], text: "const c = 3;" },
+    ]);
+  });
 });
 
 describe("processDocsMarkdown guide syntax", () => {

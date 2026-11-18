@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { isExternalUrl, LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
+import { processDocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import {
+  type Heading,
   hastHeadings,
   outlineHeadings,
-  pageHeadings,
 } from "@defold-typescript/docs-render/headings";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
@@ -196,6 +197,11 @@ const goPage = await renderCanonicalApiPage("go", TYPES_DIR);
 if (goPage === undefined) throw new Error("namespace go missing from the canonical surface");
 const goToc = outline(outlineHeadings(hastHeadings(goPage.hast)));
 
+// Raw HTML parsed by the pipeline's `rehype-raw`, as every page's headings are.
+async function outlineOf(html: string): Promise<Heading[]> {
+  return outlineHeadings(hastHeadings((await processDocsMarkdown(html, { routePrefix: "" })).hast));
+}
+
 function entry(items: TOCItemType[], url: string): TOCItemType {
   const found = items.find((item) => item.url === url);
   if (!found) throw new Error(`no outline entry links ${url}`);
@@ -229,18 +235,18 @@ describe("outline", () => {
     expect(entry(goToc, "#functions").title).toBe("Functions");
   });
 
-  test("an overload heading with no highlighted token reads its text with the overload count in place", () => {
+  test("an overload heading with no highlighted token reads its text with the overload count in place", async () => {
     const html =
       '<h3 id="f"><code>f(<span class="api-overload-count" data-toc-text="...">2 overloads</span>)</code></h3>';
-    expect(markupOf(entry(outline(pageHeadings(html)), "#f"))).toBe(
+    expect(markupOf(entry(outline(await outlineOf(html)), "#f"))).toBe(
       'f(<span class="api-overload-count">2 overloads</span>)',
     );
   });
 
-  test("a chip the server emitted inactive starts hidden in the outline", () => {
+  test("a chip the server emitted inactive starts hidden in the outline", async () => {
     const html =
       '<h3 id="f"><code>f()</code><span class="api-badge-dot api-badge-dot--new" aria-label="New" title="New" style="display:none">N</span><span class="api-badge-dot api-badge-dot--changed" aria-label="Changed" title="Changed">C</span></h3>';
-    const markup = markupOf(entry(outline(pageHeadings(html)), "#f"));
+    const markup = markupOf(entry(outline(await outlineOf(html)), "#f"));
     expect(markup).toMatch(
       /<span class="api-badge-dot api-badge-dot--new"[^>]*display:none[^>]*>N/,
     );

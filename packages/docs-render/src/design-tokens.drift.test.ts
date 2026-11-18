@@ -7,8 +7,8 @@ import { THEME_TOKENS } from "./theme-tokens";
 const STYLES_CSS = readFileSync(join(import.meta.dir, "styles.css"), "utf8");
 
 // styles.css: light values live in `@theme {`, dark in the top-level
-// `[data-theme="dark"] {` — never the `html[data-theme] .shiki` or
-// `[data-theme] .prose .admonition-*` rule blocks (no `--color-*` there).
+// `[data-theme="dark"] {` — never the `html[data-theme] .shiki` rule block (no
+// `--color-*` there).
 const STYLES_ANCHORS = {
   lightAnchor: /^@theme \{/m,
   darkAnchor: /^\[data-theme="dark"\] \{/m,
@@ -43,8 +43,8 @@ test("parseThemeColorTokens reads styles.css @theme (light) and top-level dark b
   const { light, dark } = parseThemeColorTokens(STYLES_CSS, STYLES_ANCHORS);
   expect(light.get("--color-bg")).toBe("#ffffff");
   expect(dark.get("--color-bg")).toBe("#0e0e10");
-  // Proof the dark map came from the top-level block, not a `.shiki`/`.admonition`
-  // rule: those carry no `--color-*`, so a mismatched anchor would miss this.
+  // Proof the dark map came from the top-level block, not the `.shiki` rule: it
+  // carries no `--color-*`, so a mismatched anchor would miss this.
   expect(dark.get("--color-text")).toBe("#ececef");
 });
 

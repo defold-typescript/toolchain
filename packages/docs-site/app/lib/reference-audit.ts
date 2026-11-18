@@ -27,8 +27,8 @@ const FENCE_RE = /^\s*(```|~~~)/;
 // file. Everything else non-`.md` and relative is a repo file/dir citation.
 const IMAGE_RE = /\.(png|jpe?g|gif|svg|webp|avif)$/i;
 
-// Mirror `renderMarkdown`'s heading-id rule: only h2/h3 get ids, duplicates
-// gain a `-2`, `-3` suffix, and headings inside code fences are skipped.
+// The anchors a guide reference may name: each h2 and h3 heading's slug, a
+// repeat gaining a `-1`, `-2` suffix, with headings inside code fences skipped.
 function anchorsFor(text: string): Set<string> {
   const out = new Set<string>();
   const counts = new Map<string, number>();

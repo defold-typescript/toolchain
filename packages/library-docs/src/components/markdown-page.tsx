@@ -17,7 +17,7 @@ export function MarkdownPage({ title, page }: { title: string; page: DocsMarkdow
         <article data-page-body="">
           <MarkdownBody hast={page.hast} />
         </article>
-        <PageScripts key={title} copyButtons={false} />
+        <PageScripts key={title} />
       </DocsBody>
     </DocsPage>
   );

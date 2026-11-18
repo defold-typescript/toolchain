@@ -177,11 +177,11 @@ describe("links back to the toolchain docs", () => {
     const script = `
       globalThis.__DOCS_BASE__ = "/library-data/";
       const { withBase } = await import("@defold-typescript/docs-render/base");
-      const { splitSignatureBrandLinks } = await import("@defold-typescript/docs-render/signature-brand-links");
+      const { brandWordRegex } = await import("@defold-typescript/docs-render/signature-brand-links");
       console.log(JSON.stringify({
         core: withBase(${JSON.stringify(`${TOOLCHAIN_DOCS_URL}/api/Vector3`)}),
         site: withBase("/api/demo"),
-        applied: typeof splitSignatureBrandLinks,
+        applied: typeof brandWordRegex,
       }));`;
     const child = Bun.spawnSync(["bun", "-e", script], { cwd: SITE_DIR });
     expect(child.exitCode).toBe(0);

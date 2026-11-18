@@ -223,7 +223,7 @@ async function checkCorpus(
         continue;
       }
       // A fragment on a non-markdown target is a render directive, not an
-      // anchor: `markdown.ts` reads `#max-width=` / `#mw=` off image links to
+      // anchor: `remarkGuideImages` reads `#max-width=` / `#mw=` off image links to
       // size them. Only a `.md` target's fragment names a heading.
       if (!fragment || !targetPage.endsWith(".md")) continue;
       const ids = anchors.get(targetPage);

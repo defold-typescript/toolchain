@@ -225,8 +225,8 @@ describe("jsdocToMarkdown", () => {
   });
 
   test("leaves prose and inline-code angle brackets RAW (no entity-encoding)", () => {
-    // The derived Markdown is rendered directly by markdown-it, not sanitized
-    // through `htmlToDocText`, so `<`/`>` stay literal — markdown-it escapes them
+    // The derived Markdown is parsed as it stands, not sanitized through
+    // `htmlToDocText`, so `<`/`>` stay literal — the Markdown parser reads them
     // per its own rules (code spans render `<` verbatim).
     expect(jsdocToMarkdown("/**\n * Holds when a < b is true.\n */")).toBe(
       "Holds when a < b is true.",
@@ -238,7 +238,7 @@ describe("jsdocToMarkdown", () => {
 
   test("keeps a @remarks bullet list separated from a following @example by a blank line", () => {
     // Locks the list -> paragraph spacing: each tag body becomes its own
-    // Markdown block joined by a blank line, so markdown-it renders the list and
+    // Markdown block joined by a blank line, so the parser reads the list and
     // the example caption as distinct blocks instead of one run-on.
     const md = jsdocToMarkdown(
       [
@@ -334,7 +334,7 @@ describe("parseGlobalTypes", () => {
   });
 
   test("Hash carries a deep multi-paragraph Markdown description", () => {
-    // The description is raw Markdown rendered directly by markdown-it — assert
+    // The description is raw Markdown parsed as it stands — assert
     // on it as-is, not through the HTML-oriented htmlToDocText.
     const md = pageNamed("Hash").module.description;
     expect(md.length).toBeGreaterThan(300);
@@ -348,7 +348,7 @@ describe("parseGlobalTypes", () => {
     const md = pageNamed("Opaque").module.description;
     expect(md.length).toBeGreaterThan(300);
     expect(md).toContain("\n\n");
-    // Inline-code generics stay literal (markdown-it renders them verbatim).
+    // Inline-code generics stay literal (a code span renders them verbatim).
     expect(md).toContain('`Opaque<"node">`');
     expect(md).toContain('`Opaque<"texture">`');
     expect(md).toContain("unique symbol");

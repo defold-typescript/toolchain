@@ -26,7 +26,6 @@ export const THEME_TOKENS = `
   --prose-h4-size: 0.95rem;
   --prose-code-size: 0.875em;
   --prose-pre-size: 14px;
-  --prose-code-title-size: 12px;
   /* Navigation type scale. Top menu is its own knob; the left sidebar and
    * right "on this page" rail share one. */
   --nav-top-size: 0.9rem;
