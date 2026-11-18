@@ -20,6 +20,8 @@ import type { getConfig as File_Guides_getConfig } from './pages/guides';
 // prettier-ignore
 import type { getConfig as File_Index_getConfig } from './pages/index';
 // prettier-ignore
+import type { getConfig as File_Search_getConfig } from './pages/search';
+// prettier-ignore
 import type { getConfig as File_Layout_getConfig } from './pages/_layout';
 
 // prettier-ignore
@@ -31,7 +33,8 @@ type Page =
 | ({ path: '/api' } & GetConfigResponse<typeof File_ApiIndex_getConfig>)
 | ({ path: '/get-started' } & GetConfigResponse<typeof File_GetStarted_getConfig>)
 | ({ path: '/guides' } & GetConfigResponse<typeof File_Guides_getConfig>)
-| ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>);
+| ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>)
+| ({ path: '/search' } & GetConfigResponse<typeof File_Search_getConfig>);
 
 // prettier-ignore
 type Layout =

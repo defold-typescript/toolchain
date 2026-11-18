@@ -1,3 +1,5 @@
+import { withBase } from "./base";
+
 export interface SearchRecord {
   route: string;
   title: string;
@@ -19,4 +21,29 @@ export function searchIndexFileForRoute(route: string, versionIds: readonly stri
   return candidate && versionIds.includes(candidate)
     ? `search-index-${candidate}.json`
     : DEFAULT_SEARCH_INDEX_FILE;
+}
+
+export interface SearchPageRequest {
+  query: string;
+  indexFile: string;
+}
+
+export function searchPageHref(query: string, indexFile: string): string {
+  const index =
+    indexFile === DEFAULT_SEARCH_INDEX_FILE ? "" : `&index=${encodeURIComponent(indexFile)}`;
+  return `${withBase("/search")}?q=${encodeURIComponent(query)}${index}`;
+}
+
+// The page fetches the file `index` names, so it accepts only the site's own exports.
+export function searchPageRequest(
+  search: string,
+  versionIds: readonly string[],
+): SearchPageRequest {
+  const params = new URLSearchParams(search);
+  const index = params.get("index");
+  const exported = index !== null && versionIds.some((id) => index === `search-index-${id}.json`);
+  return {
+    query: (params.get("q") ?? "").trim(),
+    indexFile: exported ? index : DEFAULT_SEARCH_INDEX_FILE,
+  };
 }

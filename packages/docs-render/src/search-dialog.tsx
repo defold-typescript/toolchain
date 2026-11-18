@@ -4,6 +4,7 @@ import {
   SearchDialog,
   SearchDialogClose,
   SearchDialogContent,
+  SearchDialogFooter,
   SearchDialogHeader,
   SearchDialogIcon,
   SearchDialogInput,
@@ -12,7 +13,11 @@ import {
 } from "fumadocs-ui/components/dialog/search";
 import type { DefaultSearchDialogProps } from "fumadocs-ui/components/dialog/search-default";
 import { useMemo } from "react";
+import { DEFAULT_SEARCH_INDEX_FILE, searchPageHref } from "./search-route";
 import { searchExcerpt } from "./snippet";
+
+// A shorter query lists too many hits to be worth a page of its own.
+const RESULTS_PAGE_MIN_QUERY = 2;
 
 export type DocsSearchDialogProps = Pick<
   DefaultSearchDialogProps,
@@ -48,6 +53,8 @@ export default function DocsSearchDialog({
   });
   const { data } = search;
   const items = useMemo(() => (data ? excerptItems(data) : null), [data]);
+  const query = search.search.trim();
+  const indexFile = api?.split("/").at(-1) || DEFAULT_SEARCH_INDEX_FILE;
   return (
     <SearchDialog {...search} open={open} onOpenChange={onOpenChange}>
       <SearchDialogOverlay />
@@ -58,6 +65,16 @@ export default function DocsSearchDialog({
           <SearchDialogClose />
         </SearchDialogHeader>
         <SearchDialogList items={items} />
+        {query.length >= RESULTS_PAGE_MIN_QUERY ? (
+          <SearchDialogFooter>
+            <a
+              href={searchPageHref(query, indexFile)}
+              className="text-sm text-fd-muted-foreground hover:text-fd-accent-foreground"
+            >
+              All results for “{query}”
+            </a>
+          </SearchDialogFooter>
+        ) : null}
       </SearchDialogContent>
     </SearchDialog>
   );
