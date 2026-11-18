@@ -10,7 +10,7 @@ import {
 } from "fumadocs-core/mdx-plugins";
 import type { TOCItemType } from "fumadocs-core/toc";
 import type { Root } from "hast";
-import type { Nodes as MdastNodes, Root as MdastRoot } from "mdast";
+import type { Nodes as MdastNodes, Root as MdastRoot, RootContent } from "mdast";
 import rehypeRaw from "rehype-raw";
 import { remark } from "remark";
 import remarkRehype from "remark-rehype";
@@ -145,9 +145,16 @@ export async function processDocsMarkdown(
   };
 }
 
-/** Markdown parsed as the docs pipeline parses it, for a page assembled as a tree. */
-export function parseDocsMarkdown(markdown: string): MdastRoot {
-  return remark().use(remarkGfm).parse(markdown);
+const fragmentParser = remark().use(remarkGfm).freeze();
+
+/**
+ * Markdown parsed as the docs pipeline parses it, for a fragment of a page built
+ * as a tree. It lives here rather than beside the API node builders because the
+ * browser loads those through the symbol index, and the parser must stay out of
+ * that bundle.
+ */
+export function parseMarkdownFragment(markdown: string): RootContent[] {
+  return fragmentParser.parse(markdown).children;
 }
 
 /** How `processApiTree` resolves a page's links, figures, code spans and signature tokens. */

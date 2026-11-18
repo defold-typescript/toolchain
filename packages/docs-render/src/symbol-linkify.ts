@@ -1,26 +1,19 @@
 /**
- * Rewrite bare mentions of known API symbols in plain text to local
- * `/api/<namespace>` links whose href carries the deploy base. The function operates on text already produced by
- * `htmlToDocText` (which strips upstream Defold cross-references) and re-attaches
- * them as local links, longest-match-first with word-boundary checks, while
- * skipping backtick code spans and ``` fenced code blocks.
+ * Link bare mentions of known API symbols in prose to their reference headings.
+ * The linker reads the text nodes of parsed Markdown, so a mention inside a code
+ * span, a fence or an existing link never reaches it. Each link carries the
+ * `symbol-xref` class the symbol tooltips bind to, and a root-absolute href: the
+ * link component that renders it adds the deploy base.
  */
 
-import { withBase } from "./base";
+import type { Link, Parent, PhrasingContent, RootContent } from "mdast";
 
 const WORD_CHAR = /[A-Za-z0-9_]/;
 
-function escapeAttr(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+export const SYMBOL_XREF_CLASS = "symbol-xref";
 
-function escapeText(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+/** Prose text as the text and symbol links it reads as. */
+export type SymbolLinker = (text: string) => PhrasingContent[];
 
 function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && WORD_CHAR.test(ch);
@@ -52,33 +45,45 @@ function keysByFirstChar(links: Map<string, string>): Map<string, string[]> {
   return buckets;
 }
 
-// Walk a non-code region position by position. At each position, try each
-// registered key in length-desc order. A key "claims" the position when the
-// text at that position starts with the key; if the boundary check fails for
-// the longest claiming key, the position is rejected and the walker advances
-// by one character (so a shorter key can't sneak in via the same prefix).
-function linkifyRegion(
-  region: string,
+function symbolLink(key: string, href: string): Link {
+  return {
+    type: "link",
+    url: href,
+    data: { hProperties: { className: [SYMBOL_XREF_CLASS] } },
+    children: [{ type: "text", value: key }],
+  };
+}
+
+// Walk the text position by position. At each position, try each registered key
+// in length-desc order. A key "claims" the position when the text at that
+// position starts with the key; if the boundary check fails for the longest
+// claiming key, the position is rejected and the walker advances by one
+// character (so a shorter key can't sneak in via the same prefix).
+function linkText(
+  text: string,
   keyBuckets: Map<string, string[]>,
-  hrefs: Map<string, string>,
-): string {
-  let result = "";
+  links: Map<string, string>,
+): PhrasingContent[] {
+  const out: PhrasingContent[] = [];
+  let pending = "";
   let i = 0;
-  while (i < region.length) {
+  while (i < text.length) {
     let handled = false;
-    for (const key of keyBuckets.get(region.charAt(i)) ?? []) {
-      if (!region.startsWith(key, i)) continue;
-      const before = i > 0 ? region[i - 1] : undefined;
-      const after = i + key.length < region.length ? region[i + key.length] : undefined;
+    for (const key of keyBuckets.get(text.charAt(i)) ?? []) {
+      if (!text.startsWith(key, i)) continue;
+      const before = i > 0 ? text[i - 1] : undefined;
+      const after = i + key.length < text.length ? text[i + key.length] : undefined;
       if (isWordChar(before) || isWordChar(after)) {
-        result += region[i];
+        pending += text[i];
         i++;
       } else {
-        const href = hrefs.get(key);
-        if (href !== undefined) {
-          result += `<a href="${escapeAttr(href)}" class="symbol-xref">${escapeText(key)}</a>`;
+        const href = links.get(key);
+        if (href === undefined) {
+          pending += key;
         } else {
-          result += key;
+          if (pending) out.push({ type: "text", value: pending });
+          pending = "";
+          out.push(symbolLink(key, href));
         }
         i += key.length;
       }
@@ -86,66 +91,38 @@ function linkifyRegion(
       break;
     }
     if (!handled) {
-      result += region[i];
+      pending += text[i];
       i++;
     }
   }
-  return result;
-}
-
-export function linkifySymbolMentions(
-  text: string,
-  links: Map<string, string>,
-  applyBase: (route: string) => string = withBase,
-): string {
-  return symbolLinkifier(links, applyBase)(text);
+  if (pending) out.push({ type: "text", value: pending });
+  return out;
 }
 
 // Prepares `links` once for many texts, such as every doc comment on a page. The
 // map must not change after this call.
-export function symbolLinkifier(
-  links: Map<string, string>,
-  applyBase: (route: string) => string = withBase,
-): (text: string) => string {
-  if (links.size === 0) return (text) => text;
+export function symbolLinkifier(links: Map<string, string>): SymbolLinker {
+  if (links.size === 0) return (text) => (text ? [{ type: "text", value: text }] : []);
   const keyBuckets = keysByFirstChar(links);
-  const hrefs = new Map([...links].map(([key, route]) => [key, applyBase(route)]));
-  return (text) => linkifyText(text, keyBuckets, hrefs);
+  return (text) => linkText(text, keyBuckets, links);
 }
 
-function linkifyText(
-  text: string,
-  keyBuckets: Map<string, string[]>,
-  hrefs: Map<string, string>,
-): string {
-  let result = "";
-  let i = 0;
-  while (i < text.length) {
-    // A fence opens only at a line start; copy it through its closing line so
-    // a mention in the code stays text rather than becoming literal anchor HTML.
-    if (text.startsWith("```", i) && (i === 0 || text[i - 1] === "\n")) {
-      const close = text.indexOf("\n```", i + 3);
-      const lineEnd = close === -1 ? -1 : text.indexOf("\n", close + 4);
-      const end = close === -1 || lineEnd === -1 ? text.length : lineEnd;
-      result += text.slice(i, end);
-      i = end;
-      continue;
-    }
-    if (text[i] === "`") {
-      const close = text.indexOf("`", i + 1);
-      if (close === -1) {
-        // Odd backtick count — preserve the rest verbatim rather than guess.
-        result += text.slice(i);
-        return result;
-      }
-      result += text.slice(i, close + 1);
-      i = close + 1;
-      continue;
-    }
-    const next = text.indexOf("`", i);
-    const end = next === -1 ? text.length : next;
-    result += linkifyRegion(text.slice(i, end), keyBuckets, hrefs);
-    i = end;
-  }
-  return result;
+// A link cannot nest in another link, and a heading's own permalink wraps its
+// text, so neither is searched; code holds no text node to search.
+const UNLINKED = new Set(["link", "linkReference", "heading"]);
+
+/**
+ * Replaces each text node in `nodes` outside a link or heading with the text and
+ * symbol links `linker` reads it as. The nodes are changed in place and returned.
+ */
+export function linkSymbolMentions<T extends RootContent>(nodes: T[], linker: SymbolLinker): T[] {
+  const walk = (parent: Parent): void => {
+    parent.children = parent.children.flatMap((child): RootContent[] => {
+      if (child.type === "text") return linker(child.value);
+      if ("children" in child && !UNLINKED.has(child.type)) walk(child);
+      return [child];
+    });
+  };
+  walk({ type: "root", children: nodes });
+  return nodes;
 }

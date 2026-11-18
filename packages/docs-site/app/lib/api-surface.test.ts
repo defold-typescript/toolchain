@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { apiElement, signatureCode } from "@defold-typescript/docs-render/api-nodes";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -32,8 +33,8 @@ import {
   combinedNamespaceToApiPage,
   compareSemverDesc,
 } from "@defold-typescript/docs-render/combined-surface";
-import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { processApiTree } from "@defold-typescript/docs-render/docs-markdown";
+import { hastHeadings, hastOutlineText, slugify } from "@defold-typescript/docs-render/headings";
 import {
   canonicalApiPages,
   windowedApiPages,
@@ -59,6 +60,8 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import type { Element, Nodes, Root } from "hast";
+import { toHtml } from "hast-util-to-html";
 import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
@@ -2819,38 +2822,138 @@ describe("mapDocType", () => {
   });
 });
 
+function hastClasses(element: Element): string[] {
+  const value = element.properties.className;
+  return Array.isArray(value) ? value.map(String) : String(value ?? "").split(/\s+/);
+}
+
+function elementChildren(node: Element | Root): Element[] {
+  const children: readonly Nodes[] = node.children;
+  return children.filter((child): child is Element => child.type === "element");
+}
+
+function hastText(node: Nodes): string {
+  if (node.type === "text") return node.value;
+  return "children" in node ? node.children.map(hastText).join("") : "";
+}
+
+function onlyElement(node: Element | Root, what: string): Element {
+  const [only, ...rest] = elementChildren(node);
+  if (!only || rest.length > 0) throw new Error(`expected exactly one element in ${what}`);
+  return only;
+}
+
+// Overview nodes rendered through the API pipeline as a page renders them, one
+// root per node.
+async function renderOverviews(
+  nodes: readonly ReturnType<typeof functionOverviewCards>[],
+): Promise<Root[]> {
+  const blocks = nodes.map((node) => {
+    if (!node) throw new Error("no overview to render");
+    return node;
+  });
+  const { hast } = await processApiTree({ type: "root", children: blocks });
+  return elementChildren(hast).map((div) => ({ type: "root", children: [div] }));
+}
+
+async function renderOverview(node: ReturnType<typeof functionOverviewCards>): Promise<Root> {
+  const [tree] = await renderOverviews([node]);
+  if (!tree) throw new Error("no overview rendered");
+  return tree;
+}
+
+interface OverviewItem {
+  className: string[];
+  href: string;
+  /** The signature as the outline reads it: a count badge reads as its `...`. */
+  code: string;
+  badge?: string;
+  /** The markup after the signature link. */
+  after: string[];
+  forms?: OverviewItem[];
+}
+
+function overviewItems(list: Element): OverviewItem[] {
+  return elementChildren(list).map((li) => {
+    if (li.children.some((child) => child.type === "text" && child.value.trim() !== "")) {
+      throw new Error("an overview item holds text outside its link");
+    }
+    const [link, ...rest] = elementChildren(li);
+    if (link?.tagName !== "a") throw new Error("an overview item opens with its link");
+    const code = onlyElement(link, "an overview link");
+    if (code.tagName !== "code" || !hastClasses(code).includes("api-signature")) {
+      throw new Error("an overview link holds its signature code");
+    }
+    const badge = elementChildren(code).find((e) => hastClasses(e).includes("api-overload-count"));
+    const nested = rest.filter((e) => e.tagName === "ul");
+    return {
+      className: hastClasses(li),
+      href: String(link.properties.href ?? ""),
+      code: hastOutlineText(code),
+      ...(badge ? { badge: hastText(badge) } : {}),
+      after: rest.filter((e) => e.tagName !== "ul").map((e) => toHtml(e)),
+      ...(nested.length > 0 ? { forms: nested.flatMap(overviewItems) } : {}),
+    };
+  });
+}
+
+interface Overview {
+  className: string[];
+  ariaLabel: unknown;
+  items: OverviewItem[];
+}
+
+// The overview's one container, its attributes and its items; any other element
+// beside the container or its list throws.
+function overviewOf(tree: Root): Overview {
+  const container = onlyElement(tree, "the rendered overview");
+  return {
+    className: hastClasses(container),
+    ariaLabel: container.properties.ariaLabel,
+    items: overviewItems(onlyElement(container, "the overview container")),
+  };
+}
+
 describe("functionOverviewCards", () => {
   async function renderedHeadingId(signature: string): Promise<string> {
-    const html = await renderMarkdown(`### \`${signature}\``);
-    const heading = pageHeadings(html)[0];
+    const { hast } = await processApiTree({
+      type: "root",
+      children: [{ type: "heading", depth: 3, children: [signatureCode(signature)] }],
+    });
+    const heading = hastHeadings(hast)[0];
     if (!heading) throw new Error(`no heading rendered for ${signature}`);
     return heading.id;
   }
 
-  test("emits one overview container and one linked bullet per symbol", () => {
-    const list = functionOverviewCards(
-      [
-        fnSymbol("go.get_position", {
-          signature: "go.get_position(): vector3",
-          docMarkdown: "Gets the world position. More prose.",
-        }),
-        fnSymbol("go.set_position", {
-          signature: "go.set_position(position: vector3): void",
-          docMarkdown: "Sets the world position.",
-        }),
+  test("emits one overview container and one linked bullet per symbol", async () => {
+    const tree = await renderOverview(
+      functionOverviewCards(
+        [
+          fnSymbol("go.get_position", {
+            signature: "go.get_position(): vector3",
+            docMarkdown: "Gets the world position. More prose.",
+          }),
+          fnSymbol("go.set_position", {
+            signature: "go.set_position(position: vector3): void",
+            docMarkdown: "Sets the world position.",
+          }),
+        ],
+        [],
+      ),
+    );
+    const item = { className: ["api-overview-item"], after: [] };
+    expect(overviewOf(tree)).toEqual({
+      className: ["api-overview"],
+      ariaLabel: "Function overview",
+      items: [
+        { ...item, href: "#goget_position-vector3", code: "go.get_position(): vector3" },
+        {
+          ...item,
+          href: "#goset_positionposition-vector3-void",
+          code: "go.set_position(position: vector3): void",
+        },
       ],
-      [],
-    );
-    expect(list).toBe(
-      [
-        '<div class="api-overview" aria-label="Function overview">',
-        "",
-        "- [`go.get_position(): vector3`](#goget_position-vector3)",
-        "- [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void)",
-        "",
-        "</div>",
-      ].join("\n"),
-    );
+    });
   });
 
   test("anchors match the id the slugify-headings rule actually assigns", async () => {
@@ -2860,59 +2963,74 @@ describe("functionOverviewCards", () => {
       "mul(rhs: Matrix4): Matrix4",
       "mul(rhs: Vector4): Vector4",
     ];
-    const cards = functionOverviewCards(
-      signatures.map((signature) => fnSymbol(signature, { signature })),
-      [],
+    const cards = await renderOverview(
+      functionOverviewCards(
+        signatures.map((signature) => fnSymbol(signature, { signature })),
+        [],
+      ),
     );
+    const hrefs = overviewOf(cards).items.map((item) => item.href);
     for (const signature of signatures) {
       const id = await renderedHeadingId(signature);
-      expect(cards).toContain(`](#${id})`);
+      expect(hrefs).toContain(`#${id}`);
     }
   });
 
-  test("keeps descriptions out of the overview and returns empty string for no symbols", async () => {
-    const list = functionOverviewCards(
-      [
-        fnSymbol("demo.escape", {
-          signature: 'demo.escape(value: "Hash | <Url> & string")',
-          docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
-        }),
-      ],
-      [],
+  test("keeps descriptions out of the overview and returns nothing for no symbols", async () => {
+    const tree = await renderOverview(
+      functionOverviewCards(
+        [
+          fnSymbol("demo.escape", {
+            signature: 'demo.escape(value: "Hash | <Url> & string")',
+            docMarkdown: 'Uses `a | b` and <unsafe> "quotes" & ampersands. Second sentence.',
+          }),
+        ],
+        [],
+      ),
     );
-    expect(list).toContain(
-      '[`demo.escape(value: "Hash | <Url> & string")`](#demoescapevalue-hash--url--string)',
-    );
-    expect(list).not.toContain("Uses `a | b`");
-    expect(list).not.toContain("title=");
-    expect(list).not.toContain("\\|");
-    expect(functionOverviewCards([], [])).toBe("");
+    expect(overviewOf(tree).items).toEqual([
+      {
+        className: ["api-overview-item"],
+        href: "#demoescapevalue-hash--url--string",
+        code: 'demo.escape(value: "Hash | <Url> & string")',
+        after: [],
+      },
+    ]);
+    const html = toHtml(tree);
+    expect(hastText(tree)).not.toContain("Uses a | b");
+    expect(html).not.toContain("title=");
+    expect(html).not.toContain("\\|");
+    expect(functionOverviewCards([], [])).toBeUndefined();
 
-    const html = await renderMarkdown(list, { highlightSignatureHeadings: true });
     expect(html).toContain('<code class="api-signature');
     expect(html).toContain("--shiki-light:");
   });
 
-  test("a markerFor callback appends its HTML after each signature link in the same item", () => {
-    const list = functionOverviewCards(
-      [
-        fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
-        fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
-      ],
-      [],
-      (group) => `<i data-mark="${group[0]?.name}"></i>`,
+  test("a markerFor callback appends its chips after each signature link in the same item", async () => {
+    const tree = await renderOverview(
+      functionOverviewCards(
+        [
+          fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
+          fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
+        ],
+        [],
+        (group) => [apiElement("i", { dataMark: group[0]?.name ?? "" }, [])],
+      ),
     );
-    expect(list).toContain(
-      '- [`go.get_position(): vector3`](#goget_position-vector3)<i data-mark="go.get_position"></i>',
-    );
-    expect(list).toContain(
-      '- [`go.set_position(position: vector3): void`](#goset_positionposition-vector3-void)<i data-mark="go.set_position"></i>',
-    );
+    expect(overviewOf(tree).items.map(({ href, after }) => ({ href, after }))).toEqual([
+      { href: "#goget_position-vector3", after: ['<i data-mark="go.get_position"></i>'] },
+      {
+        href: "#goset_positionposition-vector3-void",
+        after: ['<i data-mark="go.set_position"></i>'],
+      },
+    ]);
   });
 
-  test("an empty markerFor return leaves output byte-identical to the no-callback form", () => {
+  test("an empty markerFor return leaves the node identical to the no-callback form", () => {
     const symbols = [fnSymbol("go.get_position", { signature: "go.get_position(): vector3" })];
-    expect(functionOverviewCards(symbols, [], () => "")).toBe(functionOverviewCards(symbols, []));
+    expect(functionOverviewCards(symbols, [], () => [])).toEqual(
+      functionOverviewCards(symbols, []),
+    );
   });
 });
 
@@ -3794,34 +3912,50 @@ describe("overload grouping (committed artifacts)", () => {
     expect(counts.differing).toBeGreaterThan(0);
   });
 
-  test("the function overview nests each group's forms under its heading link", () => {
+  test("the function overview nests each group's forms under its heading link", async () => {
     let grouped = 0;
-    for (const page of combinedPages) {
+    const listed = combinedPages.flatMap((page) => {
       const rows = functionRows(page);
-      if (rows.length === 0) continue;
-      const axis = page.availability?.versions ?? [];
-      const lines = functionOverviewCards(rows, axis)
-        .split("\n")
-        .filter((line) => /^\s*- /.test(line));
-      const expected = groupOverloadForms(rows, axis).flatMap((group) => {
+      return rows.length === 0 ? [] : [{ page, rows, axis: page.availability?.versions ?? [] }];
+    });
+    const rendered = await renderOverviews(
+      listed.map(({ rows, axis }) => functionOverviewCards(rows, axis)),
+    );
+    const className = ["api-overview-item"];
+    for (const [index, { page, rows, axis }] of listed.entries()) {
+      const tree = rendered[index];
+      const items = tree ? overviewOf(tree).items : [];
+      const expected = groupOverloadForms(rows, axis).flatMap((group): OverviewItem[] => {
         const [head] = group;
         if (head === undefined) return [];
-        if (group.length === 1) return [`- [\`${head.signature}\`](#${slugify(head.signature)})`];
+        if (group.length === 1) {
+          return [
+            { className, href: `#${slugify(head.signature)}`, code: head.signature, after: [] },
+          ];
+        }
         grouped += 1;
-        const anchor = slugify(overloadHeading(group));
+        const href = `#${slugify(overloadHeading(group))}`;
         const splits = group.map(splitCallForm);
         const sameReturns = new Set(splits.map((s) => s.returns)).size === 1;
         return [
-          `- [\`${overloadHeading(group)}\` <span class="api-overload-count">${group.length} overloads</span>](#${anchor})`,
-          ...splits.map(
-            (s) =>
-              `  - [\`${sameReturns ? s.params : `${s.params}${s.returns ?? ""}`}\`](#${anchor})`,
-          ),
+          {
+            className,
+            href,
+            code: overloadHeading(group),
+            badge: `${group.length} overloads`,
+            after: [],
+            forms: splits.map((s) => ({
+              className,
+              href,
+              code: sameReturns ? s.params : `${s.params}${s.returns ?? ""}`,
+              after: [],
+            })),
+          },
         ];
       });
-      expect({ namespace: page.namespace, lines }).toEqual({
+      expect({ namespace: page.namespace, items }).toEqual({
         namespace: page.namespace,
-        lines: expected,
+        items: expected,
       });
     }
     expect(grouped).toBeGreaterThan(10);
@@ -4053,23 +4187,34 @@ describe("groupFunctionRevisions", () => {
 });
 
 describe("functionOverviewCards over overload groups", () => {
-  test("renders one card per grouped name, nesting one item per form under the group heading", () => {
+  test("renders one card per grouped name, nesting one item per form under the group heading", async () => {
     const shape = "b2d.shape.get_shape";
     const single = fnSymbol("go.get_position", { signature: "go.get_position(): vector3" });
     const forms = [
       fnSymbol(shape, { signature: `${shape}(shape_id: number): Info` }),
       fnSymbol(shape, { signature: `${shape}(body: Opaque<"b2Body">, shape_index: number): Info` }),
     ];
-    const cards = functionOverviewCards([...forms, single], []);
+    const [cards, alone] = await renderOverviews([
+      functionOverviewCards([...forms, single], []),
+      functionOverviewCards([single], []),
+    ]);
     const heading = `${shape}(...): Info`;
     expect(overloadHeading(forms)).toBe(heading);
-    expect(cards.split("\n").filter((line) => /^\s*- /.test(line))).toEqual([
-      `- [\`${heading}\` <span class="api-overload-count">2 overloads</span>](#${slugify(heading)})`,
-      `  - [\`(shape_id: number)\`](#${slugify(heading)})`,
-      `  - [\`(body: Opaque<"b2Body">, shape_index: number)\`](#${slugify(heading)})`,
-      ...functionOverviewCards([single], [])
-        .split("\n")
-        .filter((line) => line.startsWith("- ")),
+    const className = ["api-overview-item"];
+    const href = `#${slugify(heading)}`;
+    expect(cards && overviewOf(cards).items).toEqual([
+      {
+        className,
+        href,
+        code: heading,
+        badge: "2 overloads",
+        after: [],
+        forms: [
+          { className, href, code: "(shape_id: number)", after: [] },
+          { className, href, code: '(body: Opaque<"b2Body">, shape_index: number)', after: [] },
+        ],
+      },
+      ...(alone ? overviewOf(alone).items : []),
     ]);
   });
 

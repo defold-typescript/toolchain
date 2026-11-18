@@ -29,9 +29,11 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
     "@types/bun": "^1.4.4",
+    "@types/hast": "^3.0.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@typescript-to-lua/language-extensions": "1.19.0",
+    "hast-util-to-html": "^9.0.6",
     "tailwindcss": "^4.3.5",
     "typescript": "6.0.2",
     "vite": "^8.3.8"

@@ -1,40 +1,53 @@
+import type { ApiChip } from "mdast";
+import { apiElement } from "./api-nodes";
 import {
   apiLinkify,
-  apiPageMarkdown,
   apiReplacementResolver,
   apiSignatureSymbolLinks,
+  renderApiPage,
 } from "./api-page-render";
 import { COUNT_KINDS, type NamespaceBadgeCounts, namespaceBadgeCounts } from "./combined-surface";
-import { renderMarkdown } from "./markdown";
+import type { RenderedPage } from "./docs-markdown";
 import { apiNamespaceOwner, canonicalApiPages, combinedSurface } from "./toolchain-surface";
 
 // The toolchain docs' canonical `/api/<ns>` page render, kept apart from the
 // surface in `toolchain-surface.ts` so a reader of the surface alone (the release
-// scripts) does not pull in the markdown renderer and its JSX components.
+// scripts) does not pull in the docs pipeline and its plugins.
 
 // The count pills for a Combined namespace: one pill per non-zero category
 // showing its tally and category noun as visible text (`12 new`), the
 // `aria-label` spelling it out for assistive tech so color stays additive rather
 // than the sole signal. The wrapper is an inline `<span>` (not a block `<div>`)
-// so the group rides the namespace-page H1 baseline and the `/api` index card
-// title row instead of wrapping to its own line. Returns `""` when every count
-// is zero (a fully stable namespace shows nothing).
-export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
+// so the group rides the namespace-page H1 baseline instead of wrapping to its
+// own line. Returns `undefined` when every count is zero (a fully stable
+// namespace shows nothing).
+export function namespaceCountBadges(counts: NamespaceBadgeCounts): ApiChip | undefined {
   const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
-    (c) =>
-      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]} ${c.noun}</span>`,
+    (c): ApiChip["data"]["hChildren"][number] => ({
+      type: "element",
+      tagName: "span",
+      properties: {
+        className: ["api-badge-count", `api-badge-count--${c.kind}`],
+        ariaLabel: `${counts[c.flag]} ${c.noun} symbols`,
+      },
+      children: [{ type: "text", value: `${counts[c.flag]} ${c.noun}` }],
+    }),
   );
-  if (pills.length === 0) return "";
-  return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
+  if (pills.length === 0) return undefined;
+  return apiElement(
+    "span",
+    { className: ["api-badge-counts"], ariaLabel: "Availability summary" },
+    pills,
+  );
 }
 
-// The article HTML of one canonical `/api/<ns>` page, or `undefined` for a
-// namespace the canonical surface does not hold. The toolchain route renders it,
-// and the library site's link test reads the heading ids it mints.
+// One canonical `/api/<ns>` page run through the docs pipeline, or `undefined`
+// for a namespace the canonical surface does not hold. The toolchain route
+// renders it, and the library site's link test reads the heading ids it mints.
 export async function renderCanonicalApiPage(
   namespace: string,
   typesDir: string,
-): Promise<string | undefined> {
+): Promise<RenderedPage | undefined> {
   const owner = apiNamespaceOwner(namespace, typesDir);
   if (!owner) return undefined;
   const pages = canonicalApiPages(typesDir);
@@ -63,15 +76,12 @@ export async function renderCanonicalApiPage(
   // and the dots then read from the same declared range.
   const axis = surface.versions;
   const window = { from: axis[axis.length - 1] ?? "", to: axis[0] ?? "" };
-  const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model, window)) : "";
+  const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model, window)) : undefined;
 
-  return renderMarkdown(
-    apiPageMarkdown(page, linkify, {
-      resolveReplacement,
-      titleBadges,
-      combinedMarkers,
-      window,
-    }),
-    { highlightSignatureHeadings: true, signatureSymbolLinks },
+  return renderApiPage(
+    page,
+    linkify,
+    { resolveReplacement, titleBadges, combinedMarkers, window },
+    { signatureSymbolLinks },
   );
 }

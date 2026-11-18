@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPageOptions } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
   type CombinedSurface,
@@ -234,12 +234,11 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     }
   });
   const sharedPages = loadVersionIndependentPages(TYPES_DIR);
-  type RenderOptions = Parameters<typeof apiPageMarkdown>[2];
-  const sharedRender = (page: ApiPage): [string, ApiPage, RenderOptions] => [page.route, page, {}];
+  const sharedRender = (page: ApiPage): [string, ApiPage, ApiPageOptions] => [page.route, page, {}];
 
   async function unrenderedAnchors(
     file: string,
-    pages: [string, ApiPage, RenderOptions][],
+    pages: [string, ApiPage, ApiPageOptions][],
     extraRecords: SearchRecord[] = [],
   ): Promise<{ checked: number; guideChecked: number; missing: string[] }> {
     const byRoute = new Map(pages.map(([route, page, opts]) => [route, { page, opts }]));
@@ -271,7 +270,7 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
   test("search-index.json anchors resolve on the canonical and guide pages", async () => {
     const { checked, guideChecked, missing } = await unrenderedAnchors("search-index.json", [
       ...combinedApiPages(loadCombinedSurface(TYPES_DIR)).map(
-        (page): [string, ApiPage, RenderOptions] => [page.route, page, { combinedMarkers: true }],
+        (page): [string, ApiPage, ApiPageOptions] => [page.route, page, { combinedMarkers: true }],
       ),
       ...sharedPages.map(sharedRender),
     ]);
@@ -294,7 +293,7 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
     const { checked, guideChecked, missing } = await unrenderedAnchors(
       `search-index-${newest}.json`,
       [
-        ...versionRoutePages(TYPES_DIR, newest).map((page): [string, ApiPage, RenderOptions] => [
+        ...versionRoutePages(TYPES_DIR, newest).map((page): [string, ApiPage, ApiPageOptions] => [
           page.route,
           page,
           { combinedMarkers: true, window },

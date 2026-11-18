@@ -2,17 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import {
   apiLinkify,
-  apiPageMarkdown,
   apiSignatureSymbolLinks,
+  renderApiPage,
 } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { withBase } from "@defold-typescript/docs-render/base";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { hastHeadings } from "@defold-typescript/docs-render/headings";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
 import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
+import { toHtml } from "hast-util-to-html";
 import { apiPages, siteDirs } from "./api-content";
-import { renderLibraryApiHtml } from "./library-routes";
+import { renderLibraryApiPage } from "./library-routes";
 import {
   pointAtToolchainDocs,
   TOOLCHAIN_DOCS_URL,
@@ -57,10 +58,13 @@ function libraryPage(): ApiPage {
 }
 
 async function renderDemo(page: ApiPage, linkPages: ApiPage[]): Promise<string> {
-  return renderMarkdown(apiPageMarkdown(page, apiLinkify(linkPages)), {
-    highlightSignatureHeadings: true,
-    signatureSymbolLinks: apiSignatureSymbolLinks(linkPages, page),
-  });
+  const rendered = await renderApiPage(
+    page,
+    apiLinkify(linkPages),
+    {},
+    { signatureSymbolLinks: apiSignatureSymbolLinks(linkPages, page) },
+  );
+  return toHtml(rendered.hast);
 }
 
 describe("toolchainPages", () => {
@@ -92,7 +96,7 @@ describe("toolchain member links on library pages", () => {
       const holders = new Map<string, Set<string>>();
       for (const page of apiPages(REAL_DIRS)) {
         const [host = "", owner = "", repo = "", leaf = ""] = page.route.split("/").slice(2);
-        const rendered = await renderLibraryApiHtml(
+        const rendered = await renderLibraryApiPage(
           { host, owner, repo, namespace: leaf },
           REAL_DIRS,
         );
@@ -100,7 +104,8 @@ describe("toolchain member links on library pages", () => {
           route: page.route,
           rendered: true,
         });
-        for (const [, namespace, id] of (rendered?.html ?? "").matchAll(linkPattern)) {
+        const html = rendered ? toHtml(rendered.page.hast) : "";
+        for (const [, namespace, id] of html.matchAll(linkPattern)) {
           const key = `${namespace}#${id}`;
           const pagesHolding = holders.get(key) ?? new Set<string>();
           pagesHolding.add(page.namespace);
@@ -109,14 +114,19 @@ describe("toolchain member links on library pages", () => {
       }
       expect(holders.size).toBeGreaterThan(0);
 
-      const toolchainHtml = new Map<string, string | undefined>();
+      // The heading ids each linked toolchain page renders.
+      const toolchainIds = new Map<string, Set<string>>();
       const missing: string[] = [];
       for (const [key, pagesHolding] of holders) {
         const [namespace = "", id = ""] = key.split("#");
-        if (!toolchainHtml.has(namespace)) {
-          toolchainHtml.set(namespace, await renderCanonicalApiPage(namespace, TYPES_DIR));
+        if (!toolchainIds.has(namespace)) {
+          const rendered = await renderCanonicalApiPage(namespace, TYPES_DIR);
+          toolchainIds.set(
+            namespace,
+            new Set(rendered ? hastHeadings(rendered.hast).map((heading) => heading.id) : []),
+          );
         }
-        if (!toolchainHtml.get(namespace)?.includes(`id="${id}"`)) {
+        if (!toolchainIds.get(namespace)?.has(id)) {
           missing.push(`${key} (on ${[...pagesHolding].sort().join(", ")})`);
         }
       }

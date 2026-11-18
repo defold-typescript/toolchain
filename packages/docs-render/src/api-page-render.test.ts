@@ -1,8 +1,49 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiFunction, ApiModule } from "@defold-typescript/types";
-import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
+import type { Element, Nodes } from "hast";
+import { toHtml } from "hast-util-to-html";
+import type { PhrasingContent } from "mdast";
+import { apiLinkify, apiSignatureSymbolLinks, renderApiPage } from "./api-page-render";
 import type { ApiPage, LibraryMeta } from "./api-surface";
+import { hastHeadings } from "./headings";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
+
+function elements(node: Nodes | undefined, match: (element: Element) => boolean): Element[] {
+  const found: Element[] = [];
+  const walk = (current: Nodes): void => {
+    if (current.type === "element" && match(current)) found.push(current);
+    if ("children" in current) for (const child of current.children) walk(child);
+  };
+  if (node) walk(node);
+  return found;
+}
+
+function textOf(node: Nodes | undefined): string {
+  if (node?.type === "text") return node.value;
+  return node && "children" in node ? node.children.map(textOf).join("") : "";
+}
+
+function classes(node: Element | undefined): string[] {
+  const value = node?.properties.className;
+  return Array.isArray(value) ? value.map(String) : String(value ?? "").split(/\s+/);
+}
+
+const byClass = (node: Nodes | undefined, name: string): Element[] =>
+  elements(node, (element) => classes(element).includes(name));
+
+const childElements = (node: Element | undefined): Element[] =>
+  (node?.children ?? []).filter((child): child is Element => child.type === "element");
+
+// The text and link nodes a linker returns, as `[text, href?]` pairs.
+const linked = (nodes: PhrasingContent[]): [string, string?][] =>
+  nodes.map((node) =>
+    node.type === "link"
+      ? [
+          node.children.map((child) => (child.type === "text" ? child.value : "")).join(""),
+          node.url,
+        ]
+      : [node.type === "text" ? node.value : ""],
+  );
 
 const MODULE: ApiModule = {
   namespace: "astar",
@@ -50,19 +91,22 @@ function page(fields: Partial<ApiPage>): ApiPage {
   };
 }
 
-describe("apiPageMarkdown provenance block", () => {
+const html = async (p: ApiPage): Promise<string> =>
+  toHtml((await renderApiPage(p, apiLinkify([p]))).hast);
+
+describe("renderApiPage provenance block", () => {
   const provenance = [
-    `pinned to [\`0123456\`](${SOURCE_URL})`,
-    "Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    '     import * as astar from "astar"',
+    `pinned to <a href="${SOURCE_URL}"><code>0123456</code></a>`,
+    "Run <code>bunx @defold-typescript/cli resolve</code> to materialize its types.",
+    'import * as astar from "astar"',
   ];
 
-  test("a library page states its pin, resolve step and import; an engine page of the same module none", () => {
-    const library = apiPageMarkdown(page({ category: "library", libraryMeta: META }), (t) => t);
-    const engine = apiPageMarkdown(page({}), (t) => t);
-    for (const line of provenance) {
-      expect(library).toContain(line);
-      expect(engine).not.toContain(line);
+  test("a library page states its pin, resolve step and import; an engine page of the same module none", async () => {
+    const library = await html(page({ category: "library", libraryMeta: META }));
+    const engine = await html(page({}));
+    for (const text of provenance) {
+      expect(library.replace(/<span[^>]*>|<\/span>/g, "")).toContain(text);
+      expect(engine.replace(/<span[^>]*>|<\/span>/g, "")).not.toContain(text);
     }
   });
 });
@@ -70,6 +114,66 @@ describe("apiPageMarkdown provenance block", () => {
 function fn(name: string): ApiFunction {
   return { name, brief: `${name} brief`, description: "", parameters: [], returnValues: [] };
 }
+
+function withParameter(name: string, parameter: string): ApiFunction {
+  return {
+    ...fn(name),
+    parameters: [{ name: parameter, doc: "", types: ["number"], isOptional: false }],
+  };
+}
+
+describe("renderApiPage anchors", () => {
+  test("memberAnchors keys a function at the id its heading renders with, non-ASCII letters kept", async () => {
+    const p = page({
+      namespace: "ns",
+      route: "/api/ns",
+      module: { ...MODULE, namespace: "ns", functions: [fn("ns.fé")] },
+    });
+    const anchor = memberAnchors(p).get("function:ns.fé") ?? "";
+    expect(anchor).toContain("é");
+    const { hast } = await renderApiPage(p, apiLinkify([p]));
+    expect(hastHeadings(hast).map((heading) => heading.id)).toContain(anchor);
+  });
+
+  test("the function overview lists each function once, linking its heading", async () => {
+    const p = page({
+      namespace: "ns",
+      route: "/api/ns",
+      module: {
+        ...MODULE,
+        namespace: "ns",
+        functions: [fn("ns.one"), withParameter("ns.two", "a"), withParameter("ns.two", "b")],
+      },
+    });
+    const { hast } = await renderApiPage(p, apiLinkify([p]));
+    const overviews = elements(
+      hast,
+      (element) =>
+        classes(element).includes("api-overview") &&
+        element.properties.ariaLabel === "Function overview",
+    );
+    expect(overviews).toHaveLength(1);
+    const [list] = childElements(overviews[0]).filter((element) => element.tagName === "ul");
+    const items = childElements(list);
+    expect(items.map((item) => [item.tagName, classes(item)])).toEqual([
+      ["li", ["api-overview-item"]],
+      ["li", ["api-overview-item"]],
+    ]);
+    const anchors = memberAnchors(p);
+    const hrefs = items.map((item) => elements(item, (e) => e.tagName === "a")[0]?.properties.href);
+    expect(hrefs).toEqual([
+      `#${anchors.get("function:ns.one")}`,
+      `#${anchors.get("function:ns.two")}`,
+    ]);
+    const headingIds = hastHeadings(hast).map((heading) => heading.id);
+    for (const href of hrefs) expect(headingIds).toContain(String(href).slice(1));
+
+    const [overloaded] = byClass(items[1], "api-signature");
+    const [count] = byClass(overloaded, "api-overload-count");
+    expect(textOf(count)).toBe("2 overloads");
+    expect(byClass(items[0], "api-overload-count")).toEqual([]);
+  });
+});
 
 function libraryPage(key: string, namespace: string, fields: Partial<ApiModule>): ApiPage {
   return page({
@@ -138,11 +242,18 @@ describe("library member symbol keys", () => {
   test("under drop prose links a shared key only on a page that declares it, to its own heading", () => {
     const text = "Call rnd.range here.";
     const link = (current?: ApiPage) =>
-      apiLinkify(shared, current ? { current, ambiguous: "drop" } : { ambiguous: "drop" })(text);
-    expect(link(rng)).toContain(`href="${anchored(rng, "function:rnd.range")}"`);
-    expect(link(random)).toContain(`href="${anchored(random, "function:rnd.range")}"`);
-    expect(link(other)).not.toContain("<a ");
-    expect(link()).not.toContain("<a ");
+      linked(
+        apiLinkify(shared, current ? { current, ambiguous: "drop" } : { ambiguous: "drop" })(text),
+      );
+    const linkedTo = (href: string): [string, string?][] => [
+      ["Call "],
+      ["rnd.range", href],
+      [" here."],
+    ];
+    expect(link(rng)).toEqual(linkedTo(anchored(rng, "function:rnd.range")));
+    expect(link(random)).toEqual(linkedTo(anchored(random, "function:rnd.range")));
+    expect(link(other)).toEqual([[text]]);
+    expect(link()).toEqual([[text]]);
   });
 
   test("under drop a qualified type two pages declare links only from a page that declares it", () => {

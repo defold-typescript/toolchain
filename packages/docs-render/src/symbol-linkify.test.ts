@@ -1,35 +1,43 @@
 import { describe, expect, test } from "bun:test";
-import { linkifySymbolMentions, symbolLinkifier } from "./symbol-linkify";
+import type { Nodes, PhrasingContent } from "mdast";
+import { parseMarkdownFragment } from "./docs-markdown";
+import { linkSymbolMentions, symbolLinkifier } from "./symbol-linkify";
 
-describe("linkifySymbolMentions", () => {
+const textOf = (node: Nodes): string =>
+  "value" in node ? node.value : "children" in node ? node.children.map(textOf).join("") : "";
+
+// Each node as `[text]`, or `[text, href]` for a symbol link.
+const shape = (nodes: PhrasingContent[]): [string, string?][] =>
+  nodes.map((node) => (node.type === "link" ? [textOf(node), node.url] : [textOf(node)]));
+
+// Every symbol link in a parsed fragment, as `[text, href]`.
+function linksIn(markdown: string, links: Map<string, string>): [string, string][] {
+  const found: [string, string][] = [];
+  const walk = (node: Nodes): void => {
+    if (node.type === "link") found.push([textOf(node), node.url]);
+    if ("children" in node) for (const child of node.children) walk(child);
+  };
+  for (const node of linkSymbolMentions(parseMarkdownFragment(markdown), symbolLinkifier(links))) {
+    walk(node);
+  }
+  return found;
+}
+
+const SET = new Map([["go.set_position", "/api/go#gogetposition"]]);
+
+describe("symbolLinkifier", () => {
   test("longest match wins: links go.set_position, leaves the bare 'go' substring inside the longer key alone", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    const out = linkifySymbolMentions("use go.set_position to move it", links);
-    expect(out).toBe(
-      'use <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a> to move it',
-    );
+    expect(shape(symbolLinkifier(SET)("use go.set_position to move it"))).toEqual([
+      ["use "],
+      ["go.set_position", "/api/go#gogetposition"],
+      [" to move it"],
+    ]);
   });
 
   test("word boundary rejects the suffix: go.set_position_something is not linkified", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    expect(linkifySymbolMentions("go.set_position_something", links)).toBe(
-      "go.set_position_something",
-    );
-  });
-
-  test("leaves a backtick-fenced mention alone (heuristic code-span skip)", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    const out = linkifySymbolMentions("call `go.set_position` first", links);
-    expect(out).toBe("call `go.set_position` first");
-  });
-
-  test("leaves a fenced code block verbatim and links the prose after it", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    const text =
-      "Sample:\n\n```lua\ngo.set_position(p) -- `go.set_position`\n```\n\nsee go.set_position";
-    expect(linkifySymbolMentions(text, links)).toBe(
-      'Sample:\n\n```lua\ngo.set_position(p) -- `go.set_position`\n```\n\nsee <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
-    );
+    expect(shape(symbolLinkifier(SET)("go.set_position_something"))).toEqual([
+      ["go.set_position_something"],
+    ]);
   });
 
   test("links multiple mentions with distinct hrefs when the routes differ", () => {
@@ -37,86 +45,73 @@ describe("linkifySymbolMentions", () => {
       ["go.set_position", "/api/go#gogetposition"],
       ["go.get_position", "/api/world#gogetworldposition"],
     ]);
-    const out = linkifySymbolMentions("go.set_position and go.get_position", links);
-    expect(out).toBe(
-      '<a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a> and ' +
-        '<a href="/api/world#gogetworldposition" class="symbol-xref">go.get_position</a>',
-    );
+    expect(shape(symbolLinkifier(links)("go.set_position and go.get_position"))).toEqual([
+      ["go.set_position", "/api/go#gogetposition"],
+      [" and "],
+      ["go.get_position", "/api/world#gogetworldposition"],
+    ]);
   });
 
-  test("returns the input byte-identical when the registry is empty", () => {
-    const out = linkifySymbolMentions("use go.set_position first", new Map());
-    expect(out).toBe("use go.set_position first");
+  test("returns the text as one text node when the registry is empty", () => {
+    expect(shape(symbolLinkifier(new Map())("use go.set_position first"))).toEqual([
+      ["use go.set_position first"],
+    ]);
   });
 
-  test("returns the input unchanged when no registered key appears in the text", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    const out = linkifySymbolMentions("plain prose with no symbol mentions", links);
-    expect(out).toBe("plain prose with no symbol mentions");
-  });
-
-  test("preserves surrounding markdown syntax and rewrites only the bare mention", () => {
-    const links = new Map([["go.set_position", "/api/go#gogetposition"]]);
-    expect(linkifySymbolMentions("*emphasized* go.set_position", links)).toBe(
-      '*emphasized* <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
-    );
-    expect(linkifySymbolMentions("see `go.set_position` in code", links)).toBe(
-      "see `go.set_position` in code",
-    );
+  test("returns the text as one text node when no registered key appears in it", () => {
+    expect(shape(symbolLinkifier(SET)("plain prose with no symbol mentions"))).toEqual([
+      ["plain prose with no symbol mentions"],
+    ]);
   });
 
   test("ignores bare-namespace keys (no `.`): a `go` mention is not linkified even with a route", () => {
-    const links = new Map([
-      ["go", "/api/go"],
+    const links = new Map([["go", "/api/go"], ...SET]);
+    expect(shape(symbolLinkifier(links)("see the go module for go.set_position"))).toEqual([
+      ["see the go module for "],
       ["go.set_position", "/api/go#gogetposition"],
     ]);
-    const out = linkifySymbolMentions("see the go module for go.set_position", links);
-    expect(out).toBe(
-      'see the go module for <a href="/api/go#gogetposition" class="symbol-xref">go.set_position</a>',
-    );
   });
 
   test("ignores bare-global keys (no `.`): a `hash` mention is not linkified", () => {
     const links = new Map([["hash", "/api/globals#hash"]]);
-    const out = linkifySymbolMentions('use hash("foo")', links);
-    expect(out).toBe('use hash("foo")');
+    expect(shape(symbolLinkifier(links)('use hash("foo")'))).toEqual([['use hash("foo")']]);
   });
 
-  test("the rewritten link carries class=symbol-xref so the symbol tooltips can bind to it", () => {
-    const links = new Map([["go.set_position", "/api/go"]]);
-    const out = linkifySymbolMentions("use go.set_position", links);
-    expect(out).toBe('use <a href="/api/go" class="symbol-xref">go.set_position</a>');
+  test("the link carries class=symbol-xref so the symbol tooltips can bind to it, and a root-absolute href", () => {
+    const [, link] = symbolLinkifier(new Map([["go.set_position", "/api/go"]]))(
+      "use go.set_position",
+    );
+    expect(link?.type).toBe("link");
+    expect(link?.type === "link" && link.url).toBe("/api/go");
+    expect(link?.data?.hProperties?.className).toEqual(["symbol-xref"]);
   });
 });
 
-describe("deploy base", () => {
-  const repoBase = (route: string) => `/repo${route}`;
-
-  test("the xref href carries the injected deploy base", () => {
-    const links = new Map([["go.set_position", "/api/go#go-set-position"]]);
-    const out = symbolLinkifier(links, repoBase)("use go.set_position to move it");
-    expect(out).toContain('href="/repo/api/go#go-set-position"');
-    expect(out).not.toContain('href="/api/go#go-set-position"');
-  });
-
-  test("every mention carries the base and the link count is unchanged", () => {
-    const links = new Map([
-      ["go.set_position", "/api/go#go-set-position"],
-      ["gui.set_text", "/api/gui#gui-set-text"],
+describe("linkSymbolMentions", () => {
+  test("leaves a code span alone and links the prose around it", () => {
+    expect(linksIn("call `go.set_position` first", SET)).toEqual([]);
+    expect(linksIn("see `go.set_position` or go.set_position", SET)).toEqual([
+      ["go.set_position", "/api/go#gogetposition"],
     ]);
-    const out = symbolLinkifier(links, repoBase)("go.set_position and gui.set_text");
-    expect(out).toBe(
-      '<a href="/repo/api/go#go-set-position" class="symbol-xref">go.set_position</a> and ' +
-        '<a href="/repo/api/gui#gui-set-text" class="symbol-xref">gui.set_text</a>',
-    );
-    expect(out.match(/class="symbol-xref"/g)).toHaveLength(2);
   });
 
-  test("linkifySymbolMentions forwards the deploy base", () => {
-    const links = new Map([["go.set_position", "/api/go#go-set-position"]]);
-    const out = linkifySymbolMentions("use go.set_position", links, repoBase);
-    expect(out).toBe(
-      'use <a href="/repo/api/go#go-set-position" class="symbol-xref">go.set_position</a>',
-    );
+  test("leaves a fenced code block verbatim and links the prose after it", () => {
+    const markdown =
+      "Sample:\n\n```lua\ngo.set_position(p) -- `go.set_position`\n```\n\nsee go.set_position";
+    expect(linksIn(markdown, SET)).toEqual([["go.set_position", "/api/go#gogetposition"]]);
+  });
+
+  test("keeps the surrounding Markdown and links a mention inside emphasis", () => {
+    expect(linksIn("*emphasized go.set_position* and go.set_position", SET)).toEqual([
+      ["go.set_position", "/api/go#gogetposition"],
+      ["go.set_position", "/api/go#gogetposition"],
+    ]);
+  });
+
+  test("leaves a mention inside a link label or a heading as text", () => {
+    expect(linksIn("[go.set_position](https://defold.com)", SET)).toEqual([
+      ["go.set_position", "https://defold.com"],
+    ]);
+    expect(linksIn("## go.set_position", SET)).toEqual([]);
   });
 });

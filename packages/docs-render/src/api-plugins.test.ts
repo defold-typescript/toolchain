@@ -14,7 +14,7 @@ import {
   UPSTREAM_CHIP,
   upstreamChip,
 } from "./api-nodes";
-import { parseDocsMarkdown, processApiTree, processDocsMarkdown } from "./docs-markdown";
+import { parseMarkdownFragment, processApiTree, processDocsMarkdown } from "./docs-markdown";
 import { allPageHeadings, hastHeadings } from "./headings";
 import { getHighlighter, runStyle, signatureTokens } from "./signature-tokens";
 import { escapeUpstreamText } from "./upstream-text";
@@ -302,7 +302,7 @@ describe("processApiTree permalinks and links", () => {
   });
 });
 
-const fragment = (markdown: string): Root => root(...parseDocsMarkdown(markdown).children);
+const fragment = (markdown: string): Root => root(...parseMarkdownFragment(markdown));
 
 describe("processApiTree upstream safety", () => {
   test("a link to an unsafe target renders as its label", async () => {

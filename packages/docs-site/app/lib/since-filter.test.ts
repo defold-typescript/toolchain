@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { type MiniElement, parseHtml } from "@defold-typescript/docs-render/__fixtures__/mini-dom";
-import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { type ApiPageOptions, renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import {
   type ApiPage,
   type AvailabilityLookup,
@@ -14,7 +14,7 @@ import {
   namespaceBadgeCounts,
   type SignaturesArtifact,
 } from "@defold-typescript/docs-render/combined-surface";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
 import {
   type ApiFunction,
   type ApiModule,
@@ -22,6 +22,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import { toHtml } from "hast-util-to-html";
 import { type ApiSurfaceConfig, readStoredRange } from "./api-surface-pref";
 import { navLeafBadgeHtml, navNamespaceBadges } from "./nav-badges";
 import { applySinceFilter } from "./since-filter";
@@ -135,19 +136,29 @@ const configFor = (
 
 const AXIS_CONFIG = configFor(AXIS);
 
+const noLinks: SymbolLinker = (text) => [{ type: "text", value: text }];
+
+// One render per page and options; the filter mutates the tree it runs on, so
+// every caller parses its own copy of the HTML.
+const renderedHtml = new Map<string, Promise<string>>();
+
+function renderHtml(key: string, page: () => ApiPage, options: ApiPageOptions): Promise<string> {
+  let html = renderedHtml.get(key);
+  if (html === undefined) {
+    html = renderApiPage(page(), noLinks, options).then(({ hast }) => toHtml(hast));
+    renderedHtml.set(key, html);
+  }
+  return html;
+}
+
 async function renderPage(
   axis: readonly string[] = AXIS,
   window?: { from: string; to: string },
 ): Promise<MiniElement> {
-  const html = await renderMarkdown(
-    apiPageMarkdown(demoPage(axis), (t) => t, {
-      combinedMarkers: true,
-      ...(window ? { window } : {}),
-    }),
-    {
-      highlightSignatureHeadings: true,
-    },
-  );
+  const html = await renderHtml(`demo ${JSON.stringify({ axis, window })}`, () => demoPage(axis), {
+    combinedMarkers: true,
+    ...(window ? { window } : {}),
+  });
   return parseHtml(`<main>${html}</main>${sidebarHtml()}`);
 }
 
@@ -502,13 +513,10 @@ describe("a gapped span gains a category the full range does not show", () => {
   };
 
   const renderGapped = async (): Promise<MiniElement> => {
-    const html = await renderMarkdown(
-      apiPageMarkdown(gappedPage(), (t) => t, {
-        combinedMarkers: true,
-        window: { from: OLDEST, to: NEWEST },
-      }),
-      { highlightSignatureHeadings: true },
-    );
+    const html = await renderHtml("gapped", gappedPage, {
+      combinedMarkers: true,
+      window: { from: OLDEST, to: NEWEST },
+    });
     return parseHtml(`<main>${html}</main>${sidebarHtml()}`);
   };
 
@@ -612,7 +620,7 @@ describe("applySinceFilter under the route-id vocabulary", () => {
   test("a bare bound filters a page whose spans were written in the prefixed vocabulary", async () => {
     // The mirror of the case above: the markers carry route ids and the bound is
     // bare, so the marker side of the normalization is the only thing that can
-    // resolve them. `apiPageMarkdown` writes the spans, so neither axis is transcribed.
+    // resolve them. `renderApiPage` writes the spans, so neither axis is transcribed.
     const root = await renderPage(PREFIXED_AXIS);
     expect(
       headingFor(root, "demo.retired")
@@ -795,10 +803,7 @@ describe("overload forms with differing spans", () => {
   };
   const render = async (): Promise<MiniElement> =>
     parseHtml(
-      `<main id="content">${await renderMarkdown(
-        apiPageMarkdown(page(), (t) => t, { combinedMarkers: true }),
-        { highlightSignatureHeadings: true },
-      )}</main>`,
+      `<main id="content">${await renderHtml("overload forms", page, { combinedMarkers: true })}</main>`,
     );
   const forms = (root: MiniElement) => root.querySelectorAll("li.api-overload");
 

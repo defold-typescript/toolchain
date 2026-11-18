@@ -1334,6 +1334,7 @@
      wrapping to its own line. */
   .prose .api-badge-counts {
     display: inline-flex;
+    margin-left: 0.4rem;
     gap: 0.4rem;
     align-items: center;
     vertical-align: middle;

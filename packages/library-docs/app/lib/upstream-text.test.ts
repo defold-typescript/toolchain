@@ -2,15 +2,16 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import type { Element, Nodes } from "hast";
+import { toHtml } from "hast-util-to-html";
 import {
   defoldListingsFromManifest,
   type LibraryDirs,
   loadLibraryPageSources,
   portalListingsFromManifest,
 } from "./api-surface-loader";
-import { listingPageMarkdown } from "./listing-page";
+import { type LibraryPage, renderLibraryApiPage, renderLibraryListingPage } from "./library-routes";
+import type { LibraryListing } from "./nav";
 
 const SCRIPT = "<script>alert(1)</script>";
 const ENCODED_SCRIPT = "&lt;script&gt;alert(1)&lt;/script&gt;";
@@ -74,14 +75,48 @@ function writeModule(dirs: LibraryDirs, namespace: string, doc: string, deprecat
   );
 }
 
-// The `deprecated` note is the symbol's `@deprecated` source text, not ref-doc HTML, so
-// a test about how HTML converts gives it text of its own.
-async function renderPage(doc: string, deprecated = doc): Promise<string> {
-  const dirs = dataDirs();
-  writeModule(dirs, "demo", doc, deprecated);
+// A page as its route serves it: the `h1` holding the route's heading, then the
+// rendered body; and the text a reader sees in that body.
+interface Served {
+  html: string;
+  text: string;
+  hast: Nodes;
+}
+
+function textOf(node: Nodes): string {
+  if (node.type === "text") return node.value;
+  return "children" in node ? node.children.map(textOf).join("") : "";
+}
+
+function served(rendered: LibraryPage | undefined, route: string): Served {
+  if (!rendered) throw new Error(`${route} renders no page`);
+  const { hast } = rendered.page;
+  return { html: `<h1>${rendered.heading}</h1>${toHtml(hast)}`, text: textOf(hast), hast };
+}
+
+const routeSegments = (route: string): string[] => route.split("/").slice(2);
+
+async function renderLibraryPage(dirs: LibraryDirs): Promise<Served> {
   const [source] = loadLibraryPageSources(dirs);
   if (!source) throw new Error("no page");
-  return renderMarkdown(apiPageMarkdown(source.page, apiLinkify([source.page])));
+  const [host = "", owner = "", repo = "", namespace = ""] = routeSegments(source.page.route);
+  return served(
+    await renderLibraryApiPage({ host, owner, repo, namespace }, dirs),
+    source.page.route,
+  );
+}
+
+async function renderListingPage(dirs: LibraryDirs, listing: LibraryListing): Promise<Served> {
+  const [host = "", owner = "", repo = ""] = routeSegments(listing.route);
+  return served(await renderLibraryListingPage({ host, owner, repo }, dirs), listing.route);
+}
+
+// The `deprecated` note is the symbol's `@deprecated` source text, not ref-doc HTML, so
+// a test about how HTML converts gives it text of its own.
+async function renderPage(doc: string, deprecated = doc): Promise<Served> {
+  const dirs = dataDirs();
+  writeModule(dirs, "demo", doc, deprecated);
+  return renderLibraryPage(dirs);
 }
 
 function writeListing(dirs: LibraryDirs, repoUrl: string, ships: string): void {
@@ -150,12 +185,10 @@ function writePortalLibrary(dirs: LibraryDirs, id: string): void {
   );
 }
 
-async function renderPortalPage(id: string): Promise<string> {
+async function renderPortalPage(id: string): Promise<Served> {
   const dirs = dataDirs();
   writePortalLibrary(dirs, id);
-  const [source] = loadLibraryPageSources(dirs);
-  if (!source) throw new Error("no page");
-  return renderMarkdown(apiPageMarkdown(source.page, apiLinkify([source.page])));
+  return renderLibraryPage(dirs);
 }
 
 function writePortalListing(dirs: LibraryDirs, id: string, description: string): void {
@@ -176,12 +209,11 @@ function writePortalListing(dirs: LibraryDirs, id: string, description: string):
   );
 }
 
-const textOf = (html: string): string =>
-  html
-    .replace(/<[^>]+>/g, "")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&amp;", "&");
+function codeElements(node: Nodes): Element[] {
+  const own = node.type === "element" && node.tagName === "code" ? [node] : [];
+  const nested = "children" in node ? node.children.flatMap(codeElements) : [];
+  return [...own, ...nested];
+}
 
 function expectInert(html: string): void {
   expect(html).not.toContain("<script");
@@ -192,80 +224,81 @@ function expectInert(html: string): void {
 
 describe("upstream doc text on a library page", () => {
   test("a payload in the description, member and slot docs stays inert, its tags stripped", async () => {
-    const html = await renderPage(PAYLOAD, "Use demo.walk.");
+    const { html, text } = await renderPage(PAYLOAD, "Use demo.walk.");
     expectInert(html);
-    expect(textOf(html)).toContain("alert(1)");
-    expect(textOf(html)).not.toContain("<script");
+    expect(text).toContain("alert(1)");
+    expect(text).not.toContain("<script");
   });
 
   test("a tag the types package strips is stripped as on the toolchain site", async () => {
-    const html = await renderPage(
+    const { text } = await renderPage(
       "Use <strong>bold</strong> and <table><tr><td>cell</td></tr></table>.",
       "Use demo.walk.",
     );
-    expect(textOf(html)).toContain("Use bold and cell.");
-    expect(html).not.toContain("&lt;strong");
-    expect(html).not.toContain("&lt;table");
+    expect(text).toContain("Use bold and cell.");
+    expect(text).not.toContain("<strong");
+    expect(text).not.toContain("<table");
   });
 
   test("the deprecation note, source text rather than HTML, shows a payload as inert text", async () => {
-    const html = await renderPage("Run it.", PAYLOAD);
+    const { html, text } = await renderPage("Run it.", PAYLOAD);
     expectInert(html);
-    expect(textOf(html)).toContain(`Deprecated — ${SCRIPT} ${IMG} x`);
+    expect(text).toContain(`Deprecated — ${SCRIPT} ${IMG} x`);
   });
 
   test("an entity-encoded payload, which the ref-doc conversion decodes, stays inert", async () => {
-    const html = await renderPage(
+    const { html, text } = await renderPage(
       "&lt;script&gt;alert(1)&lt;/script&gt; &#60;img src=x onerror=alert(1)&#62;",
     );
     expectInert(html);
-    expect(textOf(html)).toContain(SCRIPT);
+    expect(text).toContain(SCRIPT);
   });
 
   test("a backtick that opens no code span on its own line cannot hide a tag", async () => {
     for (const doc of [`\`x\n\`${SCRIPT}\``, `\`a\n- ${SCRIPT}\``, `\`\`\`\n${SCRIPT}\n\`\`\``]) {
-      expectInert(await renderPage(doc));
+      expectInert((await renderPage(doc)).html);
     }
   });
 
   test("the payload reaches the deprecation note and breaks out of the example fence", async () => {
-    const html = await renderPage(ENCODED_SCRIPT, SCRIPT);
+    const { html, text } = await renderPage(ENCODED_SCRIPT, SCRIPT);
     expect(html).toContain("api-availability");
-    expect(html.split("&lt;script&gt;").length).toBeGreaterThan(4);
+    expect(text.split("<script>").length).toBeGreaterThan(4);
   });
 
   test("the same payload in a code span stays code, escaped once rather than twice", async () => {
-    const html = await renderPage(
+    const { html, text, hast } = await renderPage(
       `Before \`${ENCODED_SCRIPT}\` after`,
       `Before \`${SCRIPT}\` after`,
     );
     expectInert(html);
-    expect(html).toContain("<code>&lt;script&gt;alert(1)&lt;/script&gt;</code>");
-    expect(html).not.toContain("&amp;lt;");
+    const payloadCodes = codeElements(hast).filter((code) => textOf(code) === SCRIPT);
+    expect(payloadCodes.map((code) => code.properties)).toContainEqual({});
+    expect(text).not.toContain("&lt;");
   });
 
   test("a less-than in prose reads the same in the rendered text", async () => {
-    const text = textOf(await renderPage("When a < b, an Array<number> is `Map<string>`."));
+    const { text } = await renderPage("When a < b, an Array<number> is `Map<string>`.");
     expect(text).toContain("When a < b, an Array<number> is Map<string>.");
   });
 
   test("the structure tags real docs carry still shape the page", async () => {
-    const html = await renderPage("<p>One.</p><p>Two <code>three</code>.</p>");
+    const { html } = await renderPage("<p>One.</p><p>Two <code>three</code>.</p>");
     expect(html).toContain("<p>One.</p>");
     expect(html).toContain("<code>three</code>");
   });
 
   test("a fenced example keeps its code readable", async () => {
-    const html = await renderPage("```lua\nif a < b then end\n```");
-    expect(textOf(html)).toContain("if a < b then end");
-    expect(html).not.toContain("&amp;lt;");
+    const { text } = await renderPage("```lua\nif a < b then end\n```");
+    expect(text).toContain("if a < b then end");
+    expect(text).not.toContain("&lt;");
   });
 
   test("a safe link survives and an unsafe one is reduced to its label", async () => {
-    const html = await renderPage(`[good](https://example.com/a) and ${LINK}`);
+    const { html, text } = await renderPage(`[good](https://example.com/a) and ${LINK}`);
     expect(html).toContain('href="https://example.com/a"');
     expect(html).not.toContain("javascript:");
-    expect(textOf(html)).toContain("good and x");
+    expect(text).toContain("good and x");
   });
 
   test("a type or name whose backticks open a gap for a tag fails the load, naming the page", () => {
@@ -299,9 +332,9 @@ describe("upstream listing text", () => {
     writeListing(dirs, "https://github.com/defold/extension-x", PAYLOAD);
     const [listing] = defoldListingsFromManifest(dirs);
     if (!listing) throw new Error("no listing");
-    const html = await renderMarkdown(listingPageMarkdown(listing));
+    const { html, text } = await renderListingPage(dirs, listing);
     expectInert(html);
-    expect(textOf(html)).toContain(SCRIPT);
+    expect(text).toContain(SCRIPT);
   });
 
   test("a portal description holding a payload stays inert", async () => {
@@ -309,7 +342,7 @@ describe("upstream listing text", () => {
     writePortalListing(dirs, "evil", PAYLOAD);
     const [listing] = portalListingsFromManifest(dirs);
     if (!listing) throw new Error("no listing");
-    expectInert(await renderMarkdown(listingPageMarkdown(listing)));
+    expectInert((await renderListingPage(dirs, listing)).html);
   });
 
   test("a listing whose repo URL is not https makes the loader throw, naming the listing", () => {
@@ -386,7 +419,7 @@ describe("an Asset Portal ID", () => {
   });
 
   test("a valid ID on a script-API library links to its portal entry", async () => {
-    const html = await renderPortalPage("good-id");
+    const { html } = await renderPortalPage("good-id");
     expect(html).toMatch(validLink);
     expectInert(html);
   });
@@ -402,6 +435,6 @@ describe("an Asset Portal ID", () => {
     writePortalListing(dirs, "good-id", "A demo.");
     const [listing] = portalListingsFromManifest(dirs);
     if (!listing) throw new Error("no listing");
-    expect(await renderMarkdown(listingPageMarkdown(listing))).toMatch(validLink);
+    expect((await renderListingPage(dirs, listing)).html).toMatch(validLink);
   });
 });

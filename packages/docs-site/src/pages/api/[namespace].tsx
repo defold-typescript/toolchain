@@ -6,7 +6,7 @@ import type { PageProps } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
 import { TYPES_DIR } from "../../../app/lib/api-content";
 import { apiParamKind, apiStaticPaths, versionIndexEntries } from "../../../app/lib/api-routes";
-import { HtmlPage } from "../../components/html-page";
+import { ApiMarkdownPage } from "../../components/api-markdown-page";
 import { apiCanonicalHref, SITE_NAME } from "../../lib/site";
 
 // `/api/<param>` serves three page kinds, as one route because they share the
@@ -53,9 +53,9 @@ export default async function ApiParamRoute({ namespace: param }: PageProps<"/ap
     );
   }
 
-  const html = await renderCanonicalApiPage(page.namespace, TYPES_DIR);
-  if (html === undefined) unstable_notFound();
-  return <HtmlPage title={`${page.namespace} API`} html={html} />;
+  const rendered = await renderCanonicalApiPage(page.namespace, TYPES_DIR);
+  if (rendered === undefined) unstable_notFound();
+  return <ApiMarkdownPage title={`${page.namespace} API`} page={rendered} />;
 }
 
 export async function getConfig() {

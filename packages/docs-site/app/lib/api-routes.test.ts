@@ -2,9 +2,10 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { apiLinkify, renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
-import { allPageHeadings } from "@defold-typescript/docs-render/headings";
+import type { RenderedPage } from "@defold-typescript/docs-render/docs-markdown";
+import { hastHeadings } from "@defold-typescript/docs-render/headings";
 import { searchIndexFileForRoute } from "@defold-typescript/docs-render/search-route";
 import { symbolIndexFileForRoute } from "@defold-typescript/docs-render/symbol-index";
 import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
@@ -19,6 +20,8 @@ import {
   versionsWithDiskFixtures,
 } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { normalizedFunctionSignature } from "@defold-typescript/types";
+import type { Nodes } from "hast";
+import { toHtml } from "hast-util-to-html";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import {
@@ -41,7 +44,7 @@ import {
   apiParamKind,
   apiRouteSet,
   apiStaticPaths,
-  renderVersionedApiHtml,
+  renderVersionedApiPage,
   versionIndexEntries,
 } from "./api-routes";
 
@@ -54,6 +57,17 @@ const FIXTURE_DIR = join(import.meta.dir, "../../../docs-render/src/__fixtures__
 // are `process.cwd()`-bound, so a root-level `bun test` passes the dir the way
 // the sibling drift guards do.
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+
+// A rendered page's text content, which reads a signature whole although its
+// code is split into token spans.
+const textOf = (node: Nodes): string =>
+  node.type === "text"
+    ? node.value
+    : "children" in node
+      ? node.children.map((child) => textOf(child)).join("")
+      : "";
+
+const htmlOf = (page: RenderedPage | undefined): string => (page ? toHtml(page.hast) : "");
 
 const routesOf = (pages: { route: string }[]): Set<string> =>
   new Set(pages.map((page) => page.route));
@@ -120,7 +134,8 @@ describe("api routes — what kind of page an /api/<param> is", () => {
       const kind = apiParamKind(param, FIXTURE_DIR);
       kinds.add(kind.kind);
       if (kind.kind === "namespace") {
-        expect(await renderCanonicalApiPage(kind.namespace, FIXTURE_DIR)).toBeString();
+        const rendered = await renderCanonicalApiPage(kind.namespace, FIXTURE_DIR);
+        expect(rendered?.hast.children.length ?? 0).toBeGreaterThan(0);
       } else if (kind.kind === "version-index") {
         expect(versionIndexEntries(kind.version, FIXTURE_DIR).length).toBeGreaterThan(0);
       }
@@ -186,17 +201,16 @@ describe("api routes — every complete version owns a family and an index", () 
     const { versioned } = apiStaticPaths(FIXTURE_DIR);
     expect(versioned.length).toBeGreaterThan(0);
     for (const [version, namespace] of versioned) {
-      const html = await renderVersionedApiHtml(version, namespace, FIXTURE_DIR);
-      expect(html).toBeString();
-      expect(html?.length ?? 0).toBeGreaterThan(0);
+      const rendered = await renderVersionedApiPage(version, namespace, FIXTURE_DIR);
+      expect(rendered?.hast.children.length ?? 0).toBeGreaterThan(0);
     }
   });
 
   test("an unknown version or namespace renders no versioned page", async () => {
     const [version] = versionIds;
-    expect(await renderVersionedApiHtml("defold-9.9.9", "camera", FIXTURE_DIR)).toBeUndefined();
+    expect(await renderVersionedApiPage("defold-9.9.9", "camera", FIXTURE_DIR)).toBeUndefined();
     expect(
-      await renderVersionedApiHtml(version as string, "no_such_namespace", FIXTURE_DIR),
+      await renderVersionedApiPage(version as string, "no_such_namespace", FIXTURE_DIR),
     ).toBeUndefined();
   });
 });
@@ -484,7 +498,7 @@ describe("api routes — the exact-version family is the window ending at that v
     if (dir) rmSync(dir, { recursive: true, force: true });
   });
 
-  test("the newest version's family carries a namespace its own surface never had", () => {
+  test("the newest version's family carries a namespace its own surface never had", async () => {
     // `gone` exists only in 1.0.0, so the newest version's *own* surface omits it
     // entirely — yet a reader targeting 3.0.0 is exactly who needs to see that it
     // was removed.
@@ -495,8 +509,8 @@ describe("api routes — the exact-version family is the window ending at that v
     expect(windowed.map((p) => p.namespace)).toContain("gone");
 
     const gone = windowed.find((p) => p.namespace === "gone");
-    const markdown = apiPageMarkdown(gone as ApiPage, apiLinkify(windowed));
-    expect(markdown).toContain(`Removed in Defold ${MIDDLE}`);
+    const rendered = await renderApiPage(gone as ApiPage, apiLinkify(windowed));
+    expect(textOf(rendered.hast)).toContain(`Removed in Defold ${MIDDLE}`);
   });
 
   test("the windowed family routes under the version it ends at, not the canonical route", () => {
@@ -530,10 +544,14 @@ describe("api routes — the exact-version family is the window ending at that v
   });
 
   test("the versioned page renders the window: removed namespaces stay, later symbols drop", async () => {
-    const gone = await renderVersionedApiHtml(versionId(NEWEST), HISTORICAL_ONLY_NAMESPACE, dir);
-    expect(gone).toContain(`Removed in Defold ${MIDDLE}`);
-    const middle = await renderVersionedApiHtml(versionId(MIDDLE), "demo", dir);
-    const newest = await renderVersionedApiHtml(versionId(NEWEST), "demo", dir);
+    const text = async (version: string, namespace: string): Promise<string> => {
+      const rendered = await renderVersionedApiPage(versionId(version), namespace, dir);
+      return rendered ? textOf(rendered.hast) : "";
+    };
+    expect(await text(NEWEST, HISTORICAL_ONLY_NAMESPACE)).toContain(`Removed in Defold ${MIDDLE}`);
+    const middle = await text(MIDDLE, "demo");
+    const newest = await text(NEWEST, "demo");
+    expect(middle).toContain("demo.");
     expect(middle).not.toContain("demo.newest_only");
     expect(newest).toContain("demo.newest_only");
   });
@@ -781,8 +799,8 @@ describe("api routes — the rendered namespace page carries its shape links", (
       ].map((m) => [m[2] as string, m[1] as string]),
     );
 
-  const headingId = (html: string, text: string): string | undefined =>
-    allPageHeadings(html)
+  const headingId = (page: RenderedPage | undefined, text: string): string | undefined =>
+    hastHeadings(page?.hast ?? { type: "root", children: [] })
       .filter((h) => h.text === text)
       .pop()?.id;
 
@@ -796,13 +814,14 @@ describe("api routes — the rendered namespace page carries its shape links", (
     });
 
     test("links the shape token to the shape heading, not the same-named section heading", async () => {
-      const html = (await renderVersionedApiHtml(versionId(NEWEST), "demo", dir)) ?? "";
+      const page = await renderVersionedApiPage(versionId(NEWEST), "demo", dir);
+      const html = htmlOf(page);
       expect(html.length).toBeGreaterThan(0);
 
       // The fixture shape is named for the module-function section heading, so a
       // link slugged from the bare label lands on the section rather than on the
       // shape's qualified heading.
-      const headings = allPageHeadings(html);
+      const headings = hastHeadings(page?.hast ?? { type: "root", children: [] });
       const section = headings.filter((h) => h.text === TYPEDEF_SHAPE_NAME);
       const shape = headings.filter((h) => h.text === `demo.${TYPEDEF_SHAPE_NAME}`);
       expect(section.length).toBe(1);
@@ -815,10 +834,13 @@ describe("api routes — the rendered namespace page carries its shape links", (
     });
 
     test("the canonical page links the shape token to that shape's heading on its own page", async () => {
-      const html = (await renderCanonicalApiPage("demo", dir)) ?? "";
+      const page = await renderCanonicalApiPage("demo", dir);
+      const html = htmlOf(page);
       expect(html.length).toBeGreaterThan(0);
 
-      const shape = allPageHeadings(html).filter((h) => h.text === `demo.${TYPEDEF_SHAPE_NAME}`);
+      const shape = hastHeadings(page?.hast ?? { type: "root", children: [] }).filter(
+        (h) => h.text === `demo.${TYPEDEF_SHAPE_NAME}`,
+      );
       expect(shape.length).toBe(1);
       // Dropping the render's `page` argument leaves `Opaque` alone in the map, so
       // the shape renders as inert text and this reds.
@@ -836,12 +858,14 @@ describe("api routes — the rendered namespace page carries its shape links", (
   // both wirings stay green when the versioned render stops passing them.
   describe("the versioned page, over a fixture surface that carries a constant-union alias", () => {
     let dir = "";
+    let page: RenderedPage | undefined;
     let html = "";
     const prefix = `/api/${versionId(NEWEST)}`;
 
     beforeAll(async () => {
       dir = makeWindowedTypesDir({ constantUnionAlias: true });
-      html = (await renderVersionedApiHtml(versionId(NEWEST), "demo", dir)) ?? "";
+      page = await renderVersionedApiPage(versionId(NEWEST), "demo", dir);
+      html = htmlOf(page);
     });
     afterAll(() => {
       if (dir) rmSync(dir, { recursive: true, force: true });
@@ -863,13 +887,13 @@ describe("api routes — the rendered namespace page carries its shape links", (
 
     test("a signature heading links its alias to the entry this version minted", () => {
       expect(html.length).toBeGreaterThan(0);
-      const id = headingId(html, CONSTANT_UNION_ALIAS_ROW);
+      const id = headingId(page, CONSTANT_UNION_ALIAS_ROW);
       expect(id).toBeDefined();
       expect(symbolLinks(html).get(CONSTANT_UNION_ALIAS)).toBe(`${prefix}/demo#${id}`);
     });
 
     test("the parameter breakdown links the same alias to the same entry", () => {
-      const id = headingId(html, CONSTANT_UNION_ALIAS_ROW);
+      const id = headingId(page, CONSTANT_UNION_ALIAS_ROW);
       const aliasHrefs = typeLinks(consumerSlots())
         .filter(([name]) => name === CONSTANT_UNION_ALIAS)
         .map(([, href]) => href);

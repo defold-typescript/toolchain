@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { apiLinkify, renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import {
   type ApiSymbol,
   apiModuleSections,
@@ -13,6 +13,7 @@ import {
   combinedAuthoritativeSignatures,
   combinedNamespaceToApiPage,
 } from "@defold-typescript/docs-render/combined-surface";
+import { hastOutlineText } from "@defold-typescript/docs-render/headings";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
@@ -23,6 +24,7 @@ import {
   type SignatureStore,
   symbolIdentityKey,
 } from "@defold-typescript/types";
+import type { Element, Nodes, Root } from "hast";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
@@ -33,8 +35,60 @@ const combined = loadCombinedSurface(REAL_TYPES_DIR);
 const pages = combined.namespaces.map(combinedNamespaceToApiPage);
 const linkify = apiLinkify(pages);
 
-function markdownFor(ns: CombinedNamespace): string {
-  return apiPageMarkdown(combinedNamespaceToApiPage(ns), linkify);
+const renderedOf = new Map<CombinedNamespace, Promise<Root>>();
+
+function renderedFor(ns: CombinedNamespace): Promise<Root> {
+  let tree = renderedOf.get(ns);
+  if (tree === undefined) {
+    tree = renderApiPage(combinedNamespaceToApiPage(ns), linkify).then((page) => page.hast);
+    renderedOf.set(ns, tree);
+  }
+  return tree;
+}
+
+function classes(element: Element): string[] {
+  const value = element.properties.className;
+  return Array.isArray(value) ? value.map(String) : String(value ?? "").split(/\s+/);
+}
+
+function textOf(node: Nodes): string {
+  if (node.type === "text") return node.value;
+  return "children" in node ? node.children.map(textOf).join("") : "";
+}
+
+function firstElement(node: Nodes, match: (element: Element) => boolean): Element | undefined {
+  if (!("children" in node)) return undefined;
+  for (const child of node.children) {
+    if (child.type !== "element") continue;
+    if (match(child)) return child;
+    const found = firstElement(child, match);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+const isSignature = (element: Element): boolean =>
+  element.tagName === "code" && classes(element).includes("api-signature");
+
+const isSymbolHeading = (element: Element): boolean => /^h[34]$/.test(element.tagName);
+
+// A live form of an overload block; a replaced or removed form's history line
+// carries the `api-overload--revision` class as well.
+const isForm = (element: Element): boolean =>
+  element.tagName === "li" && classes(element).join(" ") === "api-overload";
+
+// The signature a symbol heading names, reading its count badge as the `...` it
+// stands over.
+function headingSignature(heading: Element): string | undefined {
+  const code = firstElement(heading, isSignature);
+  return code && hastOutlineText(code);
+}
+
+// A form line's code: the signature code of the item's first paragraph.
+function formCode(form: Element): string | undefined {
+  const [line] = form.children.filter((child): child is Element => child.type === "element");
+  const code = line && firstElement(line, isSignature);
+  return code && textOf(code);
 }
 
 // A signature's call form: its name through the `)` closing its call list, with
@@ -53,27 +107,46 @@ function callForm(signature: string): string {
   return name + splitCallForm(symbol).params;
 }
 
-// Every call form the page renders, in order: a `### \`<signature>\`` heading's
-// own (`####` under a receiver heading), or, under an overload block's
-// `### \`<fqn>(...)<returns>\`` heading, each listed form's. The trailing count badge and availability dots are not part of
-// the signature.
-function renderedCallForms(markdown: string): string[] {
+// Every call form the page renders, in order: an `h3` signature heading's own
+// (`h4` under a receiver heading), or, under an overload block's
+// `<fqn>(...)<returns>` heading, each listed form's. The count badge and
+// availability dots are not part of the signature.
+function renderedCallForms(tree: Root): string[] {
   const out: string[] = [];
-  const lines = markdown.split("\n");
   let group: string | null = null;
-  for (const [index, line] of lines.entries()) {
-    const heading = line.match(/^#{3,4} `(.+?)`(?: .*)?$/)?.[1];
-    if (heading !== undefined) {
+  const walk = (node: Nodes): void => {
+    if (node.type === "element" && isSymbolHeading(node)) {
+      const heading = headingSignature(node);
+      if (heading === undefined) return;
       const dots = heading.indexOf("(...)");
       group = dots < 0 ? null : heading.slice(0, dots);
       if (group === null) out.push(callForm(heading));
-      continue;
+      return;
     }
-    if (group === null || line !== '<li class="api-overload">') continue;
-    const form = lines[index + 2]?.match(/^`(.+?)`(?: .*)?$/)?.[1];
-    if (form !== undefined) out.push(callForm(`${group}${form}`));
-  }
+    if (node.type === "element" && group !== null && isForm(node)) {
+      const form = formCode(node);
+      if (form !== undefined) out.push(callForm(`${group}${form}`));
+    }
+    if ("children" in node) for (const child of node.children) walk(child);
+  };
+  walk(tree);
   return out;
+}
+
+// The top-level nodes from the symbol heading whose signature starts with
+// `start` up to the next heading `stop` accepts.
+function blockOf(tree: Root, start: string, stop: (element: Element) => boolean): Nodes[] {
+  const at = tree.children.findIndex(
+    (child) =>
+      child.type === "element" &&
+      isSymbolHeading(child) &&
+      headingSignature(child)?.startsWith(start) === true,
+  );
+  if (at < 0) return [];
+  const next = tree.children.findIndex(
+    (child, index) => index > at && child.type === "element" && stop(child),
+  );
+  return tree.children.slice(at, next < 0 ? undefined : next);
 }
 
 function storeFor(namespace: string): SignatureStore | null {
@@ -94,18 +167,18 @@ function armsOf(headings: string[], fqn: string): string[] {
 
 // Each live form of the overload block headed `<fqn>(...)`: the code its form
 // line lists and the text under it.
-function overloadForms(markdown: string, fqn: string): { code: string; body: string }[] {
-  const lines = markdown.split("\n");
-  const start = lines.findIndex((line) => /^#{3,4} `/.test(line) && line.includes(`\`${fqn}(...)`));
-  if (start < 0) return [];
-  const next = lines.findIndex((line, index) => index > start && /^#{2,4} /.test(line));
-  const block = lines.slice(start + 1, next < 0 ? undefined : next);
+function overloadForms(tree: Root, fqn: string): { code: string; body: string }[] {
   const forms: { code: string; body: string }[] = [];
-  for (const [index, line] of block.entries()) {
-    if (line !== '<li class="api-overload">') continue;
-    const item = block.slice(index + 2, block.indexOf("</li>", index));
-    const code = item[0]?.match(/^`(.+?)`(?: .*)?$/)?.[1] ?? "";
-    forms.push({ code, body: item.slice(1).join("\n").trim() });
+  const collect = (node: Nodes): void => {
+    if (node.type === "element" && isForm(node)) {
+      const [, ...body] = node.children.filter((child) => child.type === "element");
+      forms.push({ code: formCode(node) ?? "", body: body.map(textOf).join("\n").trim() });
+      return;
+    }
+    if ("children" in node) for (const child of node.children) collect(child);
+  };
+  for (const node of blockOf(tree, `${fqn}(...)`, (e) => /^h[2-4]$/.test(e.tagName))) {
+    collect(node);
   }
   return forms;
 }
@@ -117,12 +190,12 @@ function namespaceByName(name: string): CombinedNamespace {
 }
 
 describe("canonical pages render every authored overload arm", () => {
-  it("renders each authored arm exactly once, for every store-covered FQN", () => {
+  it("renders each authored arm exactly once, for every store-covered FQN", async () => {
     const missing: string[] = [];
     for (const ns of combined.namespaces) {
       const store = storeFor(ns.namespace);
       if (!store) continue;
-      const headings = renderedCallForms(markdownFor(ns));
+      const headings = renderedCallForms(await renderedFor(ns));
       const declared = new Set(ns.module.functions.map((fn) => fn.name));
       for (const [fqn, override] of Object.entries(store)) {
         if (!declared.has(fqn)) continue;
@@ -135,8 +208,8 @@ describe("canonical pages render every authored overload arm", () => {
     expect(missing).toEqual([]);
   });
 
-  it("renders both render.render_target arities on /api/render", () => {
-    const headings = renderedCallForms(markdownFor(namespaceByName("render")));
+  it("renders both render.render_target arities on /api/render", async () => {
+    const headings = renderedCallForms(await renderedFor(namespaceByName("render")));
     expect(headings).toContain(
       callForm(
         'render.render_target(parameters: render.RenderTargetParams): Opaque<"render_target">',
@@ -149,8 +222,8 @@ describe("canonical pages render every authored overload arm", () => {
     );
   });
 
-  it("renders the authored vmath.euler_to_quat arms and not the generated union", () => {
-    const headings = renderedCallForms(markdownFor(namespaceByName("vmath")));
+  it("renders the authored vmath.euler_to_quat arms and not the generated union", async () => {
+    const headings = renderedCallForms(await renderedFor(namespaceByName("vmath")));
     const authored = storeFor("vmath")?.["vmath.euler_to_quat"]?.signatures ?? [];
     expect(authored.length).toBeGreaterThan(1);
     for (const arm of authored) expect(headings).toContain(callForm(arm));
@@ -180,20 +253,20 @@ describe("canonical pages render every authored overload arm", () => {
     expect(rejected).toEqual([]);
   });
 
-  it("collapses a multi-identity FQN to one arm set per page", () => {
-    const msg = renderedCallForms(markdownFor(namespaceByName("msg")));
+  it("collapses a multi-identity FQN to one arm set per page", async () => {
+    const msg = renderedCallForms(await renderedFor(namespaceByName("msg")));
     const msgUrlArms = storeFor("msg")?.["msg.url"]?.signatures ?? [];
     expect(msgUrlArms.length).toBe(6);
     expect(armsOf(msg, "msg.url")).toEqual(msgUrlArms.map(callForm));
 
-    const vmath = renderedCallForms(markdownFor(namespaceByName("vmath")));
+    const vmath = renderedCallForms(await renderedFor(namespaceByName("vmath")));
     const lerpArms = storeFor("vmath")?.["vmath.lerp"]?.signatures ?? [];
     expect(lerpArms.length).toBe(3);
     expect(armsOf(vmath, "vmath.lerp")).toEqual(lerpArms.map(callForm));
   });
 
-  it("renders each Box2D backend form of a world query with its own return and prose", () => {
-    const markdown = markdownFor(namespaceByName("b2d.world"));
+  it("renders each Box2D backend form of a world query with its own return and prose", async () => {
+    const tree = await renderedFor(namespaceByName("b2d.world"));
     const multi = (hit: string, info: string) => [
       `LuaMultiReturn<[b2d.${hit}[], b2d.TreeStats]>`,
       `LuaMultiReturn<[b2d.${info}[], b2d.TreeStats]>`,
@@ -209,7 +282,7 @@ describe("canonical pages render every authored overload arm", () => {
       ["b2d.world.overlap_shape", multi("FixtureInfo", "ShapeInfo")],
     ];
     for (const [fqn, [v2Return, v3Return]] of queries) {
-      const forms = overloadForms(markdown, fqn);
+      const forms = overloadForms(tree, fqn);
       expect({ fqn, count: forms.length }).toEqual({ fqn, count: 2 });
       const [v2, v3] = forms;
       expect(v2?.code).toStartWith('<Backend extends "v2" = "v2">(');
@@ -221,17 +294,17 @@ describe("canonical pages render every authored overload arm", () => {
       expect(v3?.body).not.toContain("Same description as form");
       expect(v2?.body).not.toBe(v3?.body);
     }
-    const [castV2, castV3] = overloadForms(markdown, "b2d.world.cast_ray");
+    const [castV2, castV3] = overloadForms(tree, "b2d.world.cast_ray");
     expect(castV2?.body).toStartWith("Cast a ray.");
     expect(castV3?.body).toStartWith("The translation is the ray displacement");
   });
 
-  it("dates each Box2D backend form of a world query by the versions declaring it", () => {
+  it("dates each Box2D backend form of a world query by the versions declaring it", async () => {
     const ns = namespaceByName("b2d.world");
     const page = combinedNamespaceToApiPage(ns);
     const artifact = loadSignaturesArtifact(REAL_TYPES_DIR);
     const rows = apiModuleSymbols(page, page.translations, page.signatures);
-    const markdown = markdownFor(ns).split("\n");
+    const tree = await renderedFor(ns);
     const sections = apiModuleSections(page).sections;
     const fqns = [
       "b2d.world.cast_ray",
@@ -244,10 +317,9 @@ describe("canonical pages render every authored overload arm", () => {
       const entry = ns.entries.find((e) => e.identity.name === fqn && e.armElements !== undefined);
       if (entry === undefined) throw new Error(`no backend-arm entry for ${fqn}`);
       const key = symbolIdentityKey(entry.identity);
-      const start = markdown.findIndex((line) => line.startsWith(`### \`${fqn}(...)`));
-      const next = markdown.findIndex((line, index) => index > start && line.startsWith("### "));
-      const block = markdown.slice(start, next < 0 ? undefined : next).join("\n");
-      expect({ fqn, block: start >= 0 }).toEqual({ fqn, block: true });
+      const nodes = blockOf(tree, `${fqn}(...)`, (e) => e.tagName === "h3");
+      const block = nodes.map(textOf).join("\n");
+      expect({ fqn, block: nodes.length > 0 }).toEqual({ fqn, block: true });
       const lines = entry.authoritativeSignature.split("\n").filter((line) => line.trim() !== "");
       expect({ fqn, arms: lines.length }).toEqual({ fqn, arms: 2 });
       for (const line of lines) {
@@ -276,12 +348,12 @@ describe("canonical pages render every authored overload arm", () => {
     }
   });
 
-  it("leaves a generated symbol on the same page untouched", () => {
-    const headings = renderedCallForms(markdownFor(namespaceByName("render")));
+  it("leaves a generated symbol on the same page untouched", async () => {
+    const headings = renderedCallForms(await renderedFor(namespaceByName("render")));
     expect(headings.some((h) => h.startsWith("render.get_render_target_width("))).toBe(true);
   });
 
-  it("keeps the arms on a windowed page built from the same projection", () => {
+  it("keeps the arms on a windowed page built from the same projection", async () => {
     const axis = combined.versions;
     const window = { from: axis[axis.length - 1] ?? "", to: axis[0] ?? "" };
     const windowed = windowCombinedSurface(
@@ -291,7 +363,7 @@ describe("canonical pages render every authored overload arm", () => {
     );
     const ns = windowed.namespaces.find((n) => n.namespace === "render");
     if (!ns) throw new Error("no windowed render namespace");
-    const headings = renderedCallForms(markdownFor(ns));
+    const headings = renderedCallForms(await renderedFor(ns));
     for (const arm of storeFor("render")?.["render.render_target"]?.signatures ?? []) {
       expect(headings).toContain(callForm(arm));
     }

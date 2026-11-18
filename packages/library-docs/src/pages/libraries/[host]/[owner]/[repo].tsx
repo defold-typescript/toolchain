@@ -2,18 +2,18 @@ import type { PageProps } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
 import {
   libraryStaticPaths,
-  renderLibraryListingHtml,
+  renderLibraryListingPage,
 } from "../../../../../app/lib/library-routes";
-import { HtmlPage } from "../../../../components/html-page";
+import { ApiMarkdownPage } from "../../../../components/api-markdown-page";
 
 // The page for a library that ships no `.script_api`: what it ships and how a
 // project uses it, in place of an API reference.
 export default async function LibraryListingRoute(
   params: PageProps<"/libraries/[host]/[owner]/[repo]">,
 ) {
-  const page = await renderLibraryListingHtml(params);
+  const page = await renderLibraryListingPage(params);
   if (!page) unstable_notFound();
-  return <HtmlPage title={page.title} html={page.html} />;
+  return <ApiMarkdownPage {...page} />;
 }
 
 export async function getConfig() {

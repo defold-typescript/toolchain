@@ -1,12 +1,12 @@
 import { expect, type Locator, test } from "@playwright/test";
 
-// `/api/vmath` renders its translated examples as TypeScript/Lua tab groups.
-// The server markup shows the TypeScript tab first; the page script switches
-// only the clicked group, nothing carries across page loads, and the selected
-// tab's badge is visibly lit.
+// `/api/vmath` renders its translated examples as Fumadocs' TypeScript/Lua code
+// tabs. The server markup shows the TypeScript tab first; a click switches only
+// the clicked group, nothing carries across page loads, and the selected tab is
+// visibly lit.
 
-// The page script wires the tabs once the page hydrates, which on a cold dev
-// server can come after the first click. Selecting a tab twice is harmless, so
+// The tabs switch once the page hydrates, which on a cold dev server can come
+// after the first click. Selecting a tab twice is harmless, so
 // click until it takes.
 async function select(tab: Locator) {
   await expect(async () => {
@@ -17,21 +17,20 @@ async function select(tab: Locator) {
 
 test("a tab group starts on TypeScript and a click switches that group alone", async ({ page }) => {
   await page.goto("/api/vmath");
-  const group = page.locator("[data-code-tabs]").first();
-  const tabs = group.locator(".code-tab");
-  const panels = group.locator(".code-tabs-panel");
+  const lists = page
+    .locator("[data-page-body] [role=tablist]")
+    .filter({ has: page.getByRole("tab", { name: "Lua", exact: true }) });
+  const panelsOf = (list: Locator) => list.locator("xpath=..").locator(":scope > [role=tabpanel]");
+  const tabs = lists.first().getByRole("tab");
+  const panels = panelsOf(lists.first());
 
   await expect(tabs).toHaveText(["TypeScript", "Lua"]);
   await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
   await expect(panels.nth(0)).toBeVisible();
   await expect(panels.nth(1)).toBeHidden();
 
-  const badgeBackground = (index: number) =>
-    tabs
-      .nth(index)
-      .locator(".code-badge")
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(await badgeBackground(0)).not.toBe(await badgeBackground(1));
+  const tabColor = (index: number) => tabs.nth(index).evaluate((el) => getComputedStyle(el).color);
+  expect(await tabColor(0)).not.toBe(await tabColor(1));
 
   await select(tabs.nth(1));
   await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "false");
@@ -39,14 +38,13 @@ test("a tab group starts on TypeScript and a click switches that group alone", a
   await expect(panels.nth(0)).toBeHidden();
   await expect(panels.nth(1).locator("pre")).toContainText("vmath.");
 
-  const other = page.locator('[data-code-tabs="typescript-lua"]').nth(1);
-  await expect(other.locator(".code-tab").nth(0)).toHaveAttribute("aria-selected", "true");
-  await expect(other.locator(".code-tabs-panel").nth(1)).toBeHidden();
+  const other = lists.nth(1);
+  await expect(other.getByRole("tab").nth(0)).toHaveAttribute("aria-selected", "true");
+  await expect(panelsOf(other).nth(1)).toBeHidden();
 
   await page.reload();
-  const reloaded = page.locator('[data-code-tabs="typescript-lua"]').first();
-  await expect(reloaded.locator(".code-tab").nth(0)).toHaveAttribute("aria-selected", "true");
-  await expect(reloaded.locator(".code-tabs-panel").nth(1)).toBeHidden();
+  await expect(lists.first().getByRole("tab").nth(0)).toHaveAttribute("aria-selected", "true");
+  await expect(panelsOf(lists.first()).nth(1)).toBeHidden();
 });
 
 // The panes of a Config/Builder group differ in height. Switching one group leaves

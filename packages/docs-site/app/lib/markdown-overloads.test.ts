@@ -4,7 +4,8 @@ import {
   coloredChars,
   SIGNATURE_CODE_RE,
 } from "@defold-typescript/docs-render/__fixtures__/signature-colors";
-import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { signatureCode } from "@defold-typescript/docs-render/api-nodes";
+import { renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import {
   type ApiSymbol,
   apiModuleSymbols,
@@ -14,9 +15,13 @@ import {
   splitCallForm,
 } from "@defold-typescript/docs-render/api-surface";
 import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
-import { allPageHeadings, pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { processApiTree, type RenderedPage } from "@defold-typescript/docs-render/docs-markdown";
+import { hastHeadings, slugify } from "@defold-typescript/docs-render/headings";
+import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
 import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { toHtml } from "hast-util-to-html";
+
+const noLinks: SymbolLinker = (text) => [{ type: "text", value: text }];
 
 describe("overload block headings and form lines (committed artifacts)", () => {
   const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(
@@ -30,24 +35,25 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     );
     return { page, groups: groupOverloadForms(rows, page.availability?.versions ?? []) };
   });
-  const htmlOf = new Map<string, Promise<string>>();
-  const render = (namespace: string, markdown: () => string): Promise<string> => {
-    let html = htmlOf.get(namespace);
-    if (html === undefined) {
-      html = renderMarkdown(markdown(), { highlightSignatureHeadings: true });
-      htmlOf.set(namespace, html);
+  const renderedOf = new Map<string, Promise<RenderedPage>>();
+  const renderPage = (page: (typeof rendered)[number]["page"]): Promise<RenderedPage> => {
+    let out = renderedOf.get(page.namespace);
+    if (out === undefined) {
+      out = renderApiPage(page, noLinks, { combinedMarkers: true });
+      renderedOf.set(page.namespace, out);
     }
-    return html;
+    return out;
   };
-  const pageHtml = (page: (typeof rendered)[number]["page"]) =>
-    render(page.namespace, () => apiPageMarkdown(page, (t) => t, { combinedMarkers: true }));
+  const pageHtml = async (page: (typeof rendered)[number]["page"]) =>
+    toHtml((await renderPage(page)).hast);
   // The colors a lone signature heading gives each character: the reference a
   // fragment of that signature must match wherever it renders on its own.
   const signatureColors = async (signature: string) => {
-    const html = await renderMarkdown(`### \`${signature}\`\n`, {
-      highlightSignatureHeadings: true,
+    const { hast } = await processApiTree({
+      type: "root",
+      children: [{ type: "heading", depth: 3, children: [signatureCode(signature)] }],
     });
-    const code = [...html.matchAll(SIGNATURE_CODE_RE)][0]?.[1] ?? "";
+    const code = [...toHtml(hast).matchAll(SIGNATURE_CODE_RE)][0]?.[1] ?? "";
     return coloredChars(code);
   };
   const h3Of = (html: string, id: string): string => {
@@ -210,12 +216,8 @@ describe("overload block headings and form lines (committed artifacts)", () => {
   test("the outline reads each overload heading as its heading text", async () => {
     let checked = 0;
     for (const { page, groups } of rendered) {
-      // The version-dot glyphs every Combined heading ends with are not in scope.
-      const html = (await pageHtml(page)).replace(
-        /<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g,
-        "",
-      );
-      const headings = allPageHeadings(html);
+      // The version-dot glyphs every Combined heading ends with read as no text.
+      const headings = hastHeadings((await renderPage(page)).hast);
       for (const group of multi(groups)) {
         const id = slugify(overloadHeading(group));
         expect(headings.find((h) => h.id === id)?.text).toBe(overloadHeading(group));
@@ -229,7 +231,9 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     let checked = 0;
     let plain = 0;
     for (const { page, groups } of rendered) {
-      const headings = pageHeadings(await pageHtml(page));
+      const headings = hastHeadings((await renderPage(page)).hast).filter(
+        (h) => h.level >= 2 && h.level <= 4,
+      );
       const overloadIds = new Set<string>();
       for (const group of multi(groups)) {
         const [head] = group;

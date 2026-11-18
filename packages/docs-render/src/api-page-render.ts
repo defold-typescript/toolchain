@@ -1,10 +1,29 @@
 import type { ApiAvailability, ApiSymbolIdentity } from "@defold-typescript/types";
+import type {
+  ApiBlock,
+  ApiChip,
+  Heading,
+  Link,
+  List,
+  ListItem,
+  Paragraph,
+  PhrasingContent,
+  Root,
+  RootContent,
+  Strong,
+  Text,
+} from "mdast";
 import {
+  API_NAME_CLASS,
+  apiBlock,
+  apiName,
+  apiTypeCode,
   availabilityMark,
   BADGE_KINDS,
   badgeChip,
-  chipHtml,
   globalChip,
+  overloadCount,
+  signatureCode,
   spanMarker,
   upstreamChip,
 } from "./api-nodes";
@@ -12,7 +31,6 @@ import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
-  type AvailabilityItem,
   type AvailabilityItemCategory,
   type AvailabilityLookup,
   apiModuleSymbols,
@@ -45,17 +63,12 @@ import {
   typeShapeHeading,
   windowedBadgeCategory,
 } from "./api-surface";
-import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "./api-type-links";
+import { parseMarkdownFragment, processApiTree, type RenderedPage } from "./docs-markdown";
 import { forgeOf } from "./forge";
-import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
+import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex, memberAnchors, type SymbolIndexOptions } from "./symbol-index";
-import { symbolLinkifier } from "./symbol-linkify";
+import { linkSymbolMentions, type SymbolLinker, symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { escapeUpstreamText } from "./upstream-text";
 
@@ -69,6 +82,47 @@ const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
 
 type SymbolDepth = 3 | 4;
 
+const text = (value: string): Text => ({ type: "text", value });
+
+function paragraph(children: PhrasingContent[], className?: string): Paragraph {
+  return {
+    type: "paragraph",
+    children,
+    ...(className ? { data: { hProperties: { className: [className] } } } : {}),
+  };
+}
+
+// A tight list, so each item's paragraph renders inline in its `li`.
+function tightList(items: ListItem[]): List {
+  return { type: "list", ordered: false, spread: false, children: items };
+}
+
+function listItem(children: RootContent[], className?: string): ListItem {
+  return {
+    type: "listItem",
+    spread: false,
+    children: children as ListItem["children"],
+    ...(className ? { data: { hProperties: { className: [className] } } } : {}),
+  };
+}
+
+// The inline content of a one-line Markdown label: its paragraphs' children, so
+// a backticked name in a deprecation note still renders as code.
+function inlineMarkdown(markdown: string): PhrasingContent[] {
+  const nodes = parseMarkdownFragment(markdown);
+  if (!nodes.every((node) => node.type === "paragraph")) return [text(markdown)];
+  return nodes.flatMap((node, index) =>
+    node.type === "paragraph" ? [...(index > 0 ? [text("\n")] : []), ...node.children] : [],
+  );
+}
+
+// The function name a signature starts with: its text up to the call list, which
+// an overload form's code is colored after.
+function signatureName(signature: string): string {
+  const call = signature.search(/[(<]/);
+  return call < 0 ? signature : signature.slice(0, call);
+}
+
 // A wider-than-normal gap after the `:` between a name and its type. An en space
 // (U+2002) survives HTML whitespace collapsing (repeated ASCII spaces do not), so
 // the type reads as its own column across every parameter/return/field list.
@@ -81,72 +135,87 @@ const NAME_TYPE_GAP = "\u2002";
 // bullets only) the name is bold, and so are the parameter names of a slot whose
 // whole type is a function type, by the rule the signature heading uses.
 //
-// The type half is raw `<code class="api-type">` rather than a markdown code
-// span, because `linkApiTypeTokens` needs a class to find it by — a markdown
-// span renders as an unmarked `<code>` indistinguishable from every other
-// inline code on the page. Emitting HTML means escaping here: the span's inner
-// text is the only thing markdown-it will not escape for us, and a raw `<` in a
-// type (`Opaque<"node">`) would otherwise split the element.
+// The type half is a `code.api-type` rather than a plain code span, because the
+// type-link pass needs a class to find it by — a plain span renders as an
+// unmarked `<code>` indistinguishable from every other inline code on the page.
 function nameTypeLabel(
   name: string,
   isOptional: boolean,
   types: readonly string[],
   emphasize = false,
-): string {
+): PhrasingContent[] {
   const optional = isOptional ? "?" : "";
   const joined = types.join(" | ");
   // Joined union members read as one function type (`(a) => void | undefined`),
   // so only a lone member is asked whether it is one.
   const ranges = emphasize && types.length === 1 ? functionTypeEmphasis(joined) : [];
-  let typeText = "";
+  const typeText: (Text | Strong)[] = [];
   let last = 0;
   for (const { start, end } of ranges) {
-    typeText += `${escapeAttr(joined.slice(last, start))}${API_NAME_OPEN}${escapeAttr(joined.slice(start, end))}${API_NAME_CLOSE}`;
+    if (start > last) typeText.push(text(joined.slice(last, start)));
+    typeText.push(apiName(joined.slice(start, end)));
     last = end;
   }
-  typeText += escapeAttr(joined.slice(last));
-  const typeCode = joined ? `${API_TYPE_CODE_OPEN}${typeText}${API_TYPE_CODE_CLOSE}` : "";
+  if (last < joined.length) typeText.push(text(joined.slice(last)));
+  const typeCode = joined ? [apiTypeCode(typeText)] : [];
   if (!name) return typeCode;
-  const nameCode = emphasize ? `${API_NAME_OPEN}\`${name}\`${API_NAME_CLOSE}` : `\`${name}\``;
-  if (!joined) return `${nameCode}${optional}`;
-  return `${nameCode}${optional}:${NAME_TYPE_GAP}${typeCode}`;
+  const nameCode: PhrasingContent = emphasize
+    ? {
+        type: "strong",
+        data: { hProperties: { className: [API_NAME_CLASS] } },
+        children: [{ type: "inlineCode", value: name }],
+      }
+    : { type: "inlineCode", value: name };
+  if (!joined) return optional ? [nameCode, text(optional)] : [nameCode];
+  return [nameCode, text(`${optional}:${NAME_TYPE_GAP}`), ...typeCode];
 }
 
-// A multi-line slot doc (a list of constants) indents every continuation line to
-// the bullet's content column, so markdown-it keeps it inside that bullet.
-function underBullet(doc: string, indent: string): string {
-  return doc.replace(/\n(?=[^\n])/g, `\n${indent}`);
+// One slot bullet: its label, its doc after a dash, and a nested field list. The
+// doc's first paragraph joins the label's, so a one-line doc reads on the label's
+// line; a list of constants after it stays inside the bullet.
+function slotItem(label: PhrasingContent[], doc: RootContent[], fields?: List): ListItem {
+  const [first, ...rest] = doc;
+  const lead =
+    first?.type === "paragraph"
+      ? [paragraph([...label, text(" — "), ...first.children]), ...rest]
+      : [paragraph(doc.length > 0 ? [...label, text(" — ")] : label), ...doc];
+  return listItem(fields ? [...lead, fields] : lead);
 }
 
-// An object-literal member and its subtree, indented two spaces per depth so
-// markdown-it nests it under the parameter bullet. Each member reads
-// `` `name`?:<gap>`type` — doc ``, keeping the member type inline (backticked)
-// so a nested literal token stays legible.
-function fieldBullets(fields: ApiSymbolParam[], depth: number): string[] {
-  const indent = "  ".repeat(depth + 1);
-  const out: string[] = [];
-  for (const f of fields) {
-    let bullet = `${indent}- ${nameTypeLabel(f.name, f.isOptional, f.types)}`;
-    if (f.doc) bullet += ` — ${underBullet(f.doc, `${indent}  `)}`;
-    out.push(bullet);
-    if (f.fields && f.fields.length > 0) out.push(...fieldBullets(f.fields, depth + 1));
-  }
-  return out;
-}
-
-function paramBullet(p: ApiSymbolParam): string {
-  let bullet = `- ${nameTypeLabel(p.name, p.isOptional, p.types, true)}`;
-  if (p.doc) bullet += ` — ${underBullet(p.doc, "  ")}`;
-  if (p.fields && p.fields.length > 0) {
-    return [bullet, ...fieldBullets(p.fields, 0)].join("\n");
-  }
-  return bullet;
+// An object-literal member and its subtree, nested under the parameter bullet.
+// Each member reads `` `name`?:<gap>`type` — doc ``, keeping the member type
+// inline so a nested literal token stays legible.
+function fieldList(fields: ApiSymbolParam[], prose: (markdown: string) => RootContent[]): List {
+  return tightList(
+    fields.map((f) =>
+      slotItem(
+        nameTypeLabel(f.name, f.isOptional, f.types),
+        f.doc ? prose(f.doc) : [],
+        f.fields && f.fields.length > 0 ? fieldList(f.fields, prose) : undefined,
+      ),
+    ),
+  );
 }
 
 // The `Parameters`/`Returns` label is set apart by color and case, not weight,
 // so bold inside a symbol block marks names only.
-function paramSection(label: string, params: ApiSymbolParam[]): string {
-  return [`<p class="api-slot-label">${label}</p>`, "", ...params.map(paramBullet)].join("\n");
+function paramSection(
+  label: string,
+  params: ApiSymbolParam[],
+  prose: (markdown: string) => RootContent[],
+): RootContent[] {
+  return [
+    paragraph([text(label)], "api-slot-label"),
+    tightList(
+      params.map((p) =>
+        slotItem(
+          nameTypeLabel(p.name, p.isOptional, p.types, true),
+          p.doc ? prose(p.doc) : [],
+          p.fields && p.fields.length > 0 ? fieldList(p.fields, prose) : undefined,
+        ),
+      ),
+    ),
+  ];
 }
 
 // A table moved onto a form it did not land on takes every slot's type and
@@ -186,9 +255,9 @@ export type ReplacementResolver = (id: ApiSymbolIdentity) => string | undefined;
 // within the current surface when possible, else falls back to `indexRoute` (this
 // version's `/api[/version]` index) rather than pointing at another version. The
 // engine fact wins: `av.deprecatedSince` suppresses the source tag so a symbol
-// never shows two deprecation lines. Returns `""` only when neither input yields
-// an item — a symbol with no `av` still renders a single-item list when it carries
-// a tag.
+// never shows two deprecation lines. Returns `undefined` only when neither input
+// yields an item — a symbol with no `av` still renders a single-item list when it
+// carries a tag.
 function availabilityBadges(
   av: ApiAvailability | undefined,
   availability: AvailabilityLookup | undefined,
@@ -196,7 +265,7 @@ function availabilityBadges(
   indexRoute: string,
   deprecated?: string,
   escapeText: (text: string) => string = (text) => text,
-): string {
+): ApiBlock | undefined {
   // The curated, version-keyed engine fact wins: when it is present the source
   // tag would only restate it, so a symbol never renders two deprecation lines.
   // A wrapped JSDoc tag carries newlines, so the text is folded to one line —
@@ -204,23 +273,33 @@ function availabilityBadges(
   // out of the item.
   const tagText =
     deprecated === undefined ? undefined : escapeText(deprecated.replace(/\s+/g, " ").trim());
-  const tagLine =
+  const tagLine: PhrasingContent[] | undefined =
     tagText !== undefined && !av?.deprecatedSince
       ? tagText === ""
-        ? "Deprecated"
-        : `Deprecated — ${tagText}`
+        ? [text("Deprecated")]
+        : [text("Deprecated — "), ...inlineMarkdown(tagText)]
       : undefined;
-  const tagItem: AvailabilityItem | undefined =
+  const tagItem: AvailabilityLine | undefined =
     tagLine === undefined ? undefined : { label: tagLine, category: "deprecated" };
-  if (!av) return tagItem === undefined ? "" : availabilityList([tagItem]);
-  const items = availabilityItems(av, availability);
+  if (!av) return tagItem === undefined ? undefined : availabilityList([tagItem]);
+  const items: AvailabilityLine[] = availabilityItems(av, availability).map((item) => ({
+    label: [text(item.label)],
+    ...(item.category ? { category: item.category } : {}),
+  }));
   if (tagItem !== undefined) items.unshift(tagItem);
   if (av.replacement) {
     const route = resolveReplacement(av.replacement) ?? indexRoute;
-    items.push({ label: `Replaced by [${av.replacement.name}](${route})` });
+    const link: Link = { type: "link", url: route, children: [text(av.replacement.name)] };
+    items.push({ label: [text("Replaced by "), link] });
   }
-  if (items.length === 0) return "";
+  if (items.length === 0) return undefined;
   return availabilityList(items);
+}
+
+// One availability fact as the nodes its line reads.
+interface AvailabilityLine {
+  readonly label: PhrasingContent[];
+  readonly category?: AvailabilityItemCategory;
 }
 
 // Each item leads with the `N`/`C`/`D` chip its heading would show, in place of
@@ -228,18 +307,14 @@ function availabilityBadges(
 // the labels stay aligned. The class deliberately avoids `api-badge-dot`: the
 // window filter toggles every `api-badge-dot--*` inside an overload form, and a
 // list chip must stay beside its text whatever window is selected.
-function availabilityList(items: readonly AvailabilityItem[]): string {
-  return [
-    '<div class="api-availability" aria-label="Availability">',
-    "",
-    ...items.map((item) => `- ${availabilityMarkHtml(item.category)} ${item.label}`),
-    "",
-    "</div>",
-  ].join("\n");
-}
-
-function availabilityMarkHtml(category: AvailabilityItemCategory | undefined): string {
-  return chipHtml(availabilityMark(category));
+function availabilityList(items: readonly AvailabilityLine[]): ApiBlock {
+  return apiBlock("div", { className: ["api-availability"], ariaLabel: "Availability" }, [
+    tightList(
+      items.map((item) =>
+        listItem([paragraph([availabilityMark(item.category), text(" "), ...item.label])]),
+      ),
+    ),
+  ]);
 }
 
 // The `/api` or `/api/<version>` index route for a page: its route with the
@@ -254,13 +329,13 @@ function apiIndexRoute(route: string): string {
 // category, ordered new -> changed -> deprecated, each carrying a visible
 // `N`/`C`/`D` glyph so the category is distinguishable without perceiving color;
 // the `aria-label`/`title` name it in full. The marker sits after the signature
-// and the heading slugger drops every `api-badge-dot` span (glyph and all — see
-// `markdown.ts`), so the id and the function-overview anchors keep keying off the
-// bare signature. Returns `""` for a symbol with no category.
-function badgeDots(active: BadgeCategory, emitted: BadgeCategory = active): string {
-  return BADGE_KINDS.filter((b) => emitted[b.flag])
-    .map((b) => chipHtml(badgeChip(b.kind, { hidden: !active[b.flag] })))
-    .join("");
+// and the heading slugger reads no text from a chip (see `api-nodes.ts`), so the
+// id and the function-overview anchors keep keying off the bare signature.
+// Returns no chips for a symbol with no category.
+function badgeDots(active: BadgeCategory, emitted: BadgeCategory = active): ApiChip[] {
+  return BADGE_KINDS.filter((b) => emitted[b.flag]).map((b) =>
+    badgeChip(b.kind, { hidden: !active[b.flag] }),
+  );
 }
 
 // The category a form or function would carry at each candidate `from` on the
@@ -314,46 +389,51 @@ function unionCategory(categories: readonly BadgeCategory[]): BadgeCategory {
 function symbolSpanMarker(
   present: readonly string[],
   categories: readonly BadgeCategory[],
-): string {
+): ApiChip[] {
   const marker = spanMarker(present, categories);
-  return marker ? chipHtml(marker) : "";
+  return marker ? [marker] : [];
 }
 
 // One symbol, single column: the signature heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
-// reads as subordinate to the title. The heading is `###` under a kind section
-// and `####` under a group heading nested in one (a shape's members, a
+// reads as subordinate to the title. The heading is `h3` under a kind section
+// and `h4` under a group heading nested in one (a shape's members, a
 // receiver's methods). The signature is not repeated as a code
-// block — the heading already shows it. The blank lines around the inner markdown
-// let markdown-it parse it inside the raw HTML wrapper. Body order is `badges`
-// (the availability block), description, example, Parameters, Returns: a symbol
-// that was removed or re-signatured says so before the prose describing it, so a
-// reader never acts on a description that no longer holds for their version.
+// block — the heading already shows it. The chips follow the signature with no
+// space between, since a space would end the heading's slug in a hyphen. Body
+// order is `lead` (the availability block), description, example, Parameters,
+// Returns: a symbol that was removed or re-signatured says so before the prose
+// describing it, so a reader never acts on a description that no longer holds for
+// their version.
 function symbolBlock(
   symbol: ApiSymbol,
-  badges = "",
-  dots = "",
+  prose: (markdown: string) => RootContent[],
+  lead: readonly RootContent[] = [],
+  dots: readonly ApiChip[] = [],
   note = "",
   depth: SymbolDepth = 3,
-): string {
-  const marks = "#".repeat(depth);
-  const heading = dots
-    ? `${marks} \`${symbol.signature}\` ${dots}`
-    : `${marks} \`${symbol.signature}\``;
-  const body: string[] = [];
-  if (symbol.defoldRef) body.push(defoldRefLine(symbol.defoldRef));
-  if (badges) body.push(badges);
+): RootContent[] {
+  const heading: Heading = {
+    type: "heading",
+    depth,
+    children: [signatureCode(symbol.signature), ...dots],
+  };
+  const body: RootContent[] = [];
+  if (symbol.defoldRef) body.push(...parseMarkdownFragment(defoldRefLine(symbol.defoldRef)));
+  body.push(...lead);
   // Ahead of the prose: the note exists to qualify the upstream description and
   // example that follow it, which a reader would otherwise take at face value.
-  if (note) body.push(note);
-  if (symbol.docMarkdown) body.push(symbol.docMarkdown);
-  if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
-  if (symbol.parameters.length > 0) body.push(paramSection("Parameters", symbol.parameters));
-  if (symbol.returnValues.length > 0) body.push(paramSection("Returns", symbol.returnValues));
-  if (body.length === 0) return heading;
-  return [heading, "", '<div class="api-symbol-body">', "", body.join("\n\n"), "", "</div>"].join(
-    "\n",
-  );
+  if (note) body.push(...parseMarkdownFragment(note));
+  if (symbol.docMarkdown) body.push(...prose(symbol.docMarkdown));
+  if (symbol.exampleMarkdown) body.push(...parseMarkdownFragment(symbol.exampleMarkdown));
+  if (symbol.parameters.length > 0) {
+    body.push(...paramSection("Parameters", symbol.parameters, prose));
+  }
+  if (symbol.returnValues.length > 0) {
+    body.push(...paramSection("Returns", symbol.returnValues, prose));
+  }
+  if (body.length === 0) return [heading];
+  return [heading, apiBlock("div", { className: ["api-symbol-body"] }, body)];
 }
 
 // The reference name as a code span inside its defold.com link: the link keeps
@@ -362,20 +442,20 @@ export function defoldRefLine(ref: DefoldRef): string {
   return `[icon:lua] [\`${ref.name}\`](${ref.url})`;
 }
 
-// The heading marker for an ambient global, reusing the `api-badge-dot` markup
-// (and so the heading slugger's rule that strips it) rather than a second visual
+// The heading marker for an ambient global, reusing the `api-badge-dot` chip
+// (which the heading slugger reads no text from) rather than a second visual
 // language. Independent of the availability categories above: a `library` page
 // carries no availability record at all, and this marker rides every page.
-function globalDot(symbol: ApiSymbol): string {
-  return symbol.global ? chipHtml(globalChip()) : "";
+function globalDot(symbol: ApiSymbol): ApiChip[] {
+  return symbol.global ? [globalChip()] : [];
 }
 
 // The heading marker for a symbol whose prose came from the library's upstream
 // source rather than from the fork, on the same `api-badge-dot` terms as
 // `globalDot`. The page's provenance block already names the repo and ref the text
 // came from, so the marker points at a source the reader can already see.
-function upstreamDot(symbol: ApiSymbol): string {
-  return symbol.docSource ? chipHtml(upstreamChip()) : "";
+function upstreamDot(symbol: ApiSymbol): ApiChip[] {
+  return symbol.docSource ? [upstreamChip()] : [];
 }
 
 // The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
@@ -480,19 +560,44 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   ];
 }
 
-// Render the module intro, then each kind's symbols stacked in one column. A
-// single combined string keeps Shiki and the heading-id slugger to one pass, so
-// per-symbol headings stay uniquely id'd for the "On this page" TOC. The
-// `linkify` callback rewrites bare symbol mentions in the prose to local
-// `/api/<namespace>` links; it skips backtick-fenced code spans, so a Markdown
-// intro carrying an `@example` fence is safe to pass through it.
+/** How `apiPageTree` lays a page out. */
+export interface ApiPageOptions {
+  resolveReplacement?: ReplacementResolver;
+  // Namespace-title count pills appended inline on the H1 (Combined pages pass
+  // the `namespaceCountBadges` node) so they sit on the heading baseline; absent
+  // leaves the heading as-is.
+  titleBadges?: ApiChip | undefined;
+  // The per-symbol color/category marker layer is Combined-only: the union
+  // surface is the one place comparison across versions is meaningful. The
+  // canonical `/api/<ns>` route passes `true` when it renders a Combined engine
+  // page (`/api/combined` is a redirect stub that renders nothing); exact-version
+  // pages keep the textual availability prose with no dots.
+  combinedMarkers?: boolean;
+  // The range the category layer answers for. The version route resolves one
+  // from its path and `?since=`; the canonical route passes the full range,
+  // which is the identity case. Omitted is the full range too, so a caller that
+  // does not care about windows renders exactly what it always did.
+  window?: CategoryWindow;
+  // Library pages render their heading as the styled `creator/dir/namespace`
+  // path component in the route, so the tree starts at the intro.
+  omitHeading?: boolean;
+}
+
+// The module intro, then each kind's symbols stacked in one column, as one mdast
+// tree. One tree keeps the heading-id slugger to one pass, so per-symbol headings
+// stay uniquely id'd for the "On this page" TOC. Prose fragments are parsed
+// Markdown; headings, chips, badges, wrappers and lists are nodes built here,
+// so the page carries no raw HTML. The `linkify` callback turns bare symbol
+// mentions in the prose's text into local `/api/<namespace>` links; code spans and
+// fences hold no text node, so a Markdown intro carrying an `@example` fence is
+// safe to pass through it.
 //
 // global-type pages carry a Markdown description (derived from the canonical
-// JSDoc); it goes straight to the shared `markdown-it` pipeline so fenced
-// examples and bullet lists render verbatim. ref-doc descriptions are HTML and
-// still flow through `platformDocText` (`htmlToDocText` keeping platform icon
-// markers) first, with each prose Lua fence swapped for its pinned translation.
-export function apiPageMarkdown(
+// JSDoc); it is parsed as it stands so fenced examples and bullet lists render
+// verbatim. ref-doc descriptions are HTML and still flow through
+// `platformDocText` (`htmlToDocText` keeping platform icon markers) first, with
+// each prose Lua fence swapped for its pinned translation.
+export function apiPageTree(
   page: Pick<
     ApiPage,
     | "namespace"
@@ -505,37 +610,17 @@ export function apiPageMarkdown(
     | "displayName"
     | "route"
   >,
-  linkify: (text: string) => string,
+  linkify: SymbolLinker,
   // `resolveReplacement` links a symbol's replacement within this surface;
   // it defaults to always-unresolved, which lands the fallback on the API index.
   {
     resolveReplacement = () => undefined,
-    titleBadges = "",
+    titleBadges,
     combinedMarkers = false,
     window,
     omitHeading = false,
-  }: {
-    resolveReplacement?: ReplacementResolver;
-    // Namespace-title count pills appended inline on the H1 line (Combined pages
-    // pass the `namespaceCountBadges` HTML) so they sit on the heading baseline;
-    // empty leaves the heading as-is.
-    titleBadges?: string;
-    // The per-symbol color/category marker layer is Combined-only: the union
-    // surface is the one place comparison across versions is meaningful. The
-    // canonical `/api/<ns>` route passes `true` when it renders a Combined engine
-    // page (`/api/combined` is a redirect stub that renders nothing); exact-version
-    // pages keep the textual availability prose with no dots.
-    combinedMarkers?: boolean;
-    // The range the category layer answers for. The version route resolves one
-    // from its path and `?since=`; the canonical route passes the full range,
-    // which is the identity case. Omitted is the full range too, so a caller that
-    // does not care about windows renders exactly what it always did.
-    window?: CategoryWindow;
-    // Library pages render their heading as the styled `creator/dir/namespace`
-    // path component in the route, so the markdown starts at the intro.
-    omitHeading?: boolean;
-  } = {},
-): string {
+  }: ApiPageOptions = {},
+): Root {
   // The page's own axis and the range it renders. Omitting `window` is the full
   // range, so a caller that does not care about windows gets exactly what it did
   // before the category layer became window-relative.
@@ -561,7 +646,7 @@ export function apiPageMarkdown(
     const reachable = spanCategories([member], pageAxis, activeWindow);
     return { active, reachable };
   };
-  const symbolDots = (symbol: ApiSymbol): string => {
+  const symbolDots = (symbol: ApiSymbol): ApiChip[] => {
     const { active, reachable } = symbolCategories(symbol);
     return badgeDots(active, unionCategory(reachable));
   };
@@ -577,7 +662,7 @@ export function apiPageMarkdown(
       symbol.availability ? formMember(symbol) : { availableIn: pageAxis },
     );
   };
-  const groupDots = (forms: readonly ApiSymbol[]): string => {
+  const groupDots = (forms: readonly ApiSymbol[]): ApiChip[] => {
     const members = functionMembers(forms);
     return badgeDots(
       functionBadgeCategory(members, pageAxis, activeWindow),
@@ -595,8 +680,8 @@ export function apiPageMarkdown(
   // A group's span covers every version any form is present in, so the `?since=`
   // filter hides the block only once every form is out of the window; its
   // per-`from` categories are the function's, like its heading dots.
-  const groupSpan = (forms: readonly ApiSymbol[]): string => {
-    if (!spanTracked) return "";
+  const groupSpan = (forms: readonly ApiSymbol[]): ApiChip[] => {
+    if (!spanTracked) return [];
     const axis = pageAxis.map(bareId);
     const present = [...new Set(forms.flatMap(presentIn))].sort(
       (a, b) => axis.indexOf(bareId(a)) - axis.indexOf(bareId(b)),
@@ -609,15 +694,21 @@ export function apiPageMarkdown(
   const m = page.module;
   const indexRoute = apiIndexRoute(page.route);
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
-  const lines: string[] = [];
-  // The title pills ride the H1 line (mirroring the inline `api-badge-dot`
+  const nodes: RootContent[] = [];
+  // Upstream prose, its symbol mentions linked.
+  const prose = (markdown: string): RootContent[] =>
+    linkSymbolMentions(parseMarkdownFragment(markdown), linkify);
+  // The title pills ride the H1 (mirroring the inline `api-badge-dot`
   // signature-heading markers) so they render on the heading baseline rather
   // than as a block that wraps below the title.
   if (!omitHeading) {
-    const heading = `# ${page.displayName ?? m.namespace}`;
-    lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
+    nodes.push({
+      type: "heading",
+      depth: 1,
+      children: [text(page.displayName ?? m.namespace), ...(titleBadges ? [titleBadges] : [])],
+    });
     if (page.displayName && page.displayName !== m.namespace) {
-      lines.push(`\`${m.namespace}\``, "");
+      nodes.push(paragraph([{ type: "inlineCode", value: m.namespace }]));
     }
   }
   // A library page's text comes from a third-party upstream, so every doc string
@@ -629,20 +720,23 @@ export function apiPageMarkdown(
   const intro = escapeText(
     page.category === "global-type" ? raw : proseDocText(raw, m.namespace, page.translations),
   );
-  if (intro) lines.push(linkify(intro), "");
+  if (intro) nodes.push(...prose(intro));
   if (page.libraryMeta) {
-    lines.push(
-      ...libraryMetaBlock(
-        page.libraryMeta,
-        symbols.some((s) => s.global),
+    nodes.push(
+      ...parseMarkdownFragment(
+        libraryMetaBlock(
+          page.libraryMeta,
+          symbols.some((s) => s.global),
+        ).join("\n"),
       ),
-      "",
     );
   }
-  const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
+  // Every doc string a symbol carries, escaped; its mentions are linked once it
+  // becomes nodes, so forms compare their docs as text.
+  const escapeParam = (p: ApiSymbolParam): ApiSymbolParam => ({
     ...p,
-    doc: linkify(escapeText(p.doc)),
-    ...(p.fields ? { fields: p.fields.map(linkifyParam) } : {}),
+    doc: escapeText(p.doc),
+    ...(p.fields ? { fields: p.fields.map(escapeParam) } : {}),
   });
   const noted = new Set<string>();
   // Once per FQN: a note repeated down every form of an overload set reads as
@@ -652,14 +746,14 @@ export function apiPageMarkdown(
     if (note) noted.add(name);
     return note;
   };
-  const linkifySymbol = (symbol: ApiSymbol): ApiSymbol => ({
+  const escapeSymbol = (symbol: ApiSymbol): ApiSymbol => ({
     ...symbol,
-    docMarkdown: linkify(escapeText(symbol.docMarkdown)),
+    docMarkdown: escapeText(symbol.docMarkdown),
     ...(symbol.exampleMarkdown ? { exampleMarkdown: escapeText(symbol.exampleMarkdown) } : {}),
-    parameters: symbol.parameters.map(linkifyParam),
-    returnValues: symbol.returnValues.map(linkifyParam),
+    parameters: symbol.parameters.map(escapeParam),
+    returnValues: symbol.returnValues.map(escapeParam),
   });
-  const badgesFor = (symbol: ApiSymbol): string =>
+  const badgesFor = (symbol: ApiSymbol): ApiBlock | undefined =>
     availabilityBadges(
       symbol.availability,
       page.availability,
@@ -669,14 +763,22 @@ export function apiPageMarkdown(
       escapeText,
     );
   const emitSymbol = (symbol: ApiSymbol, depth: SymbolDepth = 3) => {
-    const dots =
-      (combinedMarkers ? symbolDots(symbol) : "") +
-      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "") +
-      globalDot(symbol) +
-      upstreamDot(symbol);
-    lines.push(
-      symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name), depth),
-      "",
+    const dots = [
+      ...(combinedMarkers ? symbolDots(symbol) : []),
+      ...(spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : []),
+      ...globalDot(symbol),
+      ...upstreamDot(symbol),
+    ];
+    const badges = badgesFor(symbol);
+    nodes.push(
+      ...symbolBlock(
+        escapeSymbol(symbol),
+        prose,
+        badges ? [badges] : [],
+        dots,
+        noteFor(symbol.name),
+        depth,
+      ),
     );
   };
   // A revision chain renders as its newest form, so that form stands for the
@@ -703,19 +805,20 @@ export function apiPageMarkdown(
     label: string,
     code: string,
     symbol: ApiSymbol,
-  ): string => {
+  ): ApiBlock => {
     const marker = spanTracked
-      ? ` ${symbolSpanMarker(presentIn(symbol), formCategories(symbol))}`
-      : "";
-    return [
-      '<li class="api-overload api-overload--revision">',
-      "",
-      `${availabilityMarkHtml(category)} ${label} \`${code}\`${marker}`,
-      "",
-      "</li>",
-    ].join("\n");
+      ? [text(" "), ...symbolSpanMarker(presentIn(symbol), formCategories(symbol))]
+      : [];
+    return apiBlock("li", { className: ["api-overload", "api-overload--revision"] }, [
+      paragraph([
+        availabilityMark(category),
+        text(` ${label} `),
+        { type: "inlineCode", value: code },
+        ...marker,
+      ]),
+    ]);
   };
-  const predecessorLines = (revision: FunctionRevision): string[] =>
+  const predecessorLines = (revision: FunctionRevision): ApiBlock[] =>
     revision.predecessors.map(({ symbol, boundary }) =>
       revisionLine(
         "changed",
@@ -724,7 +827,7 @@ export function apiPageMarkdown(
         symbol,
       ),
     );
-  const removedLines = (group: FunctionRevisionGroup): string[] => {
+  const removedLines = (group: FunctionRevisionGroup): ApiBlock[] => {
     const live = group.forms.map((form) => form.symbol);
     return group.removed.flatMap((revision) => [
       revisionLine(
@@ -736,15 +839,15 @@ export function apiPageMarkdown(
       ...predecessorLines(revision),
     ]);
   };
-  const revisionList = (items: readonly string[]): string =>
-    items.length === 0 ? "" : ['<ul class="api-revisions">', ...items, "</ul>"].join("\n");
+  const revisionList = (items: readonly ApiBlock[]): ApiBlock | undefined =>
+    items.length === 0 ? undefined : apiBlock("ul", { className: ["api-revisions"] }, [...items]);
   // The block-level account of a function whose chains do not all span the same
   // versions, newest first: a live chain starting after the function's oldest
   // version was added in its own oldest, and a removed chain was removed at its
   // boundary. A paired signature change is neither. Absolute like the history
   // lines it summarizes, so it ignores the window.
-  const overloadSummary = (group: FunctionRevisionGroup): string => {
-    if (!spanTracked) return "";
+  const overloadSummary = (group: FunctionRevisionGroup): ApiBlock | undefined => {
+    if (!spanTracked) return undefined;
     const axis = pageAxis.map(bareId);
     const chainOldest = (revision: FunctionRevision): number =>
       Math.max(
@@ -756,7 +859,7 @@ export function apiPageMarkdown(
         ),
       );
     const oldest = Math.max(...[...group.forms, ...group.removed].map(chainOldest));
-    if (oldest < 0) return "";
+    if (oldest < 0) return undefined;
     const events = new Map<string, { index: number; added: boolean; count: number }>();
     const record = (index: number, added: boolean) => {
       const key = `${index}|${added}`;
@@ -772,12 +875,16 @@ export function apiPageMarkdown(
       const index = axis.indexOf(bareId(revision.boundary));
       if (index >= 0) record(index, false);
     }
-    if (events.size === 0) return "";
+    if (events.size === 0) return undefined;
     return availabilityList(
       [...events.values()]
         .sort((a, b) => a.index - b.index || Number(b.added) - Number(a.added))
         .map(({ index, added, count }) => ({
-          label: `${count} overload${count === 1 ? "" : "s"} ${added ? "added" : "removed"} in Defold ${axis[index]}`,
+          label: [
+            text(
+              `${count} overload${count === 1 ? "" : "s"} ${added ? "added" : "removed"} in Defold ${axis[index]}`,
+            ),
+          ],
           category: "changed",
         })),
     );
@@ -792,19 +899,19 @@ export function apiPageMarkdown(
     depth: SymbolDepth,
   ) => {
     const symbol = chainSymbol(revision);
-    const dots =
-      (combinedMarkers ? groupDots([symbol]) : "") +
-      groupSpan(chainSymbols(group)) +
-      globalDot(symbol) +
-      upstreamDot(symbol);
+    const dots = [
+      ...(combinedMarkers ? groupDots([symbol]) : []),
+      ...groupSpan(chainSymbols(group)),
+      ...globalDot(symbol),
+      ...upstreamDot(symbol),
+    ];
     const lead = [
       overloadSummary(group),
       badgesFor(symbol),
       revisionList([...predecessorLines(revision), ...removedLines(group)]),
-    ].filter((part) => part !== "");
-    lines.push(
-      symbolBlock(linkifySymbol(symbol), lead.join("\n\n"), dots, noteFor(symbol.name), depth),
-      "",
+    ].filter((part) => part !== undefined);
+    nodes.push(
+      ...symbolBlock(escapeSymbol(symbol), prose, lead, dots, noteFor(symbol.name), depth),
     );
   };
   // An overloaded function renders as one block: every live form listed under
@@ -815,7 +922,7 @@ export function apiPageMarkdown(
     const forms = group.forms.map(chainSymbol);
     const [head] = forms;
     if (head === undefined) return;
-    const linked = forms.map(linkifySymbol);
+    const linked = forms.map(escapeSymbol);
     const badges = forms.map(badgesFor);
     const shared = <T>(values: readonly T[]): boolean =>
       values.every((v) => JSON.stringify(v) === JSON.stringify(values[0]));
@@ -874,77 +981,96 @@ export function apiPageMarkdown(
     const codes = overloadFormCodes(forms);
     const sharedReturnTable = sameReturnTables && (tableForm?.returnValues.length ?? 0) > 0;
 
-    const dots =
-      (combinedMarkers ? groupDots(forms) : "") +
-      groupSpan(chainSymbols(group)) +
-      globalDot(forms.find((s) => s.global) ?? head) +
-      upstreamDot(forms.find((s) => s.docSource) ?? head);
-    // The count badge stands where the heading reads `...`; the markdown renderer
-    // splices it into the colored signature and keeps it out of the anchor.
-    const heading = `${"#".repeat(depth)} \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
+    const dots = [
+      ...(combinedMarkers ? groupDots(forms) : []),
+      ...groupSpan(chainSymbols(group)),
+      ...globalDot(forms.find((s) => s.global) ?? head),
+      ...upstreamDot(forms.find((s) => s.docSource) ?? head),
+    ];
+    // The count badge stands where the heading reads `...`; the pipeline splices
+    // it into the colored signature and keeps it out of the anchor.
+    const headingText = overloadHeading(forms);
+    const heading: Heading = {
+      type: "heading",
+      depth,
+      children: [signatureCode(headingText), overloadCount(forms.length), ...dots],
+    };
+    // Each form's code colors as part of its function's full signature.
+    const name = signatureName(headingText);
     const items = linked.map((symbol, index) => {
       const code = codes[index] ?? symbol.signature;
       const markers = sameAvailability
-        ? ""
-        : (combinedMarkers ? symbolDots(symbol) : "") +
-          (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
-      const parts = [markers ? `\`${code}\` ${markers}` : `\`${code}\``];
-      if (!sameBadges && badges[index]) parts.push(badges[index]);
+        ? []
+        : [
+            ...(combinedMarkers ? symbolDots(symbol) : []),
+            ...(spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : []),
+          ];
+      const parts: RootContent[] = [
+        paragraph([
+          signatureCode(code, { prefix: name }),
+          ...(markers.length > 0 ? [text(" "), ...markers] : []),
+        ]),
+      ];
+      const formBadges = badges[index];
+      if (!sameBadges && formBadges) parts.push(formBadges);
       if (!sameDoc && symbol.docMarkdown) {
         // Forms can share prose without every form sharing it (`msg.url`'s typed
         // receiver forms restate the untyped ones), so a repeat points back to
         // the first form that carries it instead of printing it again.
         const first = linked.findIndex((s) => s.docMarkdown === symbol.docMarkdown);
-        parts.push(first < index ? `_Same description as form ${first + 1}._` : symbol.docMarkdown);
+        parts.push(
+          ...(first < index
+            ? [
+                paragraph([
+                  { type: "emphasis", children: [text(`Same description as form ${first + 1}.`)] },
+                ]),
+              ]
+            : prose(symbol.docMarkdown)),
+        );
       }
-      if (formExamples && symbol.exampleMarkdown) parts.push(symbol.exampleMarkdown);
+      if (formExamples && symbol.exampleMarkdown) {
+        parts.push(...parseMarkdownFragment(symbol.exampleMarkdown));
+      }
       const table = tables[index] ?? symbol;
       if (!sameParams && table.parameters.length > 0) {
-        parts.push(paramSection("Parameters", table.parameters));
+        parts.push(...paramSection("Parameters", table.parameters, prose));
       }
       if (!sameReturnTables && table.returnValues.length > 0) {
-        parts.push(paramSection("Returns", table.returnValues));
+        parts.push(...paramSection("Returns", table.returnValues, prose));
       }
       const revision = group.forms[index];
-      const history = revision ? revisionList(predecessorLines(revision)) : "";
+      const history = revision ? revisionList(predecessorLines(revision)) : undefined;
       if (history) parts.push(history);
-      return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
+      return apiBlock("li", { className: ["api-overload"] }, parts);
     });
     // An availability note every form shares heads the block, since it qualifies
     // all of them; otherwise each form carries its own note under its signature.
     // The shared description and the authored note that qualifies it come next,
     // ahead of the forms they describe. The shared example closes the block, after
     // every signature and table it illustrates.
-    const body: string[] = [];
+    const body: RootContent[] = [];
     const summary = overloadSummary(group);
     if (summary) body.push(summary);
     if (sameBadges && badges[0]) body.push(badges[0]);
-    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
+    if (sameDoc && linked[0]?.docMarkdown) body.push(...prose(linked[0].docMarkdown));
     const note = noteFor(head.name);
-    if (note) body.push(note);
-    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
+    if (note) body.push(...parseMarkdownFragment(note));
+    body.push(apiBlock("ol", { className: ["api-overloads"] }, items));
     const removed = revisionList(removedLines(group));
     if (removed) body.push(removed);
     if (sameParams && (tableForm?.parameters.length ?? 0) > 0) {
-      body.push(paramSection("Parameters", tableForm?.parameters ?? []));
+      body.push(...paramSection("Parameters", tableForm?.parameters ?? [], prose));
     }
-    if (sharedReturnTable) body.push(paramSection("Returns", tableForm?.returnValues ?? []));
-    if (blockExample) body.push(blockExample);
-    lines.push(
-      `${heading} ${dots}`.trimEnd(),
-      "",
-      '<div class="api-symbol-body">',
-      "",
-      body.join("\n\n"),
-      "",
-      "</div>",
-      "",
-    );
+    if (sharedReturnTable) {
+      body.push(...paramSection("Returns", tableForm?.returnValues ?? [], prose));
+    }
+    if (blockExample) body.push(...parseMarkdownFragment(blockExample));
+    nodes.push(heading, apiBlock("div", { className: ["api-symbol-body"] }, body));
   };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
     if (group.length === 0) continue;
-    lines.push(`## ${label}`, "");
+    nodes.push({ type: "heading", depth: 2, children: [text(label)] });
     // Colon-named handle methods (`file:read`, `client:send`) get their own
     // `<receiver> methods` heading nested in `Functions`, so they read apart
     // from the module table.
@@ -953,8 +1079,11 @@ export function apiPageMarkdown(
       for (const fnGroup of groupFunctionSymbols(group)) {
         const methods = fnGroup.symbols.some((s) => s.name.includes(":"));
         const depth: SymbolDepth = methods ? 4 : 3;
-        if (methods) lines.push(`### ${fnGroup.label}`, "");
-        lines.push(functionOverviewCards(fnGroup.symbols, pageAxis, overviewMarker), "");
+        if (methods) {
+          nodes.push({ type: "heading", depth: 3, children: groupHeading(fnGroup.label) });
+        }
+        const overview = functionOverviewCards(fnGroup.symbols, pageAxis, overviewMarker);
+        if (overview) nodes.push(overview);
         for (const group of groupFunctionRevisions(fnGroup.symbols, pageAxis)) {
           const [only] = group.forms;
           if (group.forms.length === 1 && only) emitFunction(group, only, depth);
@@ -971,7 +1100,11 @@ export function apiPageMarkdown(
       const { types, shapes } = groupTypeSymbols(group);
       for (const symbol of types) emitSymbol(symbol);
       for (const shape of shapes) {
-        lines.push(`### ${typeShapeHeading(page, shape.label)}`, "");
+        nodes.push({
+          type: "heading",
+          depth: 3,
+          children: [text(typeShapeHeading(page, shape.label))],
+        });
         // A shape's Defold name belongs to its heading, not to its definition row;
         // a row nested under a path heading (`go.on_input.Action`) keeps its own.
         for (const symbol of shape.symbols) {
@@ -980,7 +1113,7 @@ export function apiPageMarkdown(
             continue;
           }
           const { defoldRef, ...row } = symbol;
-          lines.push(defoldRefLine(defoldRef), "");
+          nodes.push(...parseMarkdownFragment(defoldRefLine(defoldRef)));
           emitSymbol(row, 4);
         }
       }
@@ -988,7 +1121,30 @@ export function apiPageMarkdown(
     }
     for (const symbol of group) emitSymbol(symbol);
   }
-  return lines.join("\n");
+  return { type: "root", children: nodes };
+}
+
+// A receiver group's heading (`` `file` methods ``), its receiver colored as a
+// signature like every symbol heading's code.
+function groupHeading(label: string): PhrasingContent[] {
+  return inlineMarkdown(label).map((node) =>
+    node.type === "inlineCode" ? signatureCode(node.value) : node,
+  );
+}
+
+/** How `renderApiPage` links the tokens of a page's signatures and types. */
+export interface ApiRenderOptions {
+  signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget> | undefined;
+}
+
+/** One API page, built by `apiPageTree` and run through the docs pipeline. */
+export function renderApiPage(
+  page: Parameters<typeof apiPageTree>[0],
+  linkify: SymbolLinker,
+  options: ApiPageOptions = {},
+  { signatureSymbolLinks }: ApiRenderOptions = {},
+): Promise<RenderedPage> {
+  return processApiTree(apiPageTree(page, linkify, options), { signatureSymbolLinks });
 }
 
 export interface SymbolLinkOptions extends SymbolIndexOptions {
@@ -1004,10 +1160,7 @@ export interface SymbolLinkOptions extends SymbolIndexOptions {
 // (`/api/<version>/<namespace>`) for a non-default surface — so cross-links are
 // version-correct without any per-call prefixing. `symbolLinkifier` itself
 // drops bare-namespace keys, leaving only qualified member mentions linked.
-export function apiLinkify(
-  pages: ApiPage[],
-  options: SymbolLinkOptions = {},
-): (text: string) => string {
+export function apiLinkify(pages: ApiPage[], options: SymbolLinkOptions = {}): SymbolLinker {
   const { current, ...indexOptions } = options;
   const index = buildSymbolIndex(pages, indexOptions);
   if (current) Object.assign(index, buildSymbolIndex([current]));
@@ -1030,7 +1183,7 @@ function qualifiedTypeLinks(page: ApiPage): Map<string, string> {
   return links;
 }
 
-// The `name → route` map that `renderMarkdown`'s `signatureSymbolLinks` uses to
+// The `name → route` map that `renderApiPage`'s `signatureSymbolLinks` uses to
 // deep-link type tokens inside rendered signatures. Two sources with different
 // scopes. `Opaque` — the generic engine-handle brand — resolves through
 // `buildSymbolIndex` over `pages`, and is empty when that surface carries no such
@@ -1043,7 +1196,7 @@ function qualifiedTypeLinks(page: ApiPage): Map<string, string> {
 // row's signature heading through `memberAnchors`, the same anchor its qualified
 // spelling takes below. A shape with members links from its bare name to its own
 // heading, which names the qualified path on an engine page, and that anchor is
-// deferred to `renderMarkdown` as
+// deferred to the render as
 // `{ route, heading }` rather than fixed here: the heading id is only known once
 // the render has de-duplicated it against every earlier heading on the page.
 //

@@ -8,10 +8,11 @@ import {
   memberAnchors,
   type SymbolEntry,
 } from "@defold-typescript/docs-render/symbol-index";
+import { toHtml } from "hast-util-to-html";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import { apiPages, siteDirs } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
-import { renderLibraryApiHtml } from "./library-routes";
+import { renderLibraryApiPage } from "./library-routes";
 
 // Root `bun test` runs from the repo root, so the package directory is passed in.
 const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
@@ -83,9 +84,9 @@ describe("a member key two libraries share", () => {
   };
   const greetLinks = async (page: ApiPage): Promise<string[]> => {
     const [host = "", owner = "", repo = "", namespace = ""] = page.route.split("/").slice(2);
-    const rendered = await renderLibraryApiHtml({ host, owner, repo, namespace }, dirs);
+    const rendered = await renderLibraryApiPage({ host, owner, repo, namespace }, dirs);
     if (!rendered) throw new Error(`${page.route} renders no page`);
-    const { html } = rendered;
+    const html = toHtml(rendered.page.hast);
     return [...html.matchAll(/<a href="([^"]*)" class="symbol-xref">demo\.one\.greet<\/a>/g)].map(
       (match) => match[1] ?? "",
     );

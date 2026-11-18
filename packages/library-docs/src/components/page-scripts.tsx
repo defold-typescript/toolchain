@@ -6,8 +6,9 @@ import {
 } from "@defold-typescript/docs-render/tooltip-mounts";
 import { useEffect } from "react";
 
-// Set on the page body by `HtmlPage`. A server component cannot import a plain
-// value from a client module, so the two spell it out separately.
+// Set on the page body by `HtmlPage`, `MarkdownPage` and `ApiMarkdownPage`. A
+// server component cannot import a plain value from a client module, so the two
+// spell it out separately.
 const PAGE_BODY_ATTR = "data-page-body";
 
 /**

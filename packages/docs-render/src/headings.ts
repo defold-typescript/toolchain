@@ -202,8 +202,13 @@ export function allPageHeadings(html: string): AnyHeading[] {
   return out;
 }
 
+/** The headings in the table of contents' depth window, H2 through H4. */
+export function outlineHeadings(headings: readonly AnyHeading[]): Heading[] {
+  return headings.filter((h): h is Heading => h.level >= 2 && h.level <= 4);
+}
+
 export function pageHeadings(html: string): Heading[] {
-  return allPageHeadings(html).filter((h): h is Heading => h.level >= 2 && h.level <= 4);
+  return outlineHeadings(allPageHeadings(html));
 }
 
 function classList(element: Element): string[] {
