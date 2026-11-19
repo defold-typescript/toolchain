@@ -1684,21 +1684,25 @@ describe("apiModuleSymbols", () => {
     expect(rows[5]?.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
   });
 
-  test("the curried go.get/go.set rows drop tables the row that accepts them takes over", () => {
+  test("the curried go.animate/go.get/go.set rows drop tables the row that accepts them takes over", () => {
     const store = committedStore("go");
     const symbols = apiModuleSymbols(fixturePage("go"), {}, store);
-    for (const [fqn, params] of [
-      ["go.get", ["url", "property", "options"]],
-      ["go.set", ["url", "property", "value", "options"]],
+    for (const [fqn, params, forms] of [
+      [
+        "go.animate",
+        ["url", "property", "playback", "to", "easing", "duration", "delay", "complete_function"],
+        3,
+      ],
+      ["go.get", ["url", "property", "options"], 5],
+      ["go.set", ["url", "property", "value", "options"], 3],
     ] as const) {
       const rows = symbols.filter((s) => s.name === fqn);
-      expect(rows).toHaveLength(5);
+      expect(rows).toHaveLength(forms);
       expect(rows[0]?.parameters).toEqual([]);
       expect(rows[0]?.returnValues).toEqual([]);
       expect(rows[1]?.parameters).toEqual([]);
       expect(rows[2]?.parameters.map((p) => p.name)).toEqual([...params]);
-      expect(rows[3]?.parameters).toEqual([]);
-      expect(rows[4]?.parameters).toEqual([]);
+      for (const row of rows.slice(3)) expect(row.parameters).toEqual([]);
     }
     // the `value` return row moves with the parameter table it belongs to
     expect(symbols.filter((s) => s.name === "go.get")[2]?.returnValues.map((r) => r.name)).toEqual([

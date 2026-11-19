@@ -2638,7 +2638,12 @@ describe("grouped overload blocks (committed artifacts)", () => {
       block: false,
     });
     expect(placement("go", "go.set")).toEqual({
-      forms: [false, false, true, false, true],
+      forms: [false, false, true],
+      block: false,
+    });
+    // The table names delay and complete_function, which only the last form takes.
+    expect(placement("go", "go.animate")).toEqual({
+      forms: [false, false, true],
       block: false,
     });
     // 1.13.2 documents render_target(table) alone, so the table sits under both

@@ -138,7 +138,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",
@@ -536,7 +536,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",
@@ -929,7 +929,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",
@@ -1292,7 +1292,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",
@@ -1654,7 +1654,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",
@@ -1959,7 +1959,7 @@
           "namespace": "go",
           "fixture": "go_doc.json",
           "outFile": "go.d.ts",
-          "skipFunctions": ["get", "set", "property"]
+          "skipFunctions": ["animate", "get", "set", "property"]
         },
         {
           "namespace": "graphics",

@@ -1,6 +1,6 @@
 /** @noSelfInFile */
 
-import type { Hash, Matrix4, Quaternion, Url, Vector3, Vector4 } from "./core-types";
+import type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "./core-types";
 
 interface ScriptProperty<TValue> {
   readonly __defoldScriptProperty: TValue;
@@ -19,6 +19,32 @@ type WritableKey<P> = {
     : never;
 }[keyof P];
 
+// The `to` value go.animate takes for a property whose value is `V`.
+// comp_anim.cpp `Animate` fills a vector3 or vector4 from a number and refuses
+// any other type difference; a property of none of these types is not animatable.
+type AnimateTarget<V> = V extends Quaternion
+  ? Quaternion
+  : V extends Vector3
+    ? number | Vector3
+    : V extends Vector4
+      ? number | Vector4
+      : V extends number
+        ? number
+        : never;
+
+// The writable keys of `P` whose value go.animate can tween.
+type AnimatableKey<P> = {
+  [K in keyof P]-?: [AnimateTarget<P[K]>] extends [never] ? never : K;
+}[keyof P] &
+  WritableKey<P>;
+
+// The value go.set takes for a transform key. gameobject.cpp `SetProperty` takes
+// a number for `scale.xy` and applies it to x and y, while `GetProperty`
+// returns the vector3 the catalog records.
+type TransformWrite<K extends keyof go.Properties> = K extends "scale.xy"
+  ? number | Vector3
+  : go.Properties[K];
+
 declare global {
   namespace go {
     // LuaToPropertyOptions raises when more than one of the three is non-nil, and
@@ -33,6 +59,219 @@ declare global {
       | { index?: undefined; key?: Hash | string; keys?: undefined }
       | { index?: undefined; key?: undefined; keys?: (Hash | string)[] };
 
+    /**
+     * This is only supported for numerical properties. If the node property is already being
+     * animated, that animation will be canceled and replaced by the new one.
+     * If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
+     * If you call `go.animate()` from a game object's `final()` function,
+     * any passed `complete_function` will be ignored and never called upon animation completion.
+     * See the properties guide for which properties can be animated and the animation guide for how
+     * them.
+     *
+     * @param url - url of the game object or component having the property
+     * @param property - id of the property to animate
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param to - target property value. A number fills every component of a
+     * vector3 or vector4 property; a quaternion property takes only a quaternion.
+     * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
+     * @param duration - duration of the animation in seconds
+     * @param delay - delay before the animation starts in seconds
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * script_instance The current script instance.
+     *
+     * `url`
+     *
+     * url The game object or component instance for which the property is animated.
+     *
+     * `property`
+     *
+     * hash The id of the animated property.
+     * @example
+     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
+     * ```ts
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
+     * ```
+     * @example
+     * Animate the y position of a game object using a crazy custom easing curve:
+     * ```ts
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
+     * ```
+     * @example
+     * Name the target component to type its animatable properties and their target values.
+     * The empty call applies the type argument, then the inner call infers the key:
+     * ```ts
+     * go.animate<sprite.Properties>()("#sprite", "playback_rate", go.PLAYBACK_ONCE_FORWARD, 2, go.EASING_LINEAR, 1);
+     * ```
+     */
+    function animate<P>(): <K extends AnimatableKey<P>>(
+      url: SceneAddress | Hash | Url,
+      property: K,
+      playback: go.Playback,
+      to: AnimateTarget<P[K]>,
+      easing: Vector | go.Easing,
+      duration: number,
+      ...rest:
+        | []
+        | [delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void]
+    ) => void;
+    /**
+     * This is only supported for numerical properties. If the node property is already being
+     * animated, that animation will be canceled and replaced by the new one.
+     * If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
+     * If you call `go.animate()` from a game object's `final()` function,
+     * any passed `complete_function` will be ignored and never called upon animation completion.
+     * See the properties guide for which properties can be animated and the animation guide for how
+     * them.
+     *
+     * @param url - url of the game object or component having the property
+     * @param property - id of the property to animate
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param to - target property value. A number fills every component of a
+     * vector3 or vector4 property; a quaternion property takes only a quaternion.
+     * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
+     * @param duration - duration of the animation in seconds
+     * @param delay - delay before the animation starts in seconds
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * script_instance The current script instance.
+     *
+     * `url`
+     *
+     * url The game object or component instance for which the property is animated.
+     *
+     * `property`
+     *
+     * hash The id of the animated property.
+     * @example
+     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
+     * ```ts
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
+     * ```
+     * @example
+     * Animate the y position of a game object using a crazy custom easing curve:
+     * ```ts
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
+     * ```
+     */
+    function animate<K extends keyof go.Properties | (string & {}) | Hash>(
+      url: SceneAddress | Hash | Url,
+      property: K,
+      playback: go.Playback,
+      to: K extends keyof go.Properties
+        ? AnimateTarget<go.Properties[K]>
+        : number | Vector3 | Vector4 | Quaternion,
+      easing: Vector | go.Easing,
+      duration: number,
+    ): void;
+    /**
+     * This is only supported for numerical properties. If the node property is already being
+     * animated, that animation will be canceled and replaced by the new one.
+     * If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
+     * By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
+     * If you call `go.animate()` from a game object's `final()` function,
+     * any passed `complete_function` will be ignored and never called upon animation completion.
+     * See the properties guide for which properties can be animated and the animation guide for how
+     * them.
+     *
+     * @param url - url of the game object or component having the property
+     * @param property - id of the property to animate
+     * @param playback - playback mode of the animation
+     *
+     * - `go.PLAYBACK_ONCE_FORWARD`
+     * - `go.PLAYBACK_ONCE_BACKWARD`
+     * - `go.PLAYBACK_ONCE_PINGPONG`
+     * - `go.PLAYBACK_LOOP_FORWARD`
+     * - `go.PLAYBACK_LOOP_BACKWARD`
+     * - `go.PLAYBACK_LOOP_PINGPONG`
+     * @param to - target property value. A number fills every component of a
+     * vector3 or vector4 property; a quaternion property takes only a quaternion.
+     * @param easing - easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
+     * @param duration - duration of the animation in seconds
+     * @param delay - delay before the animation starts in seconds
+     * @param complete_function - optional function to call when the animation has completed
+     *
+     * `self`
+     *
+     * script_instance The current script instance.
+     *
+     * `url`
+     *
+     * url The game object or component instance for which the property is animated.
+     *
+     * `property`
+     *
+     * hash The id of the animated property.
+     * @example
+     * Animate the position of a game object to x = 10 during 1 second, then y = 20 during 1 second:
+     * ```ts
+     * go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {
+     *   go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);
+     * });
+     * ```
+     * @example
+     * Animate the y position of a game object using a crazy custom easing curve:
+     * ```ts
+     * const values = [
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     *   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+     * ];
+     * const vec = vmath.vector(values);
+     * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
+     * ```
+     */
+    function animate<K extends keyof go.Properties | (string & {}) | Hash>(
+      url: SceneAddress | Hash | Url,
+      property: K,
+      playback: go.Playback,
+      to: K extends keyof go.Properties
+        ? AnimateTarget<go.Properties[K]>
+        : number | Vector3 | Vector4 | Quaternion,
+      easing: Vector | go.Easing,
+      duration: number,
+      delay: number,
+      complete_function?: (self: unknown, url: Url, property: Hash) => void,
+    ): void;
     /**
      * gets a named property of the specified game object or component
      *
@@ -123,46 +362,42 @@ declare global {
       value: P[K],
       ...options: [] | [GoPropertyOptions]
     ) => void;
-    function set<K extends keyof go.Properties>(
+    // One signature per arity, with the value conditional on the key: a known
+    // transform key gets its own value type and no wide overload to fall
+    // through to, while a dynamic or hashed key gets the wide union.
+    function set<K extends keyof go.Properties | (string & {}) | Hash>(
       url: SceneAddress | Hash | Url,
       property: K,
-      value: go.Properties[K],
+      value: K extends keyof go.Properties
+        ? TransformWrite<K>
+        :
+            | number
+            | boolean
+            | string
+            | Hash
+            | Url
+            | Vector3
+            | Vector4
+            | Quaternion
+            | Matrix4
+            | Vector4[],
     ): void;
-    function set<K extends keyof go.Properties>(
+    function set<K extends keyof go.Properties | (string & {}) | Hash>(
       url: SceneAddress | Hash | Url,
       property: K,
-      value: go.Properties[K],
-      options: GoPropertyOptions,
-    ): void;
-    function set(
-      url: SceneAddress | Hash | Url,
-      property: string | Hash,
-      value:
-        | number
-        | boolean
-        | string
-        | Hash
-        | Url
-        | Vector3
-        | Vector4
-        | Quaternion
-        | Matrix4
-        | Vector4[],
-    ): void;
-    function set(
-      url: SceneAddress | Hash | Url,
-      property: string | Hash,
-      value:
-        | number
-        | boolean
-        | string
-        | Hash
-        | Url
-        | Vector3
-        | Vector4
-        | Quaternion
-        | Matrix4
-        | Vector4[],
+      value: K extends keyof go.Properties
+        ? TransformWrite<K>
+        :
+            | number
+            | boolean
+            | string
+            | Hash
+            | Url
+            | Vector3
+            | Vector4
+            | Quaternion
+            | Matrix4
+            | Vector4[],
       options: GoPropertyOptions,
     ): void;
     /**

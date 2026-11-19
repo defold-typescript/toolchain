@@ -934,7 +934,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   // raises on that null itself, a check the bindings manifest does not record.
   {
     specifier: "../../src/go-overloads",
-    requiresGoInstance: ["go.get", "go.set", "go.property"],
+    requiresGoInstance: ["go.animate", "go.get", "go.set", "go.property"],
   },
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },

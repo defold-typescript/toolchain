@@ -2,8 +2,14 @@ import * as ts from "typescript";
 import type { Expression, Plugin } from "typescript-to-lua";
 
 // The Defold functions declared with a curried type-application overload,
-// `go.get<P>()(url, property)`: the empty call only fixes `P` for the checker.
-export const TYPE_APPLICATION_APIS: ReadonlySet<string> = new Set(["go.get", "go.set"]);
+// `go.get<P>()(url, property)`, `go.set<P>()(url, property, value)` and
+// `go.animate<P>()(url, property, ...)`: the empty call only fixes `P` for the
+// checker.
+export const TYPE_APPLICATION_APIS: ReadonlySet<string> = new Set([
+  "go.animate",
+  "go.get",
+  "go.set",
+]);
 
 // Keyed by the declaration's fully qualified name: only a symbol declared in
 // an ambient `declare global` block carries the `global.` prefix, so a
