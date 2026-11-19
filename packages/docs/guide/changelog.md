@@ -9,11 +9,15 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.67.1
+## v0.68.0
 
 > Summary:
 >
-> - **Docs code blocks show at full length** ([Tetris tutorial](./tetris-tutorial.md)).
+> - **`go.animate` and `go.set` check the value against the property** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+
+### Improved
+
+- **`go.animate` checks its target value against the property:** on a transform key a number fills a vector such as `"position"` and `"rotation"` takes only a quaternion, and `go.animate<P>()` takes a component catalog such as `sprite.Properties` or a `ScriptPropertiesOf` shape and accepts only the keys the engine can animate. `go.set` rejects a wrong value on a transform key too, such as a quaternion for `"position"`, instead of accepting it as an untyped write ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 
 ### Fixed
 

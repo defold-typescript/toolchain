@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { transpile } from "./transpile";
 
 describe("type-application erasure", () => {
-  test("go.get<P>() and go.set<P>() reach Lua as the engine function itself", () => {
+  test("go.get<P>(), go.set<P>() and go.animate<P>() reach Lua as the engine function itself", () => {
     const result = transpile(
       [
         "declare const url: Url;",
@@ -13,6 +13,7 @@ describe("type-application erasure", () => {
         "const read = go.get<model.Properties>();",
         'read(url, "texture0");',
         'go.get(url, "position");',
+        'go.animate<sprite.Properties>()(url, "playback_rate", go.PLAYBACK_ONCE_FORWARD, 2, go.EASING_LINEAR, 1);',
         "declare function typed<T>(): (value: T) => T;",
         "typed<number>()(1);",
         "export {};",
@@ -33,6 +34,14 @@ describe("type-application erasure", () => {
       local read = go.get
       read(url, "texture0")
       go.get(url, "position")
+      go.animate(
+          url,
+          "playback_rate",
+          go.PLAYBACK_ONCE_FORWARD,
+          2,
+          go.EASING_LINEAR,
+          1
+      )
       typed()(1)
       return ____exports
       "

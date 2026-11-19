@@ -2431,6 +2431,7 @@ describe("recoverCallbackSignature", () => {
 describe("OVERLOAD_COVERED_SKIPS", () => {
   test("is exactly the FQNs served by the hand-written go/gui/msg/render/sys/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
+      "go.animate",
       "go.get",
       "go.property",
       "go.set",
@@ -5376,7 +5377,14 @@ describe("subset constant unions", () => {
     expect(defaultPlayback?.split(" | ")).toHaveLength(7);
     expect(oldAliases.get("Playback")).toBe(defaultPlayback as string);
     expect(oldAliases.has("PLAYBACK")).toBe(false);
-    expect(parameterType(goOld, "go", "animate", "playback")).toBe("go.Playback");
+    expect(
+      parameterType(
+        sourceAt("versions", "defold-1.13.1", "model.d.ts"),
+        "model",
+        "play_anim",
+        "playback",
+      ),
+    ).toBe("Exclude<go.Playback, typeof go.PLAYBACK_NONE>");
 
     const guiOld = sourceAt("versions", "defold-1.13.1", "gui.d.ts");
     expect(typeAliases(guiOld, "gui").get("Anchor")).toBe(

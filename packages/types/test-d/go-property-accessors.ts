@@ -29,9 +29,27 @@ const _labelText: string = go.get<label.Properties>()(url, "text");
 void _labelText;
 go.set<label.Properties>()(url, "text", "Hello");
 
-// @ts-expect-error wrong value type for a known property; a string is a text
-// property value the untyped fallback takes, so the wrong value is a plain table
+// A known transform key takes only its catalogued value: the wide value union
+// is reserved for dynamic and hashed keys, so a known key cannot fall through.
+// @ts-expect-error wrong value type for a known property
 go.set(url, "position", { x: 1, y: 2 });
+// @ts-expect-error position is a vector3, not a quaternion
+go.set(url, "position", vmath.quat());
+// @ts-expect-error position is a vector3, not a boolean
+go.set(url, "position", true);
+// @ts-expect-error position is a vector3, not text
+go.set(url, "position", "oops");
+// @ts-expect-error position.x is one float
+go.set(url, "position.x", vmath.vector3());
+
+// The engine reads scale.xy back as a vector3 but sets it from a number too,
+// applying the number to x and y.
+go.set(url, "scale.xy", 2);
+go.set(url, "scale.xy", v3);
+
+declare const dynamicKey: string;
+go.set(url, dynamicKey, true);
+go.set(url, hash("tint"), vmath.vector4());
 
 // @ts-expect-error position is Vector3, not assignable to Quaternion
 const _wrong: Quaternion = go.get(url, "position");

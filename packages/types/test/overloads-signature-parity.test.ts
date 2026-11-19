@@ -68,7 +68,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     namespace: "go",
     declarationsPaths: [overloadsPath("go-overloads.d.ts")],
     storePath: GO_SIGNATURES_PATH,
-    fqns: ["go.get", "go.set", "go.property"],
+    fqns: ["go.animate", "go.get", "go.set", "go.property"],
     reflow: {
       from: "function property(name: string, value: Hash): ScriptProperty<Hash>;",
       to: "function property(\n      name: string,\n      value: Hash,\n    ): ScriptProperty<Hash>;",
@@ -258,11 +258,18 @@ function renderParams(
 // A curried overload returns a function type whose source span wraps across
 // lines and keeps a trailing comma, so rebuild it from its children instead of
 // reusing `getText()` verbatim. A union wrapped one member per line opens with a
-// `|` that is layout, not type, so it is rebuilt from its members too.
+// `|` that is layout, not type, so it is rebuilt from its members too, including
+// one that is a branch of a conditional type.
 function renderType(type: ts.TypeNode | undefined, sourceFile: ts.SourceFile): string {
   if (!type) return "void";
   if (ts.isUnionTypeNode(type)) {
     return type.types.map((member) => renderType(member, sourceFile)).join(" | ");
+  }
+  if (ts.isConditionalTypeNode(type)) {
+    return `${renderType(type.checkType, sourceFile)} extends ${renderType(
+      type.extendsType,
+      sourceFile,
+    )} ? ${renderType(type.trueType, sourceFile)} : ${renderType(type.falseType, sourceFile)}`;
   }
   if (ts.isFunctionTypeNode(type)) {
     return `${renderTypeParams(type.typeParameters, sourceFile)}(${renderParams(
@@ -376,8 +383,9 @@ function renderOverloadGates(spec: OverloadNamespace): Record<string, (string | 
 // store must agree on it, so the number is asserted against both sides below. Changing an
 // entry is a deliberate declaration that the overload set itself changed.
 const OVERLOAD_COUNTS: Record<string, number> = {
+  "go.animate": 3,
   "go.get": 5,
-  "go.set": 5,
+  "go.set": 3,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
   "go.property": 8,

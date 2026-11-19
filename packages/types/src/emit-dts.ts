@@ -275,7 +275,9 @@ export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map
 );
 
 export const OVERLOAD_COVERED_SKIPS = new Set([
-  // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes.
+  // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes,
+  // and go.animate with its target value typed per key.
+  "go.animate",
   "go.get",
   "go.set",
   "go.property",
