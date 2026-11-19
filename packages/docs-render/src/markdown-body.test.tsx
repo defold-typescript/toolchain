@@ -153,6 +153,33 @@ describe("MarkdownBody", () => {
     }
   });
 
+  // The base link border's `color-mix()` is beyond the test DOM, which drops
+  // that declaration, so the text link only shows the badge rule passing it by.
+  test("a linked shields badge draws no underline, and a text link keeps its own", async () => {
+    const { hast } = await processDocsMarkdown(
+      "[![npm](https://img.shields.io/npm/v/x)](https://example.com/npm) [docs](https://example.com/docs)",
+      { routePrefix: "" },
+    );
+    const { container, unmount } = mount(
+      <div className="prose">
+        <MarkdownBody hast={hast} />
+      </div>,
+    );
+    const style = document.createElement("style");
+    style.textContent = await Bun.file(new URL("./critical.css", import.meta.url)).text();
+    document.head.append(style);
+    try {
+      const [badge, text] = [...container.querySelectorAll("a")];
+      if (!badge?.querySelector("img") || !text)
+        throw new Error("expected a badge link, then a text link");
+      expect(getComputedStyle(badge).borderBottomStyle).toBe("none");
+      expect(getComputedStyle(text).borderBottomStyle).not.toBe("none");
+    } finally {
+      style.remove();
+      unmount();
+    }
+  });
+
   test("a raw anchor stays a plain link target", async () => {
     const host = await render('<a id="kept"></a>');
     const anchor = host.querySelector("#kept");

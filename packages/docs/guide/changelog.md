@@ -21,6 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Code blocks** on both sites show at full length instead of scrolling inside a 600px frame, and the copy button shows a hand cursor on hover.
   - **The page outline** on the toolchain docs site keeps each heading's inline code, bold, italic and struck text instead of plain text.
   - **The [API](/api) landing page** leaves space between each group's description and its cards.
+  - **Linked badges,** such as those atop the Overview page, show without a link underline.
 
 ## v0.67.0
 

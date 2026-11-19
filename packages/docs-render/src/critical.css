@@ -211,6 +211,10 @@ header.topbar-critical .logo-mark {
 .prose a:hover {
   border-bottom-color: var(--color-accent);
 }
+/* A linked badge draws no underline. Mirrors app/styles.css. */
+.prose a:has(> img[src*="shields.io"]) {
+  border-bottom: none;
+}
 .prose a.heading-anchor {
   position: relative;
   color: inherit;
