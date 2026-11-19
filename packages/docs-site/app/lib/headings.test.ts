@@ -137,6 +137,25 @@ describe("hastHeadings", () => {
     expect(heading !== undefined && "markup" in heading).toBe(false);
   });
 
+  test("a heading's inline code, bold, italic and struck text stay as bare elements in its formatted markup, and every other tag gives way to its children", async () => {
+    const html =
+      '<h2 id="f">Define <code class="x">src/pieces.ts</code>, <strong>now</strong> <em>and</em> <del>then</del> <a href="/y">here</a>' +
+      '<span class="heading-anchor-icon"><svg aria-hidden="true"><path d="M1 1"/></svg></span></h2>';
+    expect((await headingsIn(html))[0]?.formatted).toBe(
+      "Define <code>src/pieces.ts</code>, <strong>now</strong> <em>and</em> <del>then</del> here",
+    );
+  });
+
+  test("a heading with no inline formatting, or whose outline reads as its signature, carries no formatted markup", async () => {
+    const headings = await headingsIn(
+      '<h2 id="p">Plain <a href="/y">text</a></h2>' +
+        '<h3 id="s"><code><span style="--shiki-light:#111111;--shiki-dark:#EEEEEE">f()</span></code></h3>' +
+        '<h3 id="b"><code>f(<span class="api-overload-count" data-toc-text="...">2 overloads</span>)</code></h3>',
+    );
+    expect(headings.map((heading) => heading.id)).toEqual(["p", "s", "b"]);
+    for (const heading of headings) expect("formatted" in heading).toBe(false);
+  });
+
   test("outlineHeadings over the same headings keeps the h2..h4 table-of-contents bound", async () => {
     expect(outlineHeadings(await headingsIn(fullDepthHtml))).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2, code: false },

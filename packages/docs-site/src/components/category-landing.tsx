@@ -3,7 +3,7 @@ import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-ic
 import { htmlToDocText } from "@defold-typescript/types";
 import { Card, Cards } from "fumadocs-ui/components/card";
 import { DocsBody, DocsPage } from "fumadocs-ui/layouts/docs/page";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { renderCardSummary } from "../../app/lib/card-summary";
 import { guidePages } from "../../app/lib/content";
 import type { NavLink } from "../../app/lib/nav";
@@ -113,8 +113,10 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
         {flat.length > 0 && (
           <LinkCards links={flat} summaries={summaries} mono={mono} badgeCounts={badgeCounts} />
         )}
+        {/* Each group's blocks sit directly in the prose body, not in a wrapper,
+            so the body's spacing between blocks reaches them. */}
         {groups.map((group) => (
-          <section key={group.label}>
+          <Fragment key={group.label}>
             <h2 id={slug(group.label)}>{group.label}</h2>
             {group.subtitle ? (
               <p>
@@ -127,7 +129,7 @@ export function CategoryLanding({ id, lead }: { id: string; lead: ReactNode }) {
               mono={mono}
               badgeCounts={badgeCounts}
             />
-          </section>
+          </Fragment>
         ))}
       </DocsBody>
     </DocsPage>

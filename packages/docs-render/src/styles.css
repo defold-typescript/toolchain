@@ -497,6 +497,12 @@
     --color-fd-secondary: var(--color-code-bg);
   }
 
+  /* A button takes the arrow cursor by default, and Fumadocs' copy button sets
+     none of its own; the hand shows it acts on a click. */
+  .prose figure.shiki button {
+    cursor: pointer;
+  }
+
   .prose pre code {
     background: transparent;
     border: 0;

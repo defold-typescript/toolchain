@@ -135,6 +135,24 @@ describe("MarkdownBody", () => {
     }
   });
 
+  test("a code block shows at its full length, its scroll area taking no height cap", async () => {
+    const { hast } = await processDocsMarkdown(SAMPLE_WITH_FENCE, { routePrefix: "" });
+    const { container, unmount } = mount(<MarkdownBody hast={hast} />);
+    const candidates = [...container.querySelectorAll("*")].flatMap((node) => [...node.classList]);
+    const style = document.createElement("style");
+    style.textContent = (await compile("@tailwind utilities;")).build(candidates);
+    document.head.append(style);
+    try {
+      const viewport = container.querySelector("pre")?.parentElement;
+      if (!viewport) throw new Error("the code block has no scroll area");
+      expect(viewport.classList.contains("overflow-auto")).toBe(true);
+      expect(getComputedStyle(viewport).maxHeight).toBe("none");
+    } finally {
+      style.remove();
+      unmount();
+    }
+  });
+
   test("a raw anchor stays a plain link target", async () => {
     const host = await render('<a id="kept"></a>');
     const anchor = host.querySelector("#kept");
