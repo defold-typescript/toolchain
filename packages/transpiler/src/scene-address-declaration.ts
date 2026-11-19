@@ -52,8 +52,10 @@ function valueText(
 // world reaches; the per-document pass covers what it cannot — a factory
 // prototype with no static path, an embedded component under the same id — so a
 // bare address never borrows one object's script or kind for another's
-// component. Agreeing on the written value rather than on the resource lets two
-// sprites with different images share a kind.
+// component. The per-document pass reads every declaration rather than one per
+// id, so two objects in one collection factory's collection disagree the same
+// way two objects in two files do. Agreeing on the written value rather than on
+// the resource lets two sprites with different images share a kind.
 function bareValuesOf(
   documents: ReadonlyMap<string, string>,
   paths: SceneObjectPathIndex,
@@ -78,11 +80,8 @@ function bareValuesOf(
       if (!(error instanceof SceneTextFormatError)) throw error;
       continue;
     }
-    for (const id of declarations.ids) {
-      record(
-        id,
-        valueText(declarations.resources.get(id), declarations.kinds.get(id), scriptModules),
-      );
+    for (const { id, resource, kind } of declarations.occurrences) {
+      record(id, valueText(resource, kind, scriptModules));
     }
   }
   return agreed;

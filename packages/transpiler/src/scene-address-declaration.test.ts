@@ -543,6 +543,28 @@ const TWO_BODIES =
   'instances {\n  id: "a"\n  prototype: "/a.go"\n}\n' +
   'instances {\n  id: "b"\n  prototype: "/b.go"\n}\n';
 
+// A collection factory's collection opens no world, so no object in it has a
+// static path: every `body` below is visible only to the per-document pass.
+function factoryPack(...objects: string[]): Record<string, string> {
+  return {
+    "main.collection": 'instances {\n  id: "spawner"\n  prototype: "/spawner.go"\n}\n',
+    "spawner.go":
+      'embedded_components {\n  id: "factory"\n  type: "collectionfactory"\n' +
+      '  data: "prototype: \\"/pack.collection\\"\\n"\n}\n',
+    "pack.collection": `name: "pack"\n${objects
+      .map(
+        (object, index) =>
+          `embedded_instances {\n  id: "o${index}"\n  data: ${JSON.stringify(object)}\n}\n`,
+      )
+      .join("")}`,
+  };
+}
+
+const SPRITE_BODY = 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n';
+const COLLISION_BODY = 'embedded_components {\n  id: "body"\n  type: "collisionobject"\n}\n';
+const SCRIPT_BODY = 'components {\n  id: "body"\n  component: "/src/wave.ts.script"\n}\n';
+const UNTYPED_BODY = 'embedded_components {\n  id: "body"\n}\n';
+
 describe("component kind addresses", () => {
   test("each component address names its own component's kind", () => {
     const declaration = kindDeclarationFor({
@@ -602,5 +624,26 @@ describe("component kind addresses", () => {
     });
     expect(declaration).toContain('"/hero#mystery": true;');
     expect(declaration).toContain('"#mystery": true;');
+  });
+
+  test.each([
+    ["sprite then collisionobject", SPRITE_BODY, COLLISION_BODY],
+    ["collisionobject then sprite", COLLISION_BODY, SPRITE_BODY],
+    ["script then sprite", SCRIPT_BODY, SPRITE_BODY],
+    ["sprite then script", SPRITE_BODY, SCRIPT_BODY],
+    ["untyped then sprite", UNTYPED_BODY, SPRITE_BODY],
+    ["sprite then untyped", SPRITE_BODY, UNTYPED_BODY],
+  ])("a bare id stays true when one factory collection declares it as %s", (_, first, second) => {
+    const declaration = kindDeclarationFor(factoryPack(first, second), SCRIPT_MODULES);
+    expect(declaration).toContain('"#body": true;');
+  });
+
+  test("a bare id keeps its kind when every object in one factory collection agrees", () => {
+    expect(kindDeclarationFor(factoryPack(SPRITE_BODY, SPRITE_BODY), SCRIPT_MODULES)).toContain(
+      '"#body": "sprite";',
+    );
+    expect(kindDeclarationFor(factoryPack(SCRIPT_BODY, SCRIPT_BODY), SCRIPT_MODULES)).toContain(
+      '"#body": typeof import("../src/wave").default;',
+    );
   });
 });

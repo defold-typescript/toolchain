@@ -23,6 +23,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **A bare component address stays untyped when one collection factory's objects disagree on it:** if two objects in the collection a factory spawns give one component id different scripts, or a script and another component, `scene-types` writes its bare `#id` as `true`, so `msg.post` no longer checks it against only one script's messages ([Scene types](./scene-types.md#component-addresses-carry-their-messages-and-properties)).
 - **The docs sites show pages as written:**
   - **Code blocks** on both sites show at full length instead of scrolling inside a 600px frame, and the copy button shows a hand cursor on hover.
   - **The page outline** on the toolchain docs site keeps each heading's inline code, bold, italic and struck text instead of plain text.

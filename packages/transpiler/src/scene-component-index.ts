@@ -20,16 +20,31 @@ const COMPONENT_BLOCKS = new Set(["components", "embedded_components"]);
 // projects as unreadable and suppress the check for good.
 const EMBEDDING_BLOCKS = new Set(["embedded_instances", "embedded_components"]);
 
+// One component block: its id, the resource it references where it references
+// one, and its kind where one is readable. Both stay `undefined` on a block that
+// carries neither, so an untyped block still counts as a declaration.
+export interface ComponentOccurrence {
+  readonly id: string;
+  readonly resource: string | undefined;
+  readonly kind: string | undefined;
+}
+
 // A component id, the resource it references where one is referenced at all, and
 // its kind where one is readable. The axes are gathered by one pass because they
 // are read off the same block: a second walk over the same documents is exactly
 // how the id universe and the resource universe drift apart.
+//
+// `resources` and `kinds` hold one entry per id, which is exact for one game
+// object's declarations, where Defold keeps component ids unique. A whole
+// document can declare one id in several objects, so `occurrences` keeps every
+// block for a reader that has to see each of them.
 export interface ComponentDeclarations {
   readonly ids: Set<string>;
   readonly resources: Map<string, string>;
   // The component type: a referenced resource's extension (`sprite`, `script`),
   // or an embedded component's `type` field.
   readonly kinds: Map<string, string>;
+  readonly occurrences: ComponentOccurrence[];
 }
 
 // Resource paths inside a scene are project-absolute; documents are keyed by
@@ -59,20 +74,24 @@ function collect(
       declarations.ids.add(id);
     }
     const [id] = declared;
-    // `embedded_components` names no resource on purpose: its payload *is* the
-    // component, so it must never be credited with one.
-    if (blockName === "components") {
-      const [component] = message.fields.get("component") ?? [];
-      if (id !== undefined && id !== "" && component !== undefined) {
-        declarations.resources.set(id, resourceKey(component));
-        const kind = extensionOf(component);
-        if (kind !== undefined) declarations.kinds.set(id, kind);
+    if (id !== undefined && id !== "") {
+      let resource: string | undefined;
+      let kind: string | undefined;
+      // `embedded_components` names no resource on purpose: its payload *is* the
+      // component, so it must never be credited with one.
+      if (blockName === "components") {
+        const [component] = message.fields.get("component") ?? [];
+        if (component !== undefined) {
+          resource = resourceKey(component);
+          kind = extensionOf(component);
+        }
+      } else {
+        const [type] = message.fields.get("type") ?? [];
+        if (type !== undefined && type !== "") kind = type;
       }
-    } else {
-      const [type] = message.fields.get("type") ?? [];
-      if (id !== undefined && id !== "" && type !== undefined && type !== "") {
-        declarations.kinds.set(id, type);
-      }
+      if (resource !== undefined) declarations.resources.set(id, resource);
+      if (kind !== undefined) declarations.kinds.set(id, kind);
+      declarations.occurrences.push({ id, resource, kind });
     }
   }
   if (EMBEDDING_BLOCKS.has(blockName)) {
@@ -123,6 +142,7 @@ export function collectComponentDeclarations(
     ids: new Set(),
     resources: new Map(),
     kinds: new Map(),
+    occurrences: [],
   };
   collect(message, blockName, 0, displayPath, declarations, incomplete);
   return declarations;
