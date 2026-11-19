@@ -1,4 +1,14 @@
-export {};
+import type { Url } from "../../src/core-types";
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+declare global {
+  interface SceneComponentAddresses {
+    "/menu#ui": "gui";
+    "/menu#camera": "camera";
+  }
+}
 
 vmath.vector3(1, 2, 3);
 
@@ -27,3 +37,13 @@ tilemap.tiles.new();
 // game object (`"."`), whose only properties are its transform.
 go.set("#", "player_name", "Player One");
 const _goText: Extract<ReturnType<typeof go.get>, string> = "Player One";
+
+// The script surface loads no `gui` namespace, so a gui address reads the wide
+// value; `camera` declares its catalog here, so its address reads it.
+declare const url: Url;
+const uiMaterial = go.get("/menu#ui", "material");
+const wideMaterial = go.get(url, "material");
+const _uiMaterial: Equal<typeof uiMaterial, typeof wideMaterial> = true;
+const fov = go.get("/menu#camera", "fov");
+const _fov: Equal<typeof fov, number> = true;
+void [_uiMaterial, _fov];

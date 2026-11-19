@@ -152,7 +152,30 @@ describe("versioned API surface — consumer tsconfig proof", () => {
       });
       const tsconfigPath = writeProofConfig(
         root,
-        `export {};\nconst _fov: number = camera.get_fov();\nvoid _fov;\n// @ts-expect-error get_orthographic_auto_zoom is new in 1.13.0\ncamera.get_orthographic_auto_zoom();\n// @ts-expect-error vertex attribute semantic types are undocumented before 1.13.0\nvoid graphics.SEMANTIC_TYPE_COLOR;\n`,
+        [
+          "export {};",
+          "const _fov: number = camera.get_fov();",
+          "void _fov;",
+          "// @ts-expect-error get_orthographic_auto_zoom is new in 1.13.0",
+          "camera.get_orthographic_auto_zoom();",
+          "// @ts-expect-error vertex attribute semantic types are undocumented before 1.13.0",
+          "void graphics.SEMANTIC_TYPE_COLOR;",
+          "// camera declares no catalog before 1.13.0, so a camera address reads the wide value.",
+          "type Equal<A, B> =",
+          "  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;",
+          "declare global {",
+          "  interface SceneComponentAddresses {",
+          '    "/cam#camera": "camera";',
+          "  }",
+          "}",
+          "declare const url: Url;",
+          'const camFov = go.get("/cam#camera", "fov");',
+          'const wideFov = go.get(url, "fov");',
+          "const _camFov: Equal<typeof camFov, typeof wideFov> = true;",
+          "void _camFov;",
+          'go.set("/cam#camera", "fov", "wide");',
+          "",
+        ].join("\n"),
         "defold-1.12.4",
       );
       const { exitCode, output } = typecheck(tsconfigPath);

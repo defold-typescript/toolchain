@@ -318,6 +318,9 @@ declare global {
       speed: number;
     }
   }
+  interface SceneComponentCatalogs {
+    sound: sound.Properties;
+  }
 }
 
 export {};

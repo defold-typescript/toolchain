@@ -14,10 +14,11 @@ declare global {
    * @remarks
    * `go.get`, `go.set` and `go.animate` read a literal address's catalog from
    * here: a key the catalog names takes its catalogued type, and any other key,
-   * such as a material constant, keeps the wide value. A kind with no entry here
-   * (`camera`, `gui`, `particlefx`, `sound`, `tilemap`) is typed as an address
-   * with no scene types at all. The interface is open, so an extension can
-   * register its own kind.
+   * such as a material constant, keeps the wide value. `camera`, `gui`,
+   * `particlefx`, `sound` and `tilemap` each register from their generated
+   * declaration, on the targets and kind surfaces that declare it. A kind with
+   * no entry is typed as an address with no scene types at all. The interface
+   * is open, so an extension can register its own kind.
    *
    * @example
    * ```ts

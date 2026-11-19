@@ -54,6 +54,9 @@ declare global {
       material: Hash;
     }
   }
+  interface SceneComponentCatalogs {
+    particlefx: particlefx.Properties;
+  }
 }
 
 export {};
