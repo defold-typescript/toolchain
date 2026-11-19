@@ -1481,14 +1481,14 @@ describe("apiModuleSymbols", () => {
     expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
   });
 
-  test("go.get renders 5 rows and its undocumented overloads fall back to the fixture prose", () => {
+  test("go.get renders 3 rows and its undocumented overloads fall back to the fixture prose", () => {
     const store = committedStore("go");
     const page = fixturePage("go");
     const fixtureGetDoc =
       apiModuleSymbols(page, {}, {}).find((s) => s.name === "go.get")?.docMarkdown ?? "";
     const rows = apiModuleSymbols(page, {}, store).filter((s) => s.name === "go.get");
 
-    expect(rows).toHaveLength(5);
+    expect(rows).toHaveLength(3);
     expect(rows.map((s) => s.signature)).toEqual(store["go.get"]?.signatures ?? []);
     expect(rows[0]?.signature).toContain("<K extends keyof P>");
     for (const row of rows.slice(1)) expect(row.docMarkdown).toBe(fixtureGetDoc);
@@ -1693,7 +1693,7 @@ describe("apiModuleSymbols", () => {
         ["url", "property", "playback", "to", "easing", "duration", "delay", "complete_function"],
         3,
       ],
-      ["go.get", ["url", "property", "options"], 5],
+      ["go.get", ["url", "property", "options"], 3],
       ["go.set", ["url", "property", "value", "options"], 3],
     ] as const) {
       const rows = symbols.filter((s) => s.name === fqn);

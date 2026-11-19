@@ -22,6 +22,8 @@ zip.pack("a.zip", undefined, "b");
 // @ts-expect-error tilemap.tiles.* is an editor VM library, absent on the script surface
 tilemap.tiles.new();
 
-// A text property (Defold 1.13.2) round-trips through the untyped fallbacks.
-go.set(".", "player_name", "Player One");
+// A text property (Defold 1.13.2) round-trips through the untyped fallbacks. It
+// is a script property, so it is addressed on the script (`"#"`), never on the
+// game object (`"."`), whose only properties are its transform.
+go.set("#", "player_name", "Player One");
 const _goText: Extract<ReturnType<typeof go.get>, string> = "Player One";

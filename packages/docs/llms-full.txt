@@ -1278,7 +1278,9 @@ function first(values: unknown): number {
 
 **Typed alternative.** Read a property's type off the catalog with an indexed access — `label.Properties["color"]` is `Vector4`. The catalog also makes `go.get`, `go.set` and `go.animate` type-aware: a literal key drawn from `go`'s own transform properties narrows the result and the written value to the property's real type. `go.get(url, "position")` is `Vector3`, `go.get(url, "scale")` is `number | Vector3`, and `go.set(url, "euler", v3)` type-checks while `go.set(url, "position", "oops")` and `go.set(url, "position", vmath.quat())` are rejected: a known transform key takes only its own value type. The single-component keys narrow too: `go.get(url, "position.x")` is `number`, as is every `.x`, `.y`, `.z` and `.w` key of `position`, `rotation`, `euler` and `scale`, while `go.get(url, "scale.xy")` is a `Vector3` whose z is always 1. `go.set(url, "scale.xy", 2)` also type-checks, because the engine applies a number to both x and y. `go.animate` types its target value per key the way the engine converts it: a number fills every component of a vector, so `go.animate(url, "position", go.PLAYBACK_ONCE_FORWARD, 100, go.EASING_LINEAR, 1)` moves to (100, 100, 100), while `"rotation"` takes only a quaternion. Any other key — a `Hash`, a dynamic string, or a fragment-addressed cross-component property like `go.get("#sprite", "tint")` — takes or returns the documented wide union, so hashed and runtime access keep working unchanged.
 
-**Name the component to narrow a cross-component property.** A string url like `"#sprite"` cannot tell the type system which component it targets, so the bare call can only narrow `go`'s own transform properties. When you know the component, name it with a type argument and the result narrows to *that* component's catalog:
+**A scene address names the component for you.** After [`scene-types`](./scene-types.md#property-keys-follow-the-address) runs, a literal address your scenes declare carries its component's kind or script, and the bare call reads that catalog: `go.get("/logic#sprite", "playback_rate")` is `number`, `go.get("/enemy#controller", "speed")` is the type the script declares, and a key the script does not declare is a type error. A literal with no `#`, such as `"."`, is a game object, so it takes only the transform keys. Every other address — `"#"`, a runtime string, a `Url`, a `Hash`, or a literal the scenes do not declare — takes the transform keys at their types and any other key at the wide union.
+
+**Name the component to narrow a cross-component property.** A string url the scenes do not declare, like a `"#sprite"` composed at runtime, cannot tell the type system which component it targets. When you know the component, name it with a type argument and the result narrows to *that* component's catalog:
 
 ```ts
 const animation = go.get<sprite.Properties>()("#sprite", "animation"); // Hash, not the wide union
@@ -1306,9 +1308,9 @@ go.set<EnemyProps>()("/enemy#controller", "speed", 250);           // value gate
 go.get<EnemyProps>()("/enemy#controller", "missing");              // type error — not declared
 ```
 
-`ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script.
+`ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script. When the url is a literal your scenes declare, the bare `go.get("/enemy#controller", "speed")` reads the same shape off the scene types with no generic.
 
-**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.Properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number | Vector3`, a wrong-typed `go.set` value on a transform key and a wrong-typed `go.get` assignment carry `@ts-expect-error`, a number written to `"scale.xy"` type-checks, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-animate-property-values.ts` pins `go.animate`: a number fills a vector key, a quaternion into `"position"` or a number into `"rotation"` carries `@ts-expect-error`, a dynamic or hashed key keeps the wide target, and the curried form rejects read-only and non-numeric keys of `sprite.Properties` and of a `ScriptPropertiesOf` shape. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.Properties>()("#sprite", "animation")` is `Hash`, a wrong key, a wrong value type and a write to the read-only `"animation"` carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/component-properties.ts` pins the member types the catalogs resolve to: the `camera` members read as `number`, `camera.projection` / `camera.view` as `Matrix4` and `sprite.frame_count` as `number`, with a `Hash` annotation on the last carrying `@ts-expect-error`; every model texture key `"texture0"` through `"texture15"` reads and writes as `Hash`, sprite `"texture0"` and mesh `"vertices"` read as `Hash`, and the `"textureN"` placeholder, the out-of-range `"texture16"` and an undeclared mesh key carry `@ts-expect-error`. The same file pins the keys taken from the engine source at their kinds, including the `"position.x"`-style transform keys, and puts `@ts-expect-error` on a typed write to model `"animation"`, sprite `"texture0"` and each factory's `"prototype"`. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
+**How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts `label.Properties["color"]` is assignable to `Vector4` and that a `string` annotation on the same member carries `@ts-expect-error`. `packages/types/test-d/go-property-accessors.ts` pins the typed `go.get`/`go.set`: narrow keys resolve to `Vector3`/`Quaternion`/`number | Vector3`, a wrong-typed `go.set` value on a transform key and a wrong-typed `go.get` assignment carry `@ts-expect-error`, a number written to `"scale.xy"` type-checks, and the `Hash`/dynamic-string fallback still type-checks. `packages/types/test-d/go-animate-property-values.ts` pins `go.animate`: a number fills a vector key, a quaternion into `"position"` or a number into `"rotation"` carries `@ts-expect-error`, a dynamic or hashed key keeps the wide target, and the curried form rejects read-only and non-numeric keys of `sprite.Properties` and of a `ScriptPropertiesOf` shape. `packages/types/test-d/go-property-access.ts` pins the caller-named-component generic: `go.get<sprite.Properties>()("#sprite", "animation")` is `Hash`, a wrong key, a wrong value type and a write to the read-only `"animation"` carry `@ts-expect-error`, and the bare transform call still resolves; it also pins the cross-script channel — a `ScriptPropertiesOf<typeof enemyScript>`-named read is typed, a write is value-gated, and a wrong key or wrong value type carries `@ts-expect-error`. `packages/types/test-d/component-properties.ts` pins the member types the catalogs resolve to: the `camera` members read as `number`, `camera.projection` / `camera.view` as `Matrix4` and `sprite.frame_count` as `number`, with a `Hash` annotation on the last carrying `@ts-expect-error`; every model texture key `"texture0"` through `"texture15"` reads and writes as `Hash`, sprite `"texture0"` and mesh `"vertices"` read as `Hash`, and the `"textureN"` placeholder, the out-of-range `"texture16"` and an undeclared mesh key carry `@ts-expect-error`. The same file pins the keys taken from the engine source at their kinds, including the `"position.x"`-style transform keys, and puts `@ts-expect-error` on a typed write to model `"animation"`, sprite `"texture0"` and each factory's `"prototype"`. `packages/types/test-d/scene-address-properties.ts` pins the address-resolved form: a linked script's keys and their vector elements read at their declared types while an undeclared key, a transform key and a `string` key carry `@ts-expect-error`; a `"sprite"` or `"collisionobject"` address types its catalog's keys and still accepts a material constant; and `""`, `"#"`, an unregistered kind, a `Url`, a `Hash` and a `string` keep the transform-plus-wide typing, while a literal with no `#` rejects a non-transform key. `packages/types/test-d/lifecycle.ts` proves `ScriptPropertiesOf` extracts exactly the declared property shape (excess and wrong-typed fields carry `@ts-expect-error`), tying it to the `self` channel. If the property catalog is dropped, its member types change, or the overloads regress, one of these lines flips and the typecheck gate fails.
 
 #### GUI node properties are a closed set
 
@@ -2405,7 +2407,7 @@ Every route below is optional, and they combine. An id no route declares still c
 | --- | --- | --- | --- |
 | Handle it | The receiver's `onMessage` handler | Nothing new | The handler's own `message` |
 | Import the payload type | An exported type beside the handler | `import type` and a typed value | Whatever that value is assigned to |
-| Scene address | The receiver's handlers, linked by [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) | A literal component address such as `"/logic#wave"` or `"#wave"` | `msg.post` ids and payloads sent to that address |
+| Scene address | The receiver's handlers, linked by [`scene-types`](./scene-types.md#component-addresses-carry-their-messages-and-properties) | A literal component address such as `"/logic#wave"` or `"#wave"` | `msg.post` ids and payloads sent to that address |
 | Typed receiver | The receiver's handlers, read by `ScriptMessages` | `msg.url<M>(...)` | `msg.post` ids and payloads sent to that address |
 | [`CustomMessages`](#declaring-your-own-messages) | One program-wide interface | Nothing new | Every `msg.post`, `isMessage` and `onMessage` in the program |
 
@@ -2456,7 +2458,7 @@ export default defineScript({
 
 A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
 
-**Scene address.** This is the default when the receiver is a literal address your scenes declare. [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to its source, so the sender needs no import — `src/launcher.ts`:
+**Scene address.** This is the default when the receiver is a literal address your scenes declare. [`scene-types`](./scene-types.md#component-addresses-carry-their-messages-and-properties) links each script component's address to its source, so the sender needs no import — `src/launcher.ts`:
 
 ```ts
 import { defineScript } from "@defold-typescript/types";
@@ -9504,10 +9506,10 @@ declare global {
   }
 
   interface SceneComponentAddresses {
-    "#controller": true;
-    "#sprite": true;
-    "/player/player#controller": true;
-    "/player/player#sprite": true;
+    "#controller": "script";
+    "#sprite": "sprite";
+    "/player/player#controller": "script";
+    "/player/player#sprite": "sprite";
   }
 }
 ```
@@ -9534,16 +9536,19 @@ indistinguishable from an object that genuinely owns none. Nothing here is a
 rejection: an address composed at runtime still type-checks, it is simply not
 offered as a completion.
 
-#### Script addresses carry their messages
+#### Component addresses carry their messages and properties
 
-When a component names a script that your program compiles, its address is
-written as that script's module instead of `true`:
+Each component address is written as what the component is. When a component
+names a script that your program compiles, its address is that script's module.
+Every other component address is its kind: the extension of the resource it
+names, or the `type` of an embedded component.
 
 ```ts
 interface SceneComponentAddresses {
   "#wave": typeof import("../src/wave").default;
   "/logic#wave": typeof import("../src/wave").default;
-  "/logic#sprite": true;
+  "/logic#sprite": "sprite";
+  "/logic#legacy": "script";
 }
 ```
 
@@ -9551,19 +9556,51 @@ interface SceneComponentAddresses {
 [`onMessage` handlers](./messages.md#ways-to-type-your-messages) declare. The
 source is found by mapping each program file forward to the resource it builds,
 so an `outDir` works. The source must be a `defineScript` (or `defineGuiScript`)
-file; any other source stays `true`, as do embedded components, non-script
-resources and scripts outside your program.
+file. A script outside your program is written as `"script"`, and a component
+whose kind cannot be read is written as `true`.
 
 Two address forms are linked automatically:
 
 - an absolute, literal component address your scenes declare, such as
   `"/logic#wave"`;
-- a bare `"#wave"`, when every `wave` component in the project names the same
-  script.
+- a bare `"#wave"`, when every `wave` component in the project is written the
+  same way: the same script, or the same kind.
 
 An object-relative address such as `"buddy#controller"`, a bare game-object
 address and a URL built at runtime are not linked; use `msg.url<M>(...)` or
 `CustomMessages` for those.
+
+##### Property keys follow the address
+
+`go.get`, `go.set` and `go.animate` read the property catalog of a literal
+address:
+
+- **A linked script** takes the properties its `defineScript({ properties })`
+  declares, plus each element of a vector or quaternion property, such as
+  `"target.x"`. Any other key is a compile error, because the engine raises for
+  it.
+- **A registered kind** takes the keys its catalog names at their types. The
+  registered kinds are `sprite`, `label`, `model`, `mesh`, `collisionobject`
+  (`physics.Properties`), `factory` and `collectionfactory`. Any other key, such
+  as a material constant, takes the wide value.
+- **A literal with no `#`**, such as `"."` or `"/player"`, is a game object. Its
+  only properties are its transform, `go.Properties`, so any other key is a
+  compile error.
+
+```ts
+// src/wave.ts declares defineScript({ properties: { delay: 2 }, ... })
+go.get("/logic#wave", "delay");                   // number
+go.get("/logic#wave", "dleay");                   // error: wave declares no dleay
+go.set("/logic#sprite", "playback_rate", "fast"); // error: playback_rate is a number
+go.set("/logic#sprite", "tint", vmath.vector4()); // a material constant: wide value
+go.get(".", "delay");                             // error: a game object has no script property
+```
+
+`""` and `"#"` resolve to the calling script, so they stay untyped. So do an
+address whose kind has no catalog (`particlefx`, `sound`, `camera`, …), a
+`string` variable, a `Url` and a `Hash`. A key passed as `hash("delay")` is
+accepted on every address and reads the wide value. An extension registers its
+own kind by augmenting the global `SceneComponentCatalogs` interface.
 
 #### Which world an address resolves in
 
@@ -9650,7 +9687,7 @@ a `#fragment` naming a component no scene declares becomes a build warning, and 
 hole here — an unresolved dependency included — suppresses that check rather than
 reporting the fragment.
 
-#### Nothing is ever rejected
+#### An address is never rejected
 
 `SceneGameObjectAddress` and `SceneComponentAddress` stay widened with
 `(string & {})`. The keys only *add* suggestions:
@@ -9660,8 +9697,13 @@ const spawned = `/enemy${index}`;
 msg.post(spawned, "hello"); // fine — a runtime-composed address is still a string
 ```
 
-A project that has never run this verb behaves exactly as before, with both
-interfaces empty. Running it against a project with no scene files at all
+A property key is checked instead: a key that a linked script does not declare
+is a compile error, and so is a key outside the transform on a game-object
+literal, with or without this verb (see
+[Property keys follow the address](#property-keys-follow-the-address)).
+
+In a project that has never run this verb both interfaces are empty, so no
+component address is linked. Running it against a project with no scene files at all
 succeeds and writes an empty-but-valid declaration.
 
 #### Putting it in your program
@@ -15458,17 +15500,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### go
 
 - go.animate<P>(): <K extends AnimatableKey<P>>(url: SceneAddress | Hash | Url, property: K, playback: go.Playback, to: AnimateTarget<P[K]>, easing: Vector | go.Easing, duration: number, ...rest: [] | [delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void]) => void
-- go.animate<K extends keyof go.Properties | (string & {}) | Hash>(url: SceneAddress | Hash | Url, property: K, playback: go.Playback, to: K extends keyof go.Properties ? AnimateTarget<go.Properties[K]> : number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void
-- go.animate<K extends keyof go.Properties | (string & {}) | Hash>(url: SceneAddress | Hash | Url, property: K, playback: go.Playback, to: K extends keyof go.Properties ? AnimateTarget<go.Properties[K]> : number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void
+- go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateTo<AddressCatalog<R>["catalog"], K>, easing: Vector | go.Easing, duration: number): void
+- go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateTo<AddressCatalog<R>["catalog"], K>, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;
 - function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, ...options: [] | [GoPropertyOptions]) => P[K]
-- go.get<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K): go.Properties[K]
-- go.get<K extends keyof go.Properties>(url: SceneAddress | Hash | Url, property: K, options: GoPropertyOptions): go.Properties[K]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options: GoPropertyOptions): number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]
+- go.get<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K): PropertyRead<AddressCatalog<R>["catalog"], K>
+- go.get<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, options: GoPropertyOptions): PropertyRead<AddressCatalog<R>["catalog"], K>
 - function get_id(): Hash;
 - function get_id(path: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
@@ -15489,9 +15529,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: string): ScriptProperty<string>
-- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], ...options: [] | [GoPropertyOptions]) => void
-- go.set<K extends keyof go.Properties | (string & {}) | Hash>(url: SceneAddress | Hash | Url, property: K, value: K extends keyof go.Properties ? TransformWrite<K> : number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[]): void
-- go.set<K extends keyof go.Properties | (string & {}) | Hash>(url: SceneAddress | Hash | Url, property: K, value: K extends keyof go.Properties ? TransformWrite<K> : number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion | Matrix4 | Vector4[], options: GoPropertyOptions): void
+- go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWrite<P, K>, ...options: [] | [GoPropertyOptions]) => void
+- go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWrite<AddressCatalog<R>["catalog"], K>): void
+- go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWrite<AddressCatalog<R>["catalog"], K>, options: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;

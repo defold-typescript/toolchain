@@ -28,6 +28,10 @@ export interface SceneObjectPathIndex {
   // withheld: its payload is the component, so it names no resource. Withheld
   // for exactly the keys `componentsOf` withholds, on the same rule.
   readonly componentResourcesOf: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  // For each object, the kind of each component it owns where one is readable:
+  // a referenced resource's extension, or an embedded component's `type`.
+  // Withheld for exactly the keys `componentsOf` withholds, on the same rule.
+  readonly componentKindsOf: ReadonlyMap<string, ReadonlyMap<string, string>>;
   readonly incomplete: readonly string[];
 }
 
@@ -37,6 +41,7 @@ interface PathLeaf {
   readonly declarer: string;
   readonly components: readonly string[] | undefined;
   readonly resources: ReadonlyMap<string, string> | undefined;
+  readonly kinds: ReadonlyMap<string, string> | undefined;
 }
 
 // The two blocks whose `id` is a leaf segment. `collection_instances` is handled
@@ -85,6 +90,7 @@ export function buildSceneObjectPathIndex(
       declaredIn: new Map(),
       componentsOf: new Map(),
       componentResourcesOf: new Map(),
+      componentKindsOf: new Map(),
       incomplete,
     };
   }
@@ -112,6 +118,7 @@ export function buildSceneObjectPathIndex(
   interface PrototypeDeclarations {
     readonly components: readonly string[];
     readonly resources: ReadonlyMap<string, string>;
+    readonly kinds: ReadonlyMap<string, string>;
   }
   const prototypeDeclarations = new Map<string, PrototypeDeclarations | undefined>();
 
@@ -122,7 +129,11 @@ export function buildSceneObjectPathIndex(
     let declarations: PrototypeDeclarations | undefined;
     if (document !== undefined) {
       const collected = collectComponentDeclarations(document, key, incomplete);
-      declarations = { components: [...collected.ids].sort(), resources: collected.resources };
+      declarations = {
+        components: [...collected.ids].sort(),
+        resources: collected.resources,
+        kinds: collected.kinds,
+      };
     }
     prototypeDeclarations.set(key, declarations);
     return declarations;
@@ -149,6 +160,7 @@ export function buildSceneObjectPathIndex(
         if (id === undefined || id === "") continue;
         let components: readonly string[] | undefined;
         let resources: ReadonlyMap<string, string> | undefined;
+        let kinds: ReadonlyMap<string, string> | undefined;
         if (blockName === "embedded_instances") {
           // The payload declares the object outright, so the same collector the
           // flat index uses reads it — and names the document itself when the
@@ -163,6 +175,7 @@ export function buildSceneObjectPathIndex(
           if (incomplete.length === before) {
             components = [...declarations.ids].sort();
             resources = declarations.resources;
+            kinds = declarations.kinds;
           }
         } else {
           const prototype = firstField(block, "prototype");
@@ -176,13 +189,14 @@ export function buildSceneObjectPathIndex(
             const declarations = declarationsOfPrototype(resourceKey(prototype));
             components = declarations?.components;
             resources = declarations?.resources;
+            kinds = declarations?.kinds;
           } else {
             incomplete.push(
               `${displayPath}: the instance "${id}" names ${prototype}, which is not among the project's readable scene documents`,
             );
           }
         }
-        paths.set(`/${id}`, { declarer: displayPath, components, resources });
+        paths.set(`/${id}`, { declarer: displayPath, components, resources, kinds });
       }
     }
 
@@ -224,6 +238,7 @@ export function buildSceneObjectPathIndex(
   const declaredIn = new Map<string, string[]>();
   const componentsOf = new Map<string, string[]>();
   const componentResourcesOf = new Map<string, Map<string, string>>();
+  const componentKindsOf = new Map<string, Map<string, string>>();
   // An address two leaves compose is only as provable as its weakest leaf: one
   // unread prototype withholds the claim for the whole key rather than letting
   // the readable half stand in for both.
@@ -241,7 +256,11 @@ export function buildSceneObjectPathIndex(
         // declaring files still answer for it.
         declarers.push(leaf.declarer);
       }
-      if (leaf.components === undefined || leaf.resources === undefined) {
+      if (
+        leaf.components === undefined ||
+        leaf.resources === undefined ||
+        leaf.kinds === undefined
+      ) {
         withheld.add(key);
         continue;
       }
@@ -262,12 +281,21 @@ export function buildSceneObjectPathIndex(
           if (!referenced.has(id)) referenced.set(id, resource);
         }
       }
+      const typed = componentKindsOf.get(key);
+      if (typed === undefined) {
+        componentKindsOf.set(key, new Map(leaf.kinds));
+      } else {
+        for (const [id, kind] of leaf.kinds) {
+          if (!typed.has(id)) typed.set(id, kind);
+        }
+      }
     }
   }
   for (const declarers of declaredIn.values()) declarers.sort();
   for (const key of withheld) {
     componentsOf.delete(key);
     componentResourcesOf.delete(key);
+    componentKindsOf.delete(key);
   }
   for (const owned of componentsOf.values()) owned.sort();
 
@@ -282,6 +310,7 @@ export function buildSceneObjectPathIndex(
     declaredIn,
     componentsOf,
     componentResourcesOf,
+    componentKindsOf,
     incomplete: [...new Set(incomplete)],
   };
 }
