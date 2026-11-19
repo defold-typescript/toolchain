@@ -38,6 +38,9 @@ declare global {
       tile_source: Hash;
     }
   }
+  interface SceneComponentCatalogs {
+    tilemap: tilemap.Properties;
+  }
 }
 
 export {};

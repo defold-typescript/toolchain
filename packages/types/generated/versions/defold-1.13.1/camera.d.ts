@@ -298,6 +298,9 @@ declare global {
       readonly view: Matrix4;
     }
   }
+  interface SceneComponentCatalogs {
+    camera: camera.Properties;
+  }
 }
 
 export {};

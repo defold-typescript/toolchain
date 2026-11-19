@@ -2637,6 +2637,20 @@ export type TableSlotCuration = (
 // entries carry its members, so it signs no TYPEDEF of its own.
 export const PROPERTIES_INTERFACE = engineTypeName("properties");
 
+// The component kinds whose generated namespace registers its properties
+// interface in the global `SceneComponentCatalogs`, under the kind `scene-types`
+// writes, which equals the namespace. Each is declared on only some targets or
+// kind surfaces, so it registers where it is emitted. The kinds every surface
+// declares register in `src/component-properties.d.ts` instead, which also
+// reaches surfaces that load no generated namespace file of theirs.
+export const GENERATED_CATALOG_KINDS: ReadonlySet<string> = new Set([
+  "camera",
+  "gui",
+  "particlefx",
+  "sound",
+  "tilemap",
+]);
+
 // The ref-doc tokens of the handles `socket.select` takes and returns, in their
 // 1.13.2 TYPEDEF spelling, which the type map resolves to each handle's interface.
 export const SOCKET_HANDLE_TOKENS = (["client", "master", "unconnected"] as const).map(
@@ -5314,6 +5328,11 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   }
 
   lines.push("}");
+  if (GENERATED_CATALOG_KINDS.has(module.namespace) && module.properties.length > 0) {
+    lines.push("interface SceneComponentCatalogs {");
+    lines.push(`${INDENT}${module.namespace}: ${module.namespace}.${PROPERTIES_INTERFACE};`);
+    lines.push("}");
+  }
   return `${lines.join("\n")}\n`;
 }
 

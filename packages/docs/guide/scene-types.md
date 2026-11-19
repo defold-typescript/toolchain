@@ -109,8 +109,12 @@ address:
   it.
 - **A registered kind** takes the keys its catalog names at their types. The
   registered kinds are `sprite`, `label`, `model`, `mesh`, `collisionobject`
-  (`physics.Properties`), `factory` and `collectionfactory`. Any other key, such
-  as a material constant, takes the wide value.
+  (`physics.Properties`), `factory`, `collectionfactory`, `particlefx`, `sound`,
+  `tilemap`, `camera` and `gui`. `camera` registers from Defold 1.13.0 on, the
+  first version whose API declares camera properties. `gui` registers wherever
+  the `gui` namespace loads, so in a directory [walled](./wall.md) to the script
+  surface a gui address takes the wide value. Any other key, such as a material
+  constant, takes the wide value.
 - **A literal with no `#`**, such as `"."` or `"/player"`, is a game object. Its
   only properties are its transform, `go.Properties`, so any other key is a
   compile error.
@@ -125,10 +129,11 @@ go.get(".", "delay");                             // error: a game object has no
 ```
 
 `""` and `"#"` resolve to the calling script, so they stay untyped. So do an
-address whose kind has no catalog (`particlefx`, `sound`, `camera`, …), a
-`string` variable, a `Url` and a `Hash`. A key passed as `hash("delay")` is
-accepted on every address and reads the wide value. An extension registers its
-own kind by augmenting the global `SceneComponentCatalogs` interface.
+address whose kind has no catalog, such as a script outside your program
+(`"script"`) or a native extension's component, a `string` variable, a `Url` and
+a `Hash`. A key passed as `hash("delay")` is accepted on every address and reads
+the wide value. An extension registers its own kind by augmenting the global
+`SceneComponentCatalogs` interface.
 
 ## Which world an address resolves in
 

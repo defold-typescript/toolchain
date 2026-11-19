@@ -1,5 +1,5 @@
 /// <reference path="../index.d.ts" />
-import type { Hash, Url, Vector3 } from "../src/core-types";
+import type { Hash, Matrix4, Url, Vector3 } from "../src/core-types";
 import type { ScriptPropertiesOf } from "../src/lifecycle";
 import type enemy from "./script-properties/enemy";
 
@@ -7,14 +7,20 @@ type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // What `scene-types` writes for a `/props` object hosting one linked script and
-// one component of each other shape: a registered kind, a kind with no
-// registered catalog, and a component whose kind could not be read.
+// one component of each other shape: a registered kind, a kind whose catalog its
+// generated namespace registers, an unlinked script, and a component whose kind
+// could not be read.
 declare global {
   interface SceneComponentAddresses {
     "/props#enemy": typeof import("./script-properties/enemy").default;
     "/props#sprite": "sprite";
     "/props#body": "collisionobject";
     "/props#fx": "particlefx";
+    "/props#camera": "camera";
+    "/props#music": "sound";
+    "/props#map": "tilemap";
+    "/props#hud": "gui";
+    "/props#legacy": "script";
     "/props#ui": true;
   }
 }
@@ -68,11 +74,37 @@ const _velocity: Equal<typeof velocity, Vector3> = true;
 // @ts-expect-error mass is read-only
 go.set("/props#body", "mass", 2);
 
+// A kind whose generated namespace declares its catalog reads that catalog.
+const fov = go.get("/props#camera", "fov");
+const view = go.get("/props#camera", "view");
+const _fov: Equal<typeof fov, number> = true;
+const _view: Equal<typeof view, Matrix4> = true;
+go.animate("/props#camera", "fov", PB, 60, E, 1);
+// @ts-expect-error fov is a number
+go.set("/props#camera", "fov", "wide");
+// @ts-expect-error projection is read-only
+go.set("/props#camera", "projection", vmath.matrix4());
+go.set("/props#camera", "anything", 1);
+go.set("/props#music", "gain", 0.5);
+go.animate("/props#music", "gain", PB, 0, E, 1);
+const sound = go.get("/props#music", "sound");
+const _sound: Equal<typeof sound, Hash> = true;
+// @ts-expect-error sound is a Hash, which the engine cannot animate
+go.animate("/props#music", "sound", PB, 0, E, 1);
+const fxMaterial = go.get("/props#fx", "material");
+const _fxMaterial: Equal<typeof fxMaterial, Hash> = true;
+// @ts-expect-error material is a Hash
+go.set("/props#fx", "material", 1);
+const tileSource = go.get("/props#map", "tile_source");
+const _tileSource: Equal<typeof tileSource, Hash> = true;
+const hudMaterial = go.get("/props#hud", "material");
+const _hudMaterial: Equal<typeof hudMaterial, Hash> = true;
+
 // An address with no catalog behaves as it does with no scene types at all.
 declare const asUrl: Url;
 declare const asHash: Hash;
 declare const asString: string;
-const fxPosition = go.get("/props#fx", "position");
+const legacyPosition = go.get("/props#legacy", "position");
 const uiPosition = go.get("/props#ui", "position");
 const nowherePosition = go.get("/nowhere#x", "position");
 const selfPosition = go.get("#", "position");
@@ -82,7 +114,7 @@ const hashPosition = go.get(asHash, "position");
 const stringPosition = go.get(asString, "position");
 const _unlinkedPositions: Equal<
   [
-    typeof fxPosition,
+    typeof legacyPosition,
     typeof uiPosition,
     typeof nowherePosition,
     typeof selfPosition,
@@ -93,7 +125,7 @@ const _unlinkedPositions: Equal<
   ],
   [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3]
 > = true;
-go.set("/props#fx", "anything", 1);
+go.set("/props#legacy", "anything", 1);
 go.set("/props#ui", "anything", 1);
 go.set("/nowhere#x", "anything", 1);
 go.set("#", "anything", 1);
@@ -101,7 +133,7 @@ go.set("", "anything", 1);
 go.set(asUrl, "anything", 1);
 go.set(asHash, "anything", 1);
 go.set(asString, "anything", 1);
-go.animate("/props#fx", "tint", PB, vmath.vector4(), E, 1);
+go.animate("/props#legacy", "tint", PB, vmath.vector4(), E, 1);
 go.animate("/props#ui", "tint", PB, vmath.vector4(), E, 1);
 go.animate("/nowhere#x", "tint", PB, vmath.vector4(), E, 1);
 go.animate("#", "tint", PB, vmath.vector4(), E, 1);
@@ -126,4 +158,19 @@ go.set("main:/props", "tint", vmath.vector4());
 msg.post("/props#sprite", "anything", { x: 1 });
 go.set<sprite.Properties>()("#sprite", "scale.xy", 2);
 
-void [_speed, _target, _targetX, _tag, _rate, _velocity, _unlinkedPositions, _ownPosition];
+void [
+  _speed,
+  _target,
+  _targetX,
+  _tag,
+  _rate,
+  _velocity,
+  _fov,
+  _view,
+  _sound,
+  _fxMaterial,
+  _tileSource,
+  _hudMaterial,
+  _unlinkedPositions,
+  _ownPosition,
+];

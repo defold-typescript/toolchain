@@ -1971,6 +1971,9 @@ declare global {
       textures: Hash;
     }
   }
+  interface SceneComponentCatalogs {
+    gui: gui.Properties;
+  }
 }
 
 export {};
