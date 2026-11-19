@@ -1322,9 +1322,18 @@ export default defineScript({
 });
 ```
 
+To check the table against the spawned script's declared properties, name its
+shape in the curried form; an undeclared name or a wrongly typed value is then a
+type error ([Check the properties a factory spawns with](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)):
+
+```ts
+const enemy = factory.create<EnemyProps>()("#enemyfactory", undefined, undefined, { health: 100 });
+```
+
 Confirm `factory.create` against
-`node_modules/@defold-typescript/types/generated/factory.d.ts` and build the
-snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
+`node_modules/@defold-typescript/types/generated/factory.d.ts`, and the curried
+form against `node_modules/@defold-typescript/types/src/factory-overloads.d.ts`,
+and build the snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
 
 ## Spawn a hierarchy with a collection factory
 

@@ -13,13 +13,15 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`go.animate` and `go.set` check the value against the property** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+> - **`go.animate` and `go.set` check the value against the property, and `factory.create` checks a spawned script's properties** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 > - **A scene address types its property keys,** so `go.get` on a linked script or a built-in component such as a sprite or a sound reads that component's catalog ([Scene types](./scene-types.md#property-keys-follow-the-address)).
 
 ### Improved
 
-- **`go.animate` checks its target value against the property:** on a transform key a number fills a vector such as `"position"` and `"rotation"` takes only a quaternion, and `go.animate<P>()` takes a component catalog such as `sprite.Properties` or a `ScriptPropertiesOf` shape and accepts only the keys the engine can animate. `go.set` rejects a wrong value on a transform key too, such as a quaternion for `"position"`, instead of accepting it as an untyped write ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
-- **`go.get`, `go.set` and `go.animate` type a property key by its address:** `scene-types` writes each component address that names no compiled script as its kind, such as `"sprite"`, instead of `true`, so a linked script's address takes only its declared properties, a sprite, label, model, mesh, collision object, factory, collection factory, particle effect, sound, tile map, camera (Defold 1.13.0 and later) or gui address types its catalog's keys, and a literal with no `#`, such as `"."`, takes only the transform keys. An extension can register its own kind in `SceneComponentCatalogs` ([Scene types](./scene-types.md#property-keys-follow-the-address)).
+- **Property keys and values are checked against what the target declares:**
+  - **`go.animate`** checks its target value against the property: on a transform key a number fills a vector such as `"position"` and `"rotation"` takes only a quaternion, and `go.animate<P>()` takes a component catalog such as `sprite.Properties` or a `ScriptPropertiesOf` shape and accepts only the keys the engine can animate. `go.set` rejects a wrong value on a transform key too, such as a quaternion for `"position"`, instead of accepting it as an untyped write ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`go.get`, `go.set` and `go.animate`** type a property key by its address: `scene-types` writes each component address that names no compiled script as its kind, such as `"sprite"`, instead of `true`, so a linked script's address takes only its declared properties, a sprite, label, model, mesh, collision object, factory, collection factory, particle effect, sound, tile map, camera (Defold 1.13.0 and later) or gui address types its catalog's keys, and a literal with no `#`, such as `"."`, takes only the transform keys. An extension can register its own kind in `SceneComponentCatalogs` ([Scene types](./scene-types.md#property-keys-follow-the-address)).
+  - **`factory.create`** checks the spawned script's properties in its curried form: `factory.create<P>()(url, position, rotation, properties, scale)` with a `ScriptPropertiesOf` shape as `P` makes an undeclared name or a wrongly typed value in `properties` a type error, and the build removes the empty call ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 
 ### Fixed
 
