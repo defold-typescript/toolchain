@@ -47,4 +47,30 @@ describe("type-application erasure", () => {
       "
     `);
   });
+
+  test("factory.create<P>() reaches Lua as the engine function itself", () => {
+    const result = transpile(
+      [
+        "declare const url: Url;",
+        "interface EnemyProps { speed: number }",
+        "factory.create<EnemyProps>()(url, undefined, undefined, { speed: 2 });",
+        "const spawn = factory.create<EnemyProps>();",
+        "spawn(url);",
+        "factory.create(url);",
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      factory.create(url, nil, nil, {speed = 2})
+      local spawn = factory.create
+      spawn(url)
+      factory.create(url)
+      return ____exports
+      "
+    `);
+  });
 });

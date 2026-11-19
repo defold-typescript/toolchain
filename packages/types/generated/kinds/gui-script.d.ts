@@ -50,6 +50,7 @@ import "../zlib";
 import "../../src/component-properties";
 import "../../src/custom-messages";
 import "../../src/engine-globals";
+import "../../src/factory-overloads";
 import "../../src/go-overloads";
 import "../../src/gui-overloads";
 import "../../src/gui-texture-removal";
