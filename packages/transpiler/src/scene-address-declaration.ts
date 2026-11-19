@@ -29,27 +29,46 @@ function componentAddressesOf(
   return keys;
 }
 
-// What a component address resolves to: `true` for an address that names no
-// script this program compiles, else the specifier of the script module it hosts.
-type AddressValues = ReadonlyMap<string, string | undefined>;
+// What a component address resolves to, as the type text written for it: the
+// default export of the script module it hosts, else its component kind as a
+// string literal (`"sprite"`), else `true` for a component whose kind cannot be
+// read.
+type AddressValues = ReadonlyMap<string, string>;
+
+const UNKNOWN = "true";
+
+function valueText(
+  resource: string | undefined,
+  kind: string | undefined,
+  scriptModules: ReadonlyMap<string, string>,
+): string {
+  const specifier = resource === undefined ? undefined : scriptModules.get(resource);
+  if (specifier !== undefined) return `typeof import(${JSON.stringify(specifier)}).default`;
+  return kind === undefined ? UNKNOWN : JSON.stringify(kind);
+}
 
 // A bare `#id` is typed only when every declaration of that id anywhere in the
-// project names the same mapped script. The per-object walk covers each object a
+// project writes the same value. The per-object walk covers each object a
 // world reaches; the per-document pass covers what it cannot — a factory
 // prototype with no static path, an embedded component under the same id — so a
-// bare address never borrows one object's script for another's component.
-function bareScriptsOf(
+// bare address never borrows one object's script or kind for another's
+// component. Agreeing on the written value rather than on the resource lets two
+// sprites with different images share a kind.
+function bareValuesOf(
   documents: ReadonlyMap<string, string>,
   paths: SceneObjectPathIndex,
-): Map<string, string | undefined> {
-  const agreed = new Map<string, string | undefined>();
-  const record = (id: string, resource: string | undefined): void => {
-    if (!agreed.has(id)) agreed.set(id, resource);
-    else if (agreed.get(id) !== resource) agreed.set(id, undefined);
+  scriptModules: ReadonlyMap<string, string>,
+): Map<string, string> {
+  const agreed = new Map<string, string>();
+  const record = (id: string, value: string): void => {
+    const previous = agreed.get(id);
+    if (previous === undefined) agreed.set(id, value);
+    else if (previous !== value) agreed.set(id, UNKNOWN);
   };
   for (const [path, ids] of paths.componentsOf) {
     const resources = paths.componentResourcesOf.get(path);
-    for (const id of ids) record(id, resources?.get(id));
+    const kinds = paths.componentKindsOf.get(path);
+    for (const id of ids) record(id, valueText(resources?.get(id), kinds?.get(id), scriptModules));
   }
   for (const [displayPath, text] of documents) {
     let declarations: ReturnType<typeof collectComponentDeclarations>;
@@ -59,7 +78,12 @@ function bareScriptsOf(
       if (!(error instanceof SceneTextFormatError)) throw error;
       continue;
     }
-    for (const id of declarations.ids) record(id, declarations.resources.get(id));
+    for (const id of declarations.ids) {
+      record(
+        id,
+        valueText(declarations.resources.get(id), declarations.kinds.get(id), scriptModules),
+      );
+    }
   }
   return agreed;
 }
@@ -69,22 +93,21 @@ function componentValuesOf(
   paths: SceneObjectPathIndex,
   scriptModules: ReadonlyMap<string, string>,
 ): AddressValues {
-  const values = new Map<string, string | undefined>();
-  const moduleOf = (resource: string | undefined): string | undefined =>
-    resource === undefined ? undefined : scriptModules.get(resource);
-  const keys = componentAddressesOf(documents, paths);
-  if (scriptModules.size === 0) {
-    for (const key of keys) values.set(key, undefined);
-    return values;
-  }
-  const bare = bareScriptsOf(documents, paths);
-  for (const key of keys) {
+  const values = new Map<string, string>();
+  const bare = bareValuesOf(documents, paths, scriptModules);
+  for (const key of componentAddressesOf(documents, paths)) {
     const hash = key.indexOf("#");
     const path = key.slice(0, hash);
     const id = key.slice(hash + 1);
     values.set(
       key,
-      moduleOf(path === "" ? bare.get(id) : paths.componentResourcesOf.get(path)?.get(id)),
+      path === ""
+        ? (bare.get(id) ?? UNKNOWN)
+        : valueText(
+            paths.componentResourcesOf.get(path)?.get(id),
+            paths.componentKindsOf.get(path)?.get(id),
+            scriptModules,
+          ),
     );
   }
   return values;
@@ -97,18 +120,14 @@ function componentValuesOf(
 function bodyOf(values: AddressValues): string {
   if (values.size === 0) return "{}";
   const members = [...values]
-    .map(([key, specifier]) => {
-      const value =
-        specifier === undefined ? "true" : `typeof import(${JSON.stringify(specifier)}).default`;
-      return `    ${JSON.stringify(key)}: ${value};\n`;
-    })
+    .map(([key, value]) => `    ${JSON.stringify(key)}: ${value};\n`)
     .sort()
     .join("");
   return `{\n${members}  }`;
 }
 
 function trueValues(keys: Iterable<string>): AddressValues {
-  return new Map([...keys].map((key) => [key, undefined]));
+  return new Map([...keys].map((key) => [key, UNKNOWN]));
 }
 
 /**
@@ -126,8 +145,11 @@ function trueValues(keys: Iterable<string>): AddressValues {
  * `scriptModules` maps a script resource a scene names to the import specifier
  * of the program source that compiles to it, relative to the declaration file.
  * A component address whose resource maps is written as that module's default
- * export, so `msg.post` can read the script's messages off it; every other
- * address stays `true`. Omitted, every address is `true`.
+ * export, so `msg.post` can read the script's messages off it and `go.get` its
+ * properties. Every other component address is written as its kind — the
+ * referenced resource's extension or the embedded component's `type` — so
+ * `go.get` can read that kind's property catalog; one whose kind cannot be read
+ * stays `true`. Omitted, no address names a module.
  */
 export function buildSceneAddressDeclaration(
   documents: ReadonlyMap<string, string>,

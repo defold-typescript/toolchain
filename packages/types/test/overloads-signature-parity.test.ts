@@ -384,7 +384,7 @@ function renderOverloadGates(spec: OverloadNamespace): Record<string, (string | 
 // entry is a deliberate declaration that the overload set itself changed.
 const OVERLOAD_COUNTS: Record<string, number> = {
   "go.animate": 3,
-  "go.get": 5,
+  "go.get": 3,
   "go.set": 3,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
@@ -478,15 +478,15 @@ describe("curried and multi-paragraph overload rendering", () => {
 
   test("go.set's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.set"]?.[0]).toBe(
-      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: P[K], ...options: [] | [GoPropertyOptions]) => void",
+      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWrite<P, K>, ...options: [] | [GoPropertyOptions]) => void",
     );
   });
 
   test("an overload with no JSDoc description maps to null, not an empty string", () => {
     const get = goDescriptions["go.get"] ?? [];
-    expect(get).toHaveLength(5);
+    expect(get).toHaveLength(3);
     expect(typeof get[0]).toBe("string");
-    expect(get.slice(1)).toEqual([null, null, null, null]);
+    expect(get.slice(1)).toEqual([null, null]);
 
     const property = goDescriptions["go.property"] ?? [];
     // 8 is the published overload count for `go.property` (one documented plus the

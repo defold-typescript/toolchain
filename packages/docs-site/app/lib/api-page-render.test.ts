@@ -2634,7 +2634,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
     };
     // The table names the options argument, so it sits under the forms that take it.
     expect(placement("go", "go.get")).toEqual({
-      forms: [false, false, true, false, true],
+      forms: [false, false, true],
       block: false,
     });
     expect(placement("go", "go.set")).toEqual({
@@ -2677,7 +2677,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
     const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
     const typed = toHtml(overloadForms(get)[2] ?? { type: "root", children: [] });
     expect(typed).toContain(`<li>${nameCode("options")}:${G}${typeCode("GoPropertyOptions")}`);
-    expect(typed).toContain(`${G}${typeCode("go.Properties[K]")}`);
+    expect(typed).toContain(`${G}${typeCode('PropertyRead<AddressCatalog<R>["catalog"], K>')}`);
   });
 
   test("overloads that coexist keep each form's own example under that form", async () => {
