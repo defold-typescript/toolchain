@@ -214,8 +214,8 @@ append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
 it under the library folder's `source/upstream/`, at the same path it has
 upstream — so `britzl/defold-input` at `in/button.lua` lands at
 `defold-input/source/upstream/in/button.lua`. Vendor only the module file
-the target names, never the whole repository: the digest map is per-file, and an
-unused copy is dead weight the pin still has to defend.
+the target names, never the whole repository: the parity report measures only the
+files the target names, so any other copy is dead weight.
 
 The reader accepts two closing forms: a bare `return M`, and a callable module's
 `return setmetatable(M, { … })` — on one line or spread over several, as long as it
@@ -354,10 +354,11 @@ measures the fork against the same floors.
 `missingFields`, or `phantomFields` is a correction to make in the fork — never a
 number to re-baseline.** The measurement exists so the gap stays visible while it
 is being closed; the current numbers are the honest starting point, not a target.
-The vendored `.lua` copies are SHA-256-pinned for the same reason: re-vendoring at
-a different upstream ref would change what every committed number means without
-changing the number, so the pin must break loudly and the reports be re-measured
-rather than the digest updated.
+The committed reports are held to a fresh measurement for the same reason:
+`authored-parity-floor.test.ts` re-measures every target and reds when a committed
+report differs, so a re-vendor, fork edit or reader change that moves a number reds
+until `bun run --cwd packages/library-types parity` rewrites the reports and the
+coverage change is reviewed.
 
 `nakama` is the worked example and the rollout's closing statement: its fork
 declared 166 functions against upstream's 156 with only **4** agreeing on arity —
