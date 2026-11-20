@@ -61,9 +61,9 @@ sys.save("/save.dat", io.stdout);
 // @ts-expect-error a Lua file handle is not a table
 sys.serialize(io.stdout);
 
-// Runtime-owned passthrough: the spawn-time `properties` overrides are keyed by
-// the spawned object's own script-property names, so the table is an arbitrary
-// literal accepted as-is, not a typed shape.
+// The spawn-time `properties` overrides are keyed by the spawned object's own
+// script-property names, so an object literal is accepted with any names; a
+// `LuaMap` must be keyed by string (engine-table-slots.ts).
 const arbTableSpawned: Hash | undefined = factory.create(
   "#factory",
   undefined,

@@ -30,6 +30,10 @@ declare global {
        * report transferred and total byte counts to the callback
        */
       report_progress?: boolean;
+      /**
+       * Proxy server URL; ignored on HTML5.
+       */
+      proxy?: string;
     }
     /**
      * Perform a HTTP/HTTPS request.

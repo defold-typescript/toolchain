@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Quaternion, Url, Vector3 } from "../src/core-types";
+import type { Hash, Quaternion, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
@@ -60,7 +60,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns
