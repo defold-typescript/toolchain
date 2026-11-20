@@ -123,6 +123,58 @@ describe("type-application erasure", () => {
     `);
   });
 
+  test("collectionfactory?.create<P>() hashes its instance ids through an optional chain", () => {
+    const result = transpile(
+      [
+        "declare const url: Url;",
+        "interface EnemyProps { speed: number }",
+        'interface SquadProps { "/enemy": EnemyProps; "/leader": EnemyProps }',
+        'collectionfactory?.create<SquadProps>()(url, undefined, undefined, { "/enemy": { speed: 2 } });',
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      if collectionfactory ~= nil then
+          collectionfactory.create(
+              url,
+              nil,
+              nil,
+              {[hash("/enemy")] = {speed = 2}}
+          )
+      end
+      return ____exports
+      "
+    `);
+  });
+
+  test("a tagged template's strings table reaches Lua unchanged", () => {
+    const result = transpile(
+      [
+        "declare function tag(strings: TemplateStringsArray, ...values: unknown[]): string;",
+        "const n = 3;",
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a tagged template in the transpiled source
+        "const s = tag`count ${n} done`;",
+        "print(s);",
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local n = 3
+      local s = tag({[1] = "count ", [2] = " done", raw = {"count ", " done"}}, n)
+      print(s)
+      return ____exports
+      "
+    `);
+  });
+
   test("collectionfactory.create<P>() rejects every form whose instance ids the build cannot hash", () => {
     const source = [
       "declare const url: Url;",
@@ -131,6 +183,7 @@ describe("type-application erasure", () => {
       "const spawn = collectionfactory.create<EnemyProps>();",
       'collectionfactory.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, props);',
       'collectionfactory.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, { ...props });',
+      'collectionfactory?.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, props);',
       "export {};",
       "",
     ].join("\n");
@@ -150,6 +203,7 @@ describe("type-application erasure", () => {
       { line: lineOf("const spawn"), message: stored },
       { line: lineOf("undefined, props)"), message: literal },
       { line: lineOf("{ ...props }"), message: literal },
+      { line: lineOf("collectionfactory?.create"), message: literal },
     ]);
   });
 });
