@@ -1,4 +1,9 @@
-import type { Heading } from "@defold-typescript/docs-render/headings";
+import { pageToc, type RenderedPage } from "@defold-typescript/docs-render/docs-markdown";
+import {
+  type AnyHeading,
+  type Heading,
+  hastHeadings,
+} from "@defold-typescript/docs-render/headings";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { createElement, type ReactNode } from "react";
@@ -53,14 +58,21 @@ export function pageTree(nav: NavCategory[]): Root {
 }
 
 // An outline entry reads like its heading: a signature in its syntax colors,
-// with an overload heading's `N overloads` badge where the heading shows it.
-function outlineTitle(heading: Heading): ReactNode {
-  if (!heading.markup) return heading.text;
-  return createElement("span", {
-    className: "shiki outline-signature",
-    // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's own token spans
-    dangerouslySetInnerHTML: { __html: heading.markup },
-  });
+// with an overload heading's `N overloads` badge where the heading shows it, or
+// a prose heading with its inline code and emphasis.
+function outlineTitle(heading: AnyHeading): ReactNode {
+  if (heading.markup)
+    return createElement("span", {
+      className: "shiki outline-signature",
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's own token spans
+      dangerouslySetInnerHTML: { __html: heading.markup },
+    });
+  if (heading.formatted)
+    return createElement("span", {
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's bare formatting elements, rebuilt from the page's own heading
+      dangerouslySetInnerHTML: { __html: heading.formatted },
+    });
+  return heading.text;
 }
 
 /** The outline of a page's H2 through H4 headings. */
@@ -70,4 +82,18 @@ export function outline(headings: readonly Heading[]): TOCItemType[] {
     url: `#${heading.id}`,
     depth: heading.level,
   }));
+}
+
+/**
+ * A guide page's outline: the entries the Markdown pipeline collected, each
+ * titled as its rendered heading reads, with the heading's inline formatting.
+ * The rendered headings also hold the footnotes' screen-reader-only heading,
+ * which the collected entries leave out.
+ */
+export function guideOutline(page: RenderedPage): TOCItemType[] {
+  const headings = new Map(hastHeadings(page.hast).map((heading) => [heading.id, heading]));
+  return pageToc(page.toc).map((item) => {
+    const heading = headings.get(item.url.slice(1));
+    return heading ? { ...item, title: outlineTitle(heading) } : item;
+  });
 }
