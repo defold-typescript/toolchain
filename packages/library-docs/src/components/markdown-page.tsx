@@ -1,7 +1,7 @@
-import { type DocsMarkdown, pageToc } from "@defold-typescript/docs-render/docs-markdown";
+import type { DocsMarkdown } from "@defold-typescript/docs-render/docs-markdown";
 import { MarkdownBody } from "@defold-typescript/docs-render/markdown-body";
 import { DocsBody, DocsPage } from "fumadocs-ui/layouts/docs/page";
-import { SITE_NAME } from "../lib/site";
+import { guideOutline, SITE_NAME } from "../lib/site";
 import { PageScripts } from "./page-scripts";
 
 /**
@@ -11,7 +11,7 @@ import { PageScripts } from "./page-scripts";
  */
 export function MarkdownPage({ title, page }: { title: string; page: DocsMarkdown }) {
   return (
-    <DocsPage toc={pageToc(page.toc)}>
+    <DocsPage toc={guideOutline(page)}>
       <title>{`${title} | ${SITE_NAME}`}</title>
       <DocsBody>
         <article data-page-body="">

@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { siteDirs } from "../../app/lib/api-content";
 import { type NavLink, OFFICIAL_NOTE } from "../../app/lib/nav";
 import { NO_TYPED_API_ICON } from "../../app/lib/no-typed-api-icon";
-import { navCategories, outline, pageTree } from "./site";
+import { guideOutline, navCategories, outline, pageTree } from "./site";
 
 const SITE_ROOT = join(import.meta.dir, "../..");
 const nav = navCategories(siteDirs(SITE_ROOT), join(SITE_ROOT, "guides"));
@@ -76,5 +76,27 @@ describe("outline", () => {
     expect(markup(signature?.title)).toBe(
       `<span class="shiki outline-signature">${NAME}${CALL}</span>`,
     );
+  });
+});
+
+const guidePage = await processDocsMarkdown(
+  "# Tetris\n\n## 04 — Define the tetrominoes: `src/pieces.ts`\n\n### How **a** _shape_ is ~~built~~\n\n### Plain\n\nText.[^1]\n\n[^1]: A note.\n",
+  { routePrefix: "" },
+);
+
+describe("guideOutline", () => {
+  const items = guideOutline(guidePage);
+
+  test("lists the page's H2 to H4 headings, leaving out the hidden footnotes heading", () => {
+    expect(items.map((item) => item.depth)).toEqual([2, 3, 3]);
+    expect(items.map((item) => item.url)).not.toContain("#footnote-label");
+  });
+
+  test("an entry keeps its heading's inline code, bold, italic and struck text", () => {
+    expect(items.map((item) => markup(item.title))).toEqual([
+      "<span>04 — Define the tetrominoes: <code>src/pieces.ts</code></span>",
+      "<span>How <strong>a</strong> <em>shape</em> is <del>built</del></span>",
+      "Plain",
+    ]);
   });
 });
