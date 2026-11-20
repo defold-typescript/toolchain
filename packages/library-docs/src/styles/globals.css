@@ -64,6 +64,12 @@ html {
   margin-top: 0;
 }
 
+/* An entry's inline code and bold keep their own face but take the entry's
+ * color, so they read muted or accented along with the rest of the entry. */
+:is(#nd-toc, [data-toc-popover]) a.prose :is(code, strong) {
+  color: inherit;
+}
+
 /* A signature entry shows its heading's syntax colors, which the entry's own
  * color cannot tint, so it fades instead while its section is off screen. */
 :is(#nd-toc, [data-toc-popover]) a.prose .outline-signature {
