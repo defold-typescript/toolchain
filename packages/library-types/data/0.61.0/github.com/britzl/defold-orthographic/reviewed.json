@@ -1,5 +1,5 @@
 {
-  "ref": "3.6.3",
+  "ref": "3.6.4",
   "reviews": [
     {
       "version": 1,
@@ -11,6 +11,18 @@
       "source": "5ada6a569e59b9e735fc9121ebfcc9baa89bc25e4b8b04df68610df3af018ed4",
       "members": {
         "orthographic/camera.lua": "7529f244354c1995"
+      }
+    },
+    {
+      "version": 1,
+      "commits": [
+        "ea8437b94c86174eeb03163a51c41d6744b0490f"
+      ],
+      "api": "ae1c5df21f505c9fd349465208e38d3535da231996a045cc3a786271a3e6be42",
+      "doc": "bb148fbfb8c0f9db504925ec22c70f6affcfe6c7d3976841f20c1e7e38f343f9",
+      "source": "6dea59027d7f34a932e900b170a883d68afd70ebd114e90781379f0c02f7f86a",
+      "members": {
+        "orthographic/camera.lua": "eb8eedf96a6e99b7"
       }
     }
   ]
