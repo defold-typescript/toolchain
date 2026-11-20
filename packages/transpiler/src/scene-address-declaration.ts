@@ -47,15 +47,39 @@ function valueText(
   return kind === undefined ? UNKNOWN : JSON.stringify(kind);
 }
 
+// Every value the leaves composing `path` write for `id`: one per recorded
+// variant where two worlds sharing a socket declare it differently, else the
+// single value every leaf agrees on.
+function pathValuesOf(
+  paths: SceneObjectPathIndex,
+  path: string,
+  id: string,
+  scriptModules: ReadonlyMap<string, string>,
+): string[] {
+  const variants = paths.componentVariantsOf.get(path)?.get(id);
+  if (variants !== undefined) {
+    return variants.map(({ resource, kind }) => valueText(resource, kind, scriptModules));
+  }
+  return [
+    valueText(
+      paths.componentResourcesOf.get(path)?.get(id),
+      paths.componentKindsOf.get(path)?.get(id),
+      scriptModules,
+    ),
+  ];
+}
+
 // A bare `#id` is typed only when every declaration of that id anywhere in the
-// project writes the same value. The per-object walk covers each object a
-// world reaches; the per-document pass covers what it cannot — a factory
-// prototype with no static path, an embedded component under the same id — so a
-// bare address never borrows one object's script or kind for another's
-// component. The per-document pass reads every declaration rather than one per
-// id, so two objects in one collection factory's collection disagree the same
-// way two objects in two files do. Agreeing on the written value rather than on
-// the resource lets two sprites with different images share a kind.
+// project writes the same value, and a path key only when every leaf composing
+// it does. The per-object walk covers each object a world reaches, every
+// variant of a shared-socket path included; the per-document pass covers what it
+// cannot — a factory prototype with no static path, an embedded component under
+// the same id — so a bare address never borrows one object's script or kind for
+// another's component. The per-document pass reads every declaration rather than
+// one per id, so two objects in one collection factory's collection disagree the
+// same way two objects in two files do. Agreeing on the written value rather than
+// on the resource lets two sprites with different images share a kind, at a bare
+// id and at a path alike.
 function bareValuesOf(
   documents: ReadonlyMap<string, string>,
   paths: SceneObjectPathIndex,
@@ -68,9 +92,9 @@ function bareValuesOf(
     else if (previous !== value) agreed.set(id, UNKNOWN);
   };
   for (const [path, ids] of paths.componentsOf) {
-    const resources = paths.componentResourcesOf.get(path);
-    const kinds = paths.componentKindsOf.get(path);
-    for (const id of ids) record(id, valueText(resources?.get(id), kinds?.get(id), scriptModules));
+    for (const id of ids) {
+      for (const value of pathValuesOf(paths, path, id, scriptModules)) record(id, value);
+    }
   }
   for (const [displayPath, text] of documents) {
     let declarations: ReturnType<typeof collectComponentDeclarations>;
@@ -98,16 +122,13 @@ function componentValuesOf(
     const hash = key.indexOf("#");
     const path = key.slice(0, hash);
     const id = key.slice(hash + 1);
-    values.set(
-      key,
-      path === ""
-        ? (bare.get(id) ?? UNKNOWN)
-        : valueText(
-            paths.componentResourcesOf.get(path)?.get(id),
-            paths.componentKindsOf.get(path)?.get(id),
-            scriptModules,
-          ),
-    );
+    if (path === "") {
+      values.set(key, bare.get(id) ?? UNKNOWN);
+      continue;
+    }
+    const written = new Set(pathValuesOf(paths, path, id, scriptModules));
+    const [only] = written;
+    values.set(key, written.size === 1 && only !== undefined ? only : UNKNOWN);
   }
   return values;
 }

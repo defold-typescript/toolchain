@@ -91,6 +91,7 @@ function declarationFor(
   documents: ReadonlyMap<string, string>,
   gameProject: string | undefined,
   references: Record<string, string> = {},
+  scriptModules?: ReadonlyMap<string, string>,
 ): string {
   return buildSceneAddressDeclaration(
     documents,
@@ -99,6 +100,7 @@ function declarationFor(
       references: new Map(Object.entries(references)),
       gameProject,
     }),
+    scriptModules,
   );
 }
 
@@ -645,5 +647,65 @@ describe("component kind addresses", () => {
     expect(kindDeclarationFor(factoryPack(SCRIPT_BODY, SCRIPT_BODY), SCRIPT_MODULES)).toContain(
       '"#body": typeof import("../src/wave").default;',
     );
+  });
+});
+
+const SHARED_SOCKET_GAME_PROJECT = "[bootstrap]\nmain_collection = /main/main.collection\n";
+
+// One loader opens two levels that both declare `name: "level"`, so both worlds
+// compose `level:/hero`, each from its own `.go` whose `body` component each case
+// chooses.
+function sharedSocketScenes(firstBody: string, secondBody: string): Map<string, string> {
+  return new Map([
+    ["main/main.collection", 'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n'],
+    [
+      "main/loader.go",
+      'embedded_components {\n  id: "first"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n' +
+        'embedded_components {\n  id: "second"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level2.collection\\"\\n"\n}\n',
+    ],
+    [
+      "levels/level1.collection",
+      'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero1.go"\n}\n',
+    ],
+    [
+      "levels/level2.collection",
+      'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero2.go"\n}\n',
+    ],
+    ["levels/hero1.go", `components {\n  id: "body"\n  component: "${firstBody}"\n}\n`],
+    ["levels/hero2.go", `components {\n  id: "body"\n  component: "${secondBody}"\n}\n`],
+  ]);
+}
+
+describe("path keys under a shared socket", () => {
+  test("a path key under a shared socket is true when its worlds disagree", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/hero.sprite", "/levels/hero.label"),
+      SHARED_SOCKET_GAME_PROJECT,
+    );
+    expect(declaration).toContain('"level:/hero#body": true;');
+    expect(declaration).toContain('"#body": true;');
+  });
+
+  test("a path key under a shared socket keeps a value its worlds agree on", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/hero1.sprite", "/levels/hero2.sprite"),
+      SHARED_SOCKET_GAME_PROJECT,
+    );
+    expect(declaration).toContain('"level:/hero#body": "sprite";');
+  });
+
+  test("a path key names no script when its worlds host different scripts", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/a.script", "/levels/b.script"),
+      SHARED_SOCKET_GAME_PROJECT,
+      {},
+      new Map([
+        ["levels/a.script", "../levels/a"],
+        ["levels/b.script", "../levels/b"],
+      ]),
+    );
+    expect(declaration).toContain('"level:/hero#body": true;');
   });
 });

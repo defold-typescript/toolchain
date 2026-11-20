@@ -94,6 +94,11 @@ Two address forms are linked automatically:
 - a bare `"#wave"`, when every `wave` component in the project is written the
   same way: the same script, or the same kind.
 
+When two proxied collections declare the same `name:`, an address under that
+socket such as `"mylevel:/hero#body"` follows the same rule: it is linked only
+when every one of those collections writes that component the same way, and is
+`true` otherwise.
+
 An object-relative address such as `"buddy#controller"`, a bare game-object
 address and a URL built at runtime are not linked; use `msg.url<M>(...)` or
 `CustomMessages` for those.
