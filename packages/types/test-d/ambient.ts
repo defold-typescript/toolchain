@@ -89,27 +89,27 @@ const _badF: string = factory.create(msg.url(), vmath.vector3(0, 0, 0), vmath.qu
 void _f;
 void _badF;
 
-collectionfactory.create(msg.url(), vmath.vector3(0, 0, 0), vmath.quat(), {}, 1);
+collectionfactory.create(msg.url(), vmath.vector3(0, 0, 0), vmath.quat(), undefined, 1);
 collectionfactory.create(
   msg.url(),
   vmath.vector3(0, 0, 0),
   vmath.quat(),
-  {},
+  undefined,
   vmath.vector3(1, 1, 1),
 );
 
 // @ts-expect-error collectionfactory.create rotation must be Quaternion, not a string
-collectionfactory.create(msg.url(), vmath.vector3(0, 0, 0), "not a quat", {}, 1);
+collectionfactory.create(msg.url(), vmath.vector3(0, 0, 0), "not a quat", undefined, 1);
 
 // @ts-expect-error collectionfactory.create position must be Vector3, not a string
-collectionfactory.create(msg.url(), "not a vector", vmath.quat(), {}, 1);
+collectionfactory.create(msg.url(), "not a vector", vmath.quat(), undefined, 1);
 
 // @ts-expect-error collectionfactory.create returns a table (Record), not a string
 const _badCf: string = collectionfactory.create(
   msg.url(),
   vmath.vector3(0, 0, 0),
   vmath.quat(),
-  {},
+  undefined,
   1,
 );
 void _badCf;

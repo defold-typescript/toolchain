@@ -39,6 +39,7 @@ import {
   unbindableParameter,
 } from "./message-dispatch-lowering";
 import type { PropertyValue } from "./property-default-evaluator";
+import { innermostExpression, reportOnce } from "./rebuilt-calls";
 
 export const FACTORY_MODULE = "@defold-typescript/types";
 export const FACTORY_NAMES = new Set(["defineScript", "defineGuiScript", "defineRenderScript"]);
@@ -53,9 +54,11 @@ const FACTORY_SPECIFIERS = new Set([
 ]);
 
 // The lifecycle factory a callee resolves to, aliases followed, or `undefined`
-// when it is not one of this package's factory exports.
+// when it is not one of this package's factory exports. `getSymbolAtLocation`
+// resolves nothing through parentheses or a type-only form, so `(defineScript)`
+// and `defineScript!` are looked up by the name they wrap.
 function factoryExportName(callee: ts.Expression, checker: ts.TypeChecker): string | undefined {
-  let symbol = checker.getSymbolAtLocation(callee);
+  let symbol = checker.getSymbolAtLocation(innermostExpression(callee));
   if (symbol === undefined) {
     return undefined;
   }
@@ -841,22 +844,6 @@ function outermostWrapper(node: ts.Expression): ts.Expression {
   return current;
 }
 
-// The inverse of `outermostWrapper`: the expression a run of parentheses and
-// type-only forms wraps, which TSTL emits in place of the whole run.
-function innermostExpression(node: ts.Expression): ts.Expression {
-  let current = node;
-  while (
-    ts.isParenthesizedExpression(current) ||
-    ts.isAsExpression(current) ||
-    ts.isSatisfiesExpression(current) ||
-    ts.isNonNullExpression(current) ||
-    ts.isTypeAssertionExpression(current)
-  ) {
-    current = current.expression;
-  }
-  return current;
-}
-
 // Keyed by the declaration's fully qualified name: only a symbol declared in an
 // ambient `declare global` block carries the `global.` prefix, so a project's
 // own `resource` never matches.
@@ -868,6 +855,8 @@ function globalName(symbol: ts.Symbol | undefined, checker: ts.TypeChecker): str
   return fqn.startsWith("global.") ? fqn.slice("global.".length) : undefined;
 }
 
+// A callee cast to `any`, as in `(resource.atlas as any)(...)`, resolves no
+// signature declaration, so the name it wraps is looked up instead.
 function calledGlobal(call: ts.CallExpression, checker: ts.TypeChecker): string | undefined {
   const declaration = checker.getResolvedSignature(call)?.declaration;
   if (
@@ -875,7 +864,7 @@ function calledGlobal(call: ts.CallExpression, checker: ts.TypeChecker): string 
     !ts.isFunctionDeclaration(declaration) ||
     declaration.name === undefined
   ) {
-    return undefined;
+    return globalName(checker.getSymbolAtLocation(innermostExpression(call.expression)), checker);
   }
   return globalName(checker.getSymbolAtLocation(declaration.name), checker);
 }
@@ -1176,15 +1165,17 @@ const lifecycleErasurePlugin = (defaults: ComputedDefaults): Plugin => ({
     },
     [ts.SyntaxKind.ImportDeclaration]: (node, context) =>
       isFactoryOnlyImport(node) ? [] : context.superTransformStatements(node),
-    // TSTL's optional-chain lowering also visits nodes it synthesizes, which have
-    // no parent and no source span; only parsed nodes are checked.
+    // TSTL's parenthesis-stripping pre-pass and optional-chain lowering visit
+    // calls they rebuild, which have no parent and no source span, so the check
+    // runs on the source call a rebuilt one came from.
     [ts.SyntaxKind.CallExpression]: (node, context) => {
-      const marker = node.parent === undefined ? undefined : calledGlobal(node, context.checker);
-      if (marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
-        if (!isPropertyDefault(node, context.checker)) {
-          context.diagnostics.push(misplacedMarker(node, marker));
-        } else if (!readsAsMarker(node)) {
-          context.diagnostics.push(unreadableMarker(node, marker));
+      const source = ts.getParseTreeNode(node, ts.isCallExpression);
+      const marker = source === undefined ? undefined : calledGlobal(source, context.checker);
+      if (source !== undefined && marker !== undefined && RESOURCE_PROPERTY_MARKERS.has(marker)) {
+        if (!isPropertyDefault(source, context.checker)) {
+          reportOnce(context.diagnostics, misplacedMarker(source, marker));
+        } else if (!readsAsMarker(source)) {
+          reportOnce(context.diagnostics, unreadableMarker(source, marker));
         }
       }
       return context.superTransformExpression(node);

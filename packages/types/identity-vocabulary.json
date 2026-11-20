@@ -440,8 +440,8 @@
     },
     "gui.animate:param:property": { "pins": [["string", "constant"]], "adds": ["Hash"] },
     "gui.cancel_animations:param:property": {
-      "pins": [["nil", "string", "constant"]],
-      "adds": ["Hash"]
+      "pins": [["nil", "string", "constant"], ["nil", "string", "hash", "gui.PROP"]],
+      "replaces": ["keyof gui.NodeProperties", "gui.Prop", "Hash"]
     },
     "gui.clone_tree:param:node": { "pins": [["node"]], "adds": ["undefined"] },
     "gui.get_tree:param:node": { "pins": [["node"]], "adds": ["undefined"] },

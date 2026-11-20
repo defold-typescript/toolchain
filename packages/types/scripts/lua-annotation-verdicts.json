@@ -534,8 +534,8 @@
     "declared": "0..2"
   },
   "runtime:go.cancel_animations:required-as-optional:1": {
-    "verdict": "corrected",
-    "correction": "OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url",
+    "verdict": "accepted",
+    "reason": "src/go-overloads.d.ts declares `url` optional: gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent",
     "annotated": "required",
     "declared": "optional"
   },

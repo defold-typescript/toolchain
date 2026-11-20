@@ -21,6 +21,7 @@ import type { NavCategory, NavLink } from "../../app/lib/nav";
 import {
   apiCanonicalHref,
   apiSurfaceConfig,
+  guideOutline,
   landingFooterItems,
   linkTabs,
   navCategories,
@@ -253,6 +254,28 @@ describe("outline", () => {
     expect(markup).not.toMatch(
       /<span class="api-badge-dot api-badge-dot--changed"[^>]*display:none[^>]*>C/,
     );
+  });
+});
+
+const guidePage = await processDocsMarkdown(
+  "# Tetris\n\n## 04 — Define the tetrominoes: `src/pieces.ts`\n\n### How **a** _shape_ is ~~built~~\n\n### Plain\n\nText.[^1]\n\n[^1]: A note.\n",
+  { routePrefix: "" },
+);
+
+describe("guideOutline", () => {
+  const items = guideOutline(guidePage);
+
+  test("lists the page's H2 to H4 headings, leaving out the hidden footnotes heading", () => {
+    expect(items.map((item) => item.depth)).toEqual([2, 3, 3]);
+    expect(items.map((item) => item.url)).not.toContain("#footnote-label");
+  });
+
+  test("an entry keeps its heading's inline code, bold, italic and struck text", () => {
+    expect(items.map(markupOf)).toEqual([
+      "<span>04 — Define the tetrominoes: <code>src/pieces.ts</code></span>",
+      "<span>How <strong>a</strong> <em>shape</em> is <del>built</del></span>",
+      "Plain",
+    ]);
   });
 });
 

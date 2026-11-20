@@ -261,7 +261,8 @@ describe("identity over the committed surfaces", () => {
   });
 
   // Each entry names a skipped function whose hand-authored overloads include a
-  // form that stops before the slot, the form the evidence cites.
+  // form that stops before the slot or declares it optional, the form the
+  // evidence cites. A form's arity is the parameters it requires.
   test("every hand-declared optional slot is omitted by one of its hand-authored forms", () => {
     const overloads = readdirSync(resolve(PACKAGE_ROOT, "src"))
       .filter((file) => file.endsWith("-overloads.d.ts"))
@@ -276,8 +277,15 @@ describe("identity over the committed surfaces", () => {
       const index = declared?.parameters.findIndex((parameter) => parameter.name === slot) ?? -1;
       const local = element.slice(element.lastIndexOf(".") + 1);
       const arities = [
-        ...overloads.matchAll(new RegExp(`function ${local}\\(([^)]*)\\)`, "g")),
-      ].map(([, params = ""]) => (params.trim() === "" ? 0 : params.split(",").length));
+        ...overloads.matchAll(new RegExp(`function ${local}(?:<[^(]*>)?\\(([^)]*)\\)`, "g")),
+      ].map(([, params = ""]) => {
+        const declared = params
+          .split(",")
+          .map((param) => param.trim())
+          .filter((param) => param !== "");
+        const firstOptional = declared.findIndex((param) => /^\w+\?/.test(param));
+        return firstOptional === -1 ? declared.length : firstOptional;
+      });
       return index < 0 || !arities.some((arity) => arity <= index);
     });
     expect(unbacked).toEqual([]);

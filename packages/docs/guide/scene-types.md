@@ -34,10 +34,10 @@ declare global {
   }
 
   interface SceneComponentAddresses {
-    "#controller": true;
-    "#sprite": true;
-    "/player/player#controller": true;
-    "/player/player#sprite": true;
+    "#controller": "script";
+    "#sprite": "sprite";
+    "/player/player#controller": "script";
+    "/player/player#sprite": "sprite";
   }
 }
 ```
@@ -64,16 +64,19 @@ indistinguishable from an object that genuinely owns none. Nothing here is a
 rejection: an address composed at runtime still type-checks, it is simply not
 offered as a completion.
 
-## Script addresses carry their messages
+## Component addresses carry their messages and properties
 
-When a component names a script that your program compiles, its address is
-written as that script's module instead of `true`:
+Each component address is written as what the component is. When a component
+names a script that your program compiles, its address is that script's module.
+Every other component address is its kind: the extension of the resource it
+names, or the `type` of an embedded component.
 
 ```ts
 interface SceneComponentAddresses {
   "#wave": typeof import("../src/wave").default;
   "/logic#wave": typeof import("../src/wave").default;
-  "/logic#sprite": true;
+  "/logic#sprite": "sprite";
+  "/logic#legacy": "script";
 }
 ```
 
@@ -81,19 +84,61 @@ interface SceneComponentAddresses {
 [`onMessage` handlers](./messages.md#ways-to-type-your-messages) declare. The
 source is found by mapping each program file forward to the resource it builds,
 so an `outDir` works. The source must be a `defineScript` (or `defineGuiScript`)
-file; any other source stays `true`, as do embedded components, non-script
-resources and scripts outside your program.
+file. A script outside your program is written as `"script"`, and a component
+whose kind cannot be read is written as `true`.
 
 Two address forms are linked automatically:
 
 - an absolute, literal component address your scenes declare, such as
   `"/logic#wave"`;
-- a bare `"#wave"`, when every `wave` component in the project names the same
-  script.
+- a bare `"#wave"`, when every `wave` component in the project is written the
+  same way: the same script, or the same kind.
+
+When two proxied collections declare the same `name:`, an address under that
+socket such as `"mylevel:/hero#body"` follows the same rule: it is linked only
+when every one of those collections writes that component the same way, and is
+`true` otherwise.
 
 An object-relative address such as `"buddy#controller"`, a bare game-object
 address and a URL built at runtime are not linked; use `msg.url<M>(...)` or
 `CustomMessages` for those.
+
+### Property keys follow the address
+
+`go.get`, `go.set` and `go.animate` read the property catalog of a literal
+address:
+
+- **A linked script** takes the properties its `defineScript({ properties })`
+  declares, plus each element of a vector or quaternion property, such as
+  `"target.x"`. Any other key is a compile error, because the engine raises for
+  it.
+- **A registered kind** takes the keys its catalog names at their types. The
+  registered kinds are `sprite`, `label`, `model`, `mesh`, `collisionobject`
+  (`physics.Properties`), `factory`, `collectionfactory`, `particlefx`, `sound`,
+  `tilemap`, `camera` and `gui`. `camera` registers from Defold 1.13.0 on, the
+  first version whose API declares camera properties. `gui` registers wherever
+  the `gui` namespace loads, so in a directory [walled](./wall.md) to the script
+  surface a gui address takes the wide value. Any other key, such as a material
+  constant, takes the wide value.
+- **A literal with no `#`**, such as `"."` or `"/player"`, is a game object. Its
+  only properties are its transform, `go.Properties`, so any other key is a
+  compile error.
+
+```ts
+// src/wave.ts declares defineScript({ properties: { delay: 2 }, ... })
+go.get("/logic#wave", "delay");                   // number
+go.get("/logic#wave", "dleay");                   // error: wave declares no dleay
+go.set("/logic#sprite", "playback_rate", "fast"); // error: playback_rate is a number
+go.set("/logic#sprite", "tint", vmath.vector4()); // a material constant: wide value
+go.get(".", "delay");                             // error: a game object has no script property
+```
+
+`""` and `"#"` resolve to the calling script, so they stay untyped. So do an
+address whose kind has no catalog, such as a script outside your program
+(`"script"`) or a native extension's component, a `string` variable, a `Url` and
+a `Hash`. A key passed as `hash("delay")` is accepted on every address and reads
+the wide value. An extension registers its own kind by augmenting the global
+`SceneComponentCatalogs` interface.
 
 ## Which world an address resolves in
 
@@ -180,7 +225,7 @@ a `#fragment` naming a component no scene declares becomes a build warning, and 
 hole here — an unresolved dependency included — suppresses that check rather than
 reporting the fragment.
 
-## Nothing is ever rejected
+## An address is never rejected
 
 `SceneGameObjectAddress` and `SceneComponentAddress` stay widened with
 `(string & {})`. The keys only *add* suggestions:
@@ -190,8 +235,13 @@ const spawned = `/enemy${index}`;
 msg.post(spawned, "hello"); // fine — a runtime-composed address is still a string
 ```
 
-A project that has never run this verb behaves exactly as before, with both
-interfaces empty. Running it against a project with no scene files at all
+A property key is checked instead: a key that a linked script does not declare
+is a compile error, and so is a key outside the transform on a game-object
+literal, with or without this verb (see
+[Property keys follow the address](#property-keys-follow-the-address)).
+
+In a project that has never run this verb both interfaces are empty, so no
+component address is linked. Running it against a project with no scene files at all
 succeeds and writes an empty-but-valid declaration.
 
 ## Putting it in your program

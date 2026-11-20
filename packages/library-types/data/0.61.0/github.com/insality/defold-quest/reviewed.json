@@ -1,5 +1,5 @@
 {
-  "ref": "3",
+  "ref": "4",
   "reviews": [
     {
       "version": 1,
@@ -61,6 +61,70 @@
         "quest/internal/quest_validation.lua#is_completed": "a084dfb1f0246ffc",
         "quest/internal/quest_validation.lua#is_tasks_completed": "a084dfb1f0246ffc",
         "quest/quest.lua": "f494e71574dd4148"
+      }
+    },
+    {
+      "version": 1,
+      "commits": [
+        "dcdfc6a90cb5c8107e43334b48663c09c9a00747"
+      ],
+      "api": "450a78d6f8de826db12b34c8307e3e2081a2599af702b08ff689e9a4661378c4",
+      "doc": "ed11cd7cacec1859c4bbdda8f7f2f85c8d00bee80b4db9fcb10260c061c34a67",
+      "source": "5933b93bd7c3bddbce39f0ff79c3fef41fe1b9c67bccee5c050f473538205c2b",
+      "members": {
+        "quest/internal/quest_config.lua#@annotations": "72b8f157103cc8d3",
+        "quest/internal/quest_config.lua#add_quests": "1c61269def5ee7e0",
+        "quest/internal/quest_config.lua#get_quest_config": "a084dfb1f0246ffc",
+        "quest/internal/quest_config.lua#get_quests_count": "53afa49906788416",
+        "quest/internal/quest_config.lua#get_quests_data": "53afa49906788416",
+        "quest/internal/quest_config.lua#remove_quests": "0d61229bf30feecb",
+        "quest/internal/quest_config.lua#reset_state": "53afa49906788416",
+        "quest/internal/quest_events.lua#@annotations": "d84869f2f797e47c",
+        "quest/internal/quest_events.lua#completed": "388976dcbcc62f07",
+        "quest/internal/quest_events.lua#is_can_complete": "24c7bcaf858ea773",
+        "quest/internal/quest_events.lua#is_can_event": "24c7bcaf858ea773",
+        "quest/internal/quest_events.lua#is_can_start": "24c7bcaf858ea773",
+        "quest/internal/quest_events.lua#on_quest_event": "24c7bcaf858ea773",
+        "quest/internal/quest_events.lua#progress": "e4521bc29632b7e4",
+        "quest/internal/quest_events.lua#register": "388976dcbcc62f07",
+        "quest/internal/quest_events.lua#reset_state": "53afa49906788416",
+        "quest/internal/quest_events.lua#start": "388976dcbcc62f07",
+        "quest/internal/quest_events.lua#task_completed": "a632d082b8ce6d67",
+        "quest/internal/quest_lifecycle.lua#@annotations": "a5550abec841e569",
+        "quest/internal/quest_lifecycle.lua#create_can_be_started_list": "53afa49906788416",
+        "quest/internal/quest_lifecycle.lua#finish_quest": "a084dfb1f0246ffc",
+        "quest/internal/quest_lifecycle.lua#get_can_be_started": "53afa49906788416",
+        "quest/internal/quest_lifecycle.lua#make_relative_quests_map": "53afa49906788416",
+        "quest/internal/quest_lifecycle.lua#register_offline_quests": "53afa49906788416",
+        "quest/internal/quest_lifecycle.lua#register_quest": "a084dfb1f0246ffc",
+        "quest/internal/quest_lifecycle.lua#remove_from_started_list": "a084dfb1f0246ffc",
+        "quest/internal/quest_lifecycle.lua#reset_runtime_state": "53afa49906788416",
+        "quest/internal/quest_lifecycle.lua#set_quest_relative_map": "79f7c5f7f6e352a9",
+        "quest/internal/quest_lifecycle.lua#start_quest": "a084dfb1f0246ffc",
+        "quest/internal/quest_lifecycle.lua#update_can_be_started_list_on_complete": "a084dfb1f0246ffc",
+        "quest/internal/quest_logger.lua": "ba69c9b97aa6efce",
+        "quest/internal/quest_progress.lua#@annotations": "1c05146116f9de82",
+        "quest/internal/quest_progress.lua#apply_event": "21860c9ed92351cb",
+        "quest/internal/quest_progress.lua#process_event": "dde30338e3e8a5fb",
+        "quest/internal/quest_state.lua#@annotations": "8e994a2c20583bb4",
+        "quest/internal/quest_state.lua#get_state": "53afa49906788416",
+        "quest/internal/quest_state.lua#remove_quests": "0d61229bf30feecb",
+        "quest/internal/quest_state.lua#reset_state": "53afa49906788416",
+        "quest/internal/quest_state.lua#set_state": "e744a63ccd0f1f2d",
+        "quest/internal/quest_utils.lua#@annotations": "d8605b77215a805a",
+        "quest/internal/quest_utils.lua#clamp": "c8a49d45be0b8f31",
+        "quest/internal/quest_utils.lua#contains": "b11021e0997de1a5",
+        "quest/internal/quest_utils.lua#count_table_entries": "8e5b9e593a36bdc9",
+        "quest/internal/quest_utils.lua#load_json": "7409456983084f03",
+        "quest/internal/quest_validation.lua#@annotations": "a0a3a766da787eaa",
+        "quest/internal/quest_validation.lua#can_be_started_quest": "a084dfb1f0246ffc",
+        "quest/internal/quest_validation.lua#is_active": "a084dfb1f0246ffc",
+        "quest/internal/quest_validation.lua#is_all_quests_completed": "411f0a1dd5776dd9",
+        "quest/internal/quest_validation.lua#is_available": "a084dfb1f0246ffc",
+        "quest/internal/quest_validation.lua#is_catch_offline": "a084dfb1f0246ffc",
+        "quest/internal/quest_validation.lua#is_completed": "a084dfb1f0246ffc",
+        "quest/internal/quest_validation.lua#is_tasks_completed": "a084dfb1f0246ffc",
+        "quest/quest.lua": "c7976abce95c0623"
       }
     }
   ]

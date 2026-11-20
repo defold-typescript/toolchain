@@ -20,13 +20,31 @@ const COMPONENT_BLOCKS = new Set(["components", "embedded_components"]);
 // projects as unreadable and suppress the check for good.
 const EMBEDDING_BLOCKS = new Set(["embedded_instances", "embedded_components"]);
 
-// A component id and the resource it references, where one is referenced at all.
-// The two axes are gathered by one pass because they are read off the same
-// block: a second walk over the same documents is exactly how the id universe
-// and the resource universe drift apart.
+// One component block: its id, the resource it references where it references
+// one, and its kind where one is readable. Both stay `undefined` on a block that
+// carries neither, so an untyped block still counts as a declaration.
+export interface ComponentOccurrence {
+  readonly id: string;
+  readonly resource: string | undefined;
+  readonly kind: string | undefined;
+}
+
+// A component id, the resource it references where one is referenced at all, and
+// its kind where one is readable. The axes are gathered by one pass because they
+// are read off the same block: a second walk over the same documents is exactly
+// how the id universe and the resource universe drift apart.
+//
+// `resources` and `kinds` hold one entry per id, which is exact for one game
+// object's declarations, where Defold keeps component ids unique. A whole
+// document can declare one id in several objects, so `occurrences` keeps every
+// block for a reader that has to see each of them.
 export interface ComponentDeclarations {
   readonly ids: Set<string>;
   readonly resources: Map<string, string>;
+  // The component type: a referenced resource's extension (`sprite`, `script`),
+  // or an embedded component's `type` field.
+  readonly kinds: Map<string, string>;
+  readonly occurrences: ComponentOccurrence[];
 }
 
 // Resource paths inside a scene are project-absolute; documents are keyed by
@@ -34,6 +52,12 @@ export interface ComponentDeclarations {
 // `scene-object-path-index.ts`.
 function resourceKey(resource: string): string {
   return resource.startsWith("/") ? resource.slice(1) : resource;
+}
+
+function extensionOf(resource: string): string | undefined {
+  const name = resource.slice(resource.lastIndexOf("/") + 1);
+  const dot = name.lastIndexOf(".");
+  return dot === -1 || dot === name.length - 1 ? undefined : name.slice(dot + 1);
 }
 
 function collect(
@@ -49,14 +73,25 @@ function collect(
     for (const id of declared) {
       declarations.ids.add(id);
     }
-    // `embedded_components` is skipped on purpose: its payload *is* the
-    // component, so it names no resource and must never be credited with one.
-    if (blockName === "components") {
-      const [id] = declared;
-      const [component] = message.fields.get("component") ?? [];
-      if (id !== undefined && id !== "" && component !== undefined) {
-        declarations.resources.set(id, resourceKey(component));
+    const [id] = declared;
+    if (id !== undefined && id !== "") {
+      let resource: string | undefined;
+      let kind: string | undefined;
+      // `embedded_components` names no resource on purpose: its payload *is* the
+      // component, so it must never be credited with one.
+      if (blockName === "components") {
+        const [component] = message.fields.get("component") ?? [];
+        if (component !== undefined) {
+          resource = resourceKey(component);
+          kind = extensionOf(component);
+        }
+      } else {
+        const [type] = message.fields.get("type") ?? [];
+        if (type !== undefined && type !== "") kind = type;
       }
+      if (resource !== undefined) declarations.resources.set(id, resource);
+      if (kind !== undefined) declarations.kinds.set(id, kind);
+      declarations.occurrences.push({ id, resource, kind });
     }
   }
   if (EMBEDDING_BLOCKS.has(blockName)) {
@@ -103,7 +138,12 @@ export function collectComponentDeclarations(
   incomplete: string[],
   blockName = "",
 ): ComponentDeclarations {
-  const declarations: ComponentDeclarations = { ids: new Set(), resources: new Map() };
+  const declarations: ComponentDeclarations = {
+    ids: new Set(),
+    resources: new Map(),
+    kinds: new Map(),
+    occurrences: [],
+  };
   collect(message, blockName, 0, displayPath, declarations, incomplete);
   return declarations;
 }

@@ -1,5 +1,5 @@
 {
-  "ref": "9",
+  "ref": "10",
   "reviews": [
     {
       "version": 1,
@@ -28,6 +28,22 @@
       "members": {
         "saver/migrations.lua": "d95085813fe01408",
         "saver/saver.lua": "80d7bc1d8459e3d5",
+        "saver/saver_internal.lua": "9ea9f4fe7fbaf623",
+        "saver/src/defold_saver.cpp": "8b9afaa66c5fe0a9",
+        "saver/storage.lua": "540ce39b4d0eb866"
+      }
+    },
+    {
+      "version": 1,
+      "commits": [
+        "36bdd1fc90da9175eb19a01948c02d157f45134e"
+      ],
+      "api": "da99474573da0da265e5b85799adb08da63c45ed66f21d2716eb45960402f9a4",
+      "doc": "e3069bc6e5296fa2ed2a558dd3d4f476e767a845072a614ceb23ab5881dcb861",
+      "source": "1415a70bc1334746167c00eb34f9183f76c6d6cf9ab2ec48ef6648dfc39e29fb",
+      "members": {
+        "saver/migrations.lua": "d95085813fe01408",
+        "saver/saver.lua": "dfb5cb54720850e7",
         "saver/saver_internal.lua": "9ea9f4fe7fbaf623",
         "saver/src/defold_saver.cpp": "8b9afaa66c5fe0a9",
         "saver/storage.lua": "540ce39b4d0eb866"
