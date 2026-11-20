@@ -496,7 +496,7 @@ go.get<EnemyProps>()("/enemy#controller", "missing");              // type error
 
 `ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script. When the url is a literal your scenes declare, the bare `go.get("/enemy#controller", "speed")` reads the same shape off the scene types with no generic.
 
-**Check the properties a factory spawns with.** The fourth argument of `factory.create` seeds the spawned script's declared properties, and the bare form takes any table. Name the spawned script's shape in the curried form and the table is checked against it: any subset of the declared properties is accepted, and an undeclared name or a wrongly typed value is a type error:
+**Check the properties a factory spawns with.** The fourth argument of `factory.create` seeds the spawned script's declared properties. The bare form takes an object literal with any names, or a `LuaMap` keyed by `string` whose values are property types (`number`, `boolean`, `string`, `Hash`, `Url`, `Vector3`, `Vector4`, `Quaternion`): the engine skips a hash key, and one value of any other type drops every property. Name the spawned script's shape in the curried form and the table is checked against it: any subset of the declared properties is accepted, and an undeclared name or a wrongly typed value is a type error:
 
 ```ts
 // spawn an enemy with its own speed
@@ -506,7 +506,7 @@ factory.create<EnemyProps>()("#enemyfactory", undefined, undefined, { sped: 250 
 
 The form is curried for the same reason as `go.get<P>()`: the empty call names the shape, and the build removes it, so the engine receives `factory.create("#enemyfactory", ...)`. You name the script yourself; nothing verifies that the factory's prototype runs it.
 
-**Check the properties a collection factory spawns with.** `collectionfactory.create` seeds each spawned instance's script properties from a table keyed by instance id, and the engine raises on an id that is a string rather than a hash, so the bare form takes only a map keyed by `hash("/enemy_leader")`. The curried form maps each instance id, as the collection addresses it, to that instance's script shape and checks every instance's table against it; an unknown id is a type error too:
+**Check the properties a collection factory spawns with.** `collectionfactory.create` seeds each spawned instance's script properties from a table keyed by instance id, and the engine raises on an id that is a string rather than a hash, so the bare form takes only a map keyed by `hash("/enemy_leader")`, and each instance's table follows the `factory.create` rule above. The curried form maps each instance id, as the collection addresses it, to that instance's script shape and checks every instance's table against it; an unknown id is a type error too:
 
 ```ts
 type SquadProps = { "/enemy_leader": EnemyProps; "/enemy_1": EnemyProps; "/medic": MedicProps };

@@ -2457,13 +2457,11 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
 });
 
 describe("ARBITRARY_TABLE_SLOTS", () => {
-  test("holds the serialization/JSON passthrough, platform-opaque, runtime-owned passthrough, engine-formatted blob, dead cross-ref, OS-resolver, and engine-built render-target element names", () => {
+  test("holds the serialization/JSON passthrough, platform-opaque, engine-formatted blob, dead cross-ref, OS-resolver, and engine-built render-target element names", () => {
     expect([...ARBITRARY_TABLE_SLOTS].sort()).toEqual([
-      "collectionfactory.create",
       "collectionproxy.load",
       "crash.get_backtrace",
       "crash.get_modules",
-      "factory.create",
       "iac.set_listener",
       "json.decode",
       "json.encode",
@@ -2808,6 +2806,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "buffer.create:param:declaration",
       "collectionfactory.create:param:properties",
       "collectionfactory.create:return:ids",
+      "factory.create:param:properties",
       "go.delete:param:id",
       "font.get_info:return:info",
       "iap.finish:param:transaction",
@@ -2907,6 +2906,8 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "b2d.world.collide_mover:param:filter",
       "physics.get_shape:return:table",
       "physics.set_shape:param:table",
+      "sys.save:param:table",
+      "sys.serialize:param:table",
     ]);
     expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toEqual({
       kind: "keyed-object",
@@ -3043,7 +3044,8 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "collectionfactory.create")],
     });
-    const properties = "ReadonlyLuaMap<Hash, PlainTable>";
+    const properties =
+      "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>";
     expect(out).toContain(
       `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`,
     );
@@ -3253,7 +3255,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     const line = out.split("\n").find((l) => l.includes("function request(")) ?? "";
     expect(line).toContain("headers?: LuaMap<string, string>");
     expect(line).toContain(
-      "options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }",
+      "options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }",
     );
     expect(line).not.toContain("Record<string | number, unknown>");
   });
@@ -5149,7 +5151,10 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
     // The exact ordered addition keys. Each entry's own evidence is pinned on
     // the entry; this guards that no addition is silently added, removed, or
     // reordered — the shape the sibling TABLE_SLOT_CURATIONS suite asserts.
-    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual(["resource.create_texture:param:table"]);
+    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual([
+      "resource.create_texture:param:table",
+      "http.request:param:options",
+    ]);
   });
 
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
@@ -7028,7 +7033,7 @@ describe("corrections the engine bindings demand", () => {
 
   test("a value the binding returns undocumented is declared", () => {
     expect(line(sysDoc, "function save(")).toBe(
-      "function save(filename: string, table: PlainTable | readonly unknown[]): boolean;",
+      "function save(filename: string, table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): boolean;",
     );
   });
 
@@ -8202,13 +8207,13 @@ describe("upstream-pinned corrections", () => {
       "sys",
       "save",
       sysSave,
-      "table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[])",
+      "table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[])",
     ],
     [
       "sys",
       "serialize",
       sysSerialize,
-      "table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[])",
+      "table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[])",
     ],
     [
       "socket",
@@ -8230,25 +8235,42 @@ describe("upstream-pinned corrections", () => {
     expect(line.match(/\| string\b/g)).toHaveLength(1);
   });
 
-  // Verbatim 1.13.2 slot (`gamesys-script_collection_factory.cpp_doc.json`),
-  // prose omitted: the retyped spelling keeps the 1.13.1 mapping curation.
-  const collectionfactoryCreate = (types: readonly string[]) => ({
+  // Verbatim 1.13.2 slots (`gamesys-script_collection_factory.cpp_doc.json`,
+  // `gamesys-script_factory.cpp_doc.json`, `gamesys-script_physics.cpp_doc.json`),
+  // prose omitted: each retyped spelling keeps the 1.13.1 curation.
+  const slotOf = (name: string, slot: string, types: readonly string[]) => ({
     type: "FUNCTION",
-    name: "collectionfactory.create",
-    parameters: [{ name: "properties", doc: "", types, is_optional: "True" }],
+    name,
+    parameters: [{ name: slot, doc: "", types, is_optional: "False" }],
   });
+  const spawnProperties =
+    "LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })";
 
-  test("a table curation applies on the retyped spelling it pins", () => {
-    expect(
-      signature(
-        emitted(
-          "collectionfactory",
-          collectionfactoryCreate(["table<hash, table<string|hash, any>>"]),
-        ),
-        "create",
-      ),
-    ).toContain("properties?: ReadonlyLuaMap<Hash, PlainTable>)");
-  });
+  test.each([
+    [
+      "collectionfactory",
+      "create",
+      slotOf("collectionfactory.create", "properties", ["table<hash, table<string|hash, any>>"]),
+      `properties: ReadonlyLuaMap<Hash, ${spawnProperties}>)`,
+    ],
+    [
+      "factory",
+      "create",
+      slotOf("factory.create", "properties", ["table<string|hash, any>"]),
+      `properties: ${spawnProperties})`,
+    ],
+    [
+      "physics",
+      "set_shape",
+      slotOf("physics.set_shape", "table", ["physics.shape_data"]),
+      "table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number })",
+    ],
+  ] as const)(
+    "%s.%s keeps its table curation on the retyped spelling it pins",
+    (namespace, local, element, slot) => {
+      expect(signature(emitted(namespace, element), local)).toContain(slot);
+    },
+  );
 
   // Verbatim 1.13.2 struct (`gamesys-script_sound.cpp_doc.json`), which marks
   // `play_id` required while Sound_Stop reads it only when it is not nil.
@@ -8354,10 +8376,13 @@ describe("upstream-pinned corrections", () => {
   test("a table curation stays off a retyped spelling it does not pin", () => {
     expect(
       signature(
-        emitted("collectionfactory", collectionfactoryCreate(["table<hash, number>"])),
+        emitted(
+          "collectionfactory",
+          slotOf("collectionfactory.create", "properties", ["table<hash, number>"]),
+        ),
         "create",
       ),
-    ).toContain("properties?: LuaMap<Hash, number>)");
+    ).toContain("properties: LuaMap<Hash, number>)");
   });
 });
 

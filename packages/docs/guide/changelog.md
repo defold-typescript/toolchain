@@ -16,7 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`go.animate` and `go.set` check the value against the property, and `factory.create` and `collectionfactory.create` check spawned scripts' properties** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 > - **A scene address types its property keys,** so `go.get` on a linked script or a built-in component such as a sprite or a sound reads that component's catalog ([Scene types](./scene-types.md#property-keys-follow-the-address)).
 > - **`onMessage?.()` and `(onMessage)()` report an error instead of crashing the build,** and wrapped `onMessage`, `defineScript` and `resource` marker calls are checked like the bare call ([Which handler forms build](./messages.md#which-handler-forms-build)).
-> - **More calls the engine raises on are type errors,** such as a misspelled `gui.cancel_animations` property ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)).
+> - **More calls the engine raises on or ignores are type errors,** such as a misspelled `gui.cancel_animations` property ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)) or a `factory.create` property map keyed by hash ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 
 ### Improved
 
@@ -27,11 +27,15 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **Calls the engine raises on or animates wrongly are type errors:**
+- **Calls the engine raises on, ignores or animates wrongly are type errors:**
   - **`collectionfactory.create`** takes instance ids as hashes only: its `properties` is a map keyed by `hash("/enemy")`, such as a `LuaMap<Hash, EnemyProps>`, so an object literal keyed by id strings, which the engine raised on at spawn, is a type error; `collectionfactory.create<P>()` takes the ids as strings and hashes them ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`factory.create`** and each `collectionfactory.create` instance table take a `LuaMap` of properties only when it is keyed by name strings and holds property values, so a `hash("speed")` key, which the engine skipped, or a `Matrix4` value, which made it drop every property, is a type error ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
   - **`gui.animate`** checks its target against the property the way the engine reads it: `"rotation"` takes only a quaternion, so a vector3 or a number, which animated to a distorted rotation, is a type error, and a sub-key such as `"position.x"` or a scalar such as `"fill_angle"` takes only a number ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)).
   - **`gui.cancel_animations` and `go.cancel_animations`** reject a property name the engine raises on, such as `"positon"`: `gui.cancel_animations` takes the names `gui.animate` takes, and `go.cancel_animations` the keys a literal address can animate, so a script property holding a `Hash` is a type error too ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
   - **`gui.get` and `gui.set`** take an `options` table holding one of `index`, `key` or `keys`, so a table holding two, which the engine raised on, is a type error ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)).
+  - **`physics.set_shape`** on Defold 1.13.2 and later takes one table per shape kind, so a box without `dimensions` or a hull shape, which the engine raised on, is a type error.
+  - **`sys.save` and `sys.serialize`** reject a `LuaMap` or `LuaTable` keyed by anything but a string, number or `Hash`, which the engine raised on.
+- **`http.request` accepts the `proxy` option** the engine reads on native builds, which was a type error.
 - **Wrapped and optional calls to `onMessage`, `defineScript` and the `resource` markers build like the bare call:** `onMessage?.()` and `(onMessage)()` report an error instead of crashing the build and the editor's diagnostics, `onMessage!({...})` and a hook written `(onMessage)({...})` lower, `onMessage?.(handlers)` squiggles once, and a `resource.atlas` default inside `(defineScript)({...})` compiles. A marker call such as `(resource.atlas)("/a.atlas")` outside a property default fails the build like `resource.atlas("/a.atlas")` ([Which handler forms build](./messages.md#which-handler-forms-build)).
 - **A bare component address stays untyped when one collection factory's objects disagree on it:** if two objects in the collection a factory spawns give one component id different scripts, or a script and another component, `scene-types` writes its bare `#id` as `true`, so `msg.post` no longer checks it against only one script's messages ([Scene types](./scene-types.md#component-addresses-carry-their-messages-and-properties)).
 - **The docs sites show pages as written:**

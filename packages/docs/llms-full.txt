@@ -1310,7 +1310,7 @@ go.get<EnemyProps>()("/enemy#controller", "missing");              // type error
 
 `ScriptPropertiesOf` extracts the same `TProps` the owning script's `self` carries, so the cross-script type and the owning script's `self` stay one source of truth — there is no second hand-maintained interface to drift. As with the component generic, you name the script yourself; nothing verifies the url resolves to that script. When the url is a literal your scenes declare, the bare `go.get("/enemy#controller", "speed")` reads the same shape off the scene types with no generic.
 
-**Check the properties a factory spawns with.** The fourth argument of `factory.create` seeds the spawned script's declared properties, and the bare form takes any table. Name the spawned script's shape in the curried form and the table is checked against it: any subset of the declared properties is accepted, and an undeclared name or a wrongly typed value is a type error:
+**Check the properties a factory spawns with.** The fourth argument of `factory.create` seeds the spawned script's declared properties. The bare form takes an object literal with any names, or a `LuaMap` keyed by `string` whose values are property types (`number`, `boolean`, `string`, `Hash`, `Url`, `Vector3`, `Vector4`, `Quaternion`): the engine skips a hash key, and one value of any other type drops every property. Name the spawned script's shape in the curried form and the table is checked against it: any subset of the declared properties is accepted, and an undeclared name or a wrongly typed value is a type error:
 
 ```ts
 // spawn an enemy with its own speed
@@ -1320,7 +1320,7 @@ factory.create<EnemyProps>()("#enemyfactory", undefined, undefined, { sped: 250 
 
 The form is curried for the same reason as `go.get<P>()`: the empty call names the shape, and the build removes it, so the engine receives `factory.create("#enemyfactory", ...)`. You name the script yourself; nothing verifies that the factory's prototype runs it.
 
-**Check the properties a collection factory spawns with.** `collectionfactory.create` seeds each spawned instance's script properties from a table keyed by instance id, and the engine raises on an id that is a string rather than a hash, so the bare form takes only a map keyed by `hash("/enemy_leader")`. The curried form maps each instance id, as the collection addresses it, to that instance's script shape and checks every instance's table against it; an unknown id is a type error too:
+**Check the properties a collection factory spawns with.** `collectionfactory.create` seeds each spawned instance's script properties from a table keyed by instance id, and the engine raises on an id that is a string rather than a hash, so the bare form takes only a map keyed by `hash("/enemy_leader")`, and each instance's table follows the `factory.create` rule above. The curried form maps each instance id, as the collection addresses it, to that instance's script shape and checks every instance's table against it; an unknown id is a type error too:
 
 ```ts
 type SquadProps = { "/enemy_leader": EnemyProps; "/enemy_1": EnemyProps; "/medic": MedicProps };
@@ -15459,7 +15459,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
 - function get_status(url: string | Hash | Url): collectionfactory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
@@ -15522,7 +15522,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### factory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | PlainTable, scale?: number | Vector3): Hash | undefined;
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
 - function get_status(url: string | Hash | Url): factory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
@@ -16104,7 +16104,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### http
 
 - function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;
-- interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; } [since 1.13.2]
+- interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; } [since 1.13.2]
 
 ### image
 
@@ -16287,7 +16287,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
 - function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
-- function set_shape(url: string | Hash | Url, shape: string | Hash, table: physics.ShapeData): void;
+- function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
 - function update_mass(collisionobject: string | Hash | Url, mass: number): void;
 - function wakeup(url: string | Hash | Url): void;
@@ -16646,8 +16646,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function open_url(url: string, attributes: sys.OpenUrlAttributes): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void; [through 1.14.0] [signature transition]
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string, arg7?: string, arg8?: string): void; [since 1.14.1] [signature transition]
-- function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;
-- function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;
+- function save(filename: string, table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): boolean;
+- function serialize(table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): string;
 - function set_connectivity_host(host: string): void;
 - sys.set_engine_throttle(enable: false): void
 - sys.set_engine_throttle(enable: boolean, cooldown: number): void

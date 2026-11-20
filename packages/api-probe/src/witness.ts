@@ -272,6 +272,13 @@ function objectWitness(type: ts.Type, scope: Scope, depth: number): string {
   // `ReadonlyLuaMap` has no constructor; a `LuaMap` is one.
   if (symbolName === "ReadonlyLuaMap") return "new LuaMap()";
   if (symbolName === "LuaSet") return "new LuaSet()";
+  // `LuaPairsIterable` aliases an intersection with no symbol of its own; its
+  // required `__tstlIterable: "Pairs"` brand names it, and a `LuaMap` is one.
+  const brand = checker.getPropertyOfType(type, "__tstlIterable");
+  if (brand !== undefined && (brand.flags & ts.SymbolFlags.Optional) === 0) {
+    const branded = checker.getTypeOfSymbol(brand);
+    if (branded.isStringLiteral() && branded.value === "Pairs") return "new LuaMap()";
+  }
   if (checker.isTupleType(type)) {
     const elements = checker.getTypeArguments(type as ts.TypeReference);
     const fixed = ((type as ts.TypeReference).target as ts.TupleType).fixedLength;
