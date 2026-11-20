@@ -283,15 +283,19 @@ describe("regen drift guard", () => {
 });
 
 describe("go facade skip", () => {
-  test("generated go.d.ts declares neither facade-owned get/set/property nor drops animate/properties", () => {
+  test("generated go.d.ts declares none of the facade-owned animate/cancel_animations/get/set/property and keeps properties", () => {
     const go = MODULE_MANIFEST.find((e) => e.namespace === "go");
     if (!go) throw new Error("go manifest entry missing");
     const { contents, dropped } = generateModuleDeclaration(go);
+    expect(contents).not.toContain("function animate(");
+    expect(contents).not.toContain("function cancel_animations(");
     expect(contents).not.toContain("function get(");
     expect(contents).not.toContain("function set(");
     expect(contents).not.toContain("function property(");
-    expect(contents).toContain("function animate(");
+    expect(contents).toContain("function get_position(");
     expect(contents).toContain("interface Properties {");
+    expect(dropped).toContain("go.animate");
+    expect(dropped).toContain("go.cancel_animations");
     expect(dropped).toContain("go.get");
     expect(dropped).toContain("go.set");
     expect(dropped).toContain("go.property");

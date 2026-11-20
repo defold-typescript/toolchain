@@ -119,7 +119,6 @@ const SURFACES = retainedSurfaces(
 // one still needs them, each with the targets that resolved it.
 const PARAM_CORRECTIONS_RESOLVED_UPSTREAM: Record<string, readonly string[]> = {
   "gui.animate:param:property": ["defold-1.13.2", "defold-1.14.0", "defold-1.14.1"],
-  "gui.cancel_animations:param:property": ["defold-1.13.2", "defold-1.14.0", "defold-1.14.1"],
   "resource.create_texture_async:param:path": ["defold-1.13.2", "defold-1.14.0", "defold-1.14.1"],
   "render.get_render_target_width:param:render_target": [
     "defold-1.13.2",

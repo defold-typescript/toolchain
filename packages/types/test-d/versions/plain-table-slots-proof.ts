@@ -13,7 +13,9 @@ sys.save("/save.dat", proofSave);
 sys.serialize(proofSave);
 json.encode(proofSave);
 factory.create("#factory", undefined, undefined, proofSave);
-collectionfactory.create("#collectionfactory", undefined, undefined, { "/go": proofSave });
+const proofInstances = new LuaMap<Hash, ProofSave>();
+proofInstances.set(hash("/go"), proofSave);
+collectionfactory.create("#collectionfactory", undefined, undefined, proofInstances);
 
 // @ts-expect-error a Vector3 is not a table
 sys.save("/save.dat", vmath.vector3());

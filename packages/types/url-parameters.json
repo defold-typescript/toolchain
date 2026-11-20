@@ -172,16 +172,14 @@
     "parameter": "url",
     "class": "either",
     "socketScope": "same-world",
-    "source": "generated",
-    "evidence": "url of the game object or component having the property"
+    "source": "src/go-overloads.d.ts"
   },
   {
     "fqn": "go.cancel_animations",
     "parameter": "url",
     "class": "either",
     "socketScope": "same-world",
-    "source": "generated",
-    "evidence": "url of the game object or component"
+    "source": "src/go-overloads.d.ts"
   },
   {
     "fqn": "go.get",

@@ -186,7 +186,10 @@ function safeParamName(name: string, index: number): string {
 // faithful "any lua table" type, not a `recordTables` fidelity loss, so the
 // audit consults this set to avoid counting them. A new ref-doc function with an
 // opaque table must be added here deliberately; until then it surfaces under
-// `recordTables` as a visible signal.
+// `recordTables` as a visible signal. The spawn-time `properties` of
+// factory.create and collectionfactory.create are not arbitrary: the engine's
+// property parser fixes their key and value types, which TABLE_SLOT_CURATIONS
+// declares.
 export const ARBITRARY_TABLE_SLOTS = new Set([
   "json.encode",
   "json.decode",
@@ -197,15 +200,6 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   "iac.set_listener",
   "push.get_scheduled",
   "push.get_all_scheduled",
-  // runtime-owned passthrough: the table is filled by user code at runtime, never
-  // by Defold's API contract. factory.create/collectionfactory.create `properties`
-  // are spawn-time overrides keyed by the spawned object's own script-property
-  // names. No static shape exists, so `Record<string | number, unknown>` is
-  // faithful, not a loss. collectionfactory.create curates the instance-id layer
-  // of `properties` as a mapping; each per-instance property table stays that
-  // faithful `Record`.
-  "factory.create",
-  "collectionfactory.create",
   // engine-formatted blob: the engine produces the value at runtime and no
   // field list is documented, so the whole-slot `Record` is faithful, not a
   // loss. crash.get_backtrace is "table containing the backtrace",
@@ -263,19 +257,30 @@ export const ARBITRARY_TABLE_SLOT_KEYS = new Set([
 // `skipFunctions` entry with no matching overload) still counts, so the gate
 // stays a real signal. Mirrors the ARBITRARY_TABLE_SLOTS audit-honesty pattern.
 // A slot the engine treats as omissible on a function OVERLOAD_COVERED_SKIPS
-// hands to a `*-overloads.d.ts` form without it, where no generated declaration
-// exists for OPTIONAL_SLOT_CORRECTIONS to reach. Availability identity reads it
-// as optional, so a ref-doc that starts marking it is no change. The value is
-// the evidence, as in OPTIONAL_SLOT_CORRECTIONS.
-export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map(
-  (["y", "z"] as const).map((slot) => [
-    `vmath.euler_to_quat:param:${slot}`,
-    "example `vmath.euler_to_quat(v)` passes a vector3 alone; vmath-overloads.d.ts declares that form",
-  ]),
-);
+// hands to a `*-overloads.d.ts` form that omits it or declares it optional,
+// where no generated declaration exists for OPTIONAL_SLOT_CORRECTIONS to reach.
+// Availability identity reads it as optional, so a ref-doc that starts marking
+// it is no change. The value is the evidence, as in OPTIONAL_SLOT_CORRECTIONS.
+export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map([
+  ...(["y", "z"] as const).map(
+    (slot) =>
+      [
+        `vmath.euler_to_quat:param:${slot}`,
+        "example `vmath.euler_to_quat(v)` passes a vector3 alone; vmath-overloads.d.ts declares that form",
+      ] as const,
+  ),
+  [
+    "go.cancel_animations:param:url",
+    "gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent; go-overloads.d.ts declares it optional",
+  ],
+]);
 
 export const OVERLOAD_COVERED_SKIPS = new Set([
-  // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes.
+  // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes,
+  // go.animate with its target value typed per key, and go.cancel_animations
+  // with the keys an address can animate.
+  "go.animate",
+  "go.cancel_animations",
   "go.get",
   "go.set",
   "go.property",
@@ -871,17 +876,29 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       reason: "script_particlefx.cpp:ParticleFX_SetConstant takes a vector4 or a matrix4 value",
     },
   ],
-  ...(["animate", "cancel_animations"] as const).map(
-    (name) =>
-      [
-        `gui.${name}:param:property`,
-        {
-          adds: "Hash",
-          upstream: name === "animate" ? ["string", "constant"] : ["nil", "string", "constant"],
-          reason: `gui_script.cpp reads the ${name} property with CheckHashOrString(L, 2)`,
-        },
-      ] as const,
-  ),
+  [
+    "gui.animate:param:property",
+    {
+      adds: "Hash",
+      upstream: ["string", "constant"],
+      reason: "gui_script.cpp reads the animate property with CheckHashOrString(L, 2)",
+    },
+  ],
+  [
+    "gui.cancel_animations:param:property",
+    {
+      ts: "keyof gui.NodeProperties | gui.Prop | Hash",
+      upstream: ["nil", "string", "constant"],
+      retypedUpstream: [["nil", "string", "hash", "gui.PROP"]],
+      reason:
+        "gui_script.cpp:LuaCancelAnimations reads the property with CheckHashOrString(L, 2) and raises for a name dmGui::HasPropertyHash refuses, so a string must name a node property",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaCancelAnimations",
+        contains: "!dmGui::HasPropertyHash(scene, hnode, property_hash)",
+      },
+    },
+  ],
   ...(
     [
       ["clone_tree", "LuaCloneTree"],
@@ -1313,10 +1330,6 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   [
     "go.world_to_local_transform:param:url",
     "gameobject_script.cpp:Script_WorldToLocalTransfrom resolves argument 2 with ResolveInstance, which takes the calling instance when it is absent",
-  ],
-  [
-    "go.cancel_animations:param:url",
-    "gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent",
   ],
   [
     "b2d.fixture.set_density:param:update_mass",
@@ -2612,28 +2625,51 @@ export type NestedMapping = { key: string; value: string };
 // spelling a newer release retypes the same slot to without fixing it
 // (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
 // for `collectionfactory.create`'s properties.
-export type TableSlotCuration = (
-  | { kind: "mapping"; key: string; value: string | readonly TableField[] | NestedMapping }
-  // `pairs` also admits any table whose values are the element, for a binding
-  // that walks the table with lua_next and reads only its values. The extra arm
-  // is `LuaPairsIterable`, which is covariant in its value; `LuaTable` is
-  // invariant through `set`, so it would reject a `LuaTable<Hash, Hash>`.
-  | { kind: "array"; element: string | readonly string[]; pairs?: true }
-  | { kind: "object"; fields: readonly TableField[] }
-  | { kind: "array-object"; fields: readonly TableField[] }
-  // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
-  // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
-  // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
-  // restoring the keyed-by-name layer the flat object curation drops.
-  | { kind: "keyed-object" }
-  // A slot whose faithful shape no field list can carry, such as a union
-  // discriminated on `type`. `ts` is emitted verbatim, already mapped.
-  | { kind: "verbatim"; ts: string }
-) & { readonly retypedUpstream?: readonly string[] };
+export type TableSlotCuration =
+  // `pairs` emits a `ReadonlyLuaMap`, for a binding that walks the map with
+  // lua_next and only reads it: dropping `set` makes the map covariant in its
+  // value, so a `LuaMap<Hash, EnemyProps>` passes where `LuaMap` would reject it.
+  (
+    | {
+        kind: "mapping";
+        key: string;
+        value: string | readonly TableField[] | NestedMapping;
+        pairs?: true;
+      }
+    // `pairs` also admits any table whose values are the element, for a binding
+    // that walks the table with lua_next and reads only its values. The extra arm
+    // is `LuaPairsIterable`, which is covariant in its value; `LuaTable` is
+    // invariant through `set`, so it would reject a `LuaTable<Hash, Hash>`.
+    | { kind: "array"; element: string | readonly string[]; pairs?: true }
+    | { kind: "object"; fields: readonly TableField[] }
+    | { kind: "array-object"; fields: readonly TableField[] }
+    // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
+    // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
+    // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
+    // restoring the keyed-by-name layer the flat object curation drops.
+    | { kind: "keyed-object" }
+    // A slot whose faithful shape no field list can carry, such as a union
+    // discriminated on `type`. `ts` is emitted verbatim, already mapped.
+    | { kind: "verbatim"; ts: string }
+  ) & { readonly retypedUpstream?: readonly string[] };
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
 export const PROPERTIES_INTERFACE = engineTypeName("properties");
+
+// The component kinds whose generated namespace registers its properties
+// interface in the global `SceneComponentCatalogs`, under the kind `scene-types`
+// writes, which equals the namespace. Each is declared on only some targets or
+// kind surfaces, so it registers where it is emitted. The kinds every surface
+// declares register in `src/component-properties.d.ts` instead, which also
+// reaches surfaces that load no generated namespace file of theirs.
+export const GENERATED_CATALOG_KINDS: ReadonlySet<string> = new Set([
+  "camera",
+  "gui",
+  "particlefx",
+  "sound",
+  "tilemap",
+]);
 
 // The ref-doc tokens of the handles `socket.select` takes and returns, in their
 // 1.13.2 TYPEDEF spelling, which the type map resolves to each handle's interface.
@@ -2818,6 +2854,28 @@ const PHYSICS_SHAPE_DEFINITION_TS = [
   "{ type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
 ].join(" | ");
 
+// The object arm of a table slot that also takes a keyed map: any plain table
+// except TSTL's `LuaMap`/`LuaTable`/`LuaSet` wrappers, which all carry
+// `__tstlIterable`. `PlainTable` alone admits every wrapper whatever its key and
+// value types, so this arm sends a wrapper to the slot's `LuaPairsIterable` arm,
+// while an object literal, an interface-typed value or an array still passes.
+const PLAIN_OBJECT_TS = "(PlainTable & { readonly __tstlIterable?: never })";
+
+// A spawn-time property table, as gameobject_props_lua.cpp:
+// PropertyContainerCreateFromLua reads it: it walks the table with lua_next,
+// skips a key `lua_isstring` rejects (a `hash("speed")` key is dropped with no
+// error), and returns no container at all for a value GetPropertyType maps to
+// PROPERTY_TYPE_MATRIX4 or PROPERTY_TYPE_COUNT (a matrix, table or function), so
+// the object spawns with none of its properties. The binding only reads the
+// table, so the map arm is `LuaPairsIterable`, covariant in key and value: a
+// `ReadonlyLuaMap` is contravariant in its key through `get`.
+const SPAWN_PROPERTIES_TS = `LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | ${PLAIN_OBJECT_TS}`;
+
+// The table sys.save and sys.serialize take: script_table.cpp raises "keys in
+// table must be of type number, string or hash" for any other key, and stores
+// any Lua value.
+const SERIALIZED_TABLE_TS = `LuaPairsIterable<string | number | Hash, unknown> | ${PLAIN_OBJECT_TS}`;
+
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map<
   string,
   TableSlotCuration
@@ -2836,19 +2894,29 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  // collectionfactory.create's `properties` is keyed by "game object ids (hash)",
-  // which upstream's example builds with `hash("/go")`. The `string` key keeps
-  // the object-literal form this slot accepted as a bare `table`.
+  // collectionfactory.create's `properties` is keyed by "game object ids (hash)":
+  // CollectionFactoryComp_Create walks it with lua_next and reads each key with
+  // `dmScript::CheckHash`, which raises on a string, so the instance layer takes
+  // a `hash("/go")` key only. It only reads the map, so `ReadonlyLuaMap` keeps it
+  // covariant in its value. Each instance table goes through the same property
+  // parser as factory.create's `properties`.
   [
     "collectionfactory.create:param:properties",
     {
-      kind: "mapping",
-      key: "hash | string",
-      value: "table",
+      kind: "verbatim",
+      ts: `ReadonlyLuaMap<Hash, ${SPAWN_PROPERTIES_TS}>`,
       retypedUpstream: ["table<hash, table<string|hash, any>>"],
     },
   ],
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  [
+    "factory.create:param:properties",
+    {
+      kind: "verbatim",
+      ts: SPAWN_PROPERTIES_TS,
+      retypedUpstream: ["table<string|hash, any>"],
+    },
+  ],
   // go.delete's "table of id's": gameobject_script.cpp:DeleteGOTable walks any
   // table with lua_next and resolves each value with ResolveURL, so the id table
   // collectionfactory.create returns deletes as it is. 1.13.2 retypes the slot
@@ -3579,7 +3647,24 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.world.collide_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
   ["b2d.world.collide_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
   ["physics.get_shape:return:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
-  ["physics.set_shape:param:table", { kind: "verbatim", ts: PHYSICS_SHAPE_DEFINITION_TS }],
+  // 1.13.2 retypes the slot to the `physics.shape_data` typedef, which declares
+  // every field but `type` optional and admits every shape type.
+  [
+    "physics.set_shape:param:table",
+    {
+      kind: "verbatim",
+      ts: PHYSICS_SHAPE_DEFINITION_TS,
+      retypedUpstream: ["physics.shape_data"],
+    },
+  ],
+  [
+    "sys.save:param:table",
+    { kind: "verbatim", ts: SERIALIZED_TABLE_TS, retypedUpstream: ["table<any, any>"] },
+  ],
+  [
+    "sys.serialize:param:table",
+    { kind: "verbatim", ts: SERIALIZED_TABLE_TS, retypedUpstream: ["table<any, any>"] },
+  ],
 ]);
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
@@ -3831,6 +3916,15 @@ export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition>
       ],
     },
   ],
+  [
+    "http.request:param:options",
+    {
+      fields: [{ name: "proxy", types: ["string"], optional: true }],
+      evidence: [
+        "script_http.cpp:Http_Request reads `proxy` with luaL_checkstring on native builds; the HTML5 binding ignores it",
+      ],
+    },
+  ],
 ]);
 
 // A return-slot field upstream documents as platform-gated or nil-valued while
@@ -3974,6 +4068,21 @@ export const STRUCT_MEMBER_ADDITIONS: ReadonlyMap<string, StructMemberAddition> 
         cFunction: "Sys_GetIfaddrs",
         contains:
           'lua_pushliteral(L, "ipv6"); } else { lua_pushnil(L); } lua_setfield(L, -2, "family");',
+      },
+    },
+  ],
+  [
+    memberCorrectionKey("http.request_options", "proxy"),
+    {
+      member: {
+        type: "string",
+        isOptional: true,
+        doc: "Proxy server URL; ignored on HTML5.",
+      },
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_http.cpp",
+        cFunction: "Http_Request",
+        contains: 'else if (strcmp(attr, "proxy") == 0) { proxy = luaL_checkstring(L, -1); }',
       },
     },
   ],
@@ -5312,6 +5421,11 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   }
 
   lines.push("}");
+  if (GENERATED_CATALOG_KINDS.has(module.namespace) && module.properties.length > 0) {
+    lines.push("interface SceneComponentCatalogs {");
+    lines.push(`${INDENT}${module.namespace}: ${module.namespace}.${PROPERTIES_INTERFACE};`);
+    lines.push("}");
+  }
   return `${lines.join("\n")}\n`;
 }
 
@@ -7021,7 +7135,8 @@ function mapSlotUnion(
           const key = unionFromTokens(otherKeys.length > 0 ? otherKeys : keyTokens, mapType);
           ts = `LuaMap<${key}, ${value}> | ${objectLiteralArm(value)}`;
         } else {
-          ts = `LuaMap<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
+          const map = "pairs" in mapping && mapping.pairs === true ? "ReadonlyLuaMap" : "LuaMap";
+          ts = `${map}<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
         }
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);

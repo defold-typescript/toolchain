@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Quaternion, Url, Vector3 } from "../src/core-types";
+import type { Hash, Quaternion, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
@@ -85,7 +85,7 @@ declare global {
      * }
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.

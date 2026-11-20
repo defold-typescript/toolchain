@@ -61,9 +61,9 @@ sys.save("/save.dat", io.stdout);
 // @ts-expect-error a Lua file handle is not a table
 sys.serialize(io.stdout);
 
-// Runtime-owned passthrough: the spawn-time `properties` overrides are keyed by
-// the spawned object's own script-property names, so the table is an arbitrary
-// literal accepted as-is, not a typed shape.
+// The spawn-time `properties` overrides are keyed by the spawned object's own
+// script-property names, so an object literal is accepted with any names; a
+// `LuaMap` must be keyed by string (engine-table-slots.ts).
 const arbTableSpawned: Hash | undefined = factory.create(
   "#factory",
   undefined,
@@ -72,7 +72,7 @@ const arbTableSpawned: Hash | undefined = factory.create(
   1,
 );
 // collectionfactory.create keys the same per-object tables by instance id hash,
-// either as a LuaMap or as an object literal.
+// built as a LuaMap with hash(...).
 const arbTableSpawnedProps = new LuaMap<Hash, Record<string, unknown>>();
 arbTableSpawnedProps.set(hash("/enemy"), { speed: 2 });
 const arbTableSpawnedSet: LuaMap<Hash, Hash> = collectionfactory.create(
@@ -85,6 +85,7 @@ const arbTableSpawnedLiteral: LuaMap<Hash, Hash> = collectionfactory.create(
   "#collectionfactory",
   undefined,
   undefined,
+  // @ts-expect-error the engine raises on a string instance id
   { "/enemy": { speed: 2 } },
 );
 // @ts-expect-error the top level is keyed by instance id, not property name

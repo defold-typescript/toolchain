@@ -223,6 +223,38 @@ describe("buildScriptNamingContexts", () => {
   test("a .gui the caller's map does not resolve contributes no context", () => {
     expect(contextsOver({ ...TETRIS, guiScripts: {} }).size).toBe(0);
   });
+
+  test("each world sharing a socket gives its own script a context at the shared object", () => {
+    const contexts = contextsOver({
+      bootstrap: "/main/main.collection",
+      documents: [
+        [
+          "main/main.collection",
+          'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+        ],
+        [
+          "main/loader.go",
+          'embedded_components {\n  id: "first"\n  type: "collectionproxy"\n' +
+            '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n' +
+            'embedded_components {\n  id: "second"\n  type: "collectionproxy"\n' +
+            '  data: "collection: \\"/levels/level2.collection\\"\\n"\n}\n',
+        ],
+        [
+          "levels/level1.collection",
+          'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero1.go"\n}\n',
+        ],
+        [
+          "levels/level2.collection",
+          'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero2.go"\n}\n',
+        ],
+        ["levels/hero1.go", scriptObject("body", "/levels/a.script")],
+        ["levels/hero2.go", scriptObject("body", "/levels/b.script")],
+      ],
+    });
+    const shared = { object: "level:/hero", socket: "level", prefix: "level:/" };
+    expect(contexts.get("levels/a.script")).toEqual([shared]);
+    expect(contexts.get("levels/b.script")).toEqual([shared]);
+  });
 });
 
 function onlyContext(universe: Universe, resource: string): NamingContext {

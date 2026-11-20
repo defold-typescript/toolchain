@@ -621,22 +621,24 @@ describe("annotation verdict gate", () => {
   });
 
   test("a corrected verdict whose annotation no longer repeats the defect is a problem", () => {
-    const key = "runtime:go.cancel_animations:required-as-optional:1";
+    const key = "runtime:go.world_to_local_position:required-as-optional:2";
     const verdict = verdicts[key];
-    expect(verdict?.correction).toBe("OPTIONAL_SLOT_CORRECTIONS:go.cancel_animations:param:url");
-    const fn = diffModel.functions.get("runtime:go.cancel_animations");
-    if (!fn) throw new Error("go.cancel_animations is not annotated");
+    expect(verdict?.correction).toBe(
+      "OPTIONAL_SLOT_CORRECTIONS:go.world_to_local_position:param:url",
+    );
+    const fn = diffModel.functions.get("runtime:go.world_to_local_position");
+    if (!fn) throw new Error("go.world_to_local_position is not annotated");
     const fixed = {
       ...fn,
       params: fn.params.map((p) => (p.name === "url" ? { ...p, optional: true } : p)),
     };
     const functions = new Map(diffModel.functions);
-    functions.set("runtime:go.cancel_animations", fixed);
+    functions.set("runtime:go.world_to_local_position", fixed);
     const fixedModel = { ...diffModel, functions };
     const correction = {
       table: "OPTIONAL_SLOT_CORRECTIONS",
-      key: "go.cancel_animations:param:url",
-      entry: OPTIONAL_SLOT_CORRECTIONS.get("go.cancel_animations:param:url") ?? "",
+      key: "go.world_to_local_position:param:url",
+      entry: OPTIONAL_SLOT_CORRECTIONS.get("go.world_to_local_position:param:url") ?? "",
     } as const;
     expect(correctionAgreement(correction, fixed, fixedModel)).toBe("agrees");
     const problems = annotationVerdictProblems(mismatches, verdicts, fixedModel);

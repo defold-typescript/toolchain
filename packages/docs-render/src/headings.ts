@@ -38,6 +38,14 @@ export interface AnyHeading {
    * dropped. Absent when the heading holds no highlighted code.
    */
   markup?: string;
+  /**
+   * The heading's text as markup that keeps its inline formatting, for an
+   * outline that shows it: `code`, `strong`, `em` and `del` stay as bare
+   * elements, and every other tag gives way to its children. Absent when the
+   * heading holds none of them, and on a signature heading, whose outline reads
+   * as `markup` or `badge` instead.
+   */
+  formatted?: string;
 }
 
 export interface HeadingMarker {
@@ -178,6 +186,30 @@ function hastMarkup(heading: Element): string | undefined {
   return colored ? toHtml(keptMarkup(heading.children)).trim() : undefined;
 }
 
+const FORMATTING_TAGS = new Set(["code", "strong", "em", "del"]);
+
+// The outline's formatted text: inline formatting elements stay without their
+// attributes, chips and the permalink icon go, and every other element gives
+// way to its children, so the result nests inside an outline link.
+function formattingMarkup(children: readonly ElementContent[]): ElementContent[] {
+  return children.flatMap((child): ElementContent[] => {
+    if (child.type === "text") return [child];
+    if (child.type !== "element") return [];
+    if (isChip(child) || classList(child).includes("heading-anchor-icon")) return [];
+    const kept = formattingMarkup(child.children);
+    if (!FORMATTING_TAGS.has(child.tagName)) return kept;
+    return [{ type: "element", tagName: child.tagName, properties: {}, children: kept }];
+  });
+}
+
+function hastFormatted(heading: Element): string | undefined {
+  let formatted = false;
+  eachDescendant(heading, (element) => {
+    if (FORMATTING_TAGS.has(element.tagName)) formatted = true;
+  });
+  return formatted ? toHtml(formattingMarkup(heading.children)).trim() : undefined;
+}
+
 function hastHeading(element: Element, level: HeadingLevel): AnyHeading | undefined {
   const untrimmed = hastOutlineText(element);
   const text = untrimmed.trim();
@@ -199,6 +231,8 @@ function hastHeading(element: Element, level: HeadingLevel): AnyHeading | undefi
   if (markers.length > 0) heading.markers = markers;
   const markup = hastMarkup(element);
   if (markup) heading.markup = markup;
+  const formatted = markup || badge ? undefined : hastFormatted(element);
+  if (formatted) heading.formatted = formatted;
   return heading;
 }
 

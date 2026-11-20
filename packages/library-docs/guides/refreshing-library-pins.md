@@ -283,13 +283,12 @@ skip it.
   generated module's ratio with `bun run --cwd packages/library-types fidelity:floor`,
   and edit a fork's or native
   extension's `{ callable, field }` pair by hand.
-- **The vendored-snapshot digest.** `authored-parity-floor.test.ts` pins the
-  SHA-256 of every file under each forked library's `source/upstream/`, because the committed
-  parity numbers were measured against exactly those bytes. Re-vendoring changes
-  the digest; re-pin it **in the same commit**, after re-running the parity
-  report and reviewing the coverage change. Never re-baseline a digest to make a
-  red go away — that leaves every committed number standing while silently
-  changing what it is about.
+- **The parity reports.** `authored-parity-floor.test.ts` checks each committed
+  report under `packages/library-types/fidelity/authored/` and `fidelity/native/`
+  against a fresh measurement of the vendored copy. After re-vendoring, re-run
+  `bun run --cwd packages/library-types parity`, review the coverage change, and
+  commit the reports **in the same commit**. An upstream change that moves no
+  number leaves the reports as they are.
 - **The provenance assertions.** The toolchain's `api-surface-loader.test.ts` reads the
   pin back out of the emitted API-doc metadata and asserts it exactly — for
   druid, `meta.commit` is the `ref` in `druid/reviewed.json` and

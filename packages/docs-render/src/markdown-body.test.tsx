@@ -135,6 +135,51 @@ describe("MarkdownBody", () => {
     }
   });
 
+  test("a code block shows at its full length, its scroll area taking no height cap", async () => {
+    const { hast } = await processDocsMarkdown(SAMPLE_WITH_FENCE, { routePrefix: "" });
+    const { container, unmount } = mount(<MarkdownBody hast={hast} />);
+    const candidates = [...container.querySelectorAll("*")].flatMap((node) => [...node.classList]);
+    const style = document.createElement("style");
+    style.textContent = (await compile("@tailwind utilities;")).build(candidates);
+    document.head.append(style);
+    try {
+      const viewport = container.querySelector("pre")?.parentElement;
+      if (!viewport) throw new Error("the code block has no scroll area");
+      expect(viewport.classList.contains("overflow-auto")).toBe(true);
+      expect(getComputedStyle(viewport).maxHeight).toBe("none");
+    } finally {
+      style.remove();
+      unmount();
+    }
+  });
+
+  // The base link border's `color-mix()` is beyond the test DOM, which drops
+  // that declaration, so the text link only shows the badge rule passing it by.
+  test("a linked shields badge draws no underline, and a text link keeps its own", async () => {
+    const { hast } = await processDocsMarkdown(
+      "[![npm](https://img.shields.io/npm/v/x)](https://example.com/npm) [docs](https://example.com/docs)",
+      { routePrefix: "" },
+    );
+    const { container, unmount } = mount(
+      <div className="prose">
+        <MarkdownBody hast={hast} />
+      </div>,
+    );
+    const style = document.createElement("style");
+    style.textContent = await Bun.file(new URL("./critical.css", import.meta.url)).text();
+    document.head.append(style);
+    try {
+      const [badge, text] = [...container.querySelectorAll("a")];
+      if (!badge?.querySelector("img") || !text)
+        throw new Error("expected a badge link, then a text link");
+      expect(getComputedStyle(badge).borderBottomStyle).toBe("none");
+      expect(getComputedStyle(text).borderBottomStyle).not.toBe("none");
+    } finally {
+      style.remove();
+      unmount();
+    }
+  });
+
   test("a raw anchor stays a plain link target", async () => {
     const host = await render('<a id="kept"></a>');
     const anchor = host.querySelector("#kept");

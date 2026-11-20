@@ -78,7 +78,13 @@ export function buildScriptNamingContexts(
   const contexts = new Map<string, NamingContext[]>();
 
   for (const [object, resources] of index.componentResourcesOf) {
-    for (const resource of resources.values()) {
+    // Two worlds sharing a socket can host different scripts under one id at one
+    // object; each of them runs there, so every recorded variant counts.
+    const named = new Set(resources.values());
+    for (const variants of index.componentVariantsOf.get(object)?.values() ?? []) {
+      for (const { resource } of variants) if (resource !== undefined) named.add(resource);
+    }
+    for (const resource of named) {
       const script = resource.endsWith(SCRIPT_SUFFIX)
         ? resource
         : resource.endsWith(GUI_SUFFIX)

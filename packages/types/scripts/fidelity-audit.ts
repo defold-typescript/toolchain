@@ -350,7 +350,6 @@ export const UNATTRIBUTED_OPTIONAL_CORRECTIONS: ReadonlyMap<string, string> = ne
     [
       "go.world_to_local_position:param:url",
       "go.world_to_local_transform:param:url",
-      "go.cancel_animations:param:url",
       "b2d.fixture.set_density:param:update_mass",
       "render.set_render_target:param:render_target",
       "buffer.get_bytes:param:stream_name",

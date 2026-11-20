@@ -9,6 +9,41 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.68.0
+
+> Summary:
+>
+> - **`go.animate` and `go.set` check the value against the property, and `factory.create` and `collectionfactory.create` check spawned scripts' properties** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+> - **A scene address types its property keys,** so `go.get` on a linked script or a built-in component such as a sprite or a sound reads that component's catalog ([Scene types](./scene-types.md#property-keys-follow-the-address)).
+> - **`onMessage?.()` and `(onMessage)()` report an error instead of crashing the build,** and wrapped `onMessage`, `defineScript` and `resource` marker calls are checked like the bare call ([Which handler forms build](./messages.md#which-handler-forms-build)).
+> - **More calls the engine raises on or ignores are type errors,** such as a misspelled `gui.cancel_animations` property ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)) or a `factory.create` property map keyed by hash ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+
+### Improved
+
+- **Property keys and values are checked against what the target declares:**
+  - **`go.animate`** checks its target value against the property: on a transform key a number fills a vector such as `"position"` and `"rotation"` takes only a quaternion, and `go.animate<P>()` takes a component catalog such as `sprite.Properties` or a `ScriptPropertiesOf` shape and accepts only the keys the engine can animate. `go.set` rejects a wrong value on a transform key too, such as a quaternion for `"position"`, instead of accepting it as an untyped write ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`go.get`, `go.set` and `go.animate`** type a property key by its address: `scene-types` writes each component address that names no compiled script as its kind, such as `"sprite"`, instead of `true`, so a linked script's address takes only its declared properties, a sprite, label, model, mesh, collision object, factory, collection factory, particle effect, sound, tile map, camera (Defold 1.13.0 and later) or gui address types its catalog's keys, and a literal with no `#`, such as `"."`, takes only the transform keys. An extension can register its own kind in `SceneComponentCatalogs` ([Scene types](./scene-types.md#property-keys-follow-the-address)).
+  - **`factory.create` and `collectionfactory.create`** check the spawned scripts' properties in their curried forms: `factory.create<P>()` takes a `ScriptPropertiesOf` shape as `P` and `collectionfactory.create<P>()` maps each instance id, such as `"/enemy_leader"`, to one, so an unknown id, an undeclared name or a wrongly typed value in `properties` is a type error. The build removes the empty call and hashes each instance id, and reports a stored `collectionfactory.create<P>()` or a `properties` value that is not an object literal as an error ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+
+### Fixed
+
+- **Calls the engine raises on, ignores or animates wrongly are type errors:**
+  - **`collectionfactory.create`** takes instance ids as hashes only: its `properties` is a map keyed by `hash("/enemy")`, such as a `LuaMap<Hash, EnemyProps>`, so an object literal keyed by id strings, which the engine raised on at spawn, is a type error; `collectionfactory.create<P>()` takes the ids as strings and hashes them ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`factory.create`** and each `collectionfactory.create` instance table take a `LuaMap` of properties only when it is keyed by name strings and holds property values, so a `hash("speed")` key, which the engine skipped, or a `Matrix4` value, which made it drop every property, is a type error ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`gui.animate`** checks its target against the property the way the engine reads it: `"rotation"` takes only a quaternion, so a vector3 or a number, which animated to a distorted rotation, is a type error, and a sub-key such as `"position.x"` or a scalar such as `"fill_angle"` takes only a number ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)).
+  - **`gui.cancel_animations` and `go.cancel_animations`** reject a property name the engine raises on, such as `"positon"`: `gui.cancel_animations` takes the names `gui.animate` takes, and `go.cancel_animations` the keys a literal address can animate, so a script property holding a `Hash` is a type error too ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+  - **`gui.get` and `gui.set`** take an `options` table holding one of `index`, `key` or `keys`, so a table holding two, which the engine raised on, is a type error ([GUI node properties](./typescript-gotchas.md#gui-node-properties-are-a-closed-set)).
+  - **`physics.set_shape`** on Defold 1.13.2 and later takes one table per shape kind, so a box without `dimensions` or a hull shape, which the engine raised on, is a type error.
+  - **`sys.save` and `sys.serialize`** reject a `LuaMap` or `LuaTable` keyed by anything but a string, number or `Hash`, which the engine raised on.
+- **`http.request` accepts the `proxy` option** the engine reads on native builds, which was a type error.
+- **Wrapped and optional calls to `onMessage`, `defineScript` and the `resource` markers build like the bare call:** `onMessage?.()` and `(onMessage)()` report an error instead of crashing the build and the editor's diagnostics, `onMessage!({...})` and a hook written `(onMessage)({...})` lower, `onMessage?.(handlers)` squiggles once, and a `resource.atlas` default inside `(defineScript)({...})` compiles. A marker call such as `(resource.atlas)("/a.atlas")` outside a property default fails the build like `resource.atlas("/a.atlas")` ([Which handler forms build](./messages.md#which-handler-forms-build)).
+- **A component address stays untyped when the components behind it disagree:** `scene-types` writes it as `true` when two objects in the collection a factory spawns give a bare `#id` different scripts or kinds, or when two proxied collections sharing one socket declare a path such as `"level:/hero#body"` differently. `msg.post`, `go.get`, `go.set` and `go.animate` then check it against no single one of those components ([Scene types](./scene-types.md#component-addresses-carry-their-messages-and-properties)).
+- **The docs sites show pages as written:**
+  - **Code blocks** on both sites show at full length instead of scrolling inside a 600px frame, and the copy button shows a hand cursor on hover.
+  - **The page outline** on both sites keeps each heading's inline code, bold, italic and struck text instead of plain text.
+  - **The [API](/api) landing page** leaves space between each group's description and its cards.
+  - **Linked badges,** such as those atop the Overview page, show without a link underline.
+
 ## v0.67.0
 
 > Summary:
@@ -942,7 +977,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`msg.post` completion** lists every built-in id and every id declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
   - **Handler annotation** — annotating a handler's `message` in `onMessage` declares that id for the script, a numeric key under its string form (`1e3` is `"1000"`), and `ScriptMessages<typeof script>` reads the ids back off `defineScript`, `defineGuiScript` or `defineRenderScript`.
   - **Typed receiver** — `msg.url<M>(...)` returns an address that makes `msg.post` complete and check the receiver's own ids.
-  - **Scene address** — [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to the `defineScript` source that builds it, so `msg.post("/logic#wave", ...)` completes and checks that script's ids with no import.
+  - **Scene address** — [`scene-types`](./scene-types.md#component-addresses-carry-their-messages-and-properties) links each script component's address to the `defineScript` source that builds it, so `msg.post("/logic#wave", ...)` completes and checks that script's ids with no import.
 
 ### Fixed
 

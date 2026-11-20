@@ -3,7 +3,12 @@ import {
   type BadgeCountTable,
   buildBadgeCountTable,
 } from "@defold-typescript/docs-render/combined-surface";
-import type { Heading } from "@defold-typescript/docs-render/headings";
+import { pageToc, type RenderedPage } from "@defold-typescript/docs-render/docs-markdown";
+import {
+  type AnyHeading,
+  type Heading,
+  hastHeadings,
+} from "@defold-typescript/docs-render/headings";
 import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import {
   apiVersions,
@@ -237,10 +242,11 @@ export function surfaceTrees(
 
 // An outline entry reads like its heading: a signature in its syntax colors, an
 // overload heading's `N overloads` badge in place of the `...` it stands for,
-// followed by the heading's chips.
-function outlineTitle(heading: Heading): ReactNode {
-  const { badge, markers, markup } = heading;
-  if (!badge && !markers && !markup) return heading.text;
+// or a prose heading with its inline code and emphasis, followed by the
+// heading's chips.
+function outlineTitle(heading: AnyHeading): ReactNode {
+  const { badge, markers, markup, formatted } = heading;
+  if (!badge && !markers && !markup && !formatted) return heading.text;
   const text = markup
     ? [
         createElement("span", {
@@ -249,13 +255,20 @@ function outlineTitle(heading: Heading): ReactNode {
           dangerouslySetInnerHTML: { __html: markup },
         }),
       ]
-    : badge
+    : formatted
       ? [
-          heading.text.slice(0, badge.start),
-          createElement("span", { className: "api-overload-count" }, badge.label),
-          heading.text.slice(badge.end),
+          createElement("span", {
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: the shared renderer's bare formatting elements, rebuilt from the page's own heading
+            dangerouslySetInnerHTML: { __html: formatted },
+          }),
         ]
-      : [heading.text];
+      : badge
+        ? [
+            heading.text.slice(0, badge.start),
+            createElement("span", { className: "api-overload-count" }, badge.label),
+            heading.text.slice(badge.end),
+          ]
+        : [heading.text];
   const chips = (markers ?? []).map((marker) =>
     createElement(OutlineChip, { headingId: heading.id, marker }),
   );
@@ -269,4 +282,18 @@ export function outline(headings: readonly Heading[]): TOCItemType[] {
     url: `#${heading.id}`,
     depth: heading.level,
   }));
+}
+
+/**
+ * A guide page's outline: the entries the Markdown pipeline collected, each
+ * titled as its rendered heading reads, with the heading's inline formatting.
+ * The rendered headings also hold the footnotes' screen-reader-only heading,
+ * which the collected entries leave out.
+ */
+export function guideOutline(page: RenderedPage): TOCItemType[] {
+  const headings = new Map(hastHeadings(page.hast).map((heading) => [heading.id, heading]));
+  return pageToc(page.toc).map((item) => {
+    const heading = headings.get(item.url.slice(1));
+    return heading ? { ...item, title: outlineTitle(heading) } : item;
+  });
 }

@@ -7,6 +7,38 @@ import type { Hash, Vector3 } from "./core-types";
 // engine source, or from an upstream example that reads it, and cites that
 // evidence. A key the engine reads but never writes is `readonly`.
 declare global {
+  /**
+   * The property catalog of each built-in component kind, keyed by the kind
+   * `scene-types` writes for a component address (`"/hero#sprite": "sprite"`).
+   *
+   * @remarks
+   * `go.get`, `go.set` and `go.animate` read a literal address's catalog from
+   * here: a key the catalog names takes its catalogued type, and any other key,
+   * such as a material constant, keeps the wide value. `camera`, `gui`,
+   * `particlefx`, `sound` and `tilemap` each register from their generated
+   * declaration, on the targets and kind surfaces that declare it. A kind with
+   * no entry is typed as an address with no scene types at all. The interface
+   * is open, so an extension can register its own kind.
+   *
+   * @example
+   * ```ts
+   * declare global {
+   *   interface SceneComponentCatalogs {
+   *     spine: { animation: Hash; playback_rate: number };
+   *   }
+   * }
+   * ```
+   */
+  interface SceneComponentCatalogs {
+    sprite: sprite.Properties;
+    label: label.Properties;
+    model: model.Properties;
+    mesh: mesh.Properties;
+    collisionobject: physics.Properties;
+    factory: factory.Properties;
+    collectionfactory: collectionfactory.Properties;
+  }
+
   namespace go {
     interface Properties {
       /** The position's x component. `gameobject.cpp:GetProperty` reads one float. */

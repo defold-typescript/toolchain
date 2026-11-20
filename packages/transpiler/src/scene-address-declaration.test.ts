@@ -91,6 +91,7 @@ function declarationFor(
   documents: ReadonlyMap<string, string>,
   gameProject: string | undefined,
   references: Record<string, string> = {},
+  scriptModules?: ReadonlyMap<string, string>,
 ): string {
   return buildSceneAddressDeclaration(
     documents,
@@ -99,6 +100,7 @@ function declarationFor(
       references: new Map(Object.entries(references)),
       gameProject,
     }),
+    scriptModules,
   );
 }
 
@@ -162,7 +164,7 @@ describe("scene address declaration", () => {
     const declaration = declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT);
     // Named here so the stability claim provably covers the object-qualified
     // keys and not just the bare ones this test predates.
-    expect(declaration).toContain('"/player/player#sprite": true;');
+    expect(declaration).toContain('"/player/player#sprite": "sprite";');
     expect(declarationFor(reversed, NESTED_GAME_PROJECT)).toBe(declaration);
   });
 
@@ -444,14 +446,14 @@ describe("script-linked component addresses", () => {
     ).toEqual([]);
   });
 
-  test("an embedded component, a non-script resource, and an unmapped script stay true", () => {
+  test("an embedded component, a non-script resource, and an unmapped script name their kind", () => {
     const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
     expect(
       linkedMessages(
         declaration,
-        'const sprite: SceneComponentAddresses["/logic#sprite"] = true;\n' +
-          'const sound: SceneComponentAddresses["/logic#sound"] = true;\n' +
-          'const orphan: SceneComponentAddresses["/logic#orphan"] = true;\n' +
+        'const sprite: SceneComponentAddresses["/logic#sprite"] = "sprite";\n' +
+          'const sound: SceneComponentAddresses["/logic#sound"] = "sound";\n' +
+          'const orphan: SceneComponentAddresses["/logic#orphan"] = "script";\n' +
           "export { sprite, sound, orphan };\n",
       ),
     ).toEqual([]);
@@ -518,5 +520,192 @@ describe("script-linked component addresses", () => {
         'const typed: SceneComponentAddresses["/logic#wave"] = true;\nexport { typed };\n',
       ).map((d) => [d.file?.fileName, d.code]),
     ).toEqual([[LINKED_PROBE, 2322]]);
+  });
+});
+
+const KIND_GAME_PROJECT = "[bootstrap]\nmain_collection = /main.collection\n";
+
+function kindDeclarationFor(
+  documents: Record<string, string>,
+  scriptModules?: ReadonlyMap<string, string>,
+): string {
+  const scenes = new Map(Object.entries(documents));
+  return buildSceneAddressDeclaration(
+    scenes,
+    buildSceneCollectionRoles({
+      documents: scenes,
+      references: new Map(),
+      gameProject: KIND_GAME_PROJECT,
+    }),
+    scriptModules,
+  );
+}
+
+const TWO_BODIES =
+  'instances {\n  id: "a"\n  prototype: "/a.go"\n}\n' +
+  'instances {\n  id: "b"\n  prototype: "/b.go"\n}\n';
+
+// A collection factory's collection opens no world, so no object in it has a
+// static path: every `body` below is visible only to the per-document pass.
+function factoryPack(...objects: string[]): Record<string, string> {
+  return {
+    "main.collection": 'instances {\n  id: "spawner"\n  prototype: "/spawner.go"\n}\n',
+    "spawner.go":
+      'embedded_components {\n  id: "factory"\n  type: "collectionfactory"\n' +
+      '  data: "prototype: \\"/pack.collection\\"\\n"\n}\n',
+    "pack.collection": `name: "pack"\n${objects
+      .map(
+        (object, index) =>
+          `embedded_instances {\n  id: "o${index}"\n  data: ${JSON.stringify(object)}\n}\n`,
+      )
+      .join("")}`,
+  };
+}
+
+const SPRITE_BODY = 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n';
+const COLLISION_BODY = 'embedded_components {\n  id: "body"\n  type: "collisionobject"\n}\n';
+const SCRIPT_BODY = 'components {\n  id: "body"\n  component: "/src/wave.ts.script"\n}\n';
+const UNTYPED_BODY = 'embedded_components {\n  id: "body"\n}\n';
+
+describe("component kind addresses", () => {
+  test("each component address names its own component's kind", () => {
+    const declaration = kindDeclarationFor({
+      "main.collection": 'instances {\n  id: "hero"\n  prototype: "/main/hero.go"\n}\n',
+      "main/hero.go":
+        'components {\n  id: "sprite"\n  component: "/main/hero.sprite"\n}\n' +
+        'embedded_components {\n  id: "label"\n  type: "label"\n  data: "text: \\"hi\\"\\n"\n}\n' +
+        'components {\n  id: "legacy"\n  component: "/main/legacy.script"\n}\n',
+    });
+    expect(declaration).toContain('"/hero#sprite": "sprite";');
+    expect(declaration).toContain('"/hero#label": "label";');
+    expect(declaration).toContain('"/hero#legacy": "script";');
+    expect(declaration).toContain('"#sprite": "sprite";');
+    expect(declaration).toContain('"#label": "label";');
+  });
+
+  test("a bare id names a kind when every declaration agrees on it, whatever the resource", () => {
+    const declaration = kindDeclarationFor({
+      "main.collection": TWO_BODIES,
+      "a.go": 'components {\n  id: "body"\n  component: "/a.sprite"\n}\n',
+      "b.go": 'components {\n  id: "body"\n  component: "/b.sprite"\n}\n',
+    });
+    expect(declaration).toContain('"#body": "sprite";');
+  });
+
+  test("a bare id stays true when two declarations name different kinds", () => {
+    const declaration = kindDeclarationFor({
+      "main.collection": TWO_BODIES,
+      "a.go": 'components {\n  id: "body"\n  component: "/a.sprite"\n}\n',
+      "b.go": 'embedded_components {\n  id: "body"\n  type: "collisionobject"\n}\n',
+    });
+    expect(declaration).toContain('"#body": true;');
+    expect(declaration).toContain('"/a#body": "sprite";');
+    expect(declaration).toContain('"/b#body": "collisionobject";');
+  });
+
+  test("a mapped script still writes its module, qualified and bare", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
+    expect(declaration).toContain('"/logic#wave": typeof import("../src/wave").default;');
+    expect(declaration).toContain('"#wave": typeof import("../src/wave").default;');
+  });
+
+  test("a bare id stays true when one declaration maps to a module and another is a sprite", () => {
+    const declaration = linkedDeclarationFor(
+      linkedScenes("/src/wave.ts.script", {
+        "spawned.go": 'components {\n  id: "wave"\n  component: "/wave.sprite"\n}\n',
+      }),
+    );
+    expect(declaration).toContain('"#wave": true;');
+    expect(declaration).toContain('"/logic#wave": typeof import("../src/wave").default;');
+  });
+
+  test("an embedded component with no type stays true", () => {
+    const declaration = kindDeclarationFor({
+      "main.collection": 'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n',
+      "hero.go": 'embedded_components {\n  id: "mystery"\n  data: ""\n}\n',
+    });
+    expect(declaration).toContain('"/hero#mystery": true;');
+    expect(declaration).toContain('"#mystery": true;');
+  });
+
+  test.each([
+    ["sprite then collisionobject", SPRITE_BODY, COLLISION_BODY],
+    ["collisionobject then sprite", COLLISION_BODY, SPRITE_BODY],
+    ["script then sprite", SCRIPT_BODY, SPRITE_BODY],
+    ["sprite then script", SPRITE_BODY, SCRIPT_BODY],
+    ["untyped then sprite", UNTYPED_BODY, SPRITE_BODY],
+    ["sprite then untyped", SPRITE_BODY, UNTYPED_BODY],
+  ])("a bare id stays true when one factory collection declares it as %s", (_, first, second) => {
+    const declaration = kindDeclarationFor(factoryPack(first, second), SCRIPT_MODULES);
+    expect(declaration).toContain('"#body": true;');
+  });
+
+  test("a bare id keeps its kind when every object in one factory collection agrees", () => {
+    expect(kindDeclarationFor(factoryPack(SPRITE_BODY, SPRITE_BODY), SCRIPT_MODULES)).toContain(
+      '"#body": "sprite";',
+    );
+    expect(kindDeclarationFor(factoryPack(SCRIPT_BODY, SCRIPT_BODY), SCRIPT_MODULES)).toContain(
+      '"#body": typeof import("../src/wave").default;',
+    );
+  });
+});
+
+const SHARED_SOCKET_GAME_PROJECT = "[bootstrap]\nmain_collection = /main/main.collection\n";
+
+// One loader opens two levels that both declare `name: "level"`, so both worlds
+// compose `level:/hero`, each from its own `.go` whose `body` component each case
+// chooses.
+function sharedSocketScenes(firstBody: string, secondBody: string): Map<string, string> {
+  return new Map([
+    ["main/main.collection", 'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n'],
+    [
+      "main/loader.go",
+      'embedded_components {\n  id: "first"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n' +
+        'embedded_components {\n  id: "second"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level2.collection\\"\\n"\n}\n',
+    ],
+    [
+      "levels/level1.collection",
+      'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero1.go"\n}\n',
+    ],
+    [
+      "levels/level2.collection",
+      'name: "level"\ninstances {\n  id: "hero"\n  prototype: "/levels/hero2.go"\n}\n',
+    ],
+    ["levels/hero1.go", `components {\n  id: "body"\n  component: "${firstBody}"\n}\n`],
+    ["levels/hero2.go", `components {\n  id: "body"\n  component: "${secondBody}"\n}\n`],
+  ]);
+}
+
+describe("path keys under a shared socket", () => {
+  test("a path key under a shared socket is true when its worlds disagree", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/hero.sprite", "/levels/hero.label"),
+      SHARED_SOCKET_GAME_PROJECT,
+    );
+    expect(declaration).toContain('"level:/hero#body": true;');
+    expect(declaration).toContain('"#body": true;');
+  });
+
+  test("a path key under a shared socket keeps a value its worlds agree on", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/hero1.sprite", "/levels/hero2.sprite"),
+      SHARED_SOCKET_GAME_PROJECT,
+    );
+    expect(declaration).toContain('"level:/hero#body": "sprite";');
+  });
+
+  test("a path key names no script when its worlds host different scripts", () => {
+    const declaration = declarationFor(
+      sharedSocketScenes("/levels/a.script", "/levels/b.script"),
+      SHARED_SOCKET_GAME_PROJECT,
+      {},
+      new Map([
+        ["levels/a.script", "../levels/a"],
+        ["levels/b.script", "../levels/b"],
+      ]),
+    );
+    expect(declaration).toContain('"level:/hero#body": true;');
   });
 });

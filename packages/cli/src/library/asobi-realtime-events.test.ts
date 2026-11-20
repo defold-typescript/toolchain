@@ -7,7 +7,7 @@ import { printedModule } from "./print-corpus";
 
 // `on` raises for a name the Lua does not register, and each handler receives what the Lua
 // passes to `fire`. Both sides are read at test time: the printed declaration and the vendored
-// `realtime.lua`, whose digest `authored-parity-floor.test.ts` pins.
+// `realtime.lua`.
 
 const DECLARATION = await printedModule(LIBRARY_DATA_DIR, "asobi.realtime");
 const UPSTREAM = resolve(

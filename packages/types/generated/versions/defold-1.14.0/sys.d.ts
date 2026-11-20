@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Opaque } from "../../../src/core-types";
+import type { Hash, Opaque } from "../../../src/core-types";
 
 declare global {
   /**
@@ -696,7 +696,7 @@ declare global {
      * sys.save(my_file_path, my_table);
      * ```
      */
-    function save(filename: string, table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): boolean;
+    function save(filename: string, table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): boolean;
     /**
      * The buffer can later deserialized by `sys.deserialize`.
      * This function has all the same limitations as `sys.save`.
@@ -712,7 +712,7 @@ declare global {
      * const buffer = sys.serialize(my_table);
      * ```
      */
-    function serialize(table: LuaMap<AnyNotNil, unknown> | PlainTable | readonly unknown[]): string;
+    function serialize(table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): string;
     /**
      * Sets the host that is used to check for network connectivity against.
      *

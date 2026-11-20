@@ -497,6 +497,7 @@ describe("script-linked component addresses", () => {
   });
 
   // A game object naming `/src/<name>.ts.script`, whose source is written as given.
+  // An unlinked script address is the bare `"script"` kind, not a module.
   async function linkedAddressOf(name: string, source: string): Promise<readonly string[]> {
     write("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));
     write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
@@ -511,7 +512,7 @@ describe("script-linked component addresses", () => {
 
     expect(code).toBe(0);
     return diskProbeDiagnostics(
-      `const linked: SceneComponentAddresses["/logic#${name}"] = true;\nexport { linked };\n`,
+      `const linked: SceneComponentAddresses["/logic#${name}"] = "script";\nexport { linked };\n`,
     ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "));
   }
 
@@ -551,7 +552,7 @@ describe("script-linked component addresses", () => {
     expect(modules.get("src/hud.ts.gui_script")).toEndWith("/src/hud");
   });
 
-  test("a project with no tsconfig.json still writes every address as true", async () => {
+  test("a project with no tsconfig.json writes a script address as its kind", async () => {
     scaffoldProject();
 
     const { code } = await run("scene-types");
@@ -559,7 +560,7 @@ describe("script-linked component addresses", () => {
     expect(code).toBe(0);
     expect(
       probeDiagnostics(
-        'const controller: SceneComponentAddresses["/player/player#controller"] = true;\n' +
+        'const controller: SceneComponentAddresses["/player/player#controller"] = "script";\n' +
           "export { controller };\n",
       ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
     ).toEqual([]);

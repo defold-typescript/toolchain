@@ -1,9 +1,11 @@
 import type { Components } from "fumadocs-core/utils/hast-to-jsx";
 import { toJsx } from "fumadocs-core/utils/hast-to-jsx";
+import { CodeBlock, Pre } from "fumadocs-ui/components/codeblock";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { Root } from "hast";
 import {
   type AnchorHTMLAttributes,
+  type ComponentProps,
   type ComponentType,
   createElement,
   type ReactNode,
@@ -17,7 +19,19 @@ function Anchor(props: AnchorHTMLAttributes<HTMLAnchorElement>): ReactNode {
   return props.href === undefined ? <a {...props} /> : <FumadocsLink {...props} />;
 }
 
-const components = { ...defaultMdxComponents, a: Anchor };
+// Fumadocs' code block caps its scroll area at 600px, so a long listing would
+// scroll inside its frame; the page shows it at its full length instead.
+const UNCAPPED_VIEWPORT = { className: "max-h-none" };
+
+function FullLengthCodeBlock(props: ComponentProps<typeof CodeBlock>): ReactNode {
+  return (
+    <CodeBlock {...props} viewportProps={UNCAPPED_VIEWPORT}>
+      <Pre>{props.children}</Pre>
+    </CodeBlock>
+  );
+}
+
+const components = { ...defaultMdxComponents, a: Anchor, pre: FullLengthCodeBlock };
 
 /** Element renderers laid over the defaults `MarkdownBody` renders a page with. */
 export type BodyComponents = Partial<Components>;

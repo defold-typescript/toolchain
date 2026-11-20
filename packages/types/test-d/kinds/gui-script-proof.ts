@@ -1,5 +1,14 @@
 import { defineGuiScript } from "../../generated/kinds/gui-script";
-import type { Vector4 } from "../../src/core-types";
+import type { Hash, Vector4 } from "../../src/core-types";
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+declare global {
+  interface SceneComponentAddresses {
+    "/menu#ui": "gui";
+  }
+}
 
 vmath.vector3(1, 2, 3);
 const _w: number = gui.get_width();
@@ -29,3 +38,10 @@ defineGuiScript({
   // @ts-expect-error a gui script cannot declare properties
   properties: { speed: 1 },
 });
+
+// The gui-script surface loads the `gui` namespace, whose catalog a gui address reads.
+const uiMaterial = go.get("/menu#ui", "material");
+const _uiMaterial: Equal<typeof uiMaterial, Hash> = true;
+void _uiMaterial;
+// @ts-expect-error material is a Hash
+go.set("/menu#ui", "material", 1);
