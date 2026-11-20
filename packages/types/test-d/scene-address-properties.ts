@@ -56,6 +56,12 @@ go.animate("/props#enemy", "alive", PB, 3, E, 1);
 declare const k: string;
 // @ts-expect-error a closed catalog takes a known key or a hash, never a free string
 go.get("/props#enemy", k);
+go.cancel_animations("/props#enemy", "speed");
+go.cancel_animations("/props#enemy", "target.x");
+// @ts-expect-error tag is a Hash: Script_CancelAnimations raises "must be of a numerical type"
+go.cancel_animations("/props#enemy", "tag");
+// @ts-expect-error the script declares no `sped`
+go.cancel_animations("/props#enemy", "sped");
 
 // A registered kind types the keys its catalog names and leaves any other key,
 // such as a material constant, with the wide value.
@@ -69,6 +75,8 @@ go.set("/props#sprite", "frame_count", 2);
 go.set("/props#sprite", "playback_rate", vmath.vector3());
 // @ts-expect-error image is a Hash, which the engine cannot animate
 go.animate("/props#sprite", "image", PB, 2, E, 1);
+go.cancel_animations("/props#sprite", "tint");
+go.cancel_animations("/props#sprite", "anything");
 const velocity = go.get("/props#body", "linear_velocity");
 const _velocity: Equal<typeof velocity, Vector3> = true;
 // @ts-expect-error mass is read-only

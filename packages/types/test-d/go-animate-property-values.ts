@@ -64,3 +64,12 @@ go.animate<EnemyProps>()(url, "target", PB, 3, E, 1);
 go.animate<EnemyProps>()(url, "tag", PB, 3, E, 1);
 // @ts-expect-error alive is a boolean, which the engine cannot animate
 go.animate<EnemyProps>()(url, "alive", PB, 3, E, 1);
+
+// Cancelling takes the keys an address can animate, or none at all.
+go.cancel_animations();
+go.cancel_animations(url);
+go.cancel_animations(".", "position");
+go.cancel_animations(".", "position.x");
+go.cancel_animations(url, hash("tint"));
+// @ts-expect-error a game object has no "positon"
+go.cancel_animations(".", "positon");

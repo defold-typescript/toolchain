@@ -218,29 +218,6 @@ declare global {
      */
     export const PLAYBACK_ONCE_PINGPONG: number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" };
     /**
-     * By calling this function, all or specified stored property animations of the game object or component will be canceled.
-     * See the properties guide for which properties can be animated and the animation guide for how to animate them.
-     *
-     * @param url - url of the game object or component
-     * @param property - optional id of the property to cancel
-     * @example
-     * Cancel the animation of the position of a game object:
-     * ```ts
-     * go.cancel_animations(go.get_id(), "position");
-     * ```
-     * @example
-     * Cancel all property animations of the current game object:
-     * ```ts
-     * go.cancel_animations(".");
-     * ```
-     * @example
-     * Cancel all property animations of the sprite component of the current game object:
-     * ```ts
-     * go.cancel_animations("#sprite");
-     * ```
-     */
-    export function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
-    /**
      * Delete one or more game objects identified by id. Deletion is asynchronous meaning that
      * the game object(s) are scheduled for deletion which will happen at the end of the current
      * frame. Note that game objects scheduled for deletion will be counted against

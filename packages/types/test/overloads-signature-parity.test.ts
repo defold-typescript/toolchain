@@ -68,7 +68,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     namespace: "go",
     declarationsPaths: [overloadsPath("go-overloads.d.ts")],
     storePath: GO_SIGNATURES_PATH,
-    fqns: ["go.animate", "go.get", "go.set", "go.property"],
+    fqns: ["go.animate", "go.cancel_animations", "go.get", "go.set", "go.property"],
     reflow: {
       from: "function property(name: string, value: Hash): ScriptProperty<Hash>;",
       to: "function property(\n      name: string,\n      value: Hash,\n    ): ScriptProperty<Hash>;",
@@ -384,12 +384,13 @@ function renderOverloadGates(spec: OverloadNamespace): Record<string, (string | 
 // entry is a deliberate declaration that the overload set itself changed.
 const OVERLOAD_COUNTS: Record<string, number> = {
   "go.animate": 3,
+  "go.cancel_animations": 1,
   "go.get": 3,
   "go.set": 3,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
   "go.property": 8,
-  "gui.animate": 2,
+  "gui.animate": 4,
   "gui.get": 3,
   "gui.set": 6,
   "msg.post": 2,

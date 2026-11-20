@@ -31,6 +31,16 @@ type NodePropertyWrite<N extends keyof gui.NodeProperties> = N extends "rotation
     ? number
     : Vector4 | Vector3;
 
+// gui_script.cpp:LuaAnimate: a number fills every component, a vector3 keeps the
+// node's current w, and a quaternion is read raw, so `rotation` takes only a
+// quat, a sub-key or scalar a number, and every other vector a number, a vector3
+// or a vector4.
+type NodePropertyAnimateTo<N extends keyof gui.NodeProperties> = N extends "rotation"
+  ? Quaternion
+  : gui.NodeProperties[N] extends number
+    ? number
+    : number | Vector3 | Vector4;
+
 declare global {
   namespace gui {
     /**
@@ -45,12 +55,17 @@ declare global {
         | ScalarName]: K extends "rotation" ? Quaternion : K extends VectorName ? Vector4 : number;
     };
 
-    interface PropertyOptions {
-      /** **⚠️ 1-based index into an array property; passed to Defold unchanged.** */
-      index?: number;
-      key?: string | Hash;
-      keys?: (Hash | string)[];
-    }
+    // gameobject_script_util.cpp:LuaToPropertyOptions raises when more than one
+    // of the three is non-nil, and reads a nil one as absent.
+    type PropertyOptions =
+      | {
+          /** **⚠️ 1-based index into an array property; passed to Defold unchanged.** */
+          index?: number;
+          key?: undefined;
+          keys?: undefined;
+        }
+      | { index?: undefined; key?: string | Hash; keys?: undefined }
+      | { index?: undefined; key?: undefined; keys?: (Hash | string)[] };
 
     /**
      * Instead of using specific getters such as gui.get_position or gui.get_scale,
@@ -391,10 +406,10 @@ declare global {
      * });
      * ```
      */
-    function animate(
+    function animate<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
-      property: keyof gui.NodeProperties | gui.Prop | Hash,
-      to: number | Vector3 | Vector4 | Quaternion,
+      property: K,
+      to: NodePropertyAnimateTo<NodePropertyName<K>>,
       easing: gui.Easing | Vector,
       duration: number,
     ): void;
@@ -475,9 +490,63 @@ declare global {
      * });
      * ```
      */
+    function animate<K extends keyof gui.NodeProperties | gui.Prop>(
+      node: Opaque<"node">,
+      property: K,
+      to: NodePropertyAnimateTo<NodePropertyName<K>>,
+      easing: gui.Easing | Vector,
+      duration: number,
+      delay: number,
+      complete_function?: (self: unknown, node: Opaque<"node">) => void,
+      playback?: gui.Playback,
+    ): void;
+    /**
+     * Animates a node property named by a hash, such as `hash("position.y")`. The
+     * engine resolves the name at run time, so the target value is not checked
+     * against the property: pass a number, a vmath.vector3, a vmath.vector4 or a
+     * vmath.quat as the named property expects.
+     *
+     * @param node - node to animate
+     * @param property - property to animate, as a hash
+     * @param to - target property value
+     * @param easing - easing to use during animation
+     * @param duration - duration of the animation in seconds.
+     * @example
+     * ```ts
+     * const node = gui.get_node("my_node");
+     * gui.animate(node, hash("position.y"), 100, gui.EASING_OUTQUAD, 0.5);
+     * ```
+     */
     function animate(
       node: Opaque<"node">,
-      property: keyof gui.NodeProperties | gui.Prop | Hash,
+      property: Hash,
+      to: number | Vector3 | Vector4 | Quaternion,
+      easing: gui.Easing | Vector,
+      duration: number,
+    ): void;
+    /**
+     * Animates a node property named by a hash, such as `hash("position.y")`. The
+     * engine resolves the name at run time, so the target value is not checked
+     * against the property: pass a number, a vmath.vector3, a vmath.vector4 or a
+     * vmath.quat as the named property expects.
+     *
+     * @param node - node to animate
+     * @param property - property to animate, as a hash
+     * @param to - target property value
+     * @param easing - easing to use during animation
+     * @param duration - duration of the animation in seconds.
+     * @param delay - delay before the animation starts in seconds.
+     * @param complete_function - function to call when the animation has completed
+     * @param playback - playback mode
+     * @example
+     * ```ts
+     * const node = gui.get_node("my_node");
+     * gui.animate(node, hash("position.y"), 100, gui.EASING_OUTQUAD, 0.5, 0.2, undefined, gui.PLAYBACK_LOOP_PINGPONG);
+     * ```
+     */
+    function animate(
+      node: Opaque<"node">,
+      property: Hash,
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,

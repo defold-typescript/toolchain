@@ -2432,6 +2432,7 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
   test("is exactly the FQNs served by the hand-written go/gui/msg/render/sys/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.animate",
+      "go.cancel_animations",
       "go.get",
       "go.property",
       "go.set",
@@ -4834,8 +4835,10 @@ describe("documented constant slot expansion", () => {
         "SLICE9",
       ].map((name) => `gui.PROP_${name}`),
     );
+    // No engine evidence is supplied, so the binding-pinned PARAM_TYPE_CORRECTIONS
+    // entry for this slot stays inert and the borrowed constants show.
     expect(signatureLine(guiOut, "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | ${props} | Hash): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${props}): void;`,
     );
 
     // The lender's skip rule withholds its declaration, not its doc.
@@ -4845,7 +4848,7 @@ describe("documented constant slot expansion", () => {
     );
     expect(withoutAnimate).not.toContain("function animate(");
     expect(signatureLine(withoutAnimate, "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | ${props} | Hash): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${props}): void;`,
     );
   });
 
@@ -4864,7 +4867,7 @@ describe("documented constant slot expansion", () => {
       ),
     };
     expect(signatureLine(emitDeclarations(module), "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | string & { readonly __brand: "gui.PROP_COLOR" } | Hash): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | string & { readonly __brand: "gui.PROP_COLOR" }): void;`,
     );
   });
 

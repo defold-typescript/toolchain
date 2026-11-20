@@ -263,21 +263,30 @@ export const ARBITRARY_TABLE_SLOT_KEYS = new Set([
 // `skipFunctions` entry with no matching overload) still counts, so the gate
 // stays a real signal. Mirrors the ARBITRARY_TABLE_SLOTS audit-honesty pattern.
 // A slot the engine treats as omissible on a function OVERLOAD_COVERED_SKIPS
-// hands to a `*-overloads.d.ts` form without it, where no generated declaration
-// exists for OPTIONAL_SLOT_CORRECTIONS to reach. Availability identity reads it
-// as optional, so a ref-doc that starts marking it is no change. The value is
-// the evidence, as in OPTIONAL_SLOT_CORRECTIONS.
-export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map(
-  (["y", "z"] as const).map((slot) => [
-    `vmath.euler_to_quat:param:${slot}`,
-    "example `vmath.euler_to_quat(v)` passes a vector3 alone; vmath-overloads.d.ts declares that form",
-  ]),
-);
+// hands to a `*-overloads.d.ts` form that omits it or declares it optional,
+// where no generated declaration exists for OPTIONAL_SLOT_CORRECTIONS to reach.
+// Availability identity reads it as optional, so a ref-doc that starts marking
+// it is no change. The value is the evidence, as in OPTIONAL_SLOT_CORRECTIONS.
+export const HAND_DECLARED_OPTIONAL_SLOTS: ReadonlyMap<string, string> = new Map([
+  ...(["y", "z"] as const).map(
+    (slot) =>
+      [
+        `vmath.euler_to_quat:param:${slot}`,
+        "example `vmath.euler_to_quat(v)` passes a vector3 alone; vmath-overloads.d.ts declares that form",
+      ] as const,
+  ),
+  [
+    "go.cancel_animations:param:url",
+    "gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent; go-overloads.d.ts declares it optional",
+  ],
+]);
 
 export const OVERLOAD_COVERED_SKIPS = new Set([
   // go-overloads.d.ts supplies the typed go.get / go.set / go.property shapes,
-  // and go.animate with its target value typed per key.
+  // go.animate with its target value typed per key, and go.cancel_animations
+  // with the keys an address can animate.
   "go.animate",
+  "go.cancel_animations",
   "go.get",
   "go.set",
   "go.property",
@@ -873,17 +882,29 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       reason: "script_particlefx.cpp:ParticleFX_SetConstant takes a vector4 or a matrix4 value",
     },
   ],
-  ...(["animate", "cancel_animations"] as const).map(
-    (name) =>
-      [
-        `gui.${name}:param:property`,
-        {
-          adds: "Hash",
-          upstream: name === "animate" ? ["string", "constant"] : ["nil", "string", "constant"],
-          reason: `gui_script.cpp reads the ${name} property with CheckHashOrString(L, 2)`,
-        },
-      ] as const,
-  ),
+  [
+    "gui.animate:param:property",
+    {
+      adds: "Hash",
+      upstream: ["string", "constant"],
+      reason: "gui_script.cpp reads the animate property with CheckHashOrString(L, 2)",
+    },
+  ],
+  [
+    "gui.cancel_animations:param:property",
+    {
+      ts: "keyof gui.NodeProperties | gui.Prop | Hash",
+      upstream: ["nil", "string", "constant"],
+      retypedUpstream: [["nil", "string", "hash", "gui.PROP"]],
+      reason:
+        "gui_script.cpp:LuaCancelAnimations reads the property with CheckHashOrString(L, 2) and raises for a name dmGui::HasPropertyHash refuses, so a string must name a node property",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaCancelAnimations",
+        contains: "!dmGui::HasPropertyHash(scene, hnode, property_hash)",
+      },
+    },
+  ],
   ...(
     [
       ["clone_tree", "LuaCloneTree"],
@@ -1315,10 +1336,6 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   [
     "go.world_to_local_transform:param:url",
     "gameobject_script.cpp:Script_WorldToLocalTransfrom resolves argument 2 with ResolveInstance, which takes the calling instance when it is absent",
-  ],
-  [
-    "go.cancel_animations:param:url",
-    "gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent",
   ],
   [
     "b2d.fixture.set_density:param:update_mass",

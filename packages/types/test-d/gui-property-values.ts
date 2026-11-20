@@ -80,6 +80,53 @@ gui.set(node, "scale", v4);
 // @ts-expect-error a sub-key takes a number
 gui.set(node, "position.x", v3);
 
+// Animation targets are gated per name the way LuaAnimate reads them: `rotation`
+// takes only a quaternion, a sub-key or scalar a number, and any other vector a
+// number, which fills every component, a vector3 or a vector4.
+const E = gui.EASING_LINEAR;
+gui.animate(node, "rotation", vmath.quat(), E, 1);
+gui.animate(node, "position", vmath.vector3(1, 2, 3), E, 1);
+gui.animate(node, "position", 10, E, 1);
+gui.animate(node, "color", vmath.vector4(), E, 1);
+gui.animate(node, "position.x", 10, E, 1);
+gui.animate(node, gui.PROP_SCALE, 2, E, 1);
+gui.animate(node, hash("tint"), vmath.vector4(), E, 1);
+gui.animate(
+  node,
+  "position",
+  v3,
+  E,
+  1,
+  0.5,
+  (_self, done) => {
+    const _done: Opaque<"node"> = done;
+    void _done;
+  },
+  gui.PLAYBACK_ONCE_FORWARD,
+);
+// @ts-expect-error `rotation` takes a quaternion; a vector3 animates to a non-unit one
+gui.animate(node, "rotation", vmath.vector3(0, 0, 45), E, 1);
+// @ts-expect-error `rotation` takes a quaternion; a number fills all four components
+gui.animate(node, "rotation", 1, E, 1);
+// @ts-expect-error a sub-key is one float
+gui.animate(node, "position.x", vmath.vector3(), E, 1);
+// @ts-expect-error `fill_angle` is one float
+gui.animate(node, "fill_angle", vmath.vector3(), E, 1);
+
+// Cancelling names a property LuaCancelAnimations finds, or none at all.
+gui.cancel_animations(node);
+gui.cancel_animations(node, "position");
+gui.cancel_animations(node, gui.PROP_COLOR);
+gui.cancel_animations(node, hash("tint"));
+// @ts-expect-error "positon" is not a GUI node property
+gui.cancel_animations(node, "positon");
+
+// LuaToPropertyOptions takes at most one of `index`, `key` and `keys`.
+// @ts-expect-error `index` and `key` together raise
+gui.get(node, hash("w"), { index: 1, key: "a" });
+// @ts-expect-error `key` and `keys` together raise
+gui.set(node, hash("w"), 1, { key: "a", keys: ["b"] });
+
 // A material constant, or any name the engine resolves at runtime, is reached
 // through a hash.
 gui.get(node, hash("tint"), { index: 2 });
