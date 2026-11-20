@@ -9,6 +9,7 @@ import {
   type Plugin,
   setNodePosition,
 } from "typescript-to-lua";
+import { reportOnce } from "./rebuilt-calls";
 
 // The Defold functions declared with a curried type-application overload,
 // `go.get<P>()(url, property)`, `go.set<P>()(url, property, value)`,
@@ -140,20 +141,6 @@ function buildError(node: ts.Node, messageText: string): ts.Diagnostic {
     code: 0,
     messageText,
   };
-}
-
-// An optional chain reaches the visitor as the source call and again as the
-// synthetic copy TSTL rebuilds it into, which keeps the source `arguments`.
-// The build deduplicates its diagnostics, but the editor's squiggle pass
-// (`getProgramDiagnostics`) does not.
-function reportOnce(diagnostics: ts.Diagnostic[], error: ts.Diagnostic): void {
-  const reported = diagnostics.some(
-    (existing) =>
-      existing.file === error.file &&
-      existing.start === error.start &&
-      existing.messageText === error.messageText,
-  );
-  if (!reported) diagnostics.push(error);
 }
 
 // `go.get<P>()` becomes `go.get`, so the curried call reaches the engine as

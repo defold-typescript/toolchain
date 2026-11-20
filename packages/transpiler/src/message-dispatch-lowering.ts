@@ -18,6 +18,7 @@ import {
   SyntaxKind,
   type TransformationContext,
 } from "typescript-to-lua";
+import { innermostExpression, reportOnce } from "./rebuilt-calls";
 
 const DISPATCH_MODULE = "@defold-typescript/types";
 export const DISPATCH_NAME = "onMessage";
@@ -32,8 +33,10 @@ const ENGINE_MESSAGE = "____engine_message";
 const ENGINE_SENDER = "____engine_sender";
 const HANDLER_PARAM_TARGETS = [ENGINE_SELF, ENGINE_MESSAGE, ENGINE_SENDER] as const;
 
+// `getSymbolAtLocation` resolves nothing through parentheses or a type-only
+// form, so `(onMessage)` and `onMessage!` are looked up by the name they wrap.
 export function resolvesToDispatchExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
-  let symbol = checker.getSymbolAtLocation(callee);
+  let symbol = checker.getSymbolAtLocation(innermostExpression(callee));
   if (symbol === undefined) {
     return false;
   }
@@ -180,14 +183,15 @@ export const messageDispatchLoweringPlugin: Plugin = {
           const fn = handlerFunction(property);
           if (name === undefined || fn === undefined) {
             const offending = property.name ?? property;
-            context.diagnostics.push(unlowerableHandler(property, offending.getText()));
+            reportOnce(context.diagnostics, unlowerableHandler(property, offending.getText()));
             continue;
           }
           const unbindable = fn.parameters.find(
             (param) => !isThisParameter(param) && !isPlainParameter(param),
           );
           if (unbindable !== undefined) {
-            context.diagnostics.push(
+            reportOnce(
+              context.diagnostics,
               unbindableParameter(unbindable, `${DISPATCH_NAME} handler \`${name}\``),
             );
             continue;
@@ -214,8 +218,12 @@ export const messageDispatchLoweringPlugin: Plugin = {
           node,
         );
       }
-      const offending = handlersArg ?? node;
-      context.diagnostics.push(unlowerableHandler(offending, offending.getText()));
+      // A rebuilt call has no source text; the source call it came from keeps it.
+      const source = ts.getParseTreeNode(node, ts.isCallExpression);
+      if (source !== undefined) {
+        const offending = source.arguments[0] ?? source;
+        reportOnce(context.diagnostics, unlowerableHandler(offending, offending.getText()));
+      }
       return context.superTransformExpression(node);
     },
   },
