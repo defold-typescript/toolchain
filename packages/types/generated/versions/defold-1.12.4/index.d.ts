@@ -46,6 +46,7 @@ import "../../../src/scene-addresses";
 import "../../../src/go-overloads";
 import "../../../src/component-properties";
 import "../../../src/factory-overloads";
+import "../../../src/collectionfactory-overloads";
 import "../../../src/render-overloads";
 import "../../../src/gui-overloads";
 import "../../../src/socket-types";

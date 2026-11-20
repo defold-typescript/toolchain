@@ -25,6 +25,7 @@ import "./generated/bullet3d_shape";
 import "./generated/bullet3d_world";
 import "./generated/camera";
 import "./generated/collectionfactory";
+import "./src/collectionfactory-overloads";
 import "./generated/collectionproxy";
 import "./generated/compute";
 import "./generated/crash";

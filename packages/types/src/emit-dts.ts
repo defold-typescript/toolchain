@@ -2614,24 +2614,33 @@ export type NestedMapping = { key: string; value: string };
 // spelling a newer release retypes the same slot to without fixing it
 // (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
 // for `collectionfactory.create`'s properties.
-export type TableSlotCuration = (
-  | { kind: "mapping"; key: string; value: string | readonly TableField[] | NestedMapping }
-  // `pairs` also admits any table whose values are the element, for a binding
-  // that walks the table with lua_next and reads only its values. The extra arm
-  // is `LuaPairsIterable`, which is covariant in its value; `LuaTable` is
-  // invariant through `set`, so it would reject a `LuaTable<Hash, Hash>`.
-  | { kind: "array"; element: string | readonly string[]; pairs?: true }
-  | { kind: "object"; fields: readonly TableField[] }
-  | { kind: "array-object"; fields: readonly TableField[] }
-  // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
-  // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
-  // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
-  // restoring the keyed-by-name layer the flat object curation drops.
-  | { kind: "keyed-object" }
-  // A slot whose faithful shape no field list can carry, such as a union
-  // discriminated on `type`. `ts` is emitted verbatim, already mapped.
-  | { kind: "verbatim"; ts: string }
-) & { readonly retypedUpstream?: readonly string[] };
+export type TableSlotCuration =
+  // `pairs` emits a `ReadonlyLuaMap`, for a binding that walks the map with
+  // lua_next and only reads it: dropping `set` makes the map covariant in its
+  // value, so a `LuaMap<Hash, EnemyProps>` passes where `LuaMap` would reject it.
+  (
+    | {
+        kind: "mapping";
+        key: string;
+        value: string | readonly TableField[] | NestedMapping;
+        pairs?: true;
+      }
+    // `pairs` also admits any table whose values are the element, for a binding
+    // that walks the table with lua_next and reads only its values. The extra arm
+    // is `LuaPairsIterable`, which is covariant in its value; `LuaTable` is
+    // invariant through `set`, so it would reject a `LuaTable<Hash, Hash>`.
+    | { kind: "array"; element: string | readonly string[]; pairs?: true }
+    | { kind: "object"; fields: readonly TableField[] }
+    | { kind: "array-object"; fields: readonly TableField[] }
+    // A `<key> -> <args table>` slot: the doc's `<dl>` describes the *value* shape,
+    // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
+    // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
+    // restoring the keyed-by-name layer the flat object curation drops.
+    | { kind: "keyed-object" }
+    // A slot whose faithful shape no field list can carry, such as a union
+    // discriminated on `type`. `ts` is emitted verbatim, already mapped.
+    | { kind: "verbatim"; ts: string }
+  ) & { readonly retypedUpstream?: readonly string[] };
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
@@ -2852,15 +2861,17 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  // collectionfactory.create's `properties` is keyed by "game object ids (hash)",
-  // which upstream's example builds with `hash("/go")`. The `string` key keeps
-  // the object-literal form this slot accepted as a bare `table`.
+  // collectionfactory.create's `properties` is keyed by "game object ids (hash)":
+  // CollectionFactoryComp_Create walks it with lua_next and reads each key with
+  // `dmScript::CheckHash`, which raises on a string, so the instance layer takes
+  // a `hash("/go")` key only.
   [
     "collectionfactory.create:param:properties",
     {
       kind: "mapping",
-      key: "hash | string",
+      key: "hash",
       value: "table",
+      pairs: true,
       retypedUpstream: ["table<hash, table<string|hash, any>>"],
     },
   ],
@@ -7042,7 +7053,8 @@ function mapSlotUnion(
           const key = unionFromTokens(otherKeys.length > 0 ? otherKeys : keyTokens, mapType);
           ts = `LuaMap<${key}, ${value}> | ${objectLiteralArm(value)}`;
         } else {
-          ts = `LuaMap<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
+          const map = "pairs" in mapping && mapping.pairs === true ? "ReadonlyLuaMap" : "LuaMap";
+          ts = `${map}<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
         }
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);

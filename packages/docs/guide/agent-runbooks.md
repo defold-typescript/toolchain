@@ -1360,6 +1360,18 @@ export default defineScript({
 });
 ```
 
+To seed the spawned scripts' properties, call the curried
+`collectionfactory.create<P>()` directly with an object literal: `P` maps each
+instance id to `ScriptPropertiesOf<typeof itsScript>`, and the build hashes the
+ids.
+
+```ts
+collectionfactory.create<LevelProps>()("#levelfactory", undefined, undefined, { "/player": { speed: 250 } });
+```
+
+The bare form's `properties` table is keyed by `hash("/player")`, such as a
+`LuaMap<Hash, PlayerProps>`, because the engine raises on a string id.
+
 Confirm `collectionfactory.create` against
 `node_modules/@defold-typescript/types/generated/collectionfactory.d.ts` and build
 the snippet — see [Verify against the real API surface](#verify-against-the-real-api-surface).
