@@ -269,6 +269,8 @@ function objectWitness(type: ts.Type, scope: Scope, depth: number): string {
   const { checker } = scope;
   const symbolName = type.getSymbol()?.name;
   if (symbolName === "LuaMap" || symbolName === "LuaTable") return `new ${symbolName}()`;
+  // `ReadonlyLuaMap` has no constructor; a `LuaMap` is one.
+  if (symbolName === "ReadonlyLuaMap") return "new LuaMap()";
   if (symbolName === "LuaSet") return "new LuaSet()";
   if (checker.isTupleType(type)) {
     const elements = checker.getTypeArguments(type as ts.TypeReference);

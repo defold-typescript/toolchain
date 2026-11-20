@@ -3036,13 +3036,13 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain("{ node_visits: number; leaf_visits: number }");
   });
 
-  test("collectionfactory.create keys its properties by instance id hash or takes an object literal", () => {
+  test("collectionfactory.create keys its properties by instance id hash only, read-only", () => {
     const module = parseDefoldApiDoc(collectionfactoryDoc);
     const out = emitDeclarations({
       ...module,
       functions: [requireFunction(module, "collectionfactory.create")],
     });
-    const properties = "LuaMap<Hash, PlainTable> | Record<string, PlainTable>";
+    const properties = "ReadonlyLuaMap<Hash, PlainTable>";
     expect(out).toContain(
       `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`,
     );
@@ -8244,7 +8244,7 @@ describe("upstream-pinned corrections", () => {
         ),
         "create",
       ),
-    ).toContain("properties?: LuaMap<Hash, PlainTable> | Record<string, PlainTable>");
+    ).toContain("properties?: ReadonlyLuaMap<Hash, PlainTable>)");
   });
 
   // Verbatim 1.13.2 struct (`gamesys-script_sound.cpp_doc.json`), which marks

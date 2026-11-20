@@ -47,6 +47,7 @@ import "../types";
 import "../vmath";
 import "../window";
 import "../zlib";
+import "../../src/collectionfactory-overloads";
 import "../../src/component-properties";
 import "../../src/custom-messages";
 import "../../src/engine-globals";

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { transpile } from "./transpile";
+import { transpile, transpileProject } from "./transpile";
 
 describe("type-application erasure", () => {
   test("go.get<P>(), go.set<P>() and go.animate<P>() reach Lua as the engine function itself", () => {
@@ -72,5 +72,84 @@ describe("type-application erasure", () => {
       return ____exports
       "
     `);
+  });
+
+  test("collectionfactory.create<P>() reaches Lua as the engine function with hashed instance ids", () => {
+    const result = transpile(
+      [
+        "declare const url: Url;",
+        "interface EnemyProps { speed: number }",
+        'interface SquadProps { "/enemy": EnemyProps; "/leader": EnemyProps }',
+        'const LEADER = "/leader";',
+        "collectionfactory.create<SquadProps>()(url, undefined, undefined, {",
+        '  "/enemy": { speed: 2 },',
+        "  [LEADER]: { speed: 3 },",
+        "});",
+        "collectionfactory.create<SquadProps>()(url, undefined, undefined, ({",
+        '  "/enemy": { speed: 4 },',
+        "} satisfies Partial<SquadProps>));",
+        "collectionfactory.create<SquadProps>()(url, undefined, undefined, undefined);",
+        "collectionfactory.create<SquadProps>()(url);",
+        "collectionfactory.create(url);",
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local LEADER = "/leader"
+      collectionfactory.create(
+          url,
+          nil,
+          nil,
+          {
+              [hash("/enemy")] = {speed = 2},
+              [hash(LEADER)] = {speed = 3}
+          }
+      )
+      collectionfactory.create(
+          url,
+          nil,
+          nil,
+          {[hash("/enemy")] = {speed = 4}}
+      )
+      collectionfactory.create(url, nil, nil, nil)
+      collectionfactory.create(url)
+      collectionfactory.create(url)
+      return ____exports
+      "
+    `);
+  });
+
+  test("collectionfactory.create<P>() rejects every form whose instance ids the build cannot hash", () => {
+    const source = [
+      "declare const url: Url;",
+      "interface EnemyProps { speed: number }",
+      'declare const props: { "/enemy": EnemyProps };',
+      "const spawn = collectionfactory.create<EnemyProps>();",
+      'collectionfactory.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, props);',
+      'collectionfactory.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, { ...props });',
+      "export {};",
+      "",
+    ].join("\n");
+    const lineOf = (text: string): number =>
+      source.slice(0, source.indexOf(text)).split("\n").length;
+    const stored =
+      "`collectionfactory.create<P>()` must be called directly: the build hashes the instance ids of its `properties` only at that call, and the engine rejects a string id.";
+    const literal =
+      "Pass `properties` to `collectionfactory.create<P>()` as an object literal of instance ids: the build hashes each id it can see, and the engine rejects a string id. Build a `LuaMap<Hash, PlainTable>` with `hash(...)` for the bare `collectionfactory.create` instead.";
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(
+      result.diagnostics.map((diagnostic) => ({
+        line: diagnostic.line,
+        message: diagnostic.message,
+      })),
+    ).toEqual([
+      { line: lineOf("const spawn"), message: stored },
+      { line: lineOf("undefined, props)"), message: literal },
+      { line: lineOf("{ ...props }"), message: literal },
+    ]);
   });
 });
