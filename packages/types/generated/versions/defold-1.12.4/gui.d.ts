@@ -485,7 +485,7 @@ declare global {
      * gui.cancel_animations(node);
      * ```
      */
-    function cancel_animations(node: Opaque<"node">, property?: string | gui.Prop | Hash): void;
+    function cancel_animations(node: Opaque<"node">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;
     /**
      * Cancels any running flipbook animation on the specified node.
      *

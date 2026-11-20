@@ -124,6 +124,14 @@ type PropertyName<A extends AddressCatalogShape> = [A["closed"]] extends [true]
   ? (keyof A["catalog"] & string) | Hash
   : (keyof A["catalog"] & string) | (string & {}) | Hash;
 
+// The keys go.cancel_animations takes: gameobject_script.cpp
+// `Script_CancelAnimations` raises for a key the address does not have and for
+// one whose value is not numerical, so a catalog offers only its animatable
+// keys, plus any other string when it is open.
+type AnimatablePropertyName<A extends AddressCatalogShape> = [A["closed"]] extends [true]
+  ? (AnimatableKey<A["catalog"]> & string) | Hash
+  : (AnimatableKey<A["catalog"]> & string) | (string & {}) | Hash;
+
 // What go.get returns for key `K` of catalog `C`.
 type PropertyRead<C, K> = [K] extends [keyof C] ? Bounded<C[K], WideValue> : WideValue;
 
@@ -371,6 +379,32 @@ declare global {
       delay: number,
       complete_function?: (self: unknown, url: Url, property: Hash) => void,
     ): void;
+    /**
+     * By calling this function, all or specified stored property animations of the game object or component will be canceled.
+     * See the properties guide for which properties can be animated and the animation guide for how to animate them.
+     *
+     * @param url - url of the game object or component
+     * @param property - optional id of the property to cancel
+     * @example
+     * Cancel the animation of the position of a game object:
+     * ```ts
+     * go.cancel_animations(go.get_id(), "position");
+     * ```
+     * @example
+     * Cancel all property animations of the current game object:
+     * ```ts
+     * go.cancel_animations(".");
+     * ```
+     * @example
+     * Cancel all property animations of the sprite component of the current game object:
+     * ```ts
+     * go.cancel_animations("#sprite");
+     * ```
+     */
+    function cancel_animations<
+      R extends SceneAddress | Hash | Url,
+      K extends AnimatablePropertyName<AddressCatalog<R>>,
+    >(url?: R, property?: K): void;
     /**
      * gets a named property of the specified game object or component
      *
