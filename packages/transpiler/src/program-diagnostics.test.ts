@@ -119,6 +119,24 @@ describe("getProgramDiagnostics", () => {
     expect(flatten(diagnostics[0]?.messageText ?? "")).toContain("must be called directly");
   });
 
+  test("squiggles unhashable properties of collectionfactory?.create<P>() once, on the argument", () => {
+    const source = [
+      "declare const url: Url;",
+      "interface EnemyProps { speed: number }",
+      'declare const props: { "/enemy": EnemyProps };',
+      'collectionfactory?.create<{ "/enemy": EnemyProps }>()(url, undefined, undefined, props);',
+      "export {};",
+      "",
+    ].join("\n");
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf("props);"));
+    expect(flatten(diagnostics[0]?.messageText ?? "")).toContain(
+      "an object literal of instance ids",
+    );
+  });
+
   test("raises no squiggle for a properties spread the build computes", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',

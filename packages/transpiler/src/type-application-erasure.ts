@@ -107,7 +107,10 @@ function unhashableProperties(call: ts.CallExpression): ts.Node | undefined {
   return isHashableLiteral(skipTypeWrappers(properties)) ? undefined : properties;
 }
 
+// TSTL builds a tagged template's strings table as a literal with no parent;
+// it is never a `properties` argument.
 function isHashedIdsLiteral(literal: ts.ObjectLiteralExpression, checker: ts.TypeChecker): boolean {
+  if (literal.parent === undefined) return false;
   let argument: ts.Node = literal;
   let parent = literal.parent;
   while (
@@ -139,6 +142,20 @@ function buildError(node: ts.Node, messageText: string): ts.Diagnostic {
   };
 }
 
+// An optional chain reaches the visitor as the source call and again as the
+// synthetic copy TSTL rebuilds it into, which keeps the source `arguments`.
+// The build deduplicates its diagnostics, but the editor's squiggle pass
+// (`getProgramDiagnostics`) does not.
+function reportOnce(diagnostics: ts.Diagnostic[], error: ts.Diagnostic): void {
+  const reported = diagnostics.some(
+    (existing) =>
+      existing.file === error.file &&
+      existing.start === error.start &&
+      existing.messageText === error.messageText,
+  );
+  if (!reported) diagnostics.push(error);
+}
+
 // `go.get<P>()` becomes `go.get`, so the curried call reaches the engine as
 // `go.get(url, property)` and a stored `go.get<P>()` is the function itself.
 // `collectionfactory.create<P>()` also hashes the instance ids of the
@@ -148,15 +165,20 @@ export const typeApplicationErasurePlugin: Plugin = {
     [ts.SyntaxKind.CallExpression]: (node, context): Expression => {
       const api = typeApplicationApi(node, context.checker);
       if (api !== undefined) {
-        if (api === HASHED_IDS_API && !isCalledDirectly(node)) {
-          context.diagnostics.push(buildError(node, STORED_APPLIER_MESSAGE));
+        // The checker resolves a synthetic chain link through its original,
+        // so `api` is defined only when `source` is.
+        const source = ts.getParseTreeNode(node, ts.isCallExpression);
+        if (source !== undefined && api === HASHED_IDS_API && !isCalledDirectly(source)) {
+          reportOnce(context.diagnostics, buildError(source, STORED_APPLIER_MESSAGE));
         }
+        // A chain link's copy calls the chain's temp; the source callee would
+        // re-enter the chain.
         return context.transformExpression(node.expression);
       }
       if (appliesHashedIds(node, context.checker)) {
         const offending = unhashableProperties(node);
         if (offending !== undefined) {
-          context.diagnostics.push(buildError(offending, UNHASHABLE_PROPERTIES_MESSAGE));
+          reportOnce(context.diagnostics, buildError(offending, UNHASHABLE_PROPERTIES_MESSAGE));
         }
       }
       return context.superTransformExpression(node);
