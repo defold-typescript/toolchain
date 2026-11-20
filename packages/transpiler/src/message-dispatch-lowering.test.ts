@@ -342,6 +342,53 @@ describe("message dispatch lowering", () => {
     }
   });
 
+  // A call with no argument is also a type error; the lowering reports it beside
+  // that error instead of throwing on the node TSTL rebuilds.
+  test.each([
+    ["onMessage?.()", "a hook value", (call: string) => `defineScript({ on_message: ${call} });`],
+    ["(onMessage)()", "a hook value", (call: string) => `defineScript({ on_message: ${call} });`],
+    ["onMessage?.()", "a statement", (call: string) => `${call};`],
+    ["(onMessage)()", "a statement", (call: string) => `${call};`],
+  ])("reports %s with no argument as %s once", (call, _placement, place) => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      place(call),
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(2);
+    const lowering = result.diagnostics.filter((d) => d.message.includes("cannot lower"));
+    expect(lowering).toHaveLength(1);
+    expect(lowering[0]?.line).toBe(3);
+    expect(lowering[0]?.category).toBeUndefined();
+    expect(lowering[0]?.message).toContain(`\`${call}\``);
+  });
+
+  test.each(["(onMessage)", "onMessage!", "onMessage?."])(
+    "lowers a wrapped onMessage callee %s like the bare call",
+    (callee) => {
+      const scriptFor = (call: string): string =>
+        [
+          'import { defineScript } from "@defold-typescript/types";',
+          "",
+          "defineScript({",
+          `  on_message: ${call}({`,
+          "    spawn_wave(self: unknown, message: { count: number }) {",
+          "      print(message.count);",
+          "    },",
+          "  }),",
+          "});",
+          "",
+        ].join("\n");
+      const bare = transpile(scriptFor("onMessage"));
+      expect(bare.lua).toContain('if ____engine_message_id == hash("spawn_wave") then');
+      const wrapped = transpile(scriptFor(callee));
+      expect(wrapped.diagnostics).toEqual([]);
+      expect(wrapped.lua).toBe(bare.lua);
+    },
+  );
+
   test("lowers an annotated script-local id beside a built-in one", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',

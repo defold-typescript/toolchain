@@ -1494,6 +1494,37 @@ describe("resource property markers", () => {
     ]);
   });
 
+  const asConst = (call: string): string => `export const a = ${call};`;
+  const asReturn = (call: string): string => `export function f() { return ${call}; }`;
+  test.each([
+    ['(resource.atlas)("/a.atlas")', "a const", asConst],
+    ['(resource.atlas as any)("/a.atlas")', "a const", asConst],
+    ['(resource.atlas)("/a.atlas")', "a function", asReturn],
+    ['(resource.atlas as any)("/a.atlas")', "a function", asReturn],
+  ])("a wrapped marker call %s in %s fails the build", (call, _placement, place) => {
+    const source = [IMPORT, "", place(call), "", "defineScript({});", ""].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, call));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics[0]?.message).toContain("resource.atlas");
+  });
+
+  test.each(["(defineScript)", "defineScript!"])(
+    "a marker default of %s compiles like the bare call",
+    (factory) => {
+      const scriptWith = (callee: string): string =>
+        [IMPORT, "", `${callee}({ properties: { a: resource.atlas("/a.atlas") } });`, ""].join(
+          "\n",
+        );
+      const bare = transpile(scriptWith("defineScript"));
+      expect(bare.lua).toContain("go.property(");
+      const wrapped = transpile(scriptWith(factory));
+      expect(wrapped.diagnostics).toEqual([]);
+      expect(wrapped.lua).toBe(bare.lua);
+    },
+  );
+
   test("an optional chain, which TSTL lowers through synthesized nodes, transpiles", () => {
     const source = [
       IMPORT,

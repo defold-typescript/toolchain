@@ -106,6 +106,14 @@ describe("getProgramDiagnostics", () => {
     expect(diagnostics[0]?.start).toBe(source.indexOf("resource.tile_source("));
   });
 
+  test("squiggles an optional-chain marker call once", () => {
+    const source = 'export const a = resource?.atlas("/a.atlas");\n';
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf("resource?.atlas("));
+  });
+
   test("squiggles a stored collectionfactory.create<P>() whose instance ids the build cannot hash", () => {
     const source = [
       "interface EnemyProps { speed: number }",
@@ -135,6 +143,20 @@ describe("getProgramDiagnostics", () => {
     expect(flatten(diagnostics[0]?.messageText ?? "")).toContain(
       "an object literal of instance ids",
     );
+  });
+
+  test("squiggles a non-literal onMessage?.(handlers) once", () => {
+    const source = [
+      "const handlers = { spawn_wave(self: unknown, message: { count: number }) {} };",
+      "onMessage?.(handlers);",
+      "export {};",
+      "",
+    ].join("\n");
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf("handlers);"));
+    expect(flatten(diagnostics[0]?.messageText ?? "")).toContain("cannot lower `handlers`");
   });
 
   test("raises no squiggle for a properties spread the build computes", () => {

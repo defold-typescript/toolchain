@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **`go.animate` and `go.set` check the value against the property, and `factory.create` and `collectionfactory.create` check spawned scripts' properties** ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
 > - **A scene address types its property keys,** so `go.get` on a linked script or a built-in component such as a sprite or a sound reads that component's catalog ([Scene types](./scene-types.md#property-keys-follow-the-address)).
+> - **`onMessage?.()` and `(onMessage)()` report an error instead of crashing the build,** and wrapped `onMessage`, `defineScript` and `resource` marker calls are checked like the bare call ([Which handler forms build](./messages.md#which-handler-forms-build)).
 
 ### Improved
 
@@ -26,6 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **`collectionfactory.create` takes instance ids as hashes only:** its `properties` is a map keyed by `hash("/enemy")`, such as a `LuaMap<Hash, EnemyProps>`, so an object literal keyed by id strings, which the engine raised on at spawn, is a type error; `collectionfactory.create<P>()` takes the ids as strings and hashes them ([Component properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)).
+- **Wrapped and optional calls to `onMessage`, `defineScript` and the `resource` markers build like the bare call:** `onMessage?.()` and `(onMessage)()` report an error instead of crashing the build and the editor's diagnostics, `onMessage!({...})` and a hook written `(onMessage)({...})` lower, `onMessage?.(handlers)` squiggles once, and a `resource.atlas` default inside `(defineScript)({...})` compiles. A marker call such as `(resource.atlas)("/a.atlas")` outside a property default fails the build like `resource.atlas("/a.atlas")` ([Which handler forms build](./messages.md#which-handler-forms-build)).
 - **A bare component address stays untyped when one collection factory's objects disagree on it:** if two objects in the collection a factory spawns give one component id different scripts, or a script and another component, `scene-types` writes its bare `#id` as `true`, so `msg.post` no longer checks it against only one script's messages ([Scene types](./scene-types.md#component-addresses-carry-their-messages-and-properties)).
 - **The docs sites show pages as written:**
   - **Code blocks** on both sites show at full length instead of scrolling inside a 600px frame, and the copy button shows a hand cursor on hover.
