@@ -32,7 +32,24 @@ export interface SceneObjectPathIndex {
   // a referenced resource's extension, or an embedded component's `type`.
   // Withheld for exactly the keys `componentsOf` withholds, on the same rule.
   readonly componentKindsOf: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  // For each object, every distinct resource-and-kind pair of a component id the
+  // leaves composing it declare differently — two worlds sharing one socket, each
+  // with its own `/hero#body`. `componentResourcesOf` and `componentKindsOf` keep
+  // the first leaf's pair, so a reader that must not borrow one world's component
+  // for another's reads every pair here. An id every leaf declares alike has no
+  // entry. Withheld for exactly the keys `componentsOf` withholds, on the same rule.
+  readonly componentVariantsOf: ReadonlyMap<
+    string,
+    ReadonlyMap<string, readonly ComponentVariant[]>
+  >;
   readonly incomplete: readonly string[];
+}
+
+// One leaf's declaration of a component id: the resource it references, if any,
+// and its kind where one is readable.
+export interface ComponentVariant {
+  readonly resource: string | undefined;
+  readonly kind: string | undefined;
 }
 
 // One composed path's leaf: the document that declared it, and the components
@@ -91,6 +108,7 @@ export function buildSceneObjectPathIndex(
       componentsOf: new Map(),
       componentResourcesOf: new Map(),
       componentKindsOf: new Map(),
+      componentVariantsOf: new Map(),
       incomplete,
     };
   }
@@ -239,6 +257,9 @@ export function buildSceneObjectPathIndex(
   const componentsOf = new Map<string, string[]>();
   const componentResourcesOf = new Map<string, Map<string, string>>();
   const componentKindsOf = new Map<string, Map<string, string>>();
+  // Every distinct pair each id is declared with under each key, across leaves;
+  // only the ids with more than one become `componentVariantsOf`.
+  const declaredPairs = new Map<string, Map<string, ComponentVariant[]>>();
   // An address two leaves compose is only as provable as its weakest leaf: one
   // unread prototype withholds the claim for the whole key rather than letting
   // the readable half stand in for both.
@@ -270,13 +291,28 @@ export function buildSceneObjectPathIndex(
       } else {
         for (const id of leaf.components) if (!owned.includes(id)) owned.push(id);
       }
+      let pairs = declaredPairs.get(key);
+      if (pairs === undefined) {
+        pairs = new Map();
+        declaredPairs.set(key, pairs);
+      }
+      for (const id of leaf.components) {
+        const pair = { resource: leaf.resources.get(id), kind: leaf.kinds.get(id) };
+        const seen = pairs.get(id);
+        if (seen === undefined) pairs.set(id, [pair]);
+        else if (!seen.some((p) => p.resource === pair.resource && p.kind === pair.kind)) {
+          seen.push(pair);
+        }
+      }
       const referenced = componentResourcesOf.get(key);
       if (referenced === undefined) {
         componentResourcesOf.set(key, new Map(leaf.resources));
       } else {
         // Same union rule as the ids above: the first leaf to name a component's
         // resource answers for it, so two worlds sharing one socket — already a
-        // hole the roles name — cannot silently overwrite each other.
+        // hole the roles name — cannot silently overwrite each other. Where the
+        // leaves disagree, `componentVariantsOf` carries every pair, and a reader
+        // that writes a type for the path reads those rather than this first one.
         for (const [id, resource] of leaf.resources) {
           if (!referenced.has(id)) referenced.set(id, resource);
         }
@@ -292,10 +328,16 @@ export function buildSceneObjectPathIndex(
     }
   }
   for (const declarers of declaredIn.values()) declarers.sort();
+  const componentVariantsOf = new Map<string, Map<string, ComponentVariant[]>>();
+  for (const [key, pairs] of declaredPairs) {
+    const disagreeing = new Map([...pairs].filter(([, seen]) => seen.length > 1));
+    if (disagreeing.size > 0) componentVariantsOf.set(key, disagreeing);
+  }
   for (const key of withheld) {
     componentsOf.delete(key);
     componentResourcesOf.delete(key);
     componentKindsOf.delete(key);
+    componentVariantsOf.delete(key);
   }
   for (const owned of componentsOf.values()) owned.sort();
 
@@ -311,6 +353,7 @@ export function buildSceneObjectPathIndex(
     componentsOf,
     componentResourcesOf,
     componentKindsOf,
+    componentVariantsOf,
     incomplete: [...new Set(incomplete)],
   };
 }
