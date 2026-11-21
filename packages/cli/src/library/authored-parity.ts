@@ -49,15 +49,28 @@
  * `fieldCoverage` the fraction of upstream fields that are declared at all — a phantom
  * enters neither, having no upstream member to be a fraction of. A non-empty list is a
  * correction to make in the fork, never a number to re-baseline.
+ *
+ * Names and counts cannot see a fork with the right members and the wrong behavior, so
+ * three *behavior* lists sit beside the axes, per shared callable member: a return the
+ * fork declares `void` where upstream's body returns a value (`valueReturns`), a
+ * parameter the fork requires where upstream's body nil-checks or defaults it
+ * (`nilTolerantRequired`), and a slot the fork types `{}` (`emptyObjectSlots`). Each
+ * is one-sided too — a body pattern `readBody` does not know passes unnoticed — and none
+ * enters `coverage`. A `behaviorVerdict` in the library's data answers an entry that is
+ * not a defect, and one whose entry is gone is reported stale rather than applied.
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import ts from "typescript";
 import {
   type AuthoredFloor,
   type AuthoredParityException,
+  BEHAVIOR_LISTS,
+  type BehaviorVerdict,
   describeValue,
   libraryFile,
+  readLibraryBehaviorVerdicts,
   readLibraryExceptions,
 } from "./library-data";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
@@ -147,12 +160,48 @@ export interface AuthoredParityReport {
   /** Named for its axis, not for the module: neither this nor `fieldCoverage` is
    * "the" coverage of a target, and the two are never averaged into one. */
   callableCoverage: number;
+  /** Shared members every declared signature of which returns `void`, where upstream's
+   * body returns a value. */
+  valueReturns: string[];
+  /** Parameters every declared signature requires and types without `undefined`, where
+   * upstream's body nil-checks or defaults the parameter at that position. `slot` is the
+   * fork's name for it. */
+  nilTolerantRequired: BehaviorSlot[];
+  /** Parameters, or the `return`, of shared members whose declared type is `{}` or holds
+   * one — directly, through a local alias, or inside a callback's own signature. */
+  emptyObjectSlots: BehaviorSlot[];
+  /** The library's verdicts that removed an entry from one of the three lists above. */
+  behaviorVerdicts: BehaviorVerdict[];
+  /** The library's verdicts that name no entry, the mismatch they answered being gone —
+   * each a deletion to make. */
+  staleBehaviorVerdicts: BehaviorVerdict[];
+}
+
+/** One behavior-list entry that names a slot of a member. */
+export interface BehaviorSlot {
+  name: string;
+  slot: string;
+}
+
+interface DeclaredParameter {
+  name: string;
+  /** The type texts the api-doc records; empty for a parameter with no annotation. */
+  types: string[];
+  optional: boolean;
+}
+
+interface DeclaredSignature {
+  params: DeclaredParameter[];
+  /** The return type texts; empty for a `void` signature. */
+  returns: string[];
 }
 
 interface DeclaredMember {
   /** Every declared signature's parameter count, ascending. A name the api-doc holds
    * once yields one entry; an overload pair yields both. */
   params: number[];
+  /** Every declared signature, in api-doc order. */
+  signatures: DeclaredSignature[];
   documented: boolean;
 }
 
@@ -236,7 +285,19 @@ interface ApiDocFunction {
   brief?: string;
   description?: string;
   docSource?: string;
-  parameters?: unknown[];
+  parameters?: { name?: string; types?: string[]; is_optional?: string }[];
+  returnvalues?: { types?: string[] }[];
+}
+
+function declaredSignature(element: ApiDocFunction): DeclaredSignature {
+  return {
+    params: (element.parameters ?? []).map((param, index) => ({
+      name: param.name ?? `#${index + 1}`,
+      types: param.types ?? [],
+      optional: param.is_optional === "True",
+    })),
+    returns: (element.returnvalues ?? []).flatMap((value) => value.types ?? []),
+  };
 }
 
 function declaredSurface(apiDoc: string, target: AuthoredTarget): DeclaredSurface {
@@ -265,6 +326,7 @@ function declaredSurface(apiDoc: string, target: AuthoredTarget): DeclaredSurfac
     );
     callable.set(name, {
       params,
+      signatures: [...(existing?.signatures ?? []), declaredSignature(element)],
       documented: (existing?.documented ?? false) || hasProse(element),
     });
   };
@@ -425,21 +487,217 @@ export function classifyArity(input: ArityInput): ArityVerdict {
   };
 }
 
+/** The fork's own type names, each to the type it stands for: a non-generic alias to its
+ * type, an interface with no members and no parents to `{}`. A name declared twice, a
+ * generic alias and any other interface map to `undefined`, which no rule reads through.
+ * The api-doc records a slot's type as the text the fork wrote, so `type table = {}` is
+ * only visible here. */
+type ForkTypes = ReadonlyMap<string, ts.TypeNode | undefined>;
+
+function forkTypes(source: string): ForkTypes {
+  const sf = ts.createSourceFile("fork.d.ts", source, ts.ScriptTarget.Latest, false);
+  const types = new Map<string, ts.TypeNode | undefined>();
+  const declare = (name: string, type: ts.TypeNode | undefined): void => {
+    types.set(name, types.has(name) ? undefined : type);
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isTypeAliasDeclaration(node)) {
+      declare(node.name.text, node.typeParameters === undefined ? node.type : undefined);
+    } else if (ts.isInterfaceDeclaration(node)) {
+      const empty =
+        node.members.length === 0 &&
+        node.heritageClauses === undefined &&
+        node.typeParameters === undefined;
+      declare(node.name.text, empty ? ts.factory.createTypeLiteralNode([]) : undefined);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return types;
+}
+
+function parseSlotType(text: string): ts.TypeNode {
+  const sf = ts.createSourceFile("slot.ts", `type Slot = ${text};`, ts.ScriptTarget.Latest, false);
+  return (sf.statements[0] as ts.TypeAliasDeclaration).type;
+}
+
+/** The type a bare reference to one of the fork's own names stands for. */
+function aliasTarget(node: ts.TypeNode, names: ForkTypes): ts.TypeNode | undefined {
+  if (!ts.isTypeReferenceNode(node) || node.typeArguments !== undefined) return undefined;
+  return ts.isIdentifier(node.typeName) ? names.get(node.typeName.text) : undefined;
+}
+
+const UNDEFINED_ADMITTING: ReadonlySet<ts.SyntaxKind> = new Set([
+  ts.SyntaxKind.UndefinedKeyword,
+  ts.SyntaxKind.AnyKeyword,
+  ts.SyntaxKind.UnknownKeyword,
+  ts.SyntaxKind.VoidKeyword,
+]);
+
+function admitsUndefined(node: ts.TypeNode, names: ForkTypes, seen: Set<ts.Node>): boolean {
+  if (seen.has(node)) return false;
+  seen.add(node);
+  if (ts.isParenthesizedTypeNode(node)) return admitsUndefined(node.type, names, seen);
+  if (ts.isUnionTypeNode(node)) return node.types.some((arm) => admitsUndefined(arm, names, seen));
+  if (ts.isLiteralTypeNode(node)) return node.literal.kind === ts.SyntaxKind.NullKeyword;
+  if (UNDEFINED_ADMITTING.has(node.kind)) return true;
+  const target = aliasTarget(node, names);
+  return target !== undefined && admitsUndefined(target, names, seen);
+}
+
+function isEmptyObject(node: ts.TypeNode, names: ForkTypes, seen: Set<ts.Node>): boolean {
+  if (seen.has(node)) return false;
+  seen.add(node);
+  if (ts.isParenthesizedTypeNode(node)) return isEmptyObject(node.type, names, seen);
+  if (ts.isTypeLiteralNode(node)) return node.members.length === 0;
+  const target = aliasTarget(node, names);
+  return target !== undefined && isEmptyObject(target, names, seen);
+}
+
+/** Whether `node` is `{}` or holds one anywhere but an intersection arm, where `T & {}`
+ * is the idiom for a non-nullable `T` rather than a slot. A local alias is followed only
+ * to ask whether it *is* `{}`, so a shape with a `{}` field is charged where the shape is
+ * written, not at every member naming it. */
+function holdsEmptyObject(node: ts.Node, names: ForkTypes): boolean {
+  if (ts.isIntersectionTypeNode(node)) return false;
+  if (ts.isTypeNode(node) && isEmptyObject(node, names, new Set())) return true;
+  return ts.forEachChild(node, (child) => holdsEmptyObject(child, names) || undefined) ?? false;
+}
+
+interface BehaviorLists {
+  valueReturns: string[];
+  nilTolerantRequired: BehaviorSlot[];
+  emptyObjectSlots: BehaviorSlot[];
+}
+
+/**
+ * The three behavior lists over the members both sides define, pure over the two
+ * surfaces and the fork's own type names. A parameter is matched by *position*, since a
+ * fork renames freely, and only a shape every declared overload shares is charged: an
+ * overload that omits the parameter, or returns something, already offers what upstream
+ * does.
+ */
+function classifyBehavior(
+  upstream: ReadonlyMap<string, LuaMember>,
+  declared: ReadonlyMap<string, DeclaredMember>,
+  names: ForkTypes,
+): BehaviorLists {
+  const parsed = new Map<string, ts.TypeNode>();
+  const typeOf = (text: string): ts.TypeNode => {
+    let node = parsed.get(text);
+    if (node === undefined) {
+      node = parseSlotType(text);
+      parsed.set(text, node);
+    }
+    return node;
+  };
+  const tolerates = (param: DeclaredParameter): boolean =>
+    param.optional ||
+    param.types.length === 0 ||
+    param.types.some((text) => admitsUndefined(typeOf(text), names, new Set()));
+  const holds = (texts: readonly string[]): boolean =>
+    texts.some((text) => holdsEmptyObject(typeOf(text), names));
+
+  const lists: BehaviorLists = { valueReturns: [], nilTolerantRequired: [], emptyObjectSlots: [] };
+  const shared = [...upstream.keys()].filter((name) => declared.has(name)).sort();
+  for (const name of shared) {
+    const member = upstream.get(name) as LuaMember;
+    const { signatures } = declared.get(name) as DeclaredMember;
+    if (member.params === undefined) continue;
+    if (member.returnsValue === true && signatures.every((sig) => sig.returns.length === 0)) {
+      lists.valueReturns.push(name);
+    }
+    for (const param of member.nilTolerant ?? []) {
+      const position = member.params.indexOf(param);
+      const atPosition = signatures.map((sig) => sig.params[position]);
+      const first = atPosition[0];
+      if (first !== undefined && atPosition.every((at) => at !== undefined && !tolerates(at))) {
+        lists.nilTolerantRequired.push({ name, slot: first.name });
+      }
+    }
+    const slots = new Set<string>();
+    let returnSlot = false;
+    for (const signature of signatures) {
+      for (const param of signature.params) if (holds(param.types)) slots.add(param.name);
+      if (holds(signature.returns)) returnSlot = true;
+    }
+    if (returnSlot) slots.add("return");
+    for (const slot of slots) lists.emptyObjectSlots.push({ name, slot });
+  }
+  return lists;
+}
+
+function compareVerdicts(a: BehaviorVerdict, b: BehaviorVerdict): number {
+  return (
+    BEHAVIOR_LISTS.indexOf(a.list) - BEHAVIOR_LISTS.indexOf(b.list) ||
+    a.name.localeCompare(b.name) ||
+    (a.slot ?? "").localeCompare(b.slot ?? "")
+  );
+}
+
+/** `lists` with every entry a verdict answers removed, the verdicts that removed one,
+ * and the verdicts that found nothing to remove. */
+function applyVerdicts(
+  lists: BehaviorLists,
+  verdicts: readonly BehaviorVerdict[],
+): BehaviorLists & { applied: BehaviorVerdict[]; stale: BehaviorVerdict[] } {
+  let { valueReturns, nilTolerantRequired, emptyObjectSlots } = lists;
+  const applied: BehaviorVerdict[] = [];
+  const stale: BehaviorVerdict[] = [];
+  const answers = (verdict: BehaviorVerdict) => (entry: BehaviorSlot) =>
+    entry.name === verdict.name && entry.slot === verdict.slot;
+  for (const verdict of verdicts) {
+    let found: boolean;
+    if (verdict.list === "valueReturns") {
+      found = valueReturns.includes(verdict.name);
+      valueReturns = valueReturns.filter((name) => name !== verdict.name);
+    } else if (verdict.list === "nilTolerantRequired") {
+      found = nilTolerantRequired.some(answers(verdict));
+      nilTolerantRequired = nilTolerantRequired.filter((entry) => !answers(verdict)(entry));
+    } else {
+      found = emptyObjectSlots.some(answers(verdict));
+      emptyObjectSlots = emptyObjectSlots.filter((entry) => !answers(verdict)(entry));
+    }
+    (found ? applied : stale).push(verdict);
+  }
+  return {
+    valueReturns,
+    nilTolerantRequired,
+    emptyObjectSlots,
+    applied: applied.sort(compareVerdicts),
+    stale: stale.sort(compareVerdicts),
+  };
+}
+
+/** What a measurement reads besides the target; each one left out is read from the
+ * library data folder. */
+export interface AuthoredParityInputs {
+  /** The library's `parityExceptions`, keyed by namespace. */
+  exceptions?: Record<string, AuthoredParityException[]>;
+  /** The library's `behaviorVerdicts`, keyed by namespace. */
+  verdicts?: Record<string, BehaviorVerdict[]>;
+  /** The api-doc lowered from the fork. */
+  apiDoc?: string;
+  /** The vendored fork, whose own type names a slot's type text is resolved against. */
+  forkSource?: string;
+}
+
 /**
  * The parity report for one opted-in target, recomputed from the library data folder
- * alone: the vendored upstream Lua, the API model lowered from the fork, and its
- * library's parity exceptions. Pure with respect to the working tree: it reads, never
- * writes, so the committed artifact and this return value can be compared.
+ * alone: the vendored upstream Lua, the fork and the API model lowered from it, and its
+ * library's parity exceptions and behavior verdicts. Pure with respect to the working
+ * tree: it reads, never writes, so the committed artifact and this return value can be
+ * compared.
  */
 export function buildAuthoredParity(
   dataDir: string,
   target: AuthoredTarget,
-  exceptions: Record<string, AuthoredParityException[]> = readLibraryExceptions(
-    dataDir,
-    target.repo,
-  ),
-  apiDoc: string = lowerAuthoredApiDoc(dataDir, target),
+  inputs: AuthoredParityInputs = {},
 ): AuthoredParityReport {
+  const exceptions = inputs.exceptions ?? readLibraryExceptions(dataDir, target.repo);
+  const verdicts = inputs.verdicts ?? readLibraryBehaviorVerdicts(dataDir, target.repo);
+  const apiDoc = inputs.apiDoc ?? lowerAuthoredApiDoc(dataDir, target);
+  const forkSource = inputs.forkSource ?? readFileSync(join(dataDir, target.authored), "utf8");
   const {
     callable: upstream,
     fields: upstreamVariables,
@@ -522,6 +780,10 @@ export function buildAuthoredParity(
   }
 
   const phantomMembers = [...declared.keys()].filter((name) => !upstream.has(name));
+  const behavior = applyVerdicts(
+    classifyBehavior(upstream, declared, forkTypes(forkSource)),
+    verdicts[target.namespace] ?? [],
+  );
 
   return {
     namespace: target.namespace,
@@ -548,6 +810,11 @@ export function buildAuthoredParity(
     overloadedMembers,
     placeholderMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
+    valueReturns: behavior.valueReturns,
+    nilTolerantRequired: behavior.nilTolerantRequired,
+    emptyObjectSlots: behavior.emptyObjectSlots,
+    behaviorVerdicts: behavior.applied,
+    staleBehaviorVerdicts: behavior.stale,
   };
 }
 
@@ -695,7 +962,7 @@ if (import.meta.main) {
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderAuthoredParity(report));
     console.log(
-      `${target.namespace}: callable ${report.upstreamMembers} upstream, ${report.missingMembers.length} missing, ${report.phantomMembers.length} phantom, ${report.arityMismatches.length} arity, coverage ${report.callableCoverage} | fields ${report.upstreamFields} upstream, ${report.missingFields.length} missing, ${report.phantomFields.length} phantom, coverage ${report.fieldCoverage}`,
+      `${target.namespace}: callable ${report.upstreamMembers} upstream, ${report.missingMembers.length} missing, ${report.phantomMembers.length} phantom, ${report.arityMismatches.length} arity, coverage ${report.callableCoverage} | fields ${report.upstreamFields} upstream, ${report.missingFields.length} missing, ${report.phantomFields.length} phantom, coverage ${report.fieldCoverage} | behavior ${report.valueReturns.length} value returns, ${report.nilTolerantRequired.length} nil-tolerant, ${report.emptyObjectSlots.length} {}, ${report.staleBehaviorVerdicts.length} stale verdicts`,
     );
   }
 }

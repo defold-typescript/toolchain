@@ -135,6 +135,8 @@ declare module 'in.triggers' {
 	export const MOUSE_BUTTON_LEFT: Hash;
 	export const MOUSE_BUTTON_MIDDLE: Hash;
 	export const MOUSE_BUTTON_RIGHT: Hash;
+	/** `hash("touch")`, not `hash("mouse_button_1")`: `triggers.lua:143` rebinds it, matching the
+	 * action id Defold's input bindings give the first mouse button. */
 	export const MOUSE_BUTTON_1: Hash;
 	export const MOUSE_BUTTON_2: Hash;
 	export const MOUSE_BUTTON_3: Hash;
@@ -174,7 +176,7 @@ declare module 'in.triggers' {
 	export const TEXT: Hash;
 	export const MARKED_TEXT: Hash;
 
-	export function is_key(action_id: Hash): boolean;
-	export function is_mouse(action_id: Hash): boolean;
-	export function is_gamepad(action_id: Hash): boolean;
+	export function is_key(action_id: Hash | undefined): boolean;
+	export function is_mouse(action_id: Hash | undefined): boolean;
+	export function is_gamepad(action_id: Hash | undefined): boolean;
 }

@@ -80,7 +80,7 @@ declare module 'orthographic.camera' {
 	 * @param camera_id undefined for the first camera
 	 * @param intensity Intensity of the shake, in percent of screen. Defaults to 0.05
 	 * @param duration Duration of the shake, in seconds. Defaults to 0.5
-	 * @param direction Direction of the shake. Possible values: `both`, `horizontal`, `vertical`. Defaults to `both`.
+	 * @param direction Direction of the shake: `SHAKE_BOTH`, `SHAKE_HORIZONTAL` or `SHAKE_VERTICAL`. Defaults to `SHAKE_BOTH`.
 	 * @param cb Function to call when the shake has finished. Optional.
 	  * @upstreamDoc 84db852ea1df
 	 */
@@ -88,7 +88,7 @@ declare module 'orthographic.camera' {
 		camera_id: Hash | Url | undefined,
 		intensity?: number,
 		duration?: number,
-		direction?: { both?: boolean; horizontal?: boolean; vertical?: boolean },
+		direction?: Hash,
 		cb?: () => void,
 	): void;
 
@@ -108,16 +108,6 @@ declare module 'orthographic.camera' {
 	export function screen_to_world(
 		camera_id: Hash | Url | undefined,
 		screen: Vector3,
-	): Vector3;
-
-	/**
-	 * Translate window coordinates to world coordinates, based on the view and projection of the camera.
-	 * @param camera_id (hash | url), undefined for the first camera
-	 * @param window Window coordinates to convert
-	 */
-	export function window_to_world(
-		camera_id: Hash | Url | undefined,
-		window: Vector3,
 	): Vector3;
 
 	/**
@@ -150,9 +140,7 @@ declare module 'orthographic.camera' {
 	 * @param camera_id undefined for the first camera
 	  * @upstreamDoc 30e376a72f25
 	 */
-	export function get_viewport(
-		camera_id: Hash | Url | undefined,
-	): LuaMultiReturn<[number, number, number, number]>;
+	export function get_viewport(camera_id: Hash | Url | undefined): Vector4;
 
 	/**
 	 * Get the current projection of the camera.
@@ -171,7 +159,7 @@ declare module 'orthographic.camera' {
 	  * @upstreamDoc c4798b3d2956
 	 */
 	export function recoil(
-		camera_id: Hash | Url,
+		camera_id: Hash | Url | undefined,
 		offset: Vector3,
 		duration?: number,
 	): void;
@@ -217,6 +205,8 @@ declare module 'orthographic.camera' {
 		right: number,
 		bottom: number,
 	): void;
+	/** Removes the deadzone: upstream posts it without edges when any edge is nil (`camera.lua:546`). */
+	export function deadzone(camera_id: Hash | Url | undefined): void;
 
 	/**
 	 * Limits the camera position to within the specified rectangle.
@@ -234,6 +224,8 @@ declare module 'orthographic.camera' {
 		right: number,
 		bottom: number,
 	): void;
+	/** Removes the bounds: upstream posts it without edges when any edge is nil (`camera.lua:566`). */
+	export function bounds(camera_id: Hash | Url | undefined): void;
 
 	/**
 	 * Translate screen boundaries (corners) to world coordinates, based on the view and projection of the camera.
@@ -255,39 +247,8 @@ declare module 'orthographic.camera' {
 		world: Vector3,
 	): Vector3;
 
-	/**
-	 * Translate screen coordinates to world coordinates using the specified view and projection.
-	 * @param view
-	 * @param projection
-	 * @param screen Screen coordinates to convert
-	 */
-	export function unproject(
-		view: Matrix4,
-		projection: Matrix4,
-		screen: Vector3,
-	): Vector3;
-
-	/**
-	 * Translate world coordinates to screen coordinates using the specified view and projection.
-	 * @param view
-	 * @param projection
-	 * @param world World coordinates to convert
-	 */
-	export function project(
-		view: Matrix4,
-		projection: Matrix4,
-		world: Vector3,
-	): Vector3;
-
-	/**
-	 * Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.
-	 * @param scaling_factor Current window scaling factor
-	 */
-	export function set_window_scaling_factor(scaling_factor: number): void;
-
 	export const PROJECTOR: {
 		FIXED_ZOOM: Hash;
-		DEFAULT: Hash;
 		FIXED_AUTO: Hash;
 	};
 

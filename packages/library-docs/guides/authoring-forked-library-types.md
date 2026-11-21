@@ -404,7 +404,7 @@ justification reads differently from one that reached `1` by declaring everythin
 | `kind` | When it applies |
 | ------ | --------------- |
 | `script-lifecycle` | Upstream exports the member for the library's own bundled `.script` and says so in its own comment. `boom`'s five hooks carry `-- called from boom.script`; `orthographic.camera`'s `init`, `final` and `update` say *"called automatically from … the camera.script"* in LuaDoc. |
-| `deprecated-stub` | Upstream's body is nothing but `error("… is deprecated")`, so the member cannot succeed if called. `orthographic.camera` keeps ten such one-line stubs; six are excepted here. |
+| `deprecated-stub` | Upstream's body is nothing but `error("… is deprecated")`, so the member cannot succeed if called. `orthographic.camera` keeps ten such one-line stubs, all excepted here. |
 
 `reason` must cite upstream's file and line, so the entry can be re-checked against
 the pin instead of taken on trust. An arity or phantom exception is deliberately not
@@ -421,6 +421,52 @@ naming the offending entry:
 
 The ledger is not a way to skip a correction. It is the other half of *correct it or
 justify it*, and every entry is a claim about upstream that the next reader can check.
+
+### Behavior lists
+
+Names and counts cannot see a fork that has the right members with the wrong
+behavior. Three more lists sit beside the axes, per member both sides define, and
+none of them enters either coverage:
+
+| Field | What it lists |
+| ----- | ------------- |
+| `valueReturns` | Members every declared signature of which returns `void`, where upstream's body returns a value. |
+| `nilTolerantRequired` | Parameters every declared signature requires and types without `undefined`, where upstream's body nil-checks or defaults the parameter at that position. Named by the fork's parameter name. |
+| `emptyObjectSlots` | Parameters, or the `return`, typed `{}` or holding a `{}` — directly, through one of the fork's own aliases such as `type table = {}`, or inside a callback's signature. |
+| `behaviorVerdicts` | The verdicts that removed an entry from one of the three lists. |
+| `staleBehaviorVerdicts` | Verdicts that name no entry, the mismatch they answered being gone. Delete each one. |
+
+The reader matches a few body patterns and nothing else. A value return is a
+`return` with an expression other than a lone `nil`, outside every nested function. A
+parameter is nil-tolerant when the body compares the bare name with `nil`
+(`x == nil`, `x ~= nil`), tests it with `not x`, or uses it as the whole left operand
+of `and` or `or` (`x and …`, `x or default`). `if x then` and `assert(x)` are not read,
+and neither is a check made by a module the target does not vendor — Gooey's
+`gooey/internal/core.lua` returns early on a nil `action`, which no list can see. Each list is
+therefore one-sided: an empty list is not proof the fork is right.
+
+A false entry is answered by a verdict, not by widening a pattern. The usual one is a
+tail call: `return instance.reset()` reads as a value return, though
+`instance.reset` returns nothing. `behaviorVerdicts` in the library's `library.json`
+maps each fork's `namespace` to `{ list, name, slot?, reason }` entries; `slot`
+names the parameter, or `return`, for the two lists whose entries carry one, and is
+absent for `valueReturns`. As with a parity exception, `reason` cites upstream's file
+and line:
+
+```json
+"behaviorVerdicts": {
+  "in.state": [
+    {
+      "list": "valueReturns",
+      "name": "acquire",
+      "reason": "upstream returns `instance.acquire(…)` (state.lua:65), whose body returns nothing (state.lua:14)"
+    }
+  ]
+}
+```
+
+A verdict whose entry is gone moves to `staleBehaviorVerdicts` rather than throwing,
+and `authored-parity.test.ts` reds while any report carries one.
 
 ### Upstream LuaDoc import
 
@@ -782,7 +828,9 @@ third `adjust_mode` argument was silently ignored at runtime, so narrowing it is
 breaking on purpose. With nine ledger entries covering the withdrawn stubs and the
 three camera.script lifecycle hooks, the target reaches `callableCoverage: 1`. The
 markdown verdict is re-derived over the new export list and lands on the same
-`no-go`.
+`no-go`. A later [behavior](#behavior-lists) correction withdrew the four stubs still
+declared — `project`, `unproject`, `set_window_scaling_factor` and
+`window_to_world` — so the ledger now covers all ten.
 
 The fourth diff is the field correction, which moves the constants half of that
 same list: `MSG_SET_AUTOMATIC_ZOOM` was declared from the pinned `camera.lua`, and

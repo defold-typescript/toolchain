@@ -8,8 +8,11 @@ declare module 'in.state' {
 	type StateInstance = {
 		acquire: () => void;
 		release: (url?: Url) => void;
-		is_pressed: (action_id: Hash | string) => boolean;
-		on_input: (action_id: Hash | string, action: {}) => void;
+		is_pressed: (action_id: Hash | string) => boolean | undefined;
+		on_input: (
+			action_id: Hash | string | undefined,
+			action: Partial<go.on_input.Action>,
+		) => void;
 		clear: () => void;
 	};
 
@@ -19,15 +22,15 @@ declare module 'in.state' {
 	export function is_pressed(
 		action_id: Hash | string,
 		instance?: StateInstance,
-	): boolean;
+	): boolean | undefined;
 	export function update(
-		action_id: Hash | string,
-		action: {},
+		action_id: Hash | string | undefined,
+		action: Partial<go.on_input.Action>,
 		instance?: StateInstance,
 	): void;
 	export function on_input(
-		action_id: Hash | string,
-		action: {},
+		action_id: Hash | string | undefined,
+		action: Partial<go.on_input.Action>,
 		instance?: StateInstance,
 	): void;
 	export function clear(instance?: StateInstance): void;

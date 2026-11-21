@@ -19,5 +19,191 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [
+    {
+      "name": "channel_join",
+      "slot": "target"
+    },
+    {
+      "name": "channel_join",
+      "slot": "type"
+    },
+    {
+      "name": "channel_join",
+      "slot": "persistence"
+    },
+    {
+      "name": "channel_join",
+      "slot": "hidden"
+    },
+    {
+      "name": "channel_leave",
+      "slot": "channel_id"
+    },
+    {
+      "name": "channel_message_remove",
+      "slot": "channel_id"
+    },
+    {
+      "name": "channel_message_remove",
+      "slot": "message_id"
+    },
+    {
+      "name": "channel_message_send",
+      "slot": "channel_id"
+    },
+    {
+      "name": "channel_message_send",
+      "slot": "content"
+    },
+    {
+      "name": "channel_message_update",
+      "slot": "channel_id"
+    },
+    {
+      "name": "channel_message_update",
+      "slot": "message_id"
+    },
+    {
+      "name": "channel_message_update",
+      "slot": "content"
+    },
+    {
+      "name": "match_data_send",
+      "slot": "match_id"
+    },
+    {
+      "name": "match_data_send",
+      "slot": "op_code"
+    },
+    {
+      "name": "match_data_send",
+      "slot": "data"
+    },
+    {
+      "name": "match_data_send",
+      "slot": "reliable"
+    },
+    {
+      "name": "match_leave",
+      "slot": "match_id"
+    },
+    {
+      "name": "matchmaker_add",
+      "slot": "min_count"
+    },
+    {
+      "name": "matchmaker_add",
+      "slot": "max_count"
+    },
+    {
+      "name": "matchmaker_add",
+      "slot": "query"
+    },
+    {
+      "name": "matchmaker_add",
+      "slot": "count_multiple"
+    },
+    {
+      "name": "matchmaker_remove",
+      "slot": "ticket"
+    },
+    {
+      "name": "party_accept",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_close",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_create",
+      "slot": "open"
+    },
+    {
+      "name": "party_create",
+      "slot": "max_size"
+    },
+    {
+      "name": "party_data_send",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_data_send",
+      "slot": "op_code"
+    },
+    {
+      "name": "party_data_send",
+      "slot": "data"
+    },
+    {
+      "name": "party_join",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_join_request_list",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_leave",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_matchmaker_add",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_matchmaker_add",
+      "slot": "min_count"
+    },
+    {
+      "name": "party_matchmaker_add",
+      "slot": "max_count"
+    },
+    {
+      "name": "party_matchmaker_add",
+      "slot": "query"
+    },
+    {
+      "name": "party_matchmaker_add",
+      "slot": "count_multiple"
+    },
+    {
+      "name": "party_matchmaker_remove",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_matchmaker_remove",
+      "slot": "ticket"
+    },
+    {
+      "name": "party_promote",
+      "slot": "party_id"
+    },
+    {
+      "name": "party_remove",
+      "slot": "party_id"
+    },
+    {
+      "name": "status_follow",
+      "slot": "user_ids"
+    },
+    {
+      "name": "status_follow",
+      "slot": "usernames"
+    },
+    {
+      "name": "status_unfollow",
+      "slot": "user_ids"
+    },
+    {
+      "name": "status_update",
+      "slot": "status"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

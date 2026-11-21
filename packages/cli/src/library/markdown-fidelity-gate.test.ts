@@ -72,19 +72,20 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
   test("reports the ts-defold members the markdown parse does not cover", async () => {
     const { missingMembers } = await comparison();
     // Functions in the fork's surface absent from the README API table. The signature
-    // correction withdrew `add_projector`, `get_projection_id` and `use_projector` —
-    // deprecated stubs whose upstream body only `error()`s — so they are no longer in
-    // the fork to be missing from anything.
-    for (const fn of [
-      "get_cameras",
+    // correction withdrew `add_projector`, `get_projection_id` and `use_projector`, and
+    // the behavior correction the four still declared — deprecated stubs whose
+    // upstream body only `error()`s — so they are no longer in the fork to be missing
+    // from anything.
+    expect(missingMembers).toContain("get_cameras");
+    for (const withdrawn of [
+      "add_projector",
+      "get_projection_id",
+      "use_projector",
       "project",
       "set_window_scaling_factor",
       "unproject",
       "window_to_world",
     ]) {
-      expect(missingMembers).toContain(fn);
-    }
-    for (const withdrawn of ["add_projector", "get_projection_id", "use_projector"]) {
       expect(missingMembers).not.toContain(withdrawn);
     }
     // Every ts-defold constant is a member the flat signature parser cannot see.
@@ -1859,9 +1860,14 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect(addedMembers).toEqual([]);
   });
 
-  test("every one of the 8 parsed members downgrades on the README's bare Lua tokens", async () => {
+  // `dynamic_list` is the exception: the fork types its `data` as `unknown[]`, the
+  // items gooey stores on the list and hands back unread (`gooey/internal/list.lua:303`),
+  // so both sides carry an untyped token and the term does not score it.
+  test("every parsed member but dynamic_list downgrades on the README's bare Lua tokens", async () => {
     const { downgradedMembers } = await comparisonFor(GOOEY, "gooey");
-    expect([...downgradedMembers].sort()).toEqual([...PARSED_MEMBERS].sort());
+    expect([...downgradedMembers].sort()).toEqual(
+      PARSED_MEMBERS.filter((member) => member !== "dynamic_list").sort(),
+    );
   });
 
   // The term moved with the correction, and both ends of that move are the README

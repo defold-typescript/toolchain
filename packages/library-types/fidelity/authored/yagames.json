@@ -19,5 +19,23 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [
+    {
+      "name": "leaderboards_set_score",
+      "slot": "callback"
+    },
+    {
+      "name": "payments_get_catalog",
+      "slot": "callback"
+    },
+    {
+      "name": "player_init",
+      "slot": "options"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

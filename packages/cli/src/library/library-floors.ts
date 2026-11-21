@@ -54,7 +54,10 @@ export async function measureLibraryCoverage(
       .filter((target) => target.upstreamLua.length > 0)
       .map((target) =>
         measured(target.moduleId, () => {
-          const report = buildAuthoredParity(dataDir, target, library.parityExceptions);
+          const report = buildAuthoredParity(dataDir, target, {
+            exceptions: library.parityExceptions,
+            verdicts: library.behaviorVerdicts,
+          });
           return {
             namespace: target.moduleId,
             callableCoverage: report.callableCoverage,

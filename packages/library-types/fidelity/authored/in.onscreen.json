@@ -19,5 +19,26 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
+    {
+      "list": "valueReturns",
+      "name": "register_analog",
+      "reason": "upstream returns `instance.register_analog(…)` (onscreen.lua:272), whose body returns nothing (onscreen.lua:185)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "register_button",
+      "reason": "upstream returns `instance.register_button(…)` (onscreen.lua:267), whose body returns nothing (onscreen.lua:171)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "reset",
+      "reason": "upstream returns `instance.reset(…)` (onscreen.lua:262), whose body returns nothing (onscreen.lua:159)"
+    }
+  ],
+  "staleBehaviorVerdicts": []
 }

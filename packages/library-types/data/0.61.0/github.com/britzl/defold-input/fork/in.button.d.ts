@@ -16,5 +16,8 @@ declare module 'in.button' {
 	export function unregister(node_or_string?: Opaque<"node"> | string): void;
 	export function dump(): void;
 	export function effect(node: Opaque<"node">, initial_scale: Vector3): void;
-	export function on_input(action_id: Hash, action: {}): boolean;
+	export function on_input(
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+	): boolean;
 }

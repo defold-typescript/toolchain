@@ -181,6 +181,7 @@ function byName(members: LuaMember[]): Map<string, LuaMember> {
 }
 
 const NO_TAGS: LuaMember["tags"] = { params: [], returns: [] };
+const NO_BODY = { returnsValue: false, nilTolerant: [] };
 
 describe("parseLuaSurface over inline module shapes", () => {
   const source = [
@@ -214,6 +215,8 @@ describe("parseLuaSurface over inline module shapes", () => {
       doc: "",
       refusedDoc: false,
       tags: NO_TAGS,
+      returnsValue: true,
+      nilTolerant: [],
     });
   });
 
@@ -225,6 +228,7 @@ describe("parseLuaSurface over inline module shapes", () => {
       doc: "",
       refusedDoc: false,
       tags: NO_TAGS,
+      ...NO_BODY,
     });
   });
 
@@ -242,7 +246,15 @@ describe("parseLuaSurface over inline module shapes", () => {
     );
     expect(surface.moduleLocal).toBe("relay");
     expect(surface.members).toEqual([
-      { name: "ping", params: ["host"], varargs: false, doc: "", refusedDoc: false, tags: NO_TAGS },
+      {
+        name: "ping",
+        params: ["host"],
+        varargs: false,
+        doc: "",
+        refusedDoc: false,
+        tags: NO_TAGS,
+        ...NO_BODY,
+      },
     ]);
   });
 
@@ -251,7 +263,15 @@ describe("parseLuaSurface over inline module shapes", () => {
       ["local M = {}", "function M.e(a, ...)", "end", "return M", ""].join("\n"),
     );
     expect(surface.members).toEqual([
-      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false, tags: NO_TAGS },
+      {
+        name: "e",
+        params: ["a"],
+        varargs: true,
+        doc: "",
+        refusedDoc: false,
+        tags: NO_TAGS,
+        ...NO_BODY,
+      },
     ]);
   });
 
@@ -291,6 +311,7 @@ describe("parseLuaSurface over inline module shapes", () => {
         doc: "@param a number\n@param b number",
         refusedDoc: false,
         tags: NO_TAGS,
+        ...NO_BODY,
       },
     ]);
   });
@@ -300,7 +321,15 @@ describe("parseLuaSurface over inline module shapes", () => {
       ["local M = {}", "M.e = function(a,", "  ...)", "end", "return M", ""].join("\n"),
     );
     expect(surface.members).toEqual([
-      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false, tags: NO_TAGS },
+      {
+        name: "e",
+        params: ["a"],
+        varargs: true,
+        doc: "",
+        refusedDoc: false,
+        tags: NO_TAGS,
+        ...NO_BODY,
+      },
     ]);
   });
 
@@ -719,7 +748,15 @@ describe("a module closing with `return setmetatable(<name>, {…})` is the same
     );
     expect(inline.moduleLocal).toBe("M");
     expect(inline.members).toEqual([
-      { name: "a", params: ["x"], varargs: false, doc: "", refusedDoc: false, tags: NO_TAGS },
+      {
+        name: "a",
+        params: ["x"],
+        varargs: false,
+        doc: "",
+        refusedDoc: false,
+        tags: NO_TAGS,
+        ...NO_BODY,
+      },
     ]);
   });
 });
@@ -909,6 +946,7 @@ describe("a returned table's constructor entries are members", () => {
       doc: "",
       refusedDoc: false,
       tags: NO_TAGS,
+      ...NO_BODY,
     });
     expect(members.get("Client")?.params).toBeUndefined();
     expect(members.get("inner")?.params).toBeUndefined();
@@ -1106,6 +1144,8 @@ describe("a column-0 colon method of the returned table is a method member", () 
       doc: "",
       refusedDoc: false,
       tags: NO_TAGS,
+      returnsValue: true,
+      nilTolerant: [],
     });
   });
 
@@ -1173,5 +1213,207 @@ describe("parseLuaSurface strict mode", () => {
 
   test("without strict the same source reads an empty surface", () => {
     expect(parseLuaSurface(INDENTED)).toEqual({ moduleLocal: "M", members: [] });
+  });
+});
+
+describe("a callable member records what its body returns and which parameters it tolerates as nil", () => {
+  function member(lines: string[], name: string): LuaMember {
+    const found = byName(parseLuaSurface([...lines, "return M", ""].join("\n")).members).get(name);
+    if (found === undefined) throw new Error(`no member ${name}`);
+    return found;
+  }
+
+  test("a body returning an expression returns a value", () => {
+    const create = member(
+      [
+        "local M = {}",
+        "function M.create(node)",
+        "\tlocal instance = {}",
+        "\treturn instance",
+        "end",
+      ],
+      "create",
+    );
+    expect(create.returnsValue).toBe(true);
+  });
+
+  test("a body with only a bare `return`, `return nil`, or none returns no value", () => {
+    const lines = [
+      "local M = {}",
+      "function M.bare(a)",
+      "\tif a then return end",
+      "\tprint(a)",
+      "end",
+      "function M.nothing(a)",
+      "\tprint(a)",
+      "end",
+      "function M.explicit_nil()",
+      "\treturn nil",
+      "end",
+    ];
+    expect(member(lines, "bare").returnsValue).toBe(false);
+    expect(member(lines, "nothing").returnsValue).toBe(false);
+    expect(member(lines, "explicit_nil").returnsValue).toBe(false);
+  });
+
+  test("a `return` inside a nested function is that function's, not the member's", () => {
+    const install = member(
+      [
+        "local M = {}",
+        "function M.install(list)",
+        "\ttable.sort(list, function(a, b)",
+        "\t\treturn a < b",
+        "\tend)",
+        "end",
+      ],
+      "install",
+    );
+    expect(install.returnsValue).toBe(false);
+  });
+
+  test("a `return` after a loop and a branch still belongs to the member", () => {
+    const find = member(
+      [
+        "local M = {}",
+        "function M.find(list, x)",
+        "\tfor i = 1, #list do",
+        "\t\tif list[i] == x then",
+        "\t\t\tbreak",
+        "\t\tend",
+        "\tend",
+        "\twhile false do end",
+        "\trepeat local y = 1 until true",
+        "\treturn list[1]",
+        "end",
+      ],
+      "find",
+    );
+    expect(find.returnsValue).toBe(true);
+  });
+
+  test("a one-line body is read on its own line", () => {
+    expect(member(["local M = {}", "function M.id(x) return x end"], "id").returnsValue).toBe(true);
+  });
+
+  test("`== nil`, `~= nil`, `not x`, `x and`, `x or` and `x = x or` mark a parameter nil-tolerant", () => {
+    const button = member(
+      [
+        "local M = {}",
+        "function M.button(node_id, action_id, action, fn, config, cb, extra)",
+        "\tif action_id == nil then return end",
+        "\tif not action then return end",
+        "\tlocal f = fn or nop",
+        "\tconfig = config or {}",
+        "\tlocal ok = cb and cb()",
+        "\tif nil ~= extra then print(extra) end",
+        "\tprint(node_id)",
+        "end",
+      ],
+      "button",
+    );
+    expect(button.nilTolerant).toEqual(["action_id", "action", "fn", "config", "cb", "extra"]);
+  });
+
+  test("a parameter only indexed or called is not nil-tolerant, nor is a field of the same name", () => {
+    const read = member(
+      [
+        "local M = {}",
+        "function M.read(action, x, y)",
+        "\tif action.pressed then print(1) end",
+        "\tif self.x == nil then print(2) end",
+        "\tif not y.ready then print(3) end",
+        '\tlocal s = "x and y" -- x or y',
+        "end",
+      ],
+      "read",
+    );
+    expect(read.nilTolerant).toEqual([]);
+  });
+
+  test("a parameter that is the operand of a comparison before `and`/`or` is not tested itself", () => {
+    const isTop = member(
+      [
+        "local M = {}",
+        "function M.is_top(id, n)",
+        "\tassert(id)",
+        "\tlocal top = stack[#stack]",
+        "\tlocal ok = #stack > n and true",
+        "\treturn top and top.id == id or false",
+        "end",
+      ],
+      "is_top",
+    );
+    expect(isTop.nilTolerant).toEqual([]);
+  });
+
+  test("a nested function's own parameter of the same name shadows the member's", () => {
+    const create = member(
+      [
+        "local M = {}",
+        "function M.create(action_id)",
+        "\treturn function(action_id)",
+        "\t\tif not action_id then return end",
+        "\tend",
+        "end",
+      ],
+      "create",
+    );
+    expect(create.nilTolerant).toEqual([]);
+  });
+
+  test("a method, an assigned function and a constructor entry read their bodies too", () => {
+    const surface = parseLuaSurface(
+      [
+        "local M = {",
+        "\tmake = function(a) return a or 1 end,",
+        "}",
+        "M.__index = M",
+        "M.size = function(b)",
+        "\treturn #b",
+        "end",
+        "function M:get(key)",
+        "\tif key == nil then return self end",
+        "end",
+        "return M",
+        "",
+      ].join("\n"),
+    );
+    const members = byName(surface.members);
+    expect(members.get("make")).toMatchObject({ returnsValue: true, nilTolerant: ["a"] });
+    expect(members.get("size")).toMatchObject({ returnsValue: true, nilTolerant: [] });
+    expect(members.get("get")).toMatchObject({ returnsValue: true, nilTolerant: ["key"] });
+  });
+
+  test("an inline constructor's function entry reads its body from the entry", () => {
+    const members = byName(
+      parseLuaSurface(
+        ["local M = { f = function(x) return x and 1 end }", "return M", ""].join("\n"),
+      ).members,
+    );
+    expect(members.get("f")).toMatchObject({ returnsValue: true, nilTolerant: ["x"] });
+  });
+
+  test("a long string or comment holding `return` or `end` is not code", () => {
+    const quiet = member(
+      [
+        "local M = {}",
+        "function M.quiet(a)",
+        "\tlocal s = [[",
+        "\treturn a",
+        "\tend",
+        "\t]]",
+        "\t--[[ return a end ]]",
+        "\tprint(s)",
+        "end",
+      ],
+      "quiet",
+    );
+    expect(quiet).toMatchObject({ returnsValue: false, nilTolerant: [] });
+  });
+
+  test("a non-callable field carries neither record", () => {
+    const field = member(["local M = {}", "M.LIMIT = 4"], "LIMIT");
+    expect("returnsValue" in field).toBe(false);
+    expect("nilTolerant" in field).toBe(false);
   });
 });

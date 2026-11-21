@@ -19,5 +19,18 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [
+    "final",
+    "invalidate"
+  ],
+  "nilTolerantRequired": [
+    {
+      "name": "set_tree",
+      "slot": "tree"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

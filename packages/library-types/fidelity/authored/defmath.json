@@ -19,5 +19,15 @@
   "variadicMembers": 3,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [
+    {
+      "name": "round_decimal",
+      "slot": "decimal"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }
