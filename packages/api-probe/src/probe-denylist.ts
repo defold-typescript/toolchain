@@ -61,7 +61,9 @@ export const PROPERTY_DENYLIST: Readonly<Record<string, string>> = {
   ),
 };
 
-// Built-in messages the probe never posts, keyed by message id.
+// Built-in messages the probe never posts with a payload, keyed by message id.
+// One with a required field is still posted once without it, last, since the
+// engine refuses that post before sending it.
 export const MESSAGE_DENYLIST: Readonly<Record<string, string>> = {
   exit: "ends the run",
   reboot: "restarts the engine",

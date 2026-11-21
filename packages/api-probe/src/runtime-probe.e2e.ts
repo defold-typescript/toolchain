@@ -78,6 +78,10 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
     expect(failures.writableReadonly).toEqual([]);
   });
 
+  test("a message posted without its payload raises exactly when the declaration rejects the post", () => {
+    expect(failures.omittedPayloads).toEqual([]);
+  });
+
   test("an incoming message the probe project does not trigger is listed as unverified", () => {
     const unverified = run.passes.flatMap((pass) => {
       const reported = new Set(pass.outcomes.map((o) => `${o.name}:${o.variant}`));
