@@ -222,6 +222,7 @@ describe("evaluateProbe on negative calls", () => {
       returnKinds: [],
       indexSemantics: [],
       writableReadonly: [],
+      omittedPayloads: [],
     });
   });
 

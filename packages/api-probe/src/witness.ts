@@ -15,6 +15,7 @@ import {
 } from "../../types/scripts/lua-kind";
 import { type ApiTarget, loadApiTargets } from "../../types/scripts/regen";
 import { INDEX_SLOT_CLASSIFICATIONS } from "../../types/src/index-slot-classifications";
+import { checkCalls } from "./call-check";
 import { constantProbes } from "./constant-probes";
 import {
   ACCEPTED_ALONE,
@@ -73,6 +74,8 @@ export interface MessageCall {
   readonly id: string;
   readonly direction: "outgoing" | "incoming";
   readonly triggered?: boolean;
+  // A post with the payload left out, and whether the checker accepts it.
+  readonly omittedPayload?: "accepted" | "rejected";
 }
 
 export interface ProbeCall {
@@ -90,9 +93,16 @@ export interface ProbeCall {
 }
 
 // One step of the go script's message queue: a post, or a pause until the
-// engine has sent `wait` once more.
+// engine has sent `wait` once more. A `refused` post is one the declaration
+// rejects.
 export type QueueStep =
-  | { readonly id: string; readonly name: string; readonly variant: string; readonly post: string }
+  | {
+      readonly id: string;
+      readonly name: string;
+      readonly variant: string;
+      readonly post: string;
+      readonly refused?: true;
+    }
   | { readonly wait: string };
 
 // What the go script posts one per frame after its calls, the payload kinds it
@@ -574,12 +584,77 @@ function memberWitness(type: ts.Type, kind: LuaKind, scope: Scope): string | und
   return undefined;
 }
 
+// A function whose longest signature ends in a table that has no required
+// field, with the positive witnesses of every parameter before it.
+export interface OptionCandidate {
+  readonly name: string;
+  readonly kind: ScriptKind;
+  readonly args: readonly string[];
+}
+
 interface FunctionCalls {
   calls: ProbeCall[];
   unwitnessed: Unwitnessed[];
   skipped: SkippedSlot[];
   covered: CoveredKind[];
   signature?: SignatureArgs;
+  options?: OptionCandidate;
+}
+
+// A table `{}` is a value of: not an array, and every field optional.
+function isOptionsTable(param: Param | undefined, checker: ts.TypeChecker): boolean {
+  if (param === undefined || param.rest) return false;
+  const type = checker.getNonNullableType(param.type);
+  const kinds = kindsOf(type, checker);
+  if (kinds === "any" || kinds.length !== 1 || kinds[0] !== "table") return false;
+  if (checker.isArrayType(type) || checker.isTupleType(type)) return false;
+  return checker
+    .getPropertiesOfType(type)
+    .every((property) => (property.flags & ts.SymbolFlags.Optional) !== 0);
+}
+
+// Each candidate called without its options table and with `{}`, when the
+// checker lets the call leave the table out, each form carrying the returns of
+// the signature the checker resolves for it.
+export function optionFormCalls(
+  program: ts.Program,
+  candidates: readonly OptionCandidate[],
+): { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } {
+  const forms = candidates.flatMap(({ name, args }) => [
+    `${name}(${args.join(", ")})`,
+    `${name}(${[...args, "{}"].join(", ")})`,
+  ]);
+  const { checker, calls: checked } = checkCalls(program, forms);
+  const out: { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } = { calls: [], unwitnessed: [] };
+  candidates.forEach(({ name, kind }, i) => {
+    const omitted = checked[2 * i];
+    const empty = checked[2 * i + 1];
+    if (omitted?.signature === undefined) return;
+    if (empty?.signature === undefined) {
+      out.unwitnessed.push({
+        name,
+        reason: `the checker rejects an empty options table: ${empty?.errors.join("; ")}`,
+      });
+      return;
+    }
+    out.calls.push(
+      {
+        name,
+        variant: "options-omitted",
+        kind,
+        call: forms[2 * i] as string,
+        returns: declaredReturns(omitted.signature, checker),
+      },
+      {
+        name,
+        variant: "options-empty",
+        kind,
+        call: forms[2 * i + 1] as string,
+        returns: declaredReturns(empty.signature, checker),
+      },
+    );
+  });
+  return out;
 }
 
 function callsFor(
@@ -602,6 +677,9 @@ function callsFor(
   const seen = new Map<string, string>();
   const negated = new Set<number>();
   let reached = 0;
+  // The parameter count of the longest probed signature, whose last parameter
+  // decides whether the function gets option-table forms.
+  let longest = -1;
   // Each `<slot>:<kind>` a binding reads, with its accepted call or why it has none.
   const pending = new Map<string, { readonly call: ProbeCall } | { readonly reason: string }>();
   signatures.forEach((signature, index) => {
@@ -614,6 +692,11 @@ function callsFor(
     const variants: [string, number][] = [["required", required]];
     const present = params.filter((param) => !param.rest).length;
     reached = Math.max(reached, present);
+    const longer = present > longest;
+    if (longer) {
+      longest = present;
+      delete out.options;
+    }
     if (present > required) variants.push(["optional", present]);
     const returns = declaredReturns(signature, checker);
     const witnessAll = (count: number, handles = new Map<string, number>()) =>
@@ -627,6 +710,9 @@ function callsFor(
         out.calls.push({ name: fqn, variant: label, kind: context.kind, call, returns });
       }
       const positive = witnessAll(present);
+      if (longer && isOptionsTable(params[present - 1], checker)) {
+        out.options = { name: fqn, kind: context.kind, args: positive.slice(0, present - 1) };
+      }
       out.signature ??= {
         names: signature.getParameters().map((param) => param.name),
         args: positive,
@@ -768,7 +854,17 @@ function renderStep(step: QueueStep): string {
   if ("wait" in step) return `      { wait: ${JSON.stringify(step.wait)} },`;
   const name = JSON.stringify(step.name);
   const variant = JSON.stringify(step.variant);
-  return `      { name: ${name}, variant: ${variant}, post: () => ${step.post} },`;
+  if (step.refused !== true) {
+    return `      { name: ${name}, variant: ${variant}, post: () => ${step.post} },`;
+  }
+  return [
+    "      {",
+    `        name: ${name},`,
+    `        variant: ${variant},`,
+    "        // @ts-expect-error",
+    `        post: () => ${step.post},`,
+    "      },",
+  ].join("\n");
 }
 
 function renderShapes(shapes: MessageScript["shapes"]): string {
@@ -906,6 +1002,7 @@ export function generateProbes(
   const covered: CoveredKind[] = [];
   const probed = new Map<string, BindingFunction>();
   const signatures = new Map<string, SignatureArgs>();
+  const candidates: OptionCandidate[] = [];
   const urlsByKind = new Map<ScriptKind, Set<string>>(
     SCRIPT_KINDS.map((kind) => [kind, new Set<string>()]),
   );
@@ -923,12 +1020,15 @@ export function generateProbes(
     skipped.push(...generated.skipped);
     covered.push(...generated.covered);
     if (generated.signature !== undefined) signatures.set(fqn, generated.signature);
+    if (generated.options !== undefined) candidates.push(generated.options);
     if (generated.calls.length > 0) {
       for (const id of urls) urlsByKind.get(kind)?.add(id);
     }
   }
   const index = indexProbeCalls(signatures);
-  const added = [...index.calls];
+  const options = optionFormCalls(program, candidates);
+  unwitnessed.push(...options.unwitnessed);
+  const added = [...index.calls, ...options.calls];
   // Properties, messages and every constant outside `b2d` do not depend on the
   // Box2D backend, so only the stock-engine pass checks them.
   added.push(...constantProbes(target, program, backend).calls);

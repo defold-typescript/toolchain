@@ -17,8 +17,10 @@ export const EXEMPTIONS_FILE = resolve(import.meta.dir, "..", "probe-exemptions.
 // records: the engine, not the declaration, is why the call cannot pass.
 // `open`: the declaration accepts an argument the engine rejects and is due a
 // correction; it clears nothing and is reported until the declaration is fixed.
-// Outcome `ok` records a negative call a lenient binding accepts by design; an
-// accepted call is expected to end ok, so an exemption recording that is stale.
+// Outcome `ok` records a negative call a lenient binding accepts by design, an
+// ok call returning values its declaration does not, or a post without its
+// payload the engine accepts although the declaration rejects it. An accepted
+// call is expected to end ok, so an exemption recording that alone is stale.
 export interface Exemption {
   readonly outcome: "ok" | "bad-argument" | "engine-error";
   readonly verdict: "accepted" | "open";
@@ -50,6 +52,9 @@ export interface ProbeFailures {
   readonly indexSemantics: string[];
   // Writes the engine accepted to a property declared readonly.
   readonly writableReadonly: string[];
+  // Posts without a payload the engine accepts where the declaration rejects
+  // them, or refuses where the declaration accepts them.
+  readonly omittedPayloads: string[];
 }
 
 export class ExemptionValidationError extends Error {
@@ -231,6 +236,37 @@ function evaluateWitness(
   );
 }
 
+// A post without its payload must raise exactly when the declaration rejects
+// it; anything else fails unless an accepted exemption records the outcome.
+function evaluateOmittedPayload(
+  pass: PassResult,
+  outcome: ProbeOutcome,
+  rejected: boolean,
+  exemption: Exemption | undefined,
+  failures: ProbeFailures,
+): void {
+  const key = outcomeKey(pass.backend, outcome.name, outcome.variant);
+  const raised = outcome.outcome !== "ok";
+  if (raised === rejected) {
+    if (exemption === undefined) return;
+    const now = raised ? "raises" : "accepts it";
+    failures.stale.push(
+      `${key}: the engine now ${now} as the declaration says; delete the exemption`,
+    );
+    return;
+  }
+  if (exemption && exemption.outcome !== outcome.outcome) {
+    failures.stale.push(`${key}: now ends ${outcome.outcome}; update or delete the exemption`);
+  }
+  if (exemption?.verdict === "open") failures.openFindings.push(`${key}: ${exemption.reason}`);
+  if (exemption?.verdict === "accepted" && exemption.outcome === outcome.outcome) return;
+  failures.omittedPayloads.push(
+    rejected
+      ? `${key}: the engine accepts the message with no payload, which the declaration requires`
+      : `${key}: the engine raises without a payload, which the declaration leaves optional: ${outcome.message}`,
+  );
+}
+
 export function evaluateProbe(
   passes: readonly PassResult[],
   exemptions: Readonly<Record<string, Exemption>>,
@@ -247,6 +283,7 @@ export function evaluateProbe(
     returnKinds: [],
     indexSemantics: [],
     writableReadonly: [],
+    omittedPayloads: [],
   };
   const seen = new Set<string>();
   for (const pass of passes) {
@@ -277,13 +314,25 @@ export function evaluateProbe(
         }
         continue;
       }
+      const omitted = call?.message?.omittedPayload;
+      if (omitted !== undefined) {
+        evaluateOmittedPayload(pass, outcome, omitted === "rejected", exemption, failures);
+        continue;
+      }
       if (outcome.outcome === "ok") {
-        if (exemption) failures.stale.push(`${key}: now ends ok; delete the exemption`);
-        if (call?.returns !== undefined) {
-          for (const problem of returnMismatches(call.returns, outcome.returns ?? [])) {
-            failures.returnKinds.push(`${key}: ${problem}`);
-          }
+        const problems =
+          call?.returns === undefined ? [] : returnMismatches(call.returns, outcome.returns ?? []);
+        if (problems.length === 0) {
+          if (exemption) failures.stale.push(`${key}: now ends ok; delete the exemption`);
+          continue;
         }
+        if (exemption && exemption.outcome !== "ok") {
+          failures.stale.push(`${key}: now ends ok; update or delete the exemption`);
+        }
+        if (exemption?.verdict === "open")
+          failures.openFindings.push(`${key}: ${exemption.reason}`);
+        if (exemption?.verdict === "accepted" && exemption.outcome === "ok") continue;
+        for (const problem of problems) failures.returnKinds.push(`${key}: ${problem}`);
         continue;
       }
       if (exemption && exemption.outcome !== outcome.outcome) {

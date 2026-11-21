@@ -11,6 +11,7 @@ import {
   builtinMessagesCatalog,
   MESSAGES_MANIFEST,
 } from "../../types/scripts/regen";
+import { checkCalls } from "./call-check";
 import { MESSAGE_FIELD_OVERRIDES, MESSAGE_ORIGINS, MESSAGE_RECEIVERS } from "./contexts";
 import type { Unverified } from "./index-probes";
 import { MESSAGE_DENYLIST } from "./probe-denylist";
@@ -141,9 +142,21 @@ function shapeOf(payload: ts.Type, checker: ts.TypeChecker): Record<string, stri
   return shape;
 }
 
+// A post with its payload left out, of a message with a required field.
+interface OmittedPost {
+  readonly id: string;
+  readonly name: string;
+  readonly post: string;
+  // A denied message: the engine refuses the post before sending it, and an
+  // engine that sent it instead would end the run, so it is posted last.
+  readonly last: boolean;
+}
+
 // Every `BuiltinMessages` id: an outgoing one is posted from the go script, one
 // frame each, with a witness payload of its required fields and then of every
-// field; an incoming one is checked when the engine sends it.
+// field; an incoming one is checked when the engine sends it. An outgoing or
+// denied one with a required field is also posted once with no payload, and
+// the checker's verdict on that post is compared with the engine's.
 export function messageProbes(
   target: ApiTarget = probeTarget(),
   program: ts.Program = surfaceProgram(target),
@@ -163,6 +176,7 @@ export function messageProbes(
   const shapes: Record<string, Record<string, string>> = {};
   const unverified: Unverified[] = [];
   const unknown: string[] = [];
+  const omitted: OmittedPost[] = [];
   for (const message of [...messages].sort((a, b) => a.name.localeCompare(b.name))) {
     const id = message.name;
     const name = `message.${id}`;
@@ -174,7 +188,13 @@ export function messageProbes(
     const receiver = MESSAGE_RECEIVERS[id] ?? MESSAGE_ORIGINS[origin];
     const payload = checker.getTypeOfSymbol(message);
     const at = receiver === undefined ? {} : { receiver };
-    if (MESSAGE_DENYLIST[id] !== undefined) {
+    const denied = MESSAGE_DENYLIST[id] !== undefined;
+    const required = checker.getPropertiesOfType(payload).some((field) => !isOptional(field));
+    if (required && receiver !== undefined && !INCOMING.has(id)) {
+      const post = `msg.post(${receiver}, ${JSON.stringify(id)})`;
+      omitted.push({ id, name, post, last: denied });
+    }
+    if (denied) {
       probes.push({ id, origin, ...at, direction: "denied" });
       continue;
     }
@@ -242,6 +262,26 @@ export function messageProbes(
     }
   }
 
+  const verdicts = checkCalls(
+    program,
+    omitted.map((entry) => entry.post),
+  ).calls;
+  const closing: QueueStep[] = [];
+  omitted.forEach(({ id, name, post, last }, i) => {
+    const rejected = (verdicts[i]?.errors.length ?? 0) > 0;
+    const variant = "omitted-payload";
+    calls.push({
+      name,
+      variant,
+      kind: "go",
+      call: post,
+      message: { id, direction: "outgoing", omittedPayload: rejected ? "rejected" : "accepted" },
+    });
+    const step: QueueStep = { id, name, variant, post, ...(rejected ? { refused: true } : {}) };
+    if (last) closing.push(step);
+    else posts.set(id, [...(posts.get(id) ?? []), step]);
+  });
+
   const sequenced = new Set(PROXY_SEQUENCE.filter((step) => typeof step === "string"));
   const queue: QueueStep[] = [];
   for (const [id, steps] of posts) if (!sequenced.has(id)) queue.push(...steps);
@@ -249,6 +289,7 @@ export function messageProbes(
     if (typeof step !== "string") queue.push(step);
     else queue.push(...(posts.get(step) ?? []));
   }
+  queue.push(...closing);
   for (const [id] of posts) {
     const origin = origins.get(id);
     if (origin === "collectionproxy" && !sequenced.has(id)) {
