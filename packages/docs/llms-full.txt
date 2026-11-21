@@ -846,6 +846,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
 - [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, and the fix is a rename.
+- [JavaScript globals Defold's Lua lacks fail the build](#javascript-globals-defolds-lua-lacks-fail-the-build) — `JSON`, `Date`, `RegExp` and `encodeURIComponent` type-check but compile to a `nil` Lua global; use `json.encode`, `os.time` or Lua patterns instead.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
 
 #### Unary minus on Vector3 / Vector4 silently produces `number`
@@ -1579,6 +1580,32 @@ The second line compiles to `select(2, string.find("hello", "l"))`, which calls 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.
 
 **How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print.
+
+#### JavaScript globals Defold's Lua lacks fail the build
+
+**Symptom.** A habit from the browser or Node type-checks cleanly:
+
+```ts
+export const save = JSON.stringify({ level: 3 });
+export const now = Date.now();
+```
+
+**Why.** The Lua build type-checks against TypeScript's ES2022 library, which declares every JavaScript global. TypeScriptToLua rewrites many of them into Lua (`Math.floor` becomes `math.floor`; `Object.keys`, `parseInt`, `Map`, `Set`, `Promise` and the `Error` classes come from its runtime library), but leaves others as they are: `JSON.stringify(x)` compiles to `JSON:stringify(x)` and `new Date()` to `__TS__New(Date)`. Defold's Lua has no `JSON` or `Date`, so each reads `nil` and raises the first time it runs.
+
+**What fails.** [`build`](./build.md) and [`watch`](./watch.md) report an error naming the file, line, column and global, with the Defold replacement where there is one, and write no Lua for that file; the editor marks the reference. A local, an import or a project declaration of the same name is not a reference to the global, and neither is a type such as `let d: Date`.
+
+| Global | Use instead |
+| --- | --- |
+| `JSON` | `json.encode` and `json.decode` |
+| `Date` | `os.time`, `os.date` and `socket.gettime` |
+| `RegExp` | Lua patterns with `string.find`, `string.match` and `string.gsub` |
+| `encodeURIComponent`, `decodeURIComponent`, `encodeURI`, `decodeURI` | Defold has no equivalent; encode by hand with `string.gsub` |
+
+These fail with no replacement named: `Boolean`, `BigInt`, `eval`, `escape`, `unescape`, `Intl`, `Proxy`, `Reflect`, `Atomics`, `WeakRef`, `FinalizationRegistry`, `AggregateError`, `EvalError`, `ArrayBuffer`, `SharedArrayBuffer`, `DataView` and the typed arrays (`Uint8Array`, `Float32Array` and the rest).
+
+**What does not fail.** A global TypeScriptToLua rewrites in some form is not on the list: `Math`, `Number`, `Object`, `Array`, `String`, `Symbol`, `parseInt`, `parseFloat`, `isNaN` and `isFinite`. TypeScriptToLua reports the members it cannot rewrite itself (`Object.freeze is unsupported.`), but the bare value, such as `const m = Math` or `isNaN` passed as a callback, still compiles with no error and reads `nil` at runtime.
+
+**How we pin this.** `packages/transpiler/src/js-runtime-globals.test.ts` compiles every form of every global in the ES2022 library, runs the Lua in Lua 5.1, and fails when the checked list drifts from what TypeScriptToLua leaves unrewritten; `packages/transpiler/src/program-diagnostics.test.ts` checks the error on the build and editor paths.
 
 #### npm packages do not resolve — vendor the source instead
 
