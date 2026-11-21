@@ -13,9 +13,9 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **`msg.post` requires a required payload** ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
-> - **Id tables read `undefined` for a missing id**, and **`physics.raycast` returns a list only with options** ([physics](/api/physics)).
+> - **`msg.post` requires a required payload** ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)), and **id tables read `undefined` for a missing id**.
 > - **Filtered systems narrow `entities`** ([Filters](./entity-systems.md#filters)).
+> - **`JSON`, `Date` and other JavaScript globals Defold's Lua lacks fail the build** ([TypeScript gotchas](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build)).
 
 ### Breaking
 
@@ -29,6 +29,10 @@ What changed in each published `defold-typescript` toolchain release.
 - **`physics.raycast` returns what the engine pushes for each call form:** one hit or `undefined` without an options table, and a list of hits or `undefined` with one, so neither needs an `Array.isArray` check.
 - **A built-in message field that holds an engine constant takes its type:** `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`, on every Defold target that declares the type ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
 - **A system built with a `requireAll` filter types its `entities` with the filter's components:** `this.entities` inside each callback and `entities` on the system the factory returns hold the same narrowed entity `process` gets, so a loop over them, in a callback or in a script, reads those components without a check. A filter nested inside `requireAll`, the other three filters, a string filter and a function filter narrow nothing ([Filters](./entity-systems.md#filters)).
+
+### Fixed
+
+- **JavaScript globals Defold's Lua lacks fail the build:** a reference to `JSON`, `Date`, `RegExp`, `encodeURIComponent` or another global TypeScriptToLua leaves as a bare Lua global, which compiled with no diagnostic and raised on `nil` at runtime, is an error in `build`, `watch` and the editor that names the replacement, such as `json.encode` and `json.decode` for `JSON` ([TypeScript gotchas](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build)).
 
 ## v0.68.0
 

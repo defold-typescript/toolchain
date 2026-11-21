@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
+import { missingJsGlobalMessage } from "./js-runtime-globals";
 import { luaGlobalShadowMessage } from "./lua-global-shadows";
 import { getProgramDiagnostics } from "./program-diagnostics";
 import { createTranspileSession } from "./session";
@@ -227,6 +228,26 @@ describe("getProgramDiagnostics", () => {
     expect(shadows[0]?.start).toBe(source.indexOf("label"));
     expect(shadows[0]?.length).toBe("label".length);
     expect(flatten(shadows[0]?.messageText ?? "")).toBe(luaGlobalShadowMessage("label"));
+  });
+
+  test("fails on a JavaScript global Defold's Lua lacks, on both paths", () => {
+    const source = "export const s = JSON.stringify({ a: 1 });\n";
+    const program = programFor(source);
+    const errors = getProgramDiagnostics(program, program.getSourceFile("main.ts")).filter(
+      (d) => d.category === ts.DiagnosticCategory.Error,
+    );
+    expect(errors.map((d) => [d.start, d.length, flatten(d.messageText)])).toEqual([
+      [source.indexOf("JSON"), "JSON".length, missingJsGlobalMessage("JSON")],
+    ]);
+    // No `warning` category: `collectFailures` fails the file instead of writing it.
+    expect(transpileProject({ files: { "main.ts": source } }).diagnostics).toEqual([
+      {
+        file: "main.ts",
+        message: missingJsGlobalMessage("JSON"),
+        line: 1,
+        column: source.indexOf("JSON") + 1,
+      },
+    ]);
   });
 
   test("DOM-only globals are excluded on both paths", () => {

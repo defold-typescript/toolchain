@@ -6,6 +6,7 @@ import * as tstl from "typescript-to-lua";
 import { bundledLibraryLoweringPlugin } from "./bundled-libraries";
 import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
+import { findMissingJsGlobals } from "./js-runtime-globals";
 import { AMBIENT_FILES, EDITOR_AMBIENT_FILES, isEditorSideSource } from "./kind-surfaces";
 import { createLifecycleErasure, type LifecycleErasure } from "./lifecycle-erasure";
 import { LUA_COMPILE_LIB } from "./lua-compile-lib";
@@ -285,10 +286,9 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
       new tstl.Transpiler().emit({ program, writeFile: collector.writeFile });
     }
 
-    const shadows = [...userKeys].flatMap((name) => {
-      const sourceFile = program.getSourceFile(name);
-      return sourceFile === undefined ? [] : findLuaGlobalShadows(program, sourceFile);
-    });
+    const userSources = [...userKeys].flatMap((name) => program.getSourceFile(name) ?? []);
+    reported.push(...userSources.flatMap((s) => findMissingJsGlobals(program, s)));
+    const shadows = userSources.flatMap((s) => findLuaGlobalShadows(program, s));
 
     return {
       program,

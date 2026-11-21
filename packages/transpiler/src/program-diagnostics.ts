@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { findMissingJsGlobals } from "./js-runtime-globals";
 import { createLifecycleErasure } from "./lifecycle-erasure";
 import { findLuaGlobalShadows } from "./lua-global-shadows";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
@@ -31,11 +32,11 @@ function isAmbient(fileName: string): boolean {
   return /[\\/]node_modules[\\/]/.test(fileName) || /(^|[\\/])lib\.[^\\/]*\.d\.ts$/.test(fileName);
 }
 
-// Run the build path's TSTL diagnostic pass and its Lua global shadow scan
-// against an already-open `ts.Program` (e.g. the editor's), returning the raw,
-// span-bearing diagnostics so a squiggle can land on the offending source.
-// Restricts to `sourceFile` when given and drops diagnostics on
-// lib/`node_modules` ambients.
+// Run the build path's TSTL diagnostic pass, its missing JavaScript global check
+// and its Lua global shadow scan against an already-open `ts.Program` (e.g. the
+// editor's), returning the raw, span-bearing diagnostics so a squiggle can land
+// on the offending source. Restricts to `sourceFile` when given and drops
+// diagnostics on lib/`node_modules` ambients.
 export function getProgramDiagnostics(
   program: ts.Program,
   sourceFile?: ts.SourceFile,
@@ -50,6 +51,7 @@ export function getProgramDiagnostics(
     : program.getSourceFiles().filter((s) => !s.isDeclarationFile && !isAmbient(s.fileName));
   return [
     ...diagnostics.filter((d) => d.file !== undefined && !isAmbient(d.file.fileName)),
+    ...scanned.flatMap((s) => findMissingJsGlobals(program, s)),
     ...scanned.flatMap((s) => findLuaGlobalShadows(program, s)),
   ];
 }
