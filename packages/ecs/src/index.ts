@@ -1106,7 +1106,7 @@ export type With<E, K> = [K] extends [never]
  * ecs sets `world`, `entities`, `indices`, `index`, `modified` and `bufferedTime`. A definition
  * may set `active`, `interval`, `nocache` and its own fields, and the factory sets `filter`.
  */
-export interface SystemFields<E> {
+export interface SystemFields<E, X = E> {
   /**
    * The world the system belongs to.
    *
@@ -1127,9 +1127,10 @@ export interface SystemFields<E> {
    * The entities the system holds, in the order it processes them.
    *
    * @remarks
-   * A `nocache` system has none.
+   * A `nocache` system has none. In a system built with a `requireAll` filter, each has the
+   * filter's components, as in `process`.
    */
-  readonly entities?: readonly E[] | undefined;
+  readonly entities?: readonly X[] | undefined;
   /** Each held entity's position in `entities`, keyed by the entity's id in the system's world. */
   readonly indices?: Readonly<Record<number, number | undefined>> | undefined;
   /**
@@ -1316,8 +1317,8 @@ export interface SortedProcessingSystemCallbacks<E, X = E>
   onModify?: never;
 }
 
-/** A system: its definition `D` plus the fields ecs manages. */
-export type System<E, D = unknown> = D & SystemFields<E>;
+/** A system: its definition `D` plus the fields ecs manages, holding entities `X`. */
+export type System<E, D = unknown, X = E> = D & SystemFields<E, X>;
 
 /** The fields a sorted system adds to those every system carries. */
 export interface SortedSystemFields<X> {
@@ -1327,8 +1328,8 @@ export interface SortedSystemFields<X> {
   readonly sortDelegate?: ((this: void, e1: X, e2: X) => boolean) | undefined;
 }
 
-/** A sorted system over entities `E` whose `compare` takes `X`. */
-export type SortedSystem<E, D = unknown, X = E> = System<E, D> & SortedSystemFields<X>;
+/** A sorted system over entities `E` whose `entities` and `compare` take `X`. */
+export type SortedSystem<E, D = unknown, X = E> = System<E, D, X> & SortedSystemFields<X>;
 
 // Callback keys take their type from the callback interface alone. Typed as
 // `D & C`, a callback written as an arrow would also carry its own signature,
@@ -1365,8 +1366,8 @@ export interface SystemFactory<E> {
     this: void,
     filter: F & KnownKeys<E, F>,
     def: Definition<D, PlainSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-      ThisType<System<E, D>>,
-  ): System<E, D>;
+      ThisType<System<E, D, With<E, KeysIn<F>["required"]>>>,
+  ): System<E, D, With<E, KeysIn<F>["required"]>>;
 }
 
 /**
@@ -1383,8 +1384,8 @@ export type ProcessingSystemFactory<E> = <F extends Filter, D extends object>(
   this: void,
   filter: F & KnownKeys<E, F>,
   def: Definition<D, ProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-    ThisType<System<E, D>>,
-) => System<E, D>;
+    ThisType<System<E, D, With<E, KeysIn<F>["required"]>>>,
+) => System<E, D, With<E, KeysIn<F>["required"]>>;
 
 /**
  * Builds a sorted system from a definition, with or without a filter.

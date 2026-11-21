@@ -106,7 +106,9 @@ const landings = processingSystem<Ent>()(requireAll("position", "velocity"), {
   },
 });
 
-const w = world<Ent>(move, fall, visible, clock, spawner, layers, counter, landings);
+const movers = system<Ent>()(requireAll("position", "velocity"), {});
+
+const w = world<Ent>(move, fall, visible, clock, spawner, layers, counter, landings, movers);
 
 export function cheatSheet(dt: number, paused: boolean): void {
   const ball: Ent = { name: "ball", position: { x: 0, y: 10 }, velocity: { x: 1, y: 0 } };
@@ -123,6 +125,10 @@ export function cheatSheet(dt: number, paused: boolean): void {
   w.refresh();
   if (hasEntity(w, ball)) {
     print("ball is in the world");
+  }
+
+  for (const e of movers.entities ?? []) {
+    print(`${e.name} moves at ${e.velocity.x}`);
   }
 
   move.active = false;

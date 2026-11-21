@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.69.0
+
+> Summary:
+>
+> - **Filtered systems narrow `entities`** ([Filters](./entity-systems.md#filters)).
+
+### Improved
+
+- **A system built with a `requireAll` filter types its `entities` with the filter's components:** `this.entities` inside each callback and `entities` on the system the factory returns hold the same narrowed entity `process` gets, so a loop over them, in a callback or in a script, reads those components without a check. A filter nested inside `requireAll`, the other three filters, a string filter and a function filter narrow nothing ([Filters](./entity-systems.md#filters)).
+
 ## v0.68.0
 
 > Summary:
