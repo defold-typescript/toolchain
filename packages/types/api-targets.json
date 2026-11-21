@@ -160,7 +160,7 @@
           "namespace": "http",
           "fixture": "http_doc.json",
           "outFile": "http.d.ts",
-          "skipFunctions": ["response"]
+          "skipFunctions": ["request", "response"]
         },
         {
           "namespace": "image",
@@ -206,7 +206,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",
@@ -558,7 +559,7 @@
           "namespace": "http",
           "fixture": "http_doc.json",
           "outFile": "http.d.ts",
-          "skipFunctions": ["response"]
+          "skipFunctions": ["request", "response"]
         },
         {
           "namespace": "image",
@@ -604,7 +605,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",
@@ -951,7 +953,7 @@
           "namespace": "http",
           "fixture": "http_doc.json",
           "outFile": "http.d.ts",
-          "skipFunctions": ["response"]
+          "skipFunctions": ["request", "response"]
         },
         {
           "namespace": "image",
@@ -997,7 +999,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",
@@ -1313,7 +1316,8 @@
         {
           "namespace": "http",
           "fixture": "http_doc.json",
-          "outFile": "http.d.ts"
+          "outFile": "http.d.ts",
+          "skipFunctions": ["request"]
         },
         {
           "namespace": "image",
@@ -1359,7 +1363,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",
@@ -1675,7 +1680,8 @@
         {
           "namespace": "http",
           "fixture": "http_doc.json",
-          "outFile": "http.d.ts"
+          "outFile": "http.d.ts",
+          "skipFunctions": ["request"]
         },
         {
           "namespace": "image",
@@ -1721,7 +1727,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",
@@ -1980,7 +1987,8 @@
         {
           "namespace": "http",
           "fixture": "http_doc.json",
-          "outFile": "http.d.ts"
+          "outFile": "http.d.ts",
+          "skipFunctions": ["request"]
         },
         {
           "namespace": "image",
@@ -2021,7 +2029,8 @@
         {
           "namespace": "physics",
           "fixture": "physics_doc.json",
-          "outFile": "physics.d.ts"
+          "outFile": "physics.d.ts",
+          "skipFunctions": ["raycast"]
         },
         {
           "namespace": "profiler",

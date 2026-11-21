@@ -265,6 +265,77 @@ function withoutNilKinds(kinds: Set<LuaKind> | "any"): DeclaredKinds {
   return kinds === "any" ? "any" : [...kinds].filter((kind) => kind !== "nil").sort();
 }
 
+// One argument position a signature takes. A plain parameter is one position
+// with one type; a tuple rest parameter is one position per element, typed by
+// the union of what each tuple holds there.
+interface Position {
+  readonly types: readonly ts.Type[];
+  readonly optional: boolean;
+  readonly rest: boolean;
+}
+
+// The tuples a rest parameter stands for: its own tuple type, or the members of
+// the union its constraint resolves to (`msg.post`'s payload, required for one
+// message id and optional for another). Null when any member is not a tuple.
+function restTuples(type: ts.Type, checker: ts.TypeChecker): ts.TypeReference[] | null {
+  const resolved = checker.isTupleType(type)
+    ? type
+    : (checker.getBaseConstraintOfType(type) ?? type);
+  const members = resolved.isUnion() ? resolved.types : [resolved];
+  return members.length > 0 && members.every((member) => checker.isTupleType(member))
+    ? (members as ts.TypeReference[])
+    : null;
+}
+
+function tuplePositions(tuples: readonly ts.TypeReference[], checker: ts.TypeChecker): Position[] {
+  const targets = tuples.map((tuple) => tuple.target as ts.TupleType);
+  const length = Math.max(...targets.map((target) => target.fixedLength));
+  const required = Math.min(...targets.map((target) => target.minLength));
+  const positions: Position[] = [];
+  for (let index = 0; index < length; index++) {
+    const types = tuples.flatMap((tuple, i) =>
+      index < (targets[i] as ts.TupleType).fixedLength
+        ? [checker.getTypeArguments(tuple)[index] as ts.Type]
+        : [],
+    );
+    positions.push({ types, optional: index >= required, rest: false });
+  }
+  if (targets.some((target) => target.hasRestElement)) {
+    positions.push({ types: [], optional: true, rest: true });
+  }
+  return positions;
+}
+
+function signaturePositions(
+  params: readonly ts.Symbol[],
+  checker: ts.TypeChecker,
+): (Position | undefined)[] {
+  const positions: (Position | undefined)[] = [];
+  for (const param of params) {
+    const declaration = param.valueDeclaration;
+    if (!declaration || !ts.isParameter(declaration)) {
+      positions.push(undefined);
+      continue;
+    }
+    const rest = declaration.dotDotDotToken !== undefined;
+    let paramType = checker.getTypeOfSymbol(param);
+    const tuples = rest ? restTuples(paramType, checker) : null;
+    if (tuples) {
+      positions.push(...tuplePositions(tuples, checker));
+      continue;
+    }
+    if (rest && checker.isArrayType(paramType)) {
+      paramType = checker.getTypeArguments(paramType as ts.TypeReference)[0] ?? paramType;
+    }
+    positions.push({
+      types: [paramType],
+      optional: rest || checker.isOptionalParameter(declaration),
+      rest,
+    });
+  }
+  return positions;
+}
+
 interface SlotAccumulator {
   kinds: Set<LuaKind> | "any";
   optional: boolean;
@@ -300,40 +371,38 @@ function readFunction(
     }
     let required = 0;
     let variadic = false;
-    params.forEach((param, i) => {
-      const declaration = param.valueDeclaration;
-      if (!declaration || !ts.isParameter(declaration)) return;
-      const rest = declaration.dotDotDotToken !== undefined;
-      const optional = rest || checker.isOptionalParameter(declaration);
+    const positions = signaturePositions(params, checker);
+    positions.forEach((position, i) => {
+      if (position === undefined) return;
+      const { types, optional, rest } = position;
       if (!optional) required = i + 1;
       if (rest) variadic = true;
-      let paramType = checker.getTypeOfSymbol(param);
-      if (rest && checker.isArrayType(paramType)) {
-        paramType = checker.getTypeArguments(paramType as ts.TypeReference)[0] ?? paramType;
-      }
-      const kinds = mappedKinds(paramType, checker, unmapped, `${name} slot ${i + 1}`);
       const slot = slots.get(i + 1) ?? {
         kinds: new Set<LuaKind>(),
         optional: false,
         acceptsNil: false,
         fields: null,
       };
-      if (kinds === "any") slot.kinds = "any";
-      else if (slot.kinds !== "any") for (const kind of kinds) slot.kinds.add(kind);
-      const nilMember = kinds !== "any" && kinds.includes("nil");
+      let nilMember = false;
+      for (const paramType of types) {
+        const kinds = mappedKinds(paramType, checker, unmapped, `${name} slot ${i + 1}`);
+        if (kinds === "any") slot.kinds = "any";
+        else if (slot.kinds !== "any") for (const kind of kinds) slot.kinds.add(kind);
+        if (kinds !== "any" && kinds.includes("nil")) nilMember = true;
+        const fields = objectFields(checker.getNonNullableType(paramType), checker);
+        if (fields) {
+          slot.fields ??= new Set();
+          for (const field of fields) slot.fields.add(field);
+        }
+      }
       if (optional || nilMember) slot.optional = true;
       if ((optional && !rest) || nilMember) slot.acceptsNil = true;
-      const fields = objectFields(checker.getNonNullableType(paramType), checker);
-      if (fields) {
-        slot.fields ??= new Set();
-        for (const field of fields) slot.fields.add(field);
-      }
       slots.set(i + 1, slot);
     });
     minArgs = Math.min(minArgs, required);
     if (variadic) maxArgs = "variadic";
-    else if (maxArgs !== "variadic") maxArgs = Math.max(maxArgs, params.length);
-    counts.push({ length: params.length, variadic });
+    else if (maxArgs !== "variadic") maxArgs = Math.max(maxArgs, positions.length);
+    counts.push({ length: positions.length, variadic });
     returnCounts.push(returnCount(signature, checker));
     returnTypes(signature, checker).forEach((returned, i) => {
       const kinds = mappedKinds(returned, checker, unmapped, `${name} return ${i + 1}`);

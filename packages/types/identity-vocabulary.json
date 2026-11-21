@@ -590,7 +590,7 @@
     },
     "collectionfactory.create": {
       "pins": [["table"], ["table<hash, hash>"]],
-      "replaces": ["LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }"]
+      "replaces": ["LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }"]
     },
     "collectionproxy.set_collection": {
       "pins": [["number"], ["collectionproxy.RESULT"]],
@@ -601,13 +601,13 @@
     "gui.clone_tree": {
       "pins": [["table"], ["table<hash, node>"]],
       "replaces": [
-        "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }"
+        "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }"
       ]
     },
     "gui.get_tree": {
       "pins": [["table"], ["table<hash, node>"]],
       "replaces": [
-        "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }"
+        "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }"
       ]
     },
     "gui.get_xanchor": {
@@ -626,17 +626,6 @@
     "image.get_astc_header": {
       "pins": [["table", "nil"], ["image.astc_header", "nil"]],
       "removes": ["nil"]
-    },
-    "physics.raycast": {
-      "pins": [
-        ["table", "nil"],
-        ["message.physics.ray_cast_response[]", "message.physics.ray_cast_response", "nil"]
-      ],
-      "replaces": [
-        "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[]",
-        "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">",
-        "undefined"
-      ]
     },
     "render.predicate": {
       "pins": [["number"], ["render_predicate"]],

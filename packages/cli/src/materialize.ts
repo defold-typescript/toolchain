@@ -165,8 +165,9 @@ const CORE_TYPES_REEXPORT = 'export * from "@defold-typescript/types/core-types"
 // the single source of truth for the `src/` augmentations above: that index
 // describes the *current* package while this surface is pinned, so deriving
 // from it would copy a namespace added after the pinned version back into the
-// pin and defeat it. This set is short and version-independent by
-// construction, which is the property being relied on.
+// pin and defeat it. A committed snapshot carries its own `builtin-messages`,
+// whose grouped fields name only the aliases its target declares, so it is
+// copied from the snapshot; the current copy fills in only where none exists.
 const GENERATED_SIBLING_CARRY = ["builtin-messages"] as const;
 
 // The brand must resolve inside the surface: a copied declaration importing

@@ -50,6 +50,7 @@ import "../zlib";
 import "../../src/component-properties";
 import "../../src/custom-messages";
 import "../../src/engine-globals";
+import "../../src/http-overloads";
 import "../../src/message-dispatch";
 import "../../src/message-guard";
 import "../../src/msg-overloads";

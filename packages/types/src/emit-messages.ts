@@ -5,6 +5,9 @@ export interface MessageField {
   types: string[];
   optional: boolean;
   doc: string;
+  // The `<ns>.<GROUP>` constant group the field holds a member of, set by
+  // `MESSAGE_FIELD_CONSTANT_GROUPS`. The emit spells it by the target's alias.
+  group?: string;
 }
 
 export interface MessageEntry {
@@ -133,6 +136,74 @@ export function applyMessageFieldCorrections(
       );
     }
     field.types = [...correction.types];
+  }
+  return { entries };
+}
+
+// A payload field the reference types `number` while it holds a member of one
+// constant group. `upstream` is the catalog's type for it: once the catalog
+// stops declaring it the entry throws and is re-verified against the new type.
+export interface MessageFieldConstantGroup {
+  readonly origin: string;
+  readonly name: string;
+  readonly field: string;
+  readonly group: string;
+  readonly upstream: readonly string[];
+  readonly reason: string;
+}
+
+export const MESSAGE_FIELD_CONSTANT_GROUPS: readonly MessageFieldConstantGroup[] = [
+  {
+    origin: "collectionproxy",
+    name: "set_time_step",
+    field: "mode",
+    group: "collectionproxy.TIME_STEP_MODE",
+    upstream: ["number"],
+    reason:
+      "the reference documents 0 for continuous and 1 for discrete, the two values collectionproxy.TIME_STEP_MODE declares",
+  },
+  {
+    origin: "camera",
+    name: "set_camera",
+    field: "orthographic_mode",
+    group: "camera.ORTHO_MODE",
+    upstream: ["number"],
+    reason:
+      "the field selects the orthographic zoom mode the camera.ORTHO_MODE constants name, the value camera.set_orthographic_mode takes",
+  },
+  {
+    origin: "model",
+    name: "model_animation_done",
+    field: "playback",
+    group: "go.PLAYBACK",
+    upstream: ["number"],
+    reason:
+      "script_model.cpp copies the completed animation's rig playback into the message, the go.PLAYBACK value model.play_anim received",
+  },
+];
+
+export function applyMessageFieldConstantGroups(
+  catalog: MessageCatalog,
+  overlay: readonly MessageFieldConstantGroup[] = MESSAGE_FIELD_CONSTANT_GROUPS,
+): MessageCatalog {
+  const entries = catalog.entries.map((entry) => ({
+    ...entry,
+    payload: entry.payload.map((field) => ({ ...field })),
+  }));
+  for (const grouped of overlay) {
+    const field = entries
+      .find((entry) => entry.origin === grouped.origin && entry.name === grouped.name)
+      ?.payload.find((candidate) => candidate.name === grouped.field);
+    const identity = `(origin=${grouped.origin}, name=${grouped.name}, field=${grouped.field})`;
+    if (field === undefined) {
+      throw new Error(`applyMessageFieldConstantGroups: no catalog field matches ${identity}`);
+    }
+    if (field.types.join("|") !== grouped.upstream.join("|")) {
+      throw new Error(
+        `applyMessageFieldConstantGroups: upstream now declares ${field.types.join("|")} for ${identity}; re-verify the group`,
+      );
+    }
+    field.group = grouped.group;
   }
   return { entries };
 }
@@ -406,7 +477,9 @@ export function applyMessageEngineCorrections(
 // from one of them.
 export function applyMessageOverlays(catalog: MessageCatalog): MessageCatalog {
   return applyMessageEngineCorrections(
-    applyMessageFieldCorrections(applyMessageDeprecations(catalog)),
+    applyMessageFieldConstantGroups(
+      applyMessageFieldCorrections(applyMessageDeprecations(catalog)),
+    ),
   );
 }
 
@@ -470,6 +543,10 @@ export interface EmitBuiltinMessagesOptions {
   // `generated/` emit's sibling-relative path; a materialized surface has no
   // `src/` above it and supplies its own surface-root specifier.
   readonly importsFrom?: string;
+  // The TS spelling of each constant group the target declares, keyed
+  // `<ns>.<GROUP>` (`constantGroupSpellings`). A field whose group the target
+  // does not declare keeps its token's type.
+  readonly groupSpellings?: ReadonlyMap<string, string>;
 }
 
 export function emitBuiltinMessages(
@@ -477,7 +554,7 @@ export function emitBuiltinMessages(
   opts: EmitBuiltinMessagesOptions = {},
 ): string {
   const entries = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name));
-  const body = entries.map(emitEntry).join("\n");
+  const body = entries.map((entry) => emitEntry(entry, opts.groupSpellings)).join("\n");
   const inner = [
     "declare global {",
     "  interface BuiltinMessages {",
@@ -496,7 +573,10 @@ export function emitBuiltinMessages(
   return `${importLine}${inner}`;
 }
 
-function emitEntry(entry: MessageEntry): string {
+function emitEntry(
+  entry: MessageEntry,
+  groupSpellings: ReadonlyMap<string, string> | undefined,
+): string {
   const key = TS_IDENTIFIER.test(entry.name) ? entry.name : JSON.stringify(entry.name);
   const prefix = entry.deprecatedSince
     ? `    /** @deprecated since ${entry.deprecatedSince} */\n`
@@ -504,14 +584,18 @@ function emitEntry(entry: MessageEntry): string {
   if (entry.payload.length === 0) {
     return `${prefix}    ${key}: Record<string, never>;`;
   }
-  const fields = entry.payload.map(emitField).join("; ");
+  const fields = entry.payload.map((field) => emitField(field, groupSpellings)).join("; ");
   return `${prefix}    ${key}: { ${fields} };`;
 }
 
-function emitField(field: MessageField): string {
+function emitField(
+  field: MessageField,
+  groupSpellings: ReadonlyMap<string, string> | undefined,
+): string {
   const name = TS_IDENTIFIER.test(field.name) ? field.name : JSON.stringify(field.name);
   const optional = field.optional ? "?" : "";
-  const ts = field.types.length === 0 ? "unknown" : unionFromTokens(field.types);
+  const grouped = field.group === undefined ? undefined : groupSpellings?.get(field.group);
+  const ts = grouped ?? (field.types.length === 0 ? "unknown" : unionFromTokens(field.types));
   return `${name}${optional}: ${ts}`;
 }
 

@@ -47,6 +47,13 @@ export const RENDER_SIGNATURES_PATH = resolve(
   "render.json",
 );
 export const SYS_SIGNATURES_PATH = resolve(import.meta.dirname, "..", "signatures", "sys.json");
+export const HTTP_SIGNATURES_PATH = resolve(import.meta.dirname, "..", "signatures", "http.json");
+export const PHYSICS_SIGNATURES_PATH = resolve(
+  import.meta.dirname,
+  "..",
+  "signatures",
+  "physics.json",
+);
 
 export function loadSignatureFile(path: string): SignatureStore {
   let raw: string;

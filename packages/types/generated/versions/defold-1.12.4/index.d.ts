@@ -35,6 +35,7 @@ import "./types";
 import "./vmath";
 import "./window";
 import "./zlib";
+import "./builtin-messages";
 import "../../../src/custom-messages";
 import "../../../src/engine-globals";
 import "../../../src/msg-overloads";
@@ -52,5 +53,7 @@ import "../../../src/gui-overloads";
 import "../../../src/socket-types";
 import "../../../src/vmath-overloads";
 import "../../../src/sys-overloads";
+import "../../../src/http-overloads";
+import "../../../src/physics-overloads";
 
 export {};

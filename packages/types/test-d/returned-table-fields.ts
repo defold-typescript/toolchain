@@ -49,11 +49,11 @@ go.set("#model", "matrix_property", matrix);
 
 // HashTableIndex hashes a string key, so an id table reads by path too.
 const ids = collectionfactory.create("#factory");
-const spawnedById: Hash = ids.get("/go");
+const spawnedById: Hash | undefined = ids.get("/go");
 const tree = gui.get_tree(gui.get_node("root"));
-const treeNode: Opaque<"node"> = tree.get("box");
+const treeNode: Opaque<"node"> | undefined = tree.get("box");
 const clones = gui.clone_tree(gui.get_node("button"));
-const cloneNode: Opaque<"node"> = clones.get("button");
+const cloneNode: Opaque<"node"> | undefined = clones.get("button");
 void spawnedById;
 void treeNode;
 void cloneNode;
