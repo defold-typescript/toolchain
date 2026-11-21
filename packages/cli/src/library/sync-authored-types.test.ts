@@ -435,15 +435,19 @@ describe("nakama.nakama migration integrity", () => {
   ];
 
   // 174 from the callable rollout's 162: the field correction declared upstream's
-  // 12 enum constants, each lowering to one `VARIABLE` element.
-  test("the api-doc publishes all 174 elements under the bare namespace with the override description", () => {
+  // 12 enum constants, each lowering to one `VARIABLE` element. 244 from 174: the
+  // result typing declared one `TYPEDEF` per message its 66 `create_*` helpers build
+  // plus `Vars`, `ApiError`, `ApiEmpty` and the three enum unions, and dropped the
+  // local `Session` and `SessionToken` for `nakama.session`'s session.
+  test("the api-doc publishes all 244 elements under the bare namespace with the override description", () => {
     const doc = apiDoc("nakama") as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
     expect(doc.info.namespace).toBe("nakama");
-    expect(doc.elements).toHaveLength(174);
+    expect(doc.elements).toHaveLength(244);
     expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(12);
+    expect(doc.elements.filter((e) => e.type === "TYPEDEF")).toHaveLength(76);
     for (const member of VERDICT_MEMBERS) {
       expect(doc.elements.some((e) => e.name === member)).toBe(true);
     }

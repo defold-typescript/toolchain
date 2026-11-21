@@ -20,9 +20,7 @@
   "overloadedMembers": 0,
   "placeholderMembers": 0,
   "callableCoverage": 1,
-  "valueReturns": [
-    "socket_create"
-  ],
+  "valueReturns": [],
   "nilTolerantRequired": [
     {
       "name": "socket_send",

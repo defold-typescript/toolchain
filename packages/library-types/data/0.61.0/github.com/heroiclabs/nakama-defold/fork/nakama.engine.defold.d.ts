@@ -18,7 +18,7 @@ declare module 'nakama.engine.defold' {
     callback: (response: unknown) => void
   ): void;
 
-  export function socket_create(config: unknown, on_message: (socket: symbol, message: unknown) => void): void;
+  export function socket_create(config: unknown, on_message: (socket: symbol, message: unknown) => void): symbol;
 
   export function socket_connect(socket: symbol, callback: (success: boolean, error: string) => void): void;
 

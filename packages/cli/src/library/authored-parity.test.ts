@@ -3436,6 +3436,18 @@ describe("the measured corpus answers every behavior-list entry", () => {
     expect(open).toEqual([]);
   });
 
+  test("the Nakama forks return a value wherever nakama-defold's Lua does, and type no slot {}", () => {
+    const nakama = reports.filter(
+      ({ entry }) => entry.repo === "https://github.com/heroiclabs/nakama-defold",
+    );
+    const open = nakama.flatMap(({ entry, report }) => [
+      ...report.valueReturns.map((name) => `${entry.namespace}.${name}: value return`),
+      ...report.emptyObjectSlots.map(({ name, slot }) => `${entry.namespace}.${name}(${slot}): {}`),
+    ]);
+    expect(nakama.length).toBe(5);
+    expect(open).toEqual([]);
+  });
+
   test("no measured fork carries a verdict whose mismatch is gone", () => {
     const stale = reports.flatMap(({ entry, report }) =>
       report.staleBehaviorVerdicts.map(
