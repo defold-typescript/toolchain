@@ -1,15 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import {
+  add,
+  addSystem,
   filter,
   processingSystem,
   rejectAll,
   rejectAny,
+  remove,
+  removeSystem,
   requireAll,
   requireAny,
+  type SystemFields,
+  setSystemIndex,
   sortedProcessingSystem,
   sortedSystem,
   system,
   tryFilter,
+  world,
 } from "./index";
 
 // The assertions here are the compiler's: `bun run typecheck` checks this file under
@@ -25,6 +32,9 @@ interface Ent {
   active?: boolean;
   dragged?: boolean;
 }
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 describe("filter narrowing", () => {
   test("requireAll makes its components present in process and onAdd", () => {
@@ -275,5 +285,139 @@ describe("this inside a callback", () => {
       },
     });
     expect(built.settled).toEqual([]);
+  });
+});
+
+describe("entities takes the filter's narrowing", () => {
+  test("this.entities in a processing system's callback holds the required components", () => {
+    const built = processingSystem<Ent>()(requireAll("spring", "active"), {
+      postProcess() {
+        const e = this.entities?.[0];
+        if (e !== undefined) {
+          const k: number = e.spring.k;
+          const active: boolean = e.active;
+          void [k, active];
+        }
+      },
+    });
+    expect(built.postProcess).toBeTypeOf("function");
+  });
+
+  test("this.entities in a plain system's update holds the required components", () => {
+    const built = system<Ent>()(requireAll("spring"), {
+      update() {
+        for (const e of this.entities ?? []) {
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    expect(built.update).toBeTypeOf("function");
+  });
+
+  test("the system each filtered factory returns holds the required components", () => {
+    const plain = system<Ent>()(requireAll("spring"), {});
+    const processing = processingSystem<Ent>()(requireAll("spring"), { process() {} });
+    const sorted = sortedSystem<Ent>()(requireAll("spring"), {
+      compare: (e1, e2) => e1.spring.k < e2.spring.k,
+    });
+    const sortedProcessing = sortedProcessingSystem<Ent>()(requireAll("spring"), {
+      compare: (e1, e2) => e1.spring.k < e2.spring.k,
+      process() {},
+    });
+    const ks: (number | undefined)[] = [
+      plain.entities?.[0]?.spring.k,
+      processing.entities?.[0]?.spring.k,
+      sorted.entities?.[0]?.spring.k,
+      sortedProcessing.entities?.[0]?.spring.k,
+    ];
+    expect(ks).toEqual([undefined, undefined, undefined, undefined]);
+  });
+
+  test("requireAny, the rejects, a string filter, a function filter and no filter narrow nothing", () => {
+    const factory = processingSystem<Ent>();
+    const any = factory(requireAny("spring"), {
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error requireAny leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    const rejectsAll = factory(rejectAll("spring"), {
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error rejectAll leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    const rejectsAny = factory(rejectAny("spring"), {
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error rejectAny leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    const pattern = factory(filter("spring"), {
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error a string filter leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    const custom = factory((_system: unknown, e: Ent) => e.spring !== undefined, {
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error a function filter leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    const unfiltered = system<Ent>()({
+      update() {
+        for (const e of this.entities ?? []) {
+          // @ts-expect-error a system with no filter leaves `spring` optional
+          const k: number = e.spring.k;
+          void k;
+        }
+      },
+    });
+    expect([any, rejectsAll, rejectsAny, pattern, custom, unfiltered]).toHaveLength(6);
+  });
+
+  test("this.entities is undefined until the system joins a world", () => {
+    const built = system<Ent>()(requireAll("spring"), {
+      update() {
+        // @ts-expect-error the list is undefined until the system joins a world
+        const first = this.entities[0];
+        void first;
+      },
+    });
+    expect(built.entities).toBeUndefined();
+  });
+
+  test("a narrowed system passes where a plain one is expected", () => {
+    const built = processingSystem<Ent>()(requireAll("spring"), { process() {} });
+    // Never called: each call needs the system in a different world state, and only the
+    // compiler reads them.
+    const accepted = () => {
+      const w = world<Ent>(built);
+      addSystem(w, built);
+      add(w, built);
+      removeSystem(w, built);
+      remove(w, built);
+      setSystemIndex(w, built, 1);
+      const systemsUnchanged: Equal<(typeof w.systems)[number], SystemFields<Ent>> = true;
+      void systemsUnchanged;
+    };
+    expect(accepted).toBeTypeOf("function");
   });
 });

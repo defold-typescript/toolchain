@@ -268,10 +268,8 @@ export function swarm() { // [!code ++]
       x /= flock.length; // [!code ++]
       y /= flock.length; // [!code ++]
       for (const e of flock) { // [!code ++]
-        if (e.velocity !== undefined) { // [!code ++]
-          e.velocity.x += (x - e.position.x) * 0.2 * dt; // [!code ++]
-          e.velocity.y += (y - e.position.y) * 0.2 * dt; // [!code ++]
-        } // [!code ++]
+        e.velocity.x += (x - e.position.x) * 0.2 * dt; // [!code ++]
+        e.velocity.y += (y - e.position.y) * 0.2 * dt; // [!code ++]
       } // [!code ++]
     }, // [!code ++]
   }); // [!code ++]
@@ -280,7 +278,7 @@ export function swarm() { // [!code ++]
 
 - **`update(dt)`** runs once a frame, however many fireflies there are.
 - **`this`** inside a callback is the system, and `this.entities` is the list of entities its filter took.
-- **`e.velocity !== undefined`** is a check `process` never needed. `this.entities` is typed by the entity type alone, so a component the filter requires is still optional to TypeScript there.
+- **`e.velocity`** needs no check. `this.entities` carries the filter's narrowing, as `process` does, so each entity in it has a `velocity`.
 
 Add the swarm to the world:
 
@@ -1853,10 +1851,8 @@ The garden now uses every function and every field of `ecs`.
 >       x /= flock.length;
 >       y /= flock.length;
 >       for (const e of flock) {
->         if (e.velocity !== undefined) {
->           e.velocity.x += (x - e.position.x) * 0.2 * dt;
->           e.velocity.y += (y - e.position.y) * 0.2 * dt;
->         }
+>         e.velocity.x += (x - e.position.x) * 0.2 * dt;
+>         e.velocity.y += (y - e.position.y) * 0.2 * dt;
 >       }
 >     },
 >   });

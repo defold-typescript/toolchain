@@ -5751,7 +5751,7 @@ A filter picks the entities a system sees. Build one from component names and ot
 | `rejectAll(...)` | lacks at least one component or fails at least one filter given |
 | `rejectAny(...)` | has none of the components and passes none of the filters given |
 
-Inside a system, the entity has the components the top-level `requireAll` names. A filter nested inside it, and the other three filters, narrow nothing:
+Inside a system, the entity each callback gets has the components the top-level `requireAll` names, and so does each entity in the system's `entities`. A filter nested inside it, and the other three filters, narrow nothing:
 
 ```ts title="filters.ts"
 import { processingSystem, rejectAny, requireAll, requireAny } from "@defold-typescript/types/ecs";
@@ -5859,7 +5859,7 @@ Four factories build systems. Each is called with the entity type first, then wi
 
 The filter is the factory's own argument rather than a field of the definition. On TypeScript 6.0.2, a `requireAll(...)` written inside the definition infers no components when `process` has an unannotated parameter, so nothing would narrow. The factory writes the filter to the system's `filter` field, so the system is the table tiny-ecs builds.
 
-`this` inside a callback is the system. The definition's own fields are typed on it, next to the fields `ecs` manages, such as `world`, `entities` and `index`:
+`this` inside a callback is the system. The definition's own fields are typed on it, next to the fields `ecs` manages, such as `world`, `entities` and `index`. `entities` is narrowed by the filter the same way `process`'s entity is:
 
 ```ts title="systems.ts"
 import { processingSystem, requireAll, sortedSystem, system } from "@defold-typescript/types/ecs";
@@ -5900,7 +5900,7 @@ export const leftToRight = sortedSystem<Ent>()(requireAll("position"), {
   update() {
     const first = this.entities?.[0];
     if (first !== undefined) {
-      print(`${first.name} is leftmost`);
+      print(`${first.name} is leftmost, at ${first.position.x}`);
     }
   },
 });
@@ -6459,6 +6459,27 @@ if (hasEntity(w, ball)) {
 </td></tr>
 <tr><td>
 
+Read the entities a filter takes from a script
+
+</td><td>
+
+A [`system`](#systems) with the filter and an empty definition, added to the world; its `entities` has the filter's components
+
+</td><td>
+
+```ts excerpt
+const movers = system<Ent>()(requireAll("position", "velocity"), {});
+```
+
+```ts excerpt
+for (const e of movers.entities ?? []) {
+  print(`${e.name} moves at ${e.velocity.x}`);
+}
+```
+
+</td></tr>
+<tr><td>
+
 Pause one system
 
 </td><td>
@@ -6593,7 +6614,7 @@ The fields every system carries. `ecs` sets `world`, `entities`, `indices` and `
 | --- | --- | --- |
 | `world` | `World<E> \| undefined` | The world the system belongs to. |
 | `active` | `boolean` | Whether `update` and `refresh` run the system. |
-| `entities` | `readonly E[]` | The entities the system holds, in the order it processes them. |
+| `entities` | `readonly E[]`, narrowed by a `requireAll` filter | The entities the system holds, in the order it processes them. |
 | `indices` | `Record<number, number>` | Each held entity's position in `entities`, keyed by the entity's id in the system's world. |
 | `index` | `number` | The system's 1-based position in its world. |
 | `modified` | `boolean` | Whether the system's entities changed since its last update. |
