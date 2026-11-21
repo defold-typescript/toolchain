@@ -314,6 +314,12 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   // sys-overloads.d.ts supplies the form without a default, which returns nil
   // for a missing key, and the form with one, which always returns a string.
   "sys.get_config_string",
+  // physics-overloads.d.ts supplies the form without options, which returns one
+  // hit, and the form with an options table, which returns a list.
+  "physics.raycast",
+  // http-overloads.d.ts supplies the form whose callback gets the final response
+  // only, and the `report_progress` form whose callback also gets progress events.
+  "http.request",
 ]);
 
 // A declaration upstream files under another function's name: its return slot
@@ -350,10 +356,10 @@ export const NAME_CLASH_SKIPS = new Set(["http.response"]);
 
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
 // shape the field-list parser cannot read, but whose key/value a human curated
-// from the doc. Emitted as `LuaMap<K, V>` because the key is a branded `Hash`,
-// illegal in a TS index signature (`string | number | symbol` only); `LuaMap`
-// is the TSTL non-string-key Lua-table idiom and resolves the same way the
-// already-emitted `LuaMultiReturn` does. The audit consults this map too, so the
+// from the doc. Emitted as a TSTL map because the key is a branded `Hash`,
+// illegal in a TS index signature (`string | number | symbol` only); a return
+// is a lookup table, emitted `LuaMap<K, V>` so a missing key reads `undefined`
+// on every target (`asLookupTable`). The audit consults this map too, so the
 // gate and the emitted surface stay coupled; a slot not curated here still
 // surfaces under `recordTables` until a human adds it. Key and value are both
 // `A | B` union tokens split per token, so a key whose doc names constants
@@ -611,26 +617,6 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       },
     },
   ],
-  // `PushRayCastResponse` has two definitions; `Physics_RayCast` calls the one
-  // that takes the world, which sets every payload field but `request_id`.
-  [
-    "physics.raycast",
-    {
-      ts: 'Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined',
-      upstream: ["table", "nil"],
-      retypedUpstream: [
-        ["message.physics.ray_cast_response[]", "message.physics.ray_cast_response", "nil"],
-      ],
-      reason:
-        "script_physics.cpp:Physics_RayCast pushes each hit through PushRayCastResponse(L, world, hit), which sets no request_id",
-      binding: {
-        file: "gamesys/src/gamesys/scripts/script_physics.cpp",
-        cFunction: "Physics_RayCast",
-        contains: "PushRayCastResponse(L, world, hits[i]);",
-        lacks: '"request_id"',
-      },
-    },
-  ],
   ...(
     [
       [
@@ -660,7 +646,7 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       [
         key,
         {
-          ts: `LuaTable<Hash, ${value}> & { get: LuaTableGetMethod<string, ${value}> }`,
+          ts: `LuaMap<Hash, ${value}> & { get: LuaTableGetMethod<string, ${value} | undefined> }`,
           upstream: ["table"],
           retypedUpstream: [retyped],
           reason: `${file.slice(file.lastIndexOf("/") + 1)}:${cFunction} sets HashTableIndex as the id table's __index, which hashes a string key`,
@@ -3038,7 +3024,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["physics.raycast:param:groups", { kind: "array", element: "hash" }],
   ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
   // push.schedule's `notification_settings` is documented in the fixture as prose
   // only ("Table with notification and platform specific fields"), so the field
@@ -3160,10 +3145,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  // http.request's `headers` is "optional table with custom headers", a
-  // string-keyed string map (no field list). Slot-path keying targets only
-  // `headers`; the sibling `options` table stays parser-recovered.
-  ["http.request:param:headers", { kind: "mapping", key: "string", value: "string" }],
   // collectionproxy.get_resources returns "the resources, or an empty list", a
   // homogeneous list of resource paths (prose only, no field list), each a
   // hexadecimal string: script_collectionproxy.cpp:GetResourceHashCallback pushes
@@ -3206,30 +3187,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     {
       kind: "object",
       fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
-    },
-  ],
-  // physics.raycast's `result` is "a list … see ray_cast_response for details";
-  // buildTableDocResolver resolves only FUNCTION elements so the cross-ref
-  // cannot fire (the message payload lives in messages_doc.json, not the
-  // FUNCTION slot pool). The shape is curated directly from the message
-  // catalog: the ray_cast_response payload fields but `request_id`, which
-  // `Physics_RayCast` never sets. The doc declares a
-  // `nil` branch ("If missed it returns <code>nil</code>"), so the existing
-  // nil-aware emit already projects the curated array onto the
-  // `array-object | nil` return type — no curation change needed there.
-  // Where its binding pin holds, the `physics.raycast` RETURN_TYPE_CORRECTIONS
-  // entry replaces the whole return.
-  [
-    "physics.raycast:return:result",
-    {
-      kind: "array-object",
-      fields: [
-        { name: "fraction", types: ["number"] },
-        { name: "position", types: ["vector3"] },
-        { name: "normal", types: ["vector3"] },
-        { name: "id", types: ["hash"] },
-        { name: "group", types: ["hash"] },
-      ],
     },
   ],
   // compute/material shader-constant, sampler, and vertex-attribute setters take
@@ -3742,13 +3699,6 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
     },
   ],
   [
-    "http.request:param:callback",
-    onBothForms(
-      "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-      "With `report_progress` set, the callback also receives progress events carrying `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`; `response.bytes_received !== undefined` marks a progress event, since a final response never carries it.",
-    ),
-  ],
-  [
     "model.play_anim:param:complete_function",
     onBothForms(
       '(self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
@@ -3913,15 +3863,6 @@ export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition>
       evidence: [
         "the array-texture example on this element creates with `page_count = 5`",
         "resource.get_texture_info documents `page_count` as the texture array's page count",
-      ],
-    },
-  ],
-  [
-    "http.request:param:options",
-    {
-      fields: [{ name: "proxy", types: ["string"], optional: true }],
-      evidence: [
-        "script_http.cpp:Http_Request reads `proxy` with luaL_checkstring on native builds; the HTML5 binding ignores it",
       ],
     },
   ],
@@ -5124,6 +5065,20 @@ export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, st
     }
   }
   return paths;
+}
+
+// The TS spelling of each constant group the modules declare, keyed
+// `<ns>.<GROUP>`: an `ENUM` or aliasing `TYPEDEF` one of them carries, else a
+// named `CONSTANT_UNION_ALIASES` row homed in one of them.
+export function constantGroupSpellings(modules: readonly ApiModule[]): Map<string, string> {
+  const spellings = declaredTypePaths(modules);
+  const namespaces = new Set(modules.map((module) => module.namespace));
+  for (const row of CONSTANT_UNION_ALIASES) {
+    if (!("name" in row) || !namespaces.has(row.home)) continue;
+    const group = `${row.home}.${row.name}`;
+    if (!spellings.has(group)) spellings.set(group, constantUnionSpelling(row));
+  }
+  return spellings;
 }
 
 // A dotted type path with its last segment through `engineTypeName`: the
@@ -7089,6 +7044,9 @@ function mapSlotUnion(
       slotKind !== undefined && slotName !== undefined
         ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
         : undefined;
+    const lookupReturn =
+      slotKind === "return" &&
+      (slotCuration?.kind === "mapping" || MAPPING_TABLE_SLOTS.has(elementName));
     if (token === "table" && structured !== undefined) {
       ts = inlineTableType(refDocTableFields(structured), mapType, optionalFields);
     } else if (token === "function" && structured !== undefined) {
@@ -7212,7 +7170,7 @@ function mapSlotUnion(
           ? CALLBACK_SIGNATURE_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
           : undefined;
       if (curation === undefined) {
-        ts = mapType(token);
+        ts = lookupReturn ? asLookupTable(mapType(token)) : mapType(token);
       } else if (isLualsFunctionToken(token)) {
         ts = curation.typed ?? mapType(token);
       } else {
@@ -7228,6 +7186,14 @@ function mapSlotUnion(
   return slotKind === "return" && SPARSE_ARRAY_RETURNS.has(elementName)
     ? sparseArrayMap(joined, elementName)
     : joined;
+}
+
+// A return curated as a mapping is a lookup table: a key it does not hold reads
+// `nil`. A newer release's typed `table<K, V>` spelling keeps upstream's key and
+// value types and reads through `LuaMap`, whose `get` includes `undefined`, as
+// the curated `table` form does.
+function asLookupTable(ts: string): string {
+  return ts.replace(/\bLuaTable</g, "LuaMap<");
 }
 
 function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {

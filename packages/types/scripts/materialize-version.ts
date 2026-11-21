@@ -16,6 +16,7 @@ import {
   loadTargetEditorModules,
   MESSAGES_MANIFEST,
   type ModuleManifestEntry,
+  messageGroupSpellings,
   type ResolveTargetOptions,
   resolveTargetModules,
   type TargetBindingOptions,
@@ -205,12 +206,14 @@ export async function buildVersionedSurfaceFiles(
   // A generated sibling rather than a `src/*` augmentation, so it falls outside
   // `SRC_AUGMENTATION_MODULES` — but the carried `msg-overloads` and
   // `message-guard` reference `BuiltinMessages`, so a surface without it ships
-  // dangling names. The emit is version-independent, so render it here.
+  // dangling names. The catalog is version-independent; only a grouped field's
+  // alias follows the target, read from the surface's own modules.
   const generated = [
     {
       path: MESSAGES_MANIFEST.outFile,
       contents: generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
         importsFrom: surfaceCoreTypesImport(MESSAGES_MANIFEST.outFile),
+        groupSpellings: messageGroupSpellings(modules),
       }),
     },
   ].filter((file) => kept(file.path));

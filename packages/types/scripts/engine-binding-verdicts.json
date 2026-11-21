@@ -655,10 +655,6 @@
     "verdict": "accepted",
     "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
-  "defold-1.12.4:msg.post:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
-  },
   "defold-1.12.4:particlefx.play:manual:2": {
     "verdict": "manual",
     "reason": "no kind check"
@@ -1359,10 +1355,6 @@
     "verdict": "accepted",
     "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
   },
-  "defold-1.13.0:msg.post:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
-  },
   "defold-1.13.0:particlefx.play:manual:2": {
     "verdict": "manual",
     "reason": "no kind check"
@@ -1606,10 +1598,6 @@
   "defold-1.13.1:image.load:too-narrow:2": {
     "verdict": "accepted",
     "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
-  },
-  "defold-1.13.1:msg.post:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
   "defold-1.13.1:render.draw:too-narrow:2": {
     "verdict": "accepted",
@@ -1955,10 +1943,6 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "defold-1.13.2:msg.post:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
-  },
   "defold-1.13.2:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -2282,10 +2266,6 @@
   "defold-1.14.0:collectionproxy.load:manual:3": {
     "verdict": "manual",
     "reason": "lua_type switch"
-  },
-  "defold-1.14.0:msg.post:too-loose:2": {
-    "verdict": "accepted",
-    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
   "defold-1.14.0:render.set_blend_equation_separate:manual": {
     "verdict": "manual",

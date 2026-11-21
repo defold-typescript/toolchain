@@ -75,6 +75,12 @@ declare global {
      * Both receiver routes live in this one signature on purpose: a separate,
      * stricter overload ahead of it would let a mismatched payload fall through
      * to the open one and compile anyway.
+     *
+     * A built-in or receiver-declared id whose payload has a required field
+     * requires the payload: the engine raises "Field ... not specified" when a
+     * built-in message arrives without one, and a script reading a declared
+     * field would read `nil`. An id whose fields are all optional, a
+     * `CustomMessages` id and an undeclared id keep it optional.
      */
     function post<
       R extends SceneAddress | Hash | Url,
@@ -82,11 +88,15 @@ declare global {
     >(
       receiver: R,
       message_id: K,
-      message?: K extends BuiltinMessageId
-        ? MessagePayload<K>
+      ...message: K extends BuiltinMessageId
+        ? Record<never, never> extends MessagePayload<K>
+          ? [message?: MessagePayload<K>]
+          : [message: MessagePayload<K>]
         : K extends keyof ReceiverMessages<R>
-          ? ReceiverMessages<R>[K]
-          : MessagePayload<K>,
+          ? Record<never, never> extends ReceiverMessages<R>[K]
+            ? [message?: ReceiverMessages<R>[K]]
+            : [message: ReceiverMessages<R>[K]]
+          : [message?: MessagePayload<K>]
     ): void;
     function post(
       receiver: SceneAddress | Url | Hash,

@@ -13,10 +13,21 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **`msg.post` requires a required payload** ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
+> - **Id tables read `undefined` for a missing id**, and **`physics.raycast` returns a list only with options** ([physics](/api/physics)).
 > - **Filtered systems narrow `entities`** ([Filters](./entity-systems.md#filters)).
+
+### Breaking
+
+- **Engine calls are typed by what the engine does with the arguments you pass:**
+  - **`msg.post`** requires the payload of a built-in message with a required field, which the engine rejects with "Field ... not specified": `msg.post("@system:", "exit")` is a compile error, as is leaving out a required field of a message a typed receiver declares ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
+  - **Id tables** from `collectionfactory.create`, `gui.clone_tree`, `gui.get_tree`, `gui.get_layouts`, `model.get_mesh_aabb` and the rows of `tilemap.get_tiles` return `undefined` from `get` for an id they do not hold, and still iterate and pass to `go.delete`.
+  - **`http.request`** with `report_progress` hands its callback the progress events too, typed with `bytes_sent`, `bytes_received`, `bytes_total` and `url` and no `status`, so `response.status` is `number | undefined` there.
 
 ### Improved
 
+- **`physics.raycast` returns what the engine pushes for each call form:** one hit or `undefined` without an options table, and a list of hits or `undefined` with one, so neither needs an `Array.isArray` check.
+- **A built-in message field that holds an engine constant takes its type:** `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`, on every Defold target that declares the type ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
 - **A system built with a `requireAll` filter types its `entities` with the filter's components:** `this.entities` inside each callback and `entities` on the system the factory returns hold the same narrowed entity `process` gets, so a loop over them, in a callback or in a script, reads those components without a check. A filter nested inside `requireAll`, the other three filters, a string filter and a function filter narrow nothing ([Filters](./entity-systems.md#filters)).
 
 ## v0.68.0

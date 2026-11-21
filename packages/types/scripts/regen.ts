@@ -9,6 +9,7 @@ import {
   withholdOverloads,
 } from "../src/api-doc";
 import {
+  constantGroupSpellings,
   declaredTypePaths,
   emitDeclarations,
   emitSymbolSignatures,
@@ -19,6 +20,7 @@ import {
   applyMessageOverlays,
   type EmitBuiltinMessagesOptions,
   emitBuiltinMessages,
+  MESSAGE_FIELD_CONSTANT_GROUPS,
   type MessageCatalog,
   parseMessagesDoc,
 } from "../src/emit-messages";
@@ -415,6 +417,22 @@ export const MESSAGES_MANIFEST: MessagesManifestEntry = {
 
 export function builtinMessagesCatalog(entry: MessagesManifestEntry): MessageCatalog {
   return applyMessageOverlays(parseMessagesDoc(entry.doc));
+}
+
+// The spelling of each constant group a grouped message field names, as the
+// surface's own modules declare it. The catalog is shared by every target, so a
+// target whose modules lack a group's alias keeps that field's token type.
+export function messageGroupSpellings(
+  modules: readonly ModuleManifestEntry[],
+): ReadonlyMap<string, string> {
+  const groups = new Set(MESSAGE_FIELD_CONSTANT_GROUPS.map((grouped) => grouped.group));
+  const homes = new Set([...groups].map((group) => group.slice(0, group.lastIndexOf("."))));
+  const spellings = constantGroupSpellings(
+    modules
+      .filter((entry) => homes.has(entry.namespace))
+      .map((entry) => parseDefoldApiDoc(entry.doc)),
+  );
+  return new Map([...spellings].filter(([group]) => groups.has(group)));
 }
 
 export function generateBuiltinMessagesDeclaration(
@@ -948,6 +966,8 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/socket-types" },
   { specifier: "../../src/vmath-overloads" },
   { specifier: "../../src/sys-overloads" },
+  { specifier: "../../src/http-overloads" },
+  { specifier: "../../src/physics-overloads", requiresGoInstance: ["physics.raycast"] },
 ];
 
 const SRC_IMPORT_PREFIX = "../../src/";
@@ -1380,7 +1400,12 @@ export async function regenerate(
     io.log(`wrote ${out}`);
   }
   const messagesOut = resolve(generated, MESSAGES_MANIFEST.outFile);
-  io.write(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
+  io.write(
+    messagesOut,
+    generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+      groupSpellings: messageGroupSpellings(MODULE_MANIFEST),
+    }),
+  );
   io.log(`wrote ${messagesOut}`);
 
   // Imported here rather than at module scope: its fixtures are not published,
@@ -1426,15 +1451,29 @@ export async function regenerate(
     io.log(`wrote ${out}`);
   }
   for (const target of versionedTargets) {
+    // The catalog is shared, but a grouped field's alias exists only where the
+    // target declares it, so each snapshot carries its own copy for the CLI to
+    // pin in place of the current one.
+    const messagesOut = resolve(versionDirOf(target.id), MESSAGES_MANIFEST.outFile);
+    io.write(
+      messagesOut,
+      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+        importsFrom: target.coreTypesImport,
+        groupSpellings: messageGroupSpellings(
+          VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === target.id),
+        ),
+      }),
+    );
+    io.log(`wrote ${messagesOut}`);
+
     const indexOut = resolve(versionDirOf(target.id), "index.d.ts");
     io.mkdir(dirname(indexOut));
     io.write(
       indexOut,
-      generateVersionIndex(
-        target.id,
-        VERSIONED_MODULE_MANIFEST,
-        versionSrcAugmentationImports(target),
-      ),
+      generateVersionIndex(target.id, VERSIONED_MODULE_MANIFEST, [
+        MESSAGES_MANIFEST.outFile.replace(/\.d\.ts$/, ""),
+        ...versionSrcAugmentationImports(target),
+      ]),
     );
     io.log(`wrote ${indexOut}`);
 

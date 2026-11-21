@@ -21,6 +21,15 @@ msg.post("#collisionobject", "apply_force", {
 });
 ```
 
+A built-in message with a required field requires its payload, because the engine raises "Field ... not specified" when it arrives without one. A message whose fields are all optional takes the payload or not:
+
+```ts
+msg.post("@system:", "exit", { code: 0 }); // leaving out `{ code }` is a compile error
+msg.post(".", "acquire_input_focus"); // no fields, no payload needed
+```
+
+A field that holds an engine constant takes that constant group's type where the target declares it: `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`. On a target that declares no such type, the field stays `number`.
+
 The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, whose payload is unchecked until you declare it — so an undeclared id always compiles, and [declaring one](#declaring-your-own-messages) buys it the same checking a built-in id gets:
 
 ```ts
@@ -171,7 +180,7 @@ export default defineScript({
 });
 ```
 
-A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
+A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. An id it declares with a required field requires the payload, as a built-in one does, since the handler would otherwise read `nil`; a `CustomMessages` id keeps its payload optional. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
 
 **Scene address.** This is the default when the receiver is a literal address your scenes declare. [`scene-types`](./scene-types.md#component-addresses-carry-their-messages-and-properties) links each script component's address to its source, so the sender needs no import — `src/launcher.ts`:
 

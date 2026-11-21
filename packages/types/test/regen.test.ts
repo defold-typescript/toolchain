@@ -21,6 +21,7 @@ import {
   loadSrcAugmentations,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
+  messageGroupSpellings,
   RESTRICTED_NAMESPACES,
   RESTRICTED_SRC_AUGMENTATIONS,
   RUNTIME_KIND_MANIFEST,
@@ -1216,15 +1217,34 @@ describe("versioned regen drift guard", () => {
   });
 
   test.each([...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))])(
+    "%s: committed per-version builtin-messages.d.ts names only the target's own aliases",
+    async (versionId) => {
+      const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+        importsFrom: regenTargetOf(versionId).coreTypesImport,
+        groupSpellings: messageGroupSpellings(
+          VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === versionId),
+        ),
+      });
+      const path = resolve(GENERATED, "versions", versionId, MESSAGES_MANIFEST.outFile);
+      const committed = await Bun.file(path).text();
+      if (committed !== fresh) {
+        throw new Error(
+          `versions/${versionId}/${MESSAGES_MANIFEST.outFile} is stale — run \`bun run regen\` in \`packages/types/\``,
+        );
+      }
+      expect(committed).toBe(fresh);
+    },
+  );
+
+  test.each([...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))])(
     "%s: committed per-version index.d.ts matches a fresh generateVersionIndex",
     async (versionId) => {
       const target = loadApiTargets().find((candidate) => candidate.id === versionId);
       if (!target) throw new Error(`no committed target for version ${versionId}`);
-      const fresh = generateVersionIndex(
-        versionId,
-        VERSIONED_MODULE_MANIFEST,
-        versionSrcAugmentationImports(target),
-      );
+      const fresh = generateVersionIndex(versionId, VERSIONED_MODULE_MANIFEST, [
+        MESSAGES_MANIFEST.outFile.replace(/\.d\.ts$/, ""),
+        ...versionSrcAugmentationImports(target),
+      ]);
       const path = resolve(GENERATED, "versions", versionId, "index.d.ts");
       const committed = await Bun.file(path).text();
       if (committed !== fresh) {
@@ -1545,7 +1565,9 @@ describe("editor-script kind index", () => {
 
 describe("regen drift guard — builtin messages", () => {
   test("committed builtin-messages.d.ts matches a fresh pipeline run byte-for-byte", async () => {
-    const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST);
+    const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+      groupSpellings: messageGroupSpellings(MODULE_MANIFEST),
+    });
     const committed = await Bun.file(resolve(GENERATED, MESSAGES_MANIFEST.outFile)).text();
     if (committed !== fresh) {
       throw new Error(

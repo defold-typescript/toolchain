@@ -119,7 +119,7 @@ declare global {
      * }
      * ```
      */
-    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;
+    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
     /**
      * Resets a shader constant for a tile map component.
      * The constant must be defined in the material assigned to the tile map.

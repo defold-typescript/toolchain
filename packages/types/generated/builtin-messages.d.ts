@@ -22,7 +22,7 @@ declare global {
     init: Record<string, never>;
     layout_changed: { id: Hash; previous_id: Hash };
     load: Record<string, never>;
-    model_animation_done: { animation_id: Hash; playback: number };
+    model_animation_done: { animation_id: Hash; playback: go.Playback };
     pause_sound: { pause?: boolean };
     play_animation: { id: Hash; offset?: number; playback_rate?: number };
     play_sound: { delay?: number; gain?: number; play_id?: number; start_time?: number; start_frame?: number; pan?: number; speed?: number };
@@ -39,11 +39,11 @@ declare global {
     release_input_focus: Record<string, never>;
     resize: { height: number; width: number };
     resume_rendering: Record<string, never>;
-    set_camera: { aspect_ratio: number; fov: number; near_z: number; far_z: number; orthographic_projection?: number; orthographic_zoom?: number; orthographic_mode?: number };
+    set_camera: { aspect_ratio: number; fov: number; near_z: number; far_z: number; orthographic_projection?: number; orthographic_zoom?: number; orthographic_mode?: camera.OrthoMode };
     set_gain: { gain?: number; play_id?: number };
     set_pan: { pan?: number; play_id?: number };
     set_parent: { parent_id?: Hash; keep_world_transform?: 0 | 1 };
-    set_time_step: { factor: number; mode: number };
+    set_time_step: { factor: number; mode: collectionproxy.TimeStepMode };
     set_update_frequency: { frequency: number };
     set_view_projection: { id: Hash; view: Matrix4; projection: Matrix4 };
     set_vsync: { swap_interval: number };

@@ -188,50 +188,6 @@ declare global {
      * do not intersect with ray casts.
      * Which collision objects to hit is filtered by their collision groups and can be configured
      * through `groups`.
-     * NOTE: Ray casts will ignore collision objects that contain the starting point of the ray. This is a limitation in Box2D.
-     *
-     * @param from - the world position of the start of the ray
-     * @param to - the world position of the end of the ray
-     * @param groups - a lua table containing the hashed groups for which to test collisions against
-     * @param options - a lua table containing options for the raycast.
-     *
-     * `all`
-     * boolean Set to `true` to return all ray cast hits. If `false`, it will only return the closest hit.
-     * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
-     * @example
-     * ```ts
-     * function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash }) {
-     *   // act on the hit (see 'ray_cast_response')
-     * }
-     *
-     * // How to perform a ray cast synchronously:
-     * export default defineScript({
-     *   init() {
-     *     return { groups: [hash("world"), hash("enemy")] };
-     *   },
-     *
-     *   update(self, dt) {
-     *     // request ray cast
-     *     const from = go.get_world_position();
-     *     const to = vmath.vector3(from.x, from.y - 100, from.z);
-     *     const results = physics.raycast(from, to, self.groups, { all: true });
-     *     if (results !== undefined) {
-     *       // with `all` set, the ray cast returns every hit as a list
-     *       for (const result of Array.isArray(results) ? results : [results]) {
-     *         handle_result(result);
-     *       }
-     *     }
-     *   },
-     * });
-     * ```
-     */
-    function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
-    /**
-     * Ray casts are used to test for intersections against collision objects in the physics world.
-     * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
-     * do not intersect with ray casts.
-     * Which collision objects to hit is filtered by their collision groups and can be configured
-     * through `groups`.
      * The actual ray cast will be performed during the physics-update.
      *
      * - If an object is hit, the result will be reported via a ray_cast_response message.

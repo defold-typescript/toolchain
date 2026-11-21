@@ -38,6 +38,6 @@ declare global {
       rotation?: Quaternion,
       properties?: { [K in keyof P]?: Partial<P[K]> },
       scale?: number | Vector3,
-    ) => LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
+    ) => LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
   }
 }

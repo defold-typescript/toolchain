@@ -25,6 +25,7 @@ import {
   loadApiTargets,
   loadSrcAugmentations,
   MESSAGES_MANIFEST,
+  messageGroupSpellings,
   resolveTargetModules,
   SRC_AUGMENTATION_MODULES,
   srcAugmentationModulesFor,
@@ -621,14 +622,20 @@ describe("buildVersionedSurfaceFiles src augmentation carry", () => {
     expect(paths).toContain("core-types.d.ts");
   });
 
-  test("carries the generated builtin-messages module", async () => {
-    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.12.4"));
+  test("carries the generated builtin-messages module, spelled by the target's own aliases", async () => {
+    const target = committedTarget("defold-1.12.4");
+    const files = await buildVersionedSurfaceFiles(target);
 
     const file = files.find((f) => f.path === "builtin-messages.d.ts");
     expect(file === undefined ? "absent" : "present").toBe("present");
     expect(file?.contents).toBe(
-      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, { importsFrom: "./core-types" }),
+      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+        importsFrom: "./core-types",
+        groupSpellings: messageGroupSpellings(await resolveTargetModules(target)),
+      }),
     );
+    // 1.12.4 declares no collectionproxy.TimeStepMode, so the field keeps its token type.
+    expect(file?.contents).toContain("set_time_step: { factor: number; mode: number };");
   });
 
   test("the aggregate index imports the generated builtin-messages module", async () => {

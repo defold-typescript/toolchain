@@ -33,7 +33,6 @@ import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc
 import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { type: "json" };
 import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { type: "json" };
 import gui114Doc from "../fixtures/defold-1.14.0/gui_doc.json" with { type: "json" };
-import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
 import liveupdate114Doc from "../fixtures/defold-1.14.0/liveupdate_doc.json" with { type: "json" };
 import model114Doc from "../fixtures/defold-1.14.0/model_doc.json" with { type: "json" };
@@ -47,7 +46,6 @@ import iapDoc from "../fixtures/extension-docs/iap.json" with { type: "json" };
 import pushDoc from "../fixtures/extension-docs/push.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
-import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
 import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
@@ -91,7 +89,6 @@ import {
   applyNestedFieldCurations,
   applyRequiredFieldCorrections,
   buildTableDocResolver,
-  CALLBACK_SIGNATURE_CURATIONS,
   CONSTANT_UNION_ALIASES,
   type ConstantUnionAlias,
   type ConstantUnionNamedRow,
@@ -2429,7 +2426,7 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("OVERLOAD_COVERED_SKIPS", () => {
-  test("is exactly the FQNs served by the hand-written go/gui/msg/render/sys/vmath overloads, in sort order", () => {
+  test("is exactly the FQNs served by the hand-written go/gui/http/msg/physics/render/sys/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.animate",
       "go.cancel_animations",
@@ -2439,8 +2436,10 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
       "gui.animate",
       "gui.get",
       "gui.set",
+      "http.request",
       "msg.post",
       "msg.url",
+      "physics.raycast",
       "render.render_target",
       "sys.get_config_string",
       "sys.set_engine_throttle",
@@ -2554,6 +2553,29 @@ describe("MAPPING_TABLE_SLOTS", () => {
     expect(out).toContain('function clone_tree(): LuaMap<Hash, Opaque<"node">>;');
     expect(out).toContain('function get_tree(): LuaMap<Hash, Opaque<"node">>;');
     expect(out).toContain("function get_layouts(): LuaMap<Hash, Vector3>;");
+  });
+
+  test("a lookup return a newer release types table<K, V> keeps its spellings and reads through LuaMap", () => {
+    const out = emitDeclarations(
+      guiModule([
+        {
+          name: "gui.get_layouts",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [{ name: "", doc: "", types: ["table<hash, vector3>"], isOptional: false }],
+        },
+        {
+          name: "gui.get_unmapped",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [{ name: "", doc: "", types: ["table<hash, vector3>"], isOptional: false }],
+        },
+      ]),
+    );
+    expect(out).toContain("function get_layouts(): LuaMap<Hash, Vector3>;");
+    expect(out).toContain("function get_unmapped(): LuaTable<Hash, Vector3>;");
   });
 
   test("a table return on an element absent from MAPPING_TABLE_SLOTS still emits Record", () => {
@@ -2815,7 +2837,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "liveupdate.get_mounts:return:mounts",
       "model.get_aabb:return:aabb",
       "model.get_mesh_aabb:return:aabb",
-      "physics.raycast:param:groups",
       "physics.raycast_async:param:groups",
       "push.schedule:param:notification_settings",
       "socket.select:param:recvt",
@@ -2827,13 +2848,11 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "resource.get_text_metrics:return:metrics",
       "resource.get_render_target_info:return:table",
       "profiler.view_recorded_frame:param:frame_index",
-      "http.request:param:headers",
       "collectionproxy.get_resources:return:resources",
       "render.predicate:param:tags",
       "render.clear:param:buffers",
       "physics.create_joint:param:properties",
       "physics.set_joint_properties:param:properties",
-      "physics.raycast:return:result",
       "compute.set_constants:param:constants",
       "compute.set_samplers:param:samplers",
       "material.set_constants:param:constants",
@@ -3090,30 +3109,14 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(tilemapOut).not.toContain("Record<");
   });
 
-  test("physics raycast groups recover and raycast result recovers the ray_cast_response array-object", () => {
+  test("physics.raycast_async groups recover the hashed group list", () => {
     const module = parseDefoldApiDoc(physicsDoc);
     const out = emitDeclarations({
       ...module,
-      functions: [
-        requireFunction(module, "physics.raycast"),
-        requireFunction(module, "physics.raycast_async"),
-      ],
+      functions: [requireFunction(module, "physics.raycast_async")],
     });
     expect(out).toContain(
-      "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash }[] | undefined;",
-    );
-    expect(out).toContain(
       "function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;",
-    );
-    // Where the binding pin holds, the whole return is the single-or-list hit
-    // Physics_RayCast pushes, still without request_id.
-    expect(
-      emitDeclarations(
-        { ...module, functions: [requireFunction(module, "physics.raycast")] },
-        { bindingEvidence: new Set(["physics.raycast"]) },
-      ),
-    ).toContain(
-      'options?: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;',
     );
   });
 
@@ -3244,20 +3247,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "function view_recorded_frame(frame_index: { distance?: number; frame?: number }): void;",
     );
     expect(out).not.toContain("Record<string | number, unknown>");
-  });
-
-  test("http.request recovers its headers map while the options bag stays parser-recovered", () => {
-    const module = parseDefoldApiDoc(httpDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "http.request")],
-    });
-    const line = out.split("\n").find((l) => l.includes("function request(")) ?? "";
-    expect(line).toContain("headers?: LuaMap<string, string>");
-    expect(line).toContain(
-      "options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }",
-    );
-    expect(line).not.toContain("Record<string | number, unknown>");
   });
 
   test("collectionproxy.get_resources recovers a string[] return", () => {
@@ -5151,10 +5140,7 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
     // The exact ordered addition keys. Each entry's own evidence is pinned on
     // the entry; this guards that no addition is silently added, removed, or
     // reordered — the shape the sibling TABLE_SLOT_CURATIONS suite asserts.
-    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual([
-      "resource.create_texture:param:table",
-      "http.request:param:options",
-    ]);
+    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual(["resource.create_texture:param:table"]);
   });
 
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
@@ -6910,22 +6896,6 @@ describe("signatures upstream documents in prose", () => {
     return line;
   }
 
-  test("http.request's callback receives the documented response table, a Hash id and the sender", () => {
-    expect(emittedLine(httpDoc, "function request(")).toContain(
-      "callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-    );
-  });
-
-  test("http.request's callback doc carries its curation note", () => {
-    const note = CALLBACK_SIGNATURE_CURATIONS.get("http.request:param:callback")?.note;
-    if (note === undefined) throw new Error("the http.request callback curation carries no note");
-    const lines = emitDeclarations(parseDefoldApiDoc(http114Doc)).split("\n");
-    let from = lines.findIndex((line) => line.includes("function request("));
-    while (from >= 0 && !lines[from]?.includes("@param callback ")) from -= 1;
-    const to = lines.findIndex((line, index) => index > from && line.includes("@param "));
-    expect(lines.slice(from, to).join("\n")).toContain(note);
-  });
-
   test("model.play_anim's complete_function receives self, the message id and the completion message", () => {
     expect(emittedLine(model113Doc, "function play_anim(")).toContain(
       'complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
@@ -6963,12 +6933,6 @@ describe("signatures upstream documents in prose", () => {
       "event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>]",
     );
     expect(line).toContain("data: window.EventData) => void) | undefined");
-  });
-
-  test("http.request's callback keeps the documented response table where the reference names a withheld struct", () => {
-    const line = emittedLine(http114Doc, "function request(");
-    expect(line).toContain("response: { status: number;");
-    expect(line).not.toContain("http.response");
   });
 
   test("sprite.play_flipbook's complete_function keeps the inline completion message where the reference types it", () => {

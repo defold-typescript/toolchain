@@ -625,7 +625,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -1056,7 +1056,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -1082,7 +1082,7 @@
       "gui\u0000FUNCTION\u0000gui.get_layer\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layer(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout\u0000[]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layout(): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout_objects\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layout_objects(node: Opaque<\"node\">): gui.LayoutObject[];",
-      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaTable<Hash, Vector3>;",
+      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaMap<Hash, Vector3>;",
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_leading(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_line_break\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_line_break(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_material(node: Opaque<\"node\">): Hash;",
@@ -1104,7 +1104,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -1197,7 +1197,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "http\u0000TYPEDEF\u0000RequestOptions\u0000": "interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; }",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
@@ -1292,7 +1292,7 @@
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): model.Aabb;",
       "model\u0000FUNCTION\u0000model.get_blend_weights\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_blend_weights(url: string | Hash | Url): number[];",
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
-      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;",
+      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
@@ -1304,7 +1304,7 @@
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
       "model\u0000TYPEDEF\u0000Aabb\u0000": "interface Aabb { min: Vector3; max: Vector3; }",
       "model\u0000TYPEDEF\u0000PlayProperties\u0000": "interface PlayProperties { blend_duration?: number; offset?: number; playback_rate?: number; }",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -1341,7 +1341,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -1671,7 +1671,7 @@
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -2400,7 +2400,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -2830,7 +2830,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -2856,7 +2856,7 @@
       "gui\u0000FUNCTION\u0000gui.get_layer\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layer(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout\u0000[]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layout(): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout_objects\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layout_objects(node: Opaque<\"node\">): gui.LayoutObject[];",
-      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaTable<Hash, Vector3>;",
+      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaMap<Hash, Vector3>;",
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_leading(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_line_break\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_line_break(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_material(node: Opaque<\"node\">): Hash;",
@@ -2878,7 +2878,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -2971,7 +2971,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "http\u0000TYPEDEF\u0000RequestOptions\u0000": "interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; }",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
@@ -3066,7 +3066,7 @@
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): model.Aabb;",
       "model\u0000FUNCTION\u0000model.get_blend_weights\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_blend_weights(url: string | Hash | Url): number[];",
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
-      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;",
+      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
@@ -3078,7 +3078,7 @@
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
       "model\u0000TYPEDEF\u0000Aabb\u0000": "interface Aabb { min: Vector3; max: Vector3; }",
       "model\u0000TYPEDEF\u0000PlayProperties\u0000": "interface PlayProperties { blend_duration?: number; offset?: number; playback_rate?: number; }",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -3115,7 +3115,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -3436,7 +3436,7 @@
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -4161,7 +4161,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -4584,7 +4584,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -4610,7 +4610,7 @@
       "gui\u0000FUNCTION\u0000gui.get_layer\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layer(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout\u0000[]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_layout(): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_layout_objects\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layout_objects(node: Opaque<\"node\">): gui.LayoutObject[];",
-      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaTable<Hash, Vector3>;",
+      "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_layouts(): LuaMap<Hash, Vector3>;",
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_leading(node: Opaque<\"node\">): number;",
       "gui\u0000FUNCTION\u0000gui.get_line_break\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_line_break(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_material(node: Opaque<\"node\">): Hash;",
@@ -4632,7 +4632,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -4725,7 +4725,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "http\u0000TYPEDEF\u0000RequestOptions\u0000": "interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; }",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
@@ -4820,7 +4820,7 @@
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): model.Aabb;",
       "model\u0000FUNCTION\u0000model.get_blend_weights\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_blend_weights(url: string | Hash | Url): number[];",
       "model\u0000FUNCTION\u0000model.get_go\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;",
-      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;",
+      "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;",
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
       "model\u0000FUNCTION\u0000model.play_anim\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages[\"model_animation_done\"]) => void): void;",
       "model\u0000FUNCTION\u0000model.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
@@ -4832,7 +4832,7 @@
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
       "model\u0000TYPEDEF\u0000Aabb\u0000": "interface Aabb { min: Vector3; max: Vector3; }",
       "model\u0000TYPEDEF\u0000PlayProperties\u0000": "interface PlayProperties { blend_duration?: number; offset?: number; playback_rate?: number; }",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -4869,7 +4869,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -5190,7 +5190,7 @@
       "tilemap\u0000FUNCTION\u0000tilemap.get_bounds\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.get_tile_info\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;",
-      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;",
+      "tilemap\u0000FUNCTION\u0000tilemap.get_tiles\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;",
       "tilemap\u0000FUNCTION\u0000tilemap.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, constant: string | Hash): void;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_tile\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;",
       "tilemap\u0000FUNCTION\u0000tilemap.set_visible\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;",
@@ -5645,7 +5645,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -6038,7 +6038,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -6085,7 +6085,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -6173,7 +6173,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -6253,7 +6253,7 @@
       "model\u0000PROPERTY\u0000cursor\u0000": "cursor: number;",
       "model\u0000PROPERTY\u0000playback_rate\u0000": "playback_rate: number;",
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -6287,7 +6287,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -7003,7 +7003,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -7394,7 +7394,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -7441,7 +7441,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -7529,7 +7529,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -7609,7 +7609,7 @@
       "model\u0000PROPERTY\u0000cursor\u0000": "cursor: number;",
       "model\u0000PROPERTY\u0000playback_rate\u0000": "playback_rate: number;",
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -7643,7 +7643,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -8101,7 +8101,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -8448,7 +8448,7 @@
       "gui\u0000FUNCTION\u0000gui.cancel_animations\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"keyof gui.NodeProperties\",\"number\"],\"isOptional\":true}]->[]": "function cancel_animations(node: Opaque<\"node\">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.cancel_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function cancel_flipbook(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.clone\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function clone(node: Opaque<\"node\">): Opaque<\"node\">;",
-      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function clone_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.delete_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function delete_node(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.delete_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function delete_texture(texture: string | Hash): void;",
       "gui\u0000FUNCTION\u0000gui.get\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]\ngui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]\ngui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
@@ -8495,7 +8495,7 @@
       "gui\u0000FUNCTION\u0000gui.get_text\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_text(node: Opaque<\"node\">): string;",
       "gui\u0000FUNCTION\u0000gui.get_texture\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_texture(node: Opaque<\"node\">): Hash;",
       "gui\u0000FUNCTION\u0000gui.get_tracking\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_tracking(node: Opaque<\"node\">): number;",
-      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> };",
+      "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_tree(node: Opaque<\"node\"> | undefined): LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> };",
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
@@ -8583,7 +8583,7 @@
       "gui\u0000TYPEDEF\u0000Type\u0000": "type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void\nhttp.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: string & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: string & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: string & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -8635,7 +8635,7 @@
       "model\u0000PROPERTY\u0000material\u0000": "material: Hash;",
       "model\u0000PROPERTY\u0000playback_rate\u0000": "playback_rate: number;",
       "model\u0000PROPERTY\u0000textureN\u0000": "texture0: Hash;",
-      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
+      "msg\u0000FUNCTION\u0000msg.post\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void\nmsg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void",
       "msg\u0000FUNCTION\u0000msg.url\u0000[]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true},{\"types\":[\"Hash\",\"string\"],\"isOptional\":true}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
       "msg\u0000FUNCTION\u0000msg.url\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Url\"],\"isOptional\":false}]": "msg.url(): Url\nmsg.url(urlstring: SceneAddress | Hash | Url | undefined): Url\nmsg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url\nmsg.url<M extends object>(): ReceiverUrl<M>\nmsg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>\nmsg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
@@ -8669,7 +8669,7 @@
       "physics\u0000FUNCTION\u0000physics.get_joint_reaction_torque\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;",
       "physics\u0000FUNCTION\u0000physics.get_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;",
       "physics\u0000FUNCTION\u0000physics.get_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };",
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": "function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined;",
+      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined\nphysics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": "function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;\nfunction raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;",
       "physics\u0000FUNCTION\u0000physics.set_event_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;",
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
@@ -11532,7 +11532,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -11809,7 +11809,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -11906,7 +11906,7 @@
         "return:0:objects": { "type": "gui.LayoutObject[]", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:": { "type": "LuaTable<Hash, Vector3>", "optional": false }
+        "return:0:": { "type": "LuaMap<Hash, Vector3>", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -11995,7 +11995,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -12295,20 +12295,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": { "type": "http.RequestOptions", "optional": true }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:header": { "type": "image.AstcHeader", "optional": false }
@@ -12428,7 +12414,7 @@
       },
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
-        "return:0:aabb": { "type": "LuaTable<Hash, model.Aabb>", "optional": false }
+        "return:0:aabb": { "type": "LuaMap<Hash, model.Aabb>", "optional": false }
       },
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -12523,16 +12509,6 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": { "type": "physics.ShapeData", "optional": false }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "physics.RaycastOptions", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
-          "optional": false
-        }
       },
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:from": { "type": "Vector3", "optional": false },
@@ -13523,7 +13499,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "return:0:tiles": {
-          "type": "LuaTable<number, LuaTable<number, number>> | undefined",
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
           "optional": false
         }
       },
@@ -16347,7 +16323,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -16624,7 +16600,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -16721,7 +16697,7 @@
         "return:0:objects": { "type": "gui.LayoutObject[]", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:": { "type": "LuaTable<Hash, Vector3>", "optional": false }
+        "return:0:": { "type": "LuaMap<Hash, Vector3>", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -16810,7 +16786,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -17110,20 +17086,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": { "type": "http.RequestOptions", "optional": true }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:header": { "type": "image.AstcHeader", "optional": false }
@@ -17243,7 +17205,7 @@
       },
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
-        "return:0:aabb": { "type": "LuaTable<Hash, model.Aabb>", "optional": false }
+        "return:0:aabb": { "type": "LuaMap<Hash, model.Aabb>", "optional": false }
       },
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -17338,16 +17300,6 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": { "type": "physics.ShapeData", "optional": false }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "physics.RaycastOptions", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
-          "optional": false
-        }
       },
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:from": { "type": "Vector3", "optional": false },
@@ -18321,7 +18273,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "return:0:tiles": {
-          "type": "LuaTable<number, LuaTable<number, number>> | undefined",
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
           "optional": false
         }
       },
@@ -21131,7 +21083,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -21408,7 +21360,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -21505,7 +21457,7 @@
         "return:0:objects": { "type": "gui.LayoutObject[]", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_layouts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:": { "type": "LuaTable<Hash, Vector3>", "optional": false }
+        "return:0:": { "type": "LuaMap<Hash, Vector3>", "optional": false }
       },
       "gui\u0000FUNCTION\u0000gui.get_leading\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -21594,7 +21546,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -21894,20 +21846,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": { "type": "http.RequestOptions", "optional": true }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:header": { "type": "image.AstcHeader", "optional": false }
@@ -22027,7 +21965,7 @@
       },
       "model\u0000FUNCTION\u0000model.get_mesh_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
-        "return:0:aabb": { "type": "LuaTable<Hash, model.Aabb>", "optional": false }
+        "return:0:aabb": { "type": "LuaMap<Hash, model.Aabb>", "optional": false }
       },
       "model\u0000FUNCTION\u0000model.get_mesh_enabled\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -22122,16 +22060,6 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": { "type": "physics.ShapeData", "optional": false }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "physics.RaycastOptions", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
-          "optional": false
-        }
       },
       "physics\u0000FUNCTION\u0000physics.raycast_async\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[]": {
         "param:0:from": { "type": "Vector3", "optional": false },
@@ -23105,7 +23033,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:layer": { "type": "string | Hash", "optional": false },
         "return:0:tiles": {
-          "type": "LuaTable<number, LuaTable<number, number>> | undefined",
+          "type": "LuaMap<number, LuaMap<number, number>> | undefined",
           "optional": false
         }
       },
@@ -24962,7 +24890,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -25249,7 +25177,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -25431,7 +25359,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -25731,23 +25659,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": {
-          "type": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }",
-          "optional": true
-        }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
@@ -25992,16 +25903,6 @@
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": {
           "type": "{ type: number; diameter?: number; dimensions?: Vector3; height?: number }",
-          "optional": false
-        }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "{ all?: boolean }", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -28858,7 +28759,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -29137,7 +29038,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -29319,7 +29220,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -29619,23 +29520,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": {
-          "type": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }",
-          "optional": true
-        }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
@@ -29880,16 +29764,6 @@
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": {
           "type": "{ type: number; diameter?: number; dimensions?: Vector3; height?: number }",
-          "optional": false
-        }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "{ all?: boolean }", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },
@@ -31569,7 +31443,7 @@
         },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
-          "type": "LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> }",
+          "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
           "optional": false
         }
       },
@@ -31797,7 +31671,7 @@
       "gui\u0000FUNCTION\u0000gui.clone_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -31979,7 +31853,7 @@
       "gui\u0000FUNCTION\u0000gui.get_tree\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\"> | undefined", "optional": false },
         "return:0:clones": {
-          "type": "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }",
+          "type": "LuaMap<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\"> | undefined> }",
           "optional": false
         }
       },
@@ -32279,23 +32153,6 @@
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function\",\"nil\"],\"isOptional\":false}]->[]": {
         "param:0:callback": { "type": "((self: unknown) => void) | undefined", "optional": false }
       },
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:url": { "type": "string", "optional": false },
-        "param:1:method": { "type": "string", "optional": false },
-        "param:2:callback": {
-          "type": "(self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void",
-          "optional": false
-        },
-        "param:3:headers": {
-          "type": "LuaMap<string, string> | Record<string, string>",
-          "optional": true
-        },
-        "param:4:post_data": { "type": "string", "optional": true },
-        "param:5:options": {
-          "type": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string }",
-          "optional": true
-        }
-      },
       "image\u0000FUNCTION\u0000image.get_astc_header\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:buffer": { "type": "string", "optional": false },
         "return:0:table": {
@@ -32466,16 +32323,6 @@
         "param:1:shape": { "type": "string | Hash", "optional": false },
         "return:0:table": {
           "type": "{ type: number; diameter?: number; dimensions?: Vector3; height?: number }",
-          "optional": false
-        }
-      },
-      "physics\u0000FUNCTION\u0000physics.raycast\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"Omit<BuiltinMessages[\\\"ray_cast_response\\\"], \\\"request_id\\\">\",\"nil\",\"table\"],\"isOptional\":false}]": {
-        "param:0:from": { "type": "Vector3", "optional": false },
-        "param:1:to": { "type": "Vector3", "optional": false },
-        "param:2:groups": { "type": "Hash[]", "optional": false },
-        "param:3:options": { "type": "{ all?: boolean }", "optional": true },
-        "return:0:result": {
-          "type": "Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
           "optional": false
         }
       },

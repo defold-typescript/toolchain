@@ -6,8 +6,10 @@ import { SRC_AUGMENTATION_GATES } from "../scripts/regen";
 import {
   GO_SIGNATURES_PATH,
   GUI_SIGNATURES_PATH,
+  HTTP_SIGNATURES_PATH,
   loadSignatureFile,
   MSG_SIGNATURES_PATH,
+  PHYSICS_SIGNATURES_PATH,
   RENDER_SIGNATURES_PATH,
   SYS_SIGNATURES_PATH,
   VMATH_SIGNATURES_PATH,
@@ -165,6 +167,46 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       fqn: "sys.set_engine_throttle",
       from: "Disables engine throttling.",
       to: "Turns engine throttling off.",
+    },
+  },
+  {
+    namespace: "physics",
+    declarationsPaths: [overloadsPath("physics-overloads.d.ts")],
+    storePath: PHYSICS_SIGNATURES_PATH,
+    fqns: ["physics.raycast"],
+    reflow: {
+      from: "      to: Vector3,\n      groups: Hash[],\n      options: { all?: boolean },",
+      to: "      to: Vector3, groups: Hash[],\n      options: { all?: boolean },",
+    },
+    driftSignature: {
+      fqn: "physics.raycast",
+      from: "options: { all?: boolean },",
+      to: "options?: { all?: boolean },",
+    },
+    driftDoc: {
+      fqn: "physics.raycast",
+      from: "Ray cast with an options table, which returns the hits as a list",
+      to: "Ray cast with an options table, which returns a list of hits",
+    },
+  },
+  {
+    namespace: "http",
+    declarationsPaths: [overloadsPath("http-overloads.d.ts")],
+    storePath: HTTP_SIGNATURES_PATH,
+    fqns: ["http.request"],
+    reflow: {
+      from: "post_data: string | undefined,",
+      to: "post_data:\n        | string\n        | undefined,",
+    },
+    driftSignature: {
+      fqn: "http.request",
+      from: "report_progress: boolean;",
+      to: "report_progress?: boolean;",
+    },
+    driftDoc: {
+      fqn: "http.request",
+      from: "Perform a HTTP/HTTPS request that reports its progress.",
+      to: "Perform a HTTP/HTTPS request with progress events.",
     },
   },
 ];
@@ -396,6 +438,8 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,
+  "physics.raycast": 2,
+  "http.request": 2,
   "sys.get_config_string": 2,
   "sys.set_engine_throttle": 2,
   "vmath.euler_to_quat": 2,

@@ -2331,6 +2331,15 @@ msg.post("#collisionobject", "apply_force", {
 });
 ```
 
+A built-in message with a required field requires its payload, because the engine raises "Field ... not specified" when it arrives without one. A message whose fields are all optional takes the payload or not:
+
+```ts
+msg.post("@system:", "exit", { code: 0 }); // leaving out `{ code }` is a compile error
+msg.post(".", "acquire_input_focus"); // no fields, no payload needed
+```
+
+A field that holds an engine constant takes that constant group's type where the target declares it: `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`. On a target that declares no such type, the field stays `number`.
+
 The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, whose payload is unchecked until you declare it — so an undeclared id always compiles, and [declaring one](#declaring-your-own-messages) buys it the same checking a built-in id gets:
 
 ```ts
@@ -2481,7 +2490,7 @@ export default defineScript({
 });
 ```
 
-A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
+A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. An id it declares with a required field requires the payload, as a built-in one does, since the handler would otherwise read `nil`; a `CustomMessages` id keeps its payload optional. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
 
 **Scene address.** This is the default when the receiver is a literal address your scenes declare. [`scene-types`](./scene-types.md#component-addresses-carry-their-messages-and-properties) links each script component's address to its source, so the sender needs no import — `src/launcher.ts`:
 
@@ -15485,7 +15494,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
 - function get_status(url: string | Hash | Url): collectionfactory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
@@ -15863,7 +15872,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cancel_animations(node: Opaque<"node">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
-- function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+- function clone_tree(node: Opaque<"node"> | undefined): LuaMap<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node"> | undefined> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
 - gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K): gui.NodeProperties[NodePropertyName<K>]
@@ -15891,7 +15900,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_layer(node: Opaque<"node">): Hash;
 - function get_layout(): Hash;
 - function get_layout_objects(node: Opaque<"node">): gui.LayoutObject[]; [since 1.13.2]
-- function get_layouts(): LuaTable<Hash, Vector3>;
+- function get_layouts(): LuaMap<Hash, Vector3>;
 - function get_leading(node: Opaque<"node">): number;
 - function get_line_break(node: Opaque<"node">): boolean;
 - function get_material(node: Opaque<"node">): Hash;
@@ -15913,7 +15922,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_text(node: Opaque<"node">): string;
 - function get_texture(node: Opaque<"node">): Hash;
 - function get_tracking(node: Opaque<"node">): number;
-- function get_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
+- function get_tree(node: Opaque<"node"> | undefined): LuaMap<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node"> | undefined> };
 - function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.Type, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
@@ -16129,7 +16138,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### http
 
-- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: http.RequestOptions): void;
+- http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void
+- http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress: boolean; proxy?: string; }): void
 - interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; } [since 1.13.2]
 
 ### image
@@ -16251,7 +16261,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_aabb(url: string | Hash | Url): model.Aabb;
 - function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.0]
 - function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
-- function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;
+- function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;
 - function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
 - function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
@@ -16267,7 +16277,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void
+- msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: SceneAddress | Hash | Url | undefined): Url
@@ -16304,7 +16314,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
 - function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
 - function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;
-- function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: physics.RaycastOptions): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined;
+- physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined
+- physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;
@@ -16702,7 +16713,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;
 - function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;
 - function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
-- function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;
+- function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
 - function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;

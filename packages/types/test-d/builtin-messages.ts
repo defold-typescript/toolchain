@@ -140,10 +140,15 @@ void _soundStoppedShape;
 
 const _modelAnimationDone: BuiltinMessages["model_animation_done"] = {
   animation_id: _hash,
-  playback: 0,
+  playback: go.PLAYBACK_ONCE_FORWARD,
 };
-const _modelAnimationDoneShape: { animation_id: Hash; playback: number } = _modelAnimationDone;
+const _modelAnimationDoneShape: { animation_id: Hash; playback: go.Playback } = _modelAnimationDone;
 void _modelAnimationDoneShape;
+const _modelAnimationDonePlayback: Identical<
+  BuiltinMessages["model_animation_done"]["playback"],
+  go.Playback
+> = true;
+void _modelAnimationDonePlayback;
 
 // @ts-expect-error model_animation_done payload has no `current_tile` field
 void _modelAnimationDone.current_tile;
@@ -198,6 +203,43 @@ void _layoutChangedShape;
 // @ts-expect-error layout_changed id must be Hash, not string
 const _layoutChangedBadId: BuiltinMessages["layout_changed"]["id"] = "not a hash";
 void _layoutChangedBadId;
+
+// A built-in message with a required field requires its payload: the engine
+// raises "Field ... not specified" for an absent one.
+// @ts-expect-error exit requires its code
+msg.post("@system:", "exit");
+msg.post("@system:", "exit", { code: 0 });
+// @ts-expect-error play_animation requires its id
+msg.post("#sprite", "play_animation");
+msg.post("#sprite", "play_animation", { id: hash("run") });
+
+// Every field optional, or an undeclared id: the payload stays optional.
+msg.post(".", "acquire_input_focus");
+msg.post(".", "set_parent");
+msg.post(".", "an_undeclared_custom_id");
+
+type WaveMessages = { spawn_wave: { count: number }; ping: { note?: string } };
+const _wave = msg.url<WaveMessages>("/logic#wave");
+// @ts-expect-error the receiver declares spawn_wave with a required count
+msg.post(_wave, "spawn_wave");
+msg.post(_wave, "spawn_wave", { count: 3 });
+msg.post(_wave, "ping");
+
+// A field the engine reads as a constant group takes that group's alias.
+// @ts-expect-error 7 is no collectionproxy.TimeStepMode
+msg.post("#proxy", "set_time_step", { factor: 1, mode: 7 });
+msg.post("#proxy", "set_time_step", { factor: 1, mode: 1 });
+const _setTimeStepMode: Identical<
+  BuiltinMessages["set_time_step"]["mode"],
+  collectionproxy.TimeStepMode
+> = true;
+void _setTimeStepMode;
+
+const _orthoMode: BuiltinMessages["set_camera"]["orthographic_mode"] = camera.ORTHO_MODE_FIXED;
+void _orthoMode;
+// @ts-expect-error a go playback constant is no camera.OrthoMode
+const _orthoModeBad: BuiltinMessages["set_camera"]["orthographic_mode"] = go.PLAYBACK_ONCE_FORWARD;
+void _orthoModeBad;
 
 // The built-in message catalog is complete with this gui-script slice — the
 // remaining Defold component families (factory, label, tilemap, particlefx,

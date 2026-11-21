@@ -33,9 +33,9 @@ if (info !== undefined) {
 // script_tilemap.cpp:TileMap_GetTiles pushes nil for an unknown layer.
 const tiles = tilemap.get_tiles("#map", "ground");
 // @ts-expect-error tilemap.get_tiles returns nil for an unknown layer
-const _tilesEarly: LuaTable<number, LuaTable<number, number>> = tiles;
+const _tilesEarly: LuaMap<number, LuaMap<number, number>> = tiles;
 if (tiles !== undefined) {
-  const row: LuaTable<number, LuaTable<number, number>> = tiles;
+  const row: LuaMap<number, LuaMap<number, number>> = tiles;
   void row;
 }
 

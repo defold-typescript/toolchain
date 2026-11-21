@@ -106,7 +106,7 @@ declare global {
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
      * ```
      */
-    function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.Aabb>;
+    function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;
     /**
      * Get the enabled state of a mesh
      *

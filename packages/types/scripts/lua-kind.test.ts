@@ -17,6 +17,7 @@ const surface = readDeclaredSurface(program, [
   "factory",
   "go",
   "gui",
+  "msg",
   "render",
   "sprite",
   "sys",
@@ -81,6 +82,12 @@ describe("declared kinds on the default surface", () => {
     expect(slot("factory.create", 4)).toEqual({ kinds: ["table"], optional: true });
     const properties = declared("factory.create").slots.find((s) => s.index === 4);
     expect(properties).toMatchObject({ acceptsNil: true });
+  });
+
+  test("a tuple rest parameter is its elements' fixed slots, not a variadic tail", () => {
+    expect(declared("msg.post").minArgs).toBe(2);
+    expect(declared("msg.post").maxArgs).toBe(3);
+    expect(slot("msg.post", 3).optional).toBe(true);
   });
 
   test("a declared unknown maps to any", () => {

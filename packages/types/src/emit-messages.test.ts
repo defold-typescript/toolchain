@@ -1,18 +1,38 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
+import { parseDefoldApiDoc } from "./api-doc";
+import { constantGroupSpellings } from "./emit-dts";
 import {
   applyMessageDeprecations,
   applyMessageEngineCorrections,
+  applyMessageFieldConstantGroups,
   applyMessageFieldCorrections,
   applyMessageOverlays,
   emitBuiltinMessages,
   MESSAGE_DEPRECATIONS,
   MESSAGE_ENGINE_CORRECTIONS,
+  MESSAGE_FIELD_CONSTANT_GROUPS,
   MESSAGE_FIELD_CORRECTIONS,
   type MessageCatalog,
   type MessageEngineCorrection,
   parseMessagesDoc,
 } from "./emit-messages";
+
+// The spelling of each constant group the target's own modules declare.
+const targetSpellings = (version: string): ReadonlyMap<string, string> =>
+  constantGroupSpellings(
+    ["camera", "collectionproxy", "go"].map((namespace) =>
+      parseDefoldApiDoc(
+        JSON.parse(
+          readFileSync(
+            new URL(`../fixtures/defold-${version}/${namespace}_doc.json`, import.meta.url),
+            "utf8",
+          ),
+        ),
+      ),
+    ),
+  );
 
 const TWO_ENTRY_RAW: unknown = {
   info: { namespace: "builtin_messages" },
@@ -269,7 +289,9 @@ describe("applyMessageDeprecations", () => {
     const raw = JSON.parse(
       await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
     );
-    const emitted = emitBuiltinMessages(applyMessageOverlays(parseMessagesDoc(raw)));
+    const emitted = emitBuiltinMessages(applyMessageOverlays(parseMessagesDoc(raw)), {
+      groupSpellings: targetSpellings("1.14.1"),
+    });
     const generated = await Bun.file(
       new URL("../generated/builtin-messages.d.ts", import.meta.url),
     ).text();
@@ -515,5 +537,81 @@ describe("applyMessageEngineCorrections", () => {
       applyMessageDeprecations(parseMessagesDoc(messagesDoc)),
     );
     expect(() => applyMessageEngineCorrections(base)).not.toThrow();
+  });
+});
+
+describe("message field constant groups", () => {
+  const catalog = applyMessageOverlays(parseMessagesDoc(messagesDoc));
+  const payloadOf = (emitted: string, name: string): string | undefined =>
+    emitted
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith(`${name}: `));
+
+  test("a field the engine reads as a constant group takes the alias the target declares", () => {
+    const emitted = emitBuiltinMessages(catalog, { groupSpellings: targetSpellings("1.14.1") });
+    expect(payloadOf(emitted, "set_time_step")).toBe(
+      "set_time_step: { factor: number; mode: collectionproxy.TimeStepMode };",
+    );
+    expect(payloadOf(emitted, "model_animation_done")).toBe(
+      "model_animation_done: { animation_id: Hash; playback: go.Playback };",
+    );
+    expect(payloadOf(emitted, "set_camera")).toContain("orthographic_mode?: camera.OrthoMode");
+  });
+
+  test("a field whose group the target does not declare keeps its token's type", () => {
+    const emitted = emitBuiltinMessages(catalog, { groupSpellings: targetSpellings("1.13.0") });
+    expect(payloadOf(emitted, "set_time_step")).toBe(
+      "set_time_step: { factor: number; mode: number };",
+    );
+    expect(payloadOf(emitted, "set_camera")).toContain("orthographic_mode?: number");
+    // `go.Playback` is a constant-union alias row on a target with no `go.PLAYBACK` enum.
+    expect(payloadOf(emitted, "model_animation_done")).toBe(
+      "model_animation_done: { animation_id: Hash; playback: go.Playback };",
+    );
+    expect(payloadOf(emitBuiltinMessages(catalog), "set_time_step")).toBe(
+      "set_time_step: { factor: number; mode: number };",
+    );
+  });
+
+  test("throws once upstream retypes a grouped field, or the field is gone", () => {
+    const overlay = [
+      {
+        origin: "collectionproxy",
+        name: "set_time_step",
+        field: "mode",
+        group: "collectionproxy.TIME_STEP_MODE",
+        upstream: ["number"],
+        reason: "test",
+      },
+    ];
+    const retyped: MessageCatalog = {
+      entries: [
+        {
+          name: "set_time_step",
+          origin: "collectionproxy",
+          description: "",
+          payload: [
+            {
+              name: "mode",
+              types: ["collectionproxy.TIME_STEP_MODE"],
+              optional: false,
+              doc: "",
+            },
+          ],
+        },
+      ],
+    };
+    expect(() => applyMessageFieldConstantGroups(retyped, overlay)).toThrow(
+      /upstream now declares/,
+    );
+    expect(() => applyMessageFieldConstantGroups({ entries: [] }, overlay)).toThrow(
+      /no catalog field/,
+    );
+  });
+
+  test("every committed group names a field of the committed catalog", () => {
+    expect(MESSAGE_FIELD_CONSTANT_GROUPS.length).toBeGreaterThan(0);
+    expect(() => applyMessageFieldConstantGroups(parseMessagesDoc(messagesDoc))).not.toThrow();
   });
 });
