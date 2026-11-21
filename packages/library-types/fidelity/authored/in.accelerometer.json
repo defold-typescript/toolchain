@@ -19,5 +19,31 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
+    {
+      "list": "valueReturns",
+      "name": "calibrate",
+      "reason": "upstream returns `instance.calibrate(…)` (accelerometer.lua:134), whose body returns nothing (accelerometer.lua:57)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "on_input",
+      "reason": "upstream returns `instance.on_input(…)` (accelerometer.lua:139), whose body returns nothing (accelerometer.lua:61)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "on_window_resized",
+      "reason": "upstream returns `instance.on_window_resized(…)` (accelerometer.lua:169), whose body returns nothing (accelerometer.lua:113)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "reset",
+      "reason": "upstream returns `instance.reset(…)` (accelerometer.lua:129), whose body returns nothing (accelerometer.lua:49)"
+    }
+  ],
+  "staleBehaviorVerdicts": []
 }

@@ -19,5 +19,10 @@
   "variadicMembers": 1,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

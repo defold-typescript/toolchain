@@ -7,23 +7,26 @@
  * @noResolution
  */
 declare module 'in.mapper' {
+	/** The in-game action a trigger is bound to, returned as given; `mapper.md` binds strings. */
+	type MappedAction = Hash | string | number;
+
 	/**
 	 * @param gamepad - Gamepad index to bind the trigger to. **0️⃣ 0-based; passed to `in.mapper` unchanged.**
 	 */
 	export function bind(
-		trigger: {},
-		action: {},
+		trigger: Hash,
+		action: MappedAction,
 		player?: any,
 		gamepad?: any,
-	): unknown;
-	export function unbind(trigger: {}, player?: any): void;
+	): MappedAction | undefined;
+	export function unbind(trigger: Hash, player?: any): void;
 	export function unbind_all(player?: any): void;
 	/**
 	 * @param gamepad - Gamepad index the trigger came from, `action.gamepad`. **0️⃣ 0-based; passed to `in.mapper` unchanged.**
 	 */
 	export function on_input(
-		trigger: {},
+		trigger: Hash | undefined,
 		player?: any,
 		gamepad?: any,
-	): {} | undefined;
+	): MappedAction | undefined;
 }

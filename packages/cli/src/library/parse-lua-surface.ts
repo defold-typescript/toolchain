@@ -82,7 +82,20 @@ export interface LuaMember {
   /** The parameter and return text of the block `doc` holds, types left out; empty when
    * `doc` is. See `luaDocTags`. */
   tags: LuaDocTags;
+  /** Present exactly when `params` is: whether the body returns a value, a `return` with
+   * an expression other than a lone `nil`, outside every nested function. See
+   * `readBody`. */
+  returnsValue?: boolean;
+  /** Present exactly when `params` is: the parameters the body nil-checks or defaults, in
+   * parameter order. See `readBody`. */
+  nilTolerant?: string[];
 }
+
+/** What a callable member's body does with its result and its parameters. */
+type LuaBody = Required<Pick<LuaMember, "returnsValue" | "nilTolerant">>;
+
+/** Reads the body of the function whose parameter list opens at a source position. */
+type BodyReader = (line: number, column: number, params: readonly string[]) => LuaBody;
 
 export interface LuaDocTags {
   /** In block order; a tag whose text is empty is left out. */
@@ -185,6 +198,253 @@ function readParams(
     .map((part) => part.trim())
     .filter((part) => part !== "");
   return { params: raw.filter((part) => part !== "..."), varargs: raw.includes("...") };
+}
+
+interface LuaToken {
+  text: string;
+  line: number;
+  column: number;
+}
+
+/** What a string token reads as: no name, keyword or operator, so a string holding
+ * `return` or a parameter's name is never mistaken for code. */
+const STRING_TOKEN = "<string>";
+const OPERATORS = ["...", "==", "~=", "<=", ">=", "..", "::", "//", "<<", ">>"];
+
+/** The level of the long bracket `[[`, `[=[`, … opening at `position`, or -1. */
+function longBracketLevel(source: string, position: number): number {
+  if (source[position] !== "[") return -1;
+  let cursor = position + 1;
+  while (source[cursor] === "=") cursor += 1;
+  return source[cursor] === "[" ? cursor - position - 1 : -1;
+}
+
+/** The position just past the long bracket of `level` closing after `from`, or the end
+ * of the source when it never closes. */
+function longBracketEnd(source: string, from: number, level: number): number {
+  const close = `]${"=".repeat(level)}]`;
+  const at = source.indexOf(close, from);
+  return at === -1 ? source.length : at + close.length;
+}
+
+/** The end of the quoted string opening at `position`; an unterminated one ends at its
+ * line, as Lua would refuse it there. */
+function quotedStringEnd(source: string, position: number): number {
+  const quote = source[position];
+  let cursor = position + 1;
+  while (cursor < source.length) {
+    const char = source[cursor];
+    if (char === "\\") cursor += 2;
+    else if (char === quote) return cursor + 1;
+    else if (char === "\n") return cursor;
+    else cursor += 1;
+  }
+  return source.length;
+}
+
+/** Lua's tokens with their line and column, comments dropped and every string read as
+ * `STRING_TOKEN`. Enough of the lexical grammar to find where a block ends; nothing here
+ * reads a number's value or an operator's meaning. */
+function tokenizeLua(source: string): LuaToken[] {
+  const tokens: LuaToken[] = [];
+  let line = 0;
+  let lineStart = 0;
+  let cursor = 0;
+  const skipTo = (end: number): void => {
+    for (let at = cursor; at < end; at += 1) {
+      if (source[at] === "\n") {
+        line += 1;
+        lineStart = at + 1;
+      }
+    }
+    cursor = end;
+  };
+  const push = (text: string, end: number): void => {
+    tokens.push({ text, line, column: cursor - lineStart });
+    skipTo(end);
+  };
+  while (cursor < source.length) {
+    const char = source[cursor] as string;
+    if (/\s/.test(char)) {
+      skipTo(cursor + 1);
+      continue;
+    }
+    if (source.startsWith("--", cursor)) {
+      const level = longBracketLevel(source, cursor + 2);
+      if (level >= 0) skipTo(longBracketEnd(source, cursor + level + 4, level));
+      else {
+        const newline = source.indexOf("\n", cursor);
+        skipTo(newline === -1 ? source.length : newline);
+      }
+      continue;
+    }
+    const level = longBracketLevel(source, cursor);
+    if (level >= 0) {
+      push(STRING_TOKEN, longBracketEnd(source, cursor + level + 2, level));
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      push(STRING_TOKEN, quotedStringEnd(source, cursor));
+      continue;
+    }
+    const word = /^(?:[A-Za-z_][A-Za-z0-9_]*|\.?[0-9](?:[eEpP][+-]|[0-9A-Za-z_.])*)/.exec(
+      source.slice(cursor, cursor + 256),
+    );
+    if (word) {
+      push(word[0], cursor + word[0].length);
+      continue;
+    }
+    const operator = OPERATORS.find((candidate) => source.startsWith(candidate, cursor)) ?? char;
+    push(operator, cursor + operator.length);
+  }
+  return tokens;
+}
+
+/** Tokens that end a statement, so a `return` followed by one returns nothing. */
+const STATEMENT_END: ReadonlySet<string> = new Set(["end", "else", "elseif", "until", ";"]);
+/** Tokens that make a name the start of an index or a call rather than a bare value. */
+const ACCESS: ReadonlySet<string> = new Set([".", "[", ":", "(", "{", STRING_TOKEN]);
+/** Operators that bind tighter than `and` and `or`, so a name right after one is their
+ * operand: in `top.id == id or false` the `or` tests the comparison, not `id`. */
+const BINDS_TIGHTER: ReadonlySet<string> = new Set([
+  "==",
+  "~=",
+  "<",
+  ">",
+  "<=",
+  ">=",
+  "..",
+  "+",
+  "-",
+  "*",
+  "/",
+  "//",
+  "%",
+  "^",
+  "#",
+  "&",
+  "|",
+  "~",
+  "<<",
+  ">>",
+]);
+
+/** Whether the `return` at `index` hands back a value: an expression follows it, and the
+ * expression is not a lone `nil`. */
+function returnsAValue(tokens: readonly LuaToken[], index: number): boolean {
+  const next = tokens[index + 1]?.text;
+  if (next === undefined || STATEMENT_END.has(next)) return false;
+  if (next !== "nil") return true;
+  const after = tokens[index + 2]?.text;
+  return after !== undefined && !STATEMENT_END.has(after);
+}
+
+interface BodyFrame {
+  function: boolean;
+  /** The member's parameter names a nested function redeclares as its own. */
+  shadows?: ReadonlySet<string>;
+}
+
+/**
+ * The body of the function whose parameter list opens at token `open`, read to its
+ * matching `end` by counting Lua's blocks.
+ *
+ * `returnsValue` is true when a `return` outside every nested function carries an
+ * expression; a bare `return` and `return nil` carry none. A parameter is nil-tolerant
+ * when the body compares it with `nil` (`x == nil`, `x ~= nil`, either way round), tests
+ * it with `not x`, or uses it as the whole left operand of `and` or `or` (`x and …`,
+ * `x or default`, `x = x or default`, but not `a == x or b`, whose `or` tests the
+ * comparison). Only the bare name counts — `self.x == nil` and
+ * `not x.ready` read something else — and a nested function that redeclares the name
+ * hides it. A pattern the Lua writes another way passes unnoticed: the lists this feeds
+ * are one-sided on purpose.
+ */
+function readBody(tokens: readonly LuaToken[], open: number, params: readonly string[]): LuaBody {
+  const names = new Set(params);
+  const tolerant = new Set<string>();
+  let returnsValue = false;
+  let start = open;
+  while (start < tokens.length && tokens[start]?.text !== ")") start += 1;
+  const stack: BodyFrame[] = [{ function: true }];
+  let loopsAwaitingDo = 0;
+  const visible = (name: string): boolean =>
+    names.has(name) && !stack.some((frame) => frame.shadows?.has(name));
+  const bare = (index: number): boolean => {
+    const before = tokens[index - 1]?.text;
+    return before !== "." && before !== ":";
+  };
+  for (let index = start + 1; index < tokens.length && stack.length > 0; index += 1) {
+    const text = (tokens[index] as LuaToken).text;
+    const next = tokens[index + 1]?.text;
+    switch (text) {
+      case "function": {
+        let cursor = index + 1;
+        while (cursor < tokens.length && tokens[cursor]?.text !== "(") cursor += 1;
+        const shadows = new Set<string>();
+        for (cursor += 1; cursor < tokens.length && tokens[cursor]?.text !== ")"; cursor += 1) {
+          const param = (tokens[cursor] as LuaToken).text;
+          if (names.has(param)) shadows.add(param);
+        }
+        stack.push({ function: true, shadows });
+        index = cursor;
+        continue;
+      }
+      case "for":
+      case "while":
+        loopsAwaitingDo += 1;
+        stack.push({ function: false });
+        continue;
+      case "do":
+        if (loopsAwaitingDo > 0) loopsAwaitingDo -= 1;
+        else stack.push({ function: false });
+        continue;
+      case "if":
+      case "repeat":
+        stack.push({ function: false });
+        continue;
+      case "end":
+      case "until":
+        stack.pop();
+        continue;
+      case "return":
+        if (stack.filter((frame) => frame.function).length === 1 && returnsAValue(tokens, index)) {
+          returnsValue = true;
+        }
+        continue;
+    }
+    if (text === "nil" && (next === "==" || next === "~=")) {
+      const subject = tokens[index + 2]?.text;
+      const after = tokens[index + 3]?.text;
+      if (subject !== undefined && visible(subject) && (after === undefined || !ACCESS.has(after)))
+        tolerant.add(subject);
+      continue;
+    }
+    if (!visible(text) || !bare(index)) continue;
+    const comparedWithNil = (next === "==" || next === "~=") && tokens[index + 2]?.text === "nil";
+    const before = tokens[index - 1]?.text;
+    const negated = before === "not" && (next === undefined || !ACCESS.has(next));
+    const logicalOperand =
+      (next === "and" || next === "or") && (before === undefined || !BINDS_TIGHTER.has(before));
+    if (comparedWithNil || negated || logicalOperand) tolerant.add(text);
+  }
+  return { returnsValue, nilTolerant: params.filter((param) => tolerant.has(param)) };
+}
+
+/** A `BodyReader` over `source`, tokenized once on first use. A position no token sits
+ * at reads as a body that returns nothing and tolerates nothing, the lists it feeds being
+ * one-sided. */
+function bodyReader(source: string): BodyReader {
+  let index: Map<string, number> | undefined;
+  let tokens: LuaToken[] = [];
+  return (line, column, params) => {
+    if (index === undefined) {
+      tokens = tokenizeLua(source);
+      index = new Map(tokens.map((token, at) => [`${token.line}:${token.column}`, at]));
+    }
+    const open = index.get(`${line}:${column}`);
+    if (open === undefined) return { returnsValue: false, nilTolerant: [] };
+    return readBody(tokens, open, params);
+  };
 }
 
 /** `line` with its quoted strings emptied and its trailing comment dropped, so the
@@ -304,6 +564,7 @@ function readConstructor(
   index: number,
   open: number,
   strict: boolean,
+  bodies: BodyReader,
 ): { entries: LuaMember[]; close: number } {
   const opening = lines[index] as string;
   const inline = stripStringsAndComment(opening.slice(open + 1));
@@ -319,8 +580,12 @@ function readConstructor(
       if (strict) assertNotNamedValue(rhs, index + 1, opening.trim());
       const undocumented = { doc: "", refusedDoc: false, tags: noTags() };
       if (!FUNCTION_VALUE.test(rhs)) return { name, varargs: false, ...undocumented };
-      const { params, varargs } = readParams([rhs], 0, rhs.indexOf("("));
-      return { name, params, varargs, ...undocumented };
+      const paren = rhs.indexOf("(");
+      const { params, varargs } = readParams([rhs], 0, paren);
+      // The entry's own text is the whole function, so it is read on its own rather than
+      // located in a source its strings were emptied out of.
+      const own = bodyReader(rhs)(0, paren, params);
+      return { name, params, varargs, ...undocumented, ...own };
     });
     return { entries, close: index };
   }
@@ -333,12 +598,15 @@ function readConstructor(
       const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(line), cursor + 1, trimmed);
       if (strict) assertNotNamedValue(rhs, cursor + 1, trimmed);
       if (FUNCTION_VALUE.test(rhs)) {
-        const { params, varargs } = readParams(
-          lines,
-          cursor,
-          line.indexOf("(", line.length - rhs.length),
-        );
-        entries.push({ name, params, varargs, ...readDoc(lines, cursor) });
+        const paren = line.indexOf("(", line.length - rhs.length);
+        const { params, varargs } = readParams(lines, cursor, paren);
+        entries.push({
+          name,
+          params,
+          varargs,
+          ...readDoc(lines, cursor),
+          ...bodies(cursor, paren, params),
+        });
       } else {
         entries.push({ name, varargs: false, ...readDoc(lines, cursor) });
       }
@@ -488,8 +756,19 @@ function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refus
 }
 
 /** The entries of the table literal a data module returns at line `index`. */
-function readReturnedLiteral(lines: string[], index: number, strict: boolean): LuaMember[] {
-  const { entries } = readConstructor(lines, index, (lines[index] as string).indexOf("{"), strict);
+function readReturnedLiteral(
+  lines: string[],
+  index: number,
+  strict: boolean,
+  bodies: BodyReader,
+): LuaMember[] {
+  const { entries } = readConstructor(
+    lines,
+    index,
+    (lines[index] as string).indexOf("{"),
+    strict,
+    bodies,
+  );
   if (entries.some((entry) => entry.name === "__index")) {
     throw new Error(
       "lua surface: the returned table carries `__index`, so members reached through it would be invisible and the surface would read as complete while short.",
@@ -511,10 +790,11 @@ function readReturnedLiteral(lines: string[], index: number, strict: boolean): L
 export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {}): LuaSurface {
   const lines = source.split("\n");
   const strict = options.strict === true;
+  const bodies = bodyReader(source);
   const returned: ModuleReturn =
     options.moduleLocal !== undefined ? { local: options.moduleLocal } : resolveModuleReturn(lines);
   if ("literal" in returned) {
-    const literal = readReturnedLiteral(lines, returned.literal, strict);
+    const literal = readReturnedLiteral(lines, returned.literal, strict, bodies);
     if (strict) assertSomeMembers(literal.length);
     return { moduleLocal: undefined, members: literal };
   }
@@ -543,7 +823,13 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     const line = lines[index] as string;
     const opened = tableConstructor?.exec(line);
     if (opened) {
-      const { entries, close } = readConstructor(lines, index, opened[0].length - 1, strict);
+      const { entries, close } = readConstructor(
+        lines,
+        index,
+        opened[0].length - 1,
+        strict,
+        bodies,
+      );
       for (const entry of entries) record(entry);
       index = close;
       continue;
@@ -556,20 +842,29 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
           `lua surface: line ${index + 1} defines a \`:\` method on \`${colon[1]}\`, not on the returned \`${moduleLocal}\`, so the instances it serves are reached through no member this reader sees — ${line.trim()}`,
         );
       }
-      const { params, varargs } = readParams(lines, index, colon[0].length - 1);
+      const paren = colon[0].length - 1;
+      const { params, varargs } = readParams(lines, index, paren);
       record({
         name: colon[2] as string,
         params,
         varargs,
         method: true,
         ...readDoc(lines, index),
+        ...bodies(index, paren, params),
       });
       continue;
     }
     const defined = definition.exec(line);
     if (defined) {
-      const { params, varargs } = readParams(lines, index, defined[0].length - 1);
-      record({ name: defined[1] as string, params, varargs, ...readDoc(lines, index) });
+      const paren = defined[0].length - 1;
+      const { params, varargs } = readParams(lines, index, paren);
+      record({
+        name: defined[1] as string,
+        params,
+        varargs,
+        ...readDoc(lines, index),
+        ...bodies(index, paren, params),
+      });
       continue;
     }
     const assigned = assignment.exec(line);
@@ -583,7 +878,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     }
     const open = line.indexOf("(", line.length - rhs.length);
     const { params, varargs } = readParams(lines, index, open);
-    record({ name, params, varargs, ...readDoc(lines, index) });
+    record({ name, params, varargs, ...readDoc(lines, index), ...bodies(index, open, params) });
   }
 
   if (strict) assertSomeMembers(members.size);

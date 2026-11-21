@@ -7,8 +7,6 @@
  * @noResolution
  */
 declare module 'gooey.gooey' {
-	type table = {};
-
 	type ButtonState = {
 		node: Opaque<"node">;
 		node_id: Hash;
@@ -135,6 +133,23 @@ declare module 'gooey.gooey' {
 		total_width: number;
 	};
 
+	type ComponentState =
+		| ButtonState
+		| CheckboxState
+		| RadioState
+		| ListState
+		| ScrollbarState
+		| InputState;
+
+	/** The table `group` builds and returns (`gooey.lua:191`): the components its function
+	 * created, whether one of them consumed the input, and which one holds focus. */
+	type GroupState = {
+		id: Hash | string;
+		consumed: boolean;
+		components: ComponentState[];
+		focus: { component: ComponentState | undefined; index: number | undefined };
+	};
+
 	/** What `create_theme` hands back: the helpers it installs, over any component
 	 * carrying a node. `is_enabled` and `set_enabled` return nothing when it does not. */
 	type Theme = {
@@ -144,10 +159,10 @@ declare module 'gooey.gooey' {
 		release_input: () => void;
 		group: (
 			group_id: Hash | string,
-			action_id: Hash,
-			action: table,
+			action_id: Hash | undefined,
+			action: Partial<go.on_input.Action>,
 			group_fn: () => void,
-		) => table;
+		) => GroupState;
 	};
 
 	/**
@@ -167,17 +182,17 @@ declare module 'gooey.gooey' {
 
 	export function button(
 		node_id: Hash | string,
-		action_id: Hash,
-		action: table,
-		fn: (button: ButtonState) => void,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+		fn?: (button: ButtonState) => void,
 		refresh_fn?: (button: ButtonState) => void,
 	): ButtonState;
 
 	export function checkbox(
 		node_id: Hash | string,
-		action_id: Hash,
-		action: table,
-		fn: (checkbox: CheckboxState) => void,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+		fn?: (checkbox: CheckboxState) => void,
 		refresh_fn?: (checkbox: CheckboxState) => void,
 	): CheckboxState;
 
@@ -185,17 +200,17 @@ declare module 'gooey.gooey' {
 	 * input it was called with, not a radio state (`README.md:265`). */
 	export function radiogroup(
 		group_id: Hash | string,
-		action_id: Hash,
-		action: table,
-		fn: (group_id: Hash | string, action_id: Hash, action: table) => void,
-	): table;
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+		fn?: (group_id: Hash, action_id: Hash | undefined, action: Partial<go.on_input.Action>) => void,
+	): RadioState[];
 
 	export function radio(
 		node_id: Hash | string,
-		group: string,
-		action_id: Hash,
-		action: table,
-		fn: (radio: RadioState) => void,
+		group: Hash | string,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+		fn?: (radio: RadioState) => void,
 		refresh_fn?: (radio: RadioState) => void,
 	): RadioState;
 
@@ -203,10 +218,10 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_ids: (Hash | string)[],
-		action_id: Hash,
-		action: table,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: { horizontal?: boolean } | undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
@@ -214,11 +229,11 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
-		data: table,
-		action_id: Hash,
-		action: table,
+		data: unknown[],
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: { horizontal?: boolean; carousel?: boolean } | undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
@@ -226,11 +241,11 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
-		data: table,
-		action_id: Hash,
-		action: table,
+		data: unknown[],
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: { carousel?: boolean } | undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
@@ -238,11 +253,11 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
-		data: table,
-		action_id: Hash,
-		action: table,
+		data: unknown[],
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: { carousel?: boolean } | undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
@@ -250,10 +265,10 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_ids: (Hash | string)[],
-		action_id: Hash,
-		action: table,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
@@ -261,38 +276,50 @@ declare module 'gooey.gooey' {
 		list_id: string,
 		stencil_id: Hash | string,
 		item_ids: (Hash | string)[],
-		action_id: Hash,
-		action: table,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config: undefined,
-		fn: (list: ListState) => void,
+		fn?: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
 	): ListState;
 
+	/**
+	 * `gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.vertical` as the
+	 * scroll callback and its sixth as the refresh callback, so the README's
+	 * `(handle_id, bounds_id, action_id, action, fn, refresh_fn)` is the call that works;
+	 * the seventh parameter `gooey.lua` names reaches nothing.
+	 */
 	export function vertical_scrollbar(
 		handle_id: Hash | string,
 		bounds_id: Hash | string,
-		action_id: Hash,
-		action: table,
-		config: table | undefined,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		fn: (scrollbar: ScrollbarState) => void,
 		refresh_fn?: (scrollbar: ScrollbarState) => void,
+		unused?: undefined,
 	): ScrollbarState;
 
+	/**
+	 * `gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.horizontal` as the
+	 * scroll callback and its sixth as the refresh callback, so the README's
+	 * `(handle_id, bounds_id, action_id, action, fn, refresh_fn)` is the call that works;
+	 * the seventh parameter `gooey.lua` names reaches nothing.
+	 */
 	export function horizontal_scrollbar(
 		handle_id: Hash | string,
 		bounds_id: Hash | string,
-		action_id: Hash,
-		action: table,
-		config: table | undefined,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		fn: (scrollbar: ScrollbarState) => void,
 		refresh_fn?: (scrollbar: ScrollbarState) => void,
+		unused?: undefined,
 	): ScrollbarState;
 
 	export function input(
 		node_id: Hash | string,
 		keyboard_type: number,
-		action_id: Hash,
-		action: table,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		config?: {
 			max_length?: number;
 			empty_text?: string;
@@ -304,15 +331,15 @@ declare module 'gooey.gooey' {
 
 	export function group(
 		group_id: Hash | string,
-		action_id: Hash,
-		action: table,
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		group_fn: () => void,
-	): table;
+	): GroupState;
 
 	/**
 	 * Move a group's focus to the component at `index`, refreshing it.
 	 *
 	 * @param index **⚠️ 1-based; passed to `gooey` unchanged.**
 	 */
-	export function set_focus(group: table, index: number): void;
+	export function set_focus(group: GroupState, index: number): void;
 }

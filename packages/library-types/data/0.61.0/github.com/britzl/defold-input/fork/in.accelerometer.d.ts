@@ -8,7 +8,7 @@ declare module 'in.accelerometer' {
 	type AccelerometerInstance = {
 		reset: () => void;
 		calibrate: () => void;
-		on_input: (action: { acc_x: number; acc_y: number; acc_z: number }) => void;
+		on_input: (action: Partial<go.on_input.Action>) => void;
 		calibrated: () => Vector3;
 		adjusted: () => Vector3;
 		average: () => Vector3;
@@ -21,7 +21,7 @@ declare module 'in.accelerometer' {
 	export function reset(instance?: AccelerometerInstance): void;
 	export function calibrate(instance?: AccelerometerInstance): void;
 	export function on_input(
-		action: { acc_x: number; acc_y: number; acc_z: number },
+		action: Partial<go.on_input.Action>,
 		instance?: AccelerometerInstance,
 	): void;
 	export function calibrated(instance?: AccelerometerInstance): Vector3;

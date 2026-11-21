@@ -124,5 +124,68 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "in.accelerometer": [
+      {
+        "list": "valueReturns",
+        "name": "calibrate",
+        "reason": "upstream returns `instance.calibrate(…)` (accelerometer.lua:134), whose body returns nothing (accelerometer.lua:57)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "on_input",
+        "reason": "upstream returns `instance.on_input(…)` (accelerometer.lua:139), whose body returns nothing (accelerometer.lua:61)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "on_window_resized",
+        "reason": "upstream returns `instance.on_window_resized(…)` (accelerometer.lua:169), whose body returns nothing (accelerometer.lua:113)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "reset",
+        "reason": "upstream returns `instance.reset(…)` (accelerometer.lua:129), whose body returns nothing (accelerometer.lua:49)"
+      }
+    ],
+    "in.onscreen": [
+      {
+        "list": "valueReturns",
+        "name": "register_analog",
+        "reason": "upstream returns `instance.register_analog(…)` (onscreen.lua:272), whose body returns nothing (onscreen.lua:185)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "register_button",
+        "reason": "upstream returns `instance.register_button(…)` (onscreen.lua:267), whose body returns nothing (onscreen.lua:171)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "reset",
+        "reason": "upstream returns `instance.reset(…)` (onscreen.lua:262), whose body returns nothing (onscreen.lua:159)"
+      }
+    ],
+    "in.state": [
+      {
+        "list": "valueReturns",
+        "name": "acquire",
+        "reason": "upstream returns `instance.acquire(…)` (state.lua:65), whose body returns nothing (state.lua:14)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "on_input",
+        "reason": "upstream returns `instance.on_input(…)` (state.lua:95), whose body returns nothing (state.lua:38)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "release",
+        "reason": "upstream returns `instance.release(…)` (state.lua:73), whose body returns nothing (state.lua:21)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "update",
+        "reason": "upstream returns `instance.on_input(…)` (state.lua:91), whose body returns nothing (state.lua:38)"
+      }
+    ]
   }
 }

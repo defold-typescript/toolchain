@@ -19,5 +19,19 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [
+    {
+      "name": "army_create",
+      "slot": "is_sticky"
+    },
+    {
+      "name": "army_update_stickiness",
+      "slot": "is_sticky"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

@@ -19,5 +19,31 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [],
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
+    {
+      "list": "valueReturns",
+      "name": "acquire",
+      "reason": "upstream returns `instance.acquire(…)` (state.lua:65), whose body returns nothing (state.lua:14)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "on_input",
+      "reason": "upstream returns `instance.on_input(…)` (state.lua:95), whose body returns nothing (state.lua:38)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "release",
+      "reason": "upstream returns `instance.release(…)` (state.lua:73), whose body returns nothing (state.lua:21)"
+    },
+    {
+      "list": "valueReturns",
+      "name": "update",
+      "reason": "upstream returns `instance.on_input(…)` (state.lua:91), whose body returns nothing (state.lua:38)"
+    }
+  ],
+  "staleBehaviorVerdicts": []
 }

@@ -19,5 +19,21 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 0,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [
+    "apply"
+  ],
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [
+    {
+      "name": "apply",
+      "slot": "settings"
+    },
+    {
+      "name": "register",
+      "slot": "fn"
+    }
+  ],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

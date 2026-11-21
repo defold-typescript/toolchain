@@ -6,7 +6,10 @@
  */
 declare module 'in.gesture' {
 	type GestureInstance = {
-		on_input(action_id: Hash, action: {}): DetectedGestures;
+		on_input(
+			action_id: Hash | undefined,
+			action: Partial<go.on_input.Action>,
+		): DetectedGestures | undefined;
 	};
 
 	type DetectedGestures = {
@@ -47,7 +50,7 @@ declare module 'in.gesture' {
 	};
 
 	export function create(settings?: {
-		action_id?: string;
+		action_id?: Hash;
 		tap_threshold?: number;
 		double_tap_interval?: number;
 		swipe_threshold?: number;
@@ -58,7 +61,7 @@ declare module 'in.gesture' {
 
 	export function on_input(
 		this: any,
-		action_id: Hash,
-		action: {},
-	): DetectedGestures;
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+	): DetectedGestures | undefined;
 }

@@ -17,6 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **Filtered systems narrow `entities`** ([Filters](./entity-systems.md#filters)).
 > - **`JSON`, `Date` and other JavaScript globals Defold's Lua lacks fail the build** ([TypeScript gotchas](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build)).
 > - **LuaLS library modules take plain tables, export their types and declare their constants** ([Vendored library types](./resolve.md#vendored-library-types)).
+> - **Gooey, defold-input, Monarch and Orthographic types follow their Lua**, so each README's setup compiles ([Vendored library types](./resolve.md#vendored-library-types)).
 
 ### Breaking
 
@@ -24,6 +25,11 @@ What changed in each published `defold-typescript` toolchain release.
   - **`msg.post`** requires the payload of a built-in message with a required field, which the engine rejects with "Field ... not specified": `msg.post("@system:", "exit")` is a compile error, as is leaving out a required field of a message a typed receiver declares ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
   - **Id tables** from `collectionfactory.create`, `gui.clone_tree`, `gui.get_tree`, `gui.get_layouts`, `model.get_mesh_aabb` and the rows of `tilemap.get_tiles` return `undefined` from `get` for an id they do not hold, and still iterate and pass to `go.delete`.
   - **`http.request`** with `report_progress` hands its callback the progress events too, typed with `bytes_sent`, `bytes_received`, `bytes_total` and `url` and no `status`, so `response.status` is `number | undefined` there.
+- **The Gooey, defold-input, Monarch and Orthographic types follow what their Lua does**, so each README's setup compiles, forwarded from `on_input` or `on_message` included:
+  - **[gooey](https://defold-typescript.github.io/library-data/api/github.com/britzl/gooey/gooey)** — `action_id` takes `undefined` and `action` the action `on_input` hands over, a component's callback may be left out, `gooey.group` returns the group's `consumed`, `components` and `focus`, `gooey.radiogroup` returns its radio states, a dynamic list's `data` is an array, and a scrollbar's fifth argument is its scroll callback.
+  - **defold-input** — each module's `on_input` takes the forwarded `action_id` and action; `in.gesture.on_input` returns `undefined` when it detects nothing, `in.state.is_pressed` returns `undefined` for an action never pressed, an onscreen control's callback reads `x`, `y`, `id`, `pressed` and `released`, and `in.mapper.bind` binds a trigger to a string, number or hash action.
+  - **[monarch](https://defold-typescript.github.io/library-data/api/github.com/britzl/monarch/monarch.monarch)** — a transition preset and the transition's `show_in`, `show_out`, `back_in` and `back_out` return the transition, a transition function receives the node's `pos` and `scale`, `monarch.monarch.data` returns the data as given or `undefined`, `monarch.monarch.top` and `monarch.monarch.bottom` return a `Hash` or `undefined`, transition and focus handlers get a `Hash` message id, `monarch.monarch.show`, `monarch.monarch.replace`, `monarch.monarch.back`, `monarch.monarch.preload` and `monarch.monarch.unload` return a `boolean`, and `monarch.monarch.preload` takes `keep_loaded` rather than `auto_preload`.
+  - **[orthographic](https://defold-typescript.github.io/library-data/api/github.com/britzl/defold-orthographic/orthographic.camera)** — `orthographic.camera.shake` takes a `SHAKE_*` direction, `orthographic.camera.get_viewport` returns a `Vector4`, `orthographic.camera.bounds` and `orthographic.camera.deadzone` with only a camera id remove them, and `orthographic.camera.window_to_world`, `orthographic.camera.project`, `orthographic.camera.unproject`, `orthographic.camera.set_window_scaling_factor` and `PROJECTOR.DEFAULT`, which upstream defines as errors or not at all, are gone.
 
 ### Improved
 

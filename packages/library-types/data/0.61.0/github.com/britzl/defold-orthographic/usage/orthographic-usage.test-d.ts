@@ -33,6 +33,21 @@ camera.follow(undefined, _url, { lerp: 0.1, offset: _v3, immediate: true });
 // @ts-expect-error a number is neither a target nor an array of targets
 camera.follow(undefined, 3);
 
+// `shake` compares its direction with the `SHAKE_*` hashes (`camera.lua:594`), and
+// `get_viewport` returns the camera's one `vmath.vector4` (`camera.lua:690`).
+const _id = hash("camera");
+camera.shake(_id, 0.05, 0.5, camera.SHAKE_HORIZONTAL);
+const _viewport: Vector4 = camera.get_viewport(_id);
+// Nil edges remove the bounds, and a nil camera id means the first camera.
+camera.bounds(_id, 0, 1000, 1000, 0);
+camera.bounds(_id);
+camera.recoil(undefined, _v3);
+// @ts-expect-error `window_to_world` only raises "deprecated" upstream (`camera.lua:92`).
+camera.window_to_world(_id, _v3);
+// @ts-expect-error upstream's `PROJECTOR` holds no `DEFAULT` (`camera.lua:27`).
+void camera.PROJECTOR.DEFAULT;
+
+void _viewport;
 void _view;
 void _offset;
 void _world;

@@ -39,6 +39,11 @@
         "reason": "upstream's LuaDoc says \"This is called automatically from the init() function of the camera.script\" (camera.lua:374)"
       },
       {
+        "name": "project",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"project() is deprecated\")` (camera.lua:89)"
+      },
+      {
         "name": "send_view_projection",
         "kind": "deprecated-stub",
         "reason": "upstream's whole body is `error(\"send_view_projection() is deprecated\")` (camera.lua:80)"
@@ -49,6 +54,16 @@
         "reason": "upstream's whole body is `error(\"set_dpi_ratio() is deprecated\")` (camera.lua:86)"
       },
       {
+        "name": "set_window_scaling_factor",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"set_window_scaling_factor() is deprecated\")` (camera.lua:83)"
+      },
+      {
+        "name": "unproject",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"unproject() is deprecated\")` (camera.lua:98)"
+      },
+      {
         "name": "update",
         "kind": "script-lifecycle",
         "reason": "upstream's LuaDoc says \"This is called automatically from the camera.script\" (camera.lua:431)"
@@ -57,6 +72,11 @@
         "name": "use_projector",
         "kind": "deprecated-stub",
         "reason": "upstream's whole body is `error(\"use_projector() is deprecated\")` (camera.lua:74)"
+      },
+      {
+        "name": "window_to_world",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"window_to_world() is deprecated\")` (camera.lua:92)"
       },
       {
         "name": "world_to_window",

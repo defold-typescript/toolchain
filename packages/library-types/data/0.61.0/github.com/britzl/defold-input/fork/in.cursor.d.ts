@@ -19,9 +19,10 @@ declare module 'in.cursor' {
 	export const DRAG_MODE_VERTICAL: Hash;
 	export const DRAG_MODE_FREE: Hash;
 
-	type ListenerFunction = (message_id: Hash | string, message: {}) => boolean;
+	type ListenerFunction = (message_id: Hash | string, message: unknown) => boolean;
 
-	export function trigger(message_id: Hash | string, message: {}): boolean;
+	/** Hands `message` to every listener of `message_id` unread (`cursor.lua:33`). */
+	export function trigger(message_id: Hash | string, message: unknown): boolean;
 	export function listen(
 		cursor_url: Url,
 		message_id: Hash,

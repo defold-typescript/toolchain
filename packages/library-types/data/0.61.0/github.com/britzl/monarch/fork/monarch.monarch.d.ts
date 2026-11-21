@@ -33,10 +33,23 @@ declare module 'monarch.monarch' {
 		sequential?: boolean;
 	};
 	type PreloadOptions = {
-		auto_preload?: boolean;
+		keep_loaded?: boolean;
 	};
-	type Data = {};
-	type Message = {};
+	/** What a transition handler receives: `TRANSITION_SHOW_OUT` and `TRANSITION_BACK_OUT` name
+	 * the screen coming next and `TRANSITION_SHOW_IN` and `TRANSITION_BACK_IN` the one before
+	 * (`monarch.lua:618`, `monarch.lua:656`); `layout_changed` forwards the engine's message. */
+	type TransitionMessage = {
+		next_screen?: Hash;
+		previous_screen?: Hash;
+		id?: Hash;
+		previous_id?: Hash;
+	};
+
+	/** What a focus listener receives: the screen focus moved from or to, when there is one
+	 * (`monarch.lua:517`, `monarch.lua:527`). */
+	type FocusMessage = {
+		id?: Hash;
+	};
 	type Callback = () => void;
 
 	// transition messages
@@ -160,7 +173,7 @@ declare module 'monarch.monarch' {
 	export function register_proxy(
 		screen_id: ScreenId,
 		proxy: Url,
-		settings: RegisterProxyOptions,
+		settings?: RegisterProxyOptions,
 	): void;
 
 	/**
@@ -192,7 +205,7 @@ declare module 'monarch.monarch' {
 	export function register_factory(
 		screen_id: ScreenId,
 		factory: Url,
-		settings: RegisterProxyOptions,
+		settings?: RegisterProxyOptions,
 	): void;
 
 	/**
@@ -202,9 +215,10 @@ declare module 'monarch.monarch' {
 
 	/**
 	 * @param {string|hash} screen_id - Id of the screen to get data for
-	 * @returns {object} Data associated with the screen
+	 * @returns The data `show`, `replace` or `back` passed for the screen, as given, or
+	 * `undefined` when none was passed (`monarch.lua:717`). `T` is not checked.
 	 */
-	export function data(screen_id: ScreenId): Data;
+	export function data<T = unknown>(screen_id: ScreenId): T | undefined;
 
 	/**
 	 * Check if a Monarch screen exists.
@@ -239,9 +253,9 @@ declare module 'monarch.monarch' {
 	export function show(
 		screen_id: ScreenId,
 		options?: ShowOptions,
-		data?: Data,
+		data?: unknown,
 		callback?: Callback,
-	): void;
+	): boolean;
 
 	/**
 	 * Replace the top of the stack with a new screen.
@@ -258,9 +272,9 @@ declare module 'monarch.monarch' {
 	export function replace(
 		screen_id: ScreenId,
 		options?: ReplaceOptions,
-		data?: Data,
+		data?: unknown,
 		callback?: Callback,
-	): void;
+	): boolean;
 
 	/**
 	 * Hide a screen. The screen must either be at the top of the stack or
@@ -290,9 +304,9 @@ declare module 'monarch.monarch' {
 	 */
 	export function back(
 		options?: BackOptions,
-		data?: Data,
+		data?: unknown,
 		callback?: Callback,
-	): void;
+	): boolean;
 
 	/**
 	 * Check if a screen is preloading via monarch.preload() or automatically
@@ -328,7 +342,7 @@ declare module 'monarch.monarch' {
 		screen_id: ScreenId,
 		options?: PreloadOptions,
 		callback?: Callback,
-	): void;
+	): boolean;
 
 	/**
 	 * Check if a screen has missing resources, always returns false for factory
@@ -342,7 +356,7 @@ declare module 'monarch.monarch' {
 	 * @param {function} callback - Optional callback to invoke when the screen is unloaded.
 	  * @upstreamDoc 1f1a8de077c3
 	 */
-	export function unload(screen_id: ScreenId, callback?: Callback): void;
+	export function unload(screen_id: ScreenId, callback?: Callback): boolean;
 
 	/**
 	 * Post a message to a screen using msg.post.
@@ -357,12 +371,12 @@ declare module 'monarch.monarch' {
 	export function post(
 		screen_id: ScreenId,
 		message_id: Hash | string,
-		message?: Message,
+		message?: object,
 	): LuaMultiReturn<[boolean, string | undefined]>;
 
 	export function on_message(
 		message_id: Hash | string,
-		message: Message,
+		message: unknown,
 		sender: Url,
 	): void;
 
@@ -373,7 +387,7 @@ declare module 'monarch.monarch' {
 	 * stack, and the last value is at the top (and currently visible).
 	  * @upstreamDoc 1bdba082255c
 	 */
-	export function get_stack(): ScreenId[];
+	export function get_stack(): Hash[];
 
 	/**
 	 * Get the screen on top of the stack.
@@ -382,7 +396,7 @@ declare module 'monarch.monarch' {
 	 * @returns {string|hash} - Id of the requested screen.
 	  * @upstreamDoc 0778c92c3290
 	 */
-	export function top(offset?: number): ScreenId;
+	export function top(offset?: number): Hash | undefined;
 
 	/**
 	 * Get the screen at the bottom of the stack.
@@ -390,7 +404,7 @@ declare module 'monarch.monarch' {
 	 * @returns {string|hash} - Id of the requested screen.
 	  * @upstreamDoc e7154f73a661
 	 */
-	export function bottom(offset?: number): ScreenId;
+	export function bottom(offset?: number): Hash | undefined;
 
 	/**
 	 * Set the timestep to apply for a screen when below a popup.
@@ -415,7 +429,7 @@ declare module 'monarch.monarch' {
 	 */
 	export function on_transition(
 		screen_id: ScreenId,
-		fn: (message_id: string, message: Message, sender: Url) => void,
+		fn: ((message_id: Hash, message: TransitionMessage, sender: Url) => void) | undefined,
 	): void;
 
 	/**
@@ -429,7 +443,7 @@ declare module 'monarch.monarch' {
 	 */
 	export function on_focus_changed(
 		screen_id: ScreenId,
-		fn: (message_id: string, message: Message, sender: Url) => void,
+		fn: (message_id: Hash, message: FocusMessage, sender: Url) => void,
 	): void;
 
 	/**

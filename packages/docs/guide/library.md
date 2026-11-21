@@ -171,9 +171,10 @@ It runs four checks in order, and a check that fails stops the ones after it:
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library
-   folder, and every `apiDoc` stays under `api-doc/`; every `floors` and
-   `parityExceptions` key names a module its library measures; and no module is
-   named by two libraries.
+   folder, and every `apiDoc` stays under `api-doc/`; every `floors`,
+   `parityExceptions` and `behaviorVerdicts` key names a module its library
+   measures, and every behavior verdict names a list, a member, a slot where its
+   list has one, and a reason; and no module is named by two libraries.
 2. **Print** — every module the data serves prints, as `resolve` prints it
    when a project's dependency archive is not at hand.
 3. **Compile** — one TypeScript program compiles every printed declaration,

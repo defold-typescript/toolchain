@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
+  type BehaviorVerdict,
   LibraryDataError,
   libraryFolderName,
   readIndexSlots,
@@ -124,6 +125,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         indexSlots: {},
         floors: {},
         parityExceptions: {},
+        behaviorVerdicts: {},
         usage: [],
       });
       expect(box2d).toEqual({
@@ -156,6 +158,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         },
         floors: {},
         parityExceptions: {},
+        behaviorVerdicts: {},
         usage: [],
       });
     } finally {
@@ -953,4 +956,75 @@ describe("a library's recorded reviews", () => {
       }
     });
   }
+});
+
+describe("readLibraryData reads a library's behavior verdicts", () => {
+  // `flow` measures `flow.ui` only; `flow.layout` is generated, so no verdict can name it.
+  function withVerdicts(behaviorVerdicts: unknown): string {
+    const root = writeDataFolder();
+    write(root, "github.com/pause-games/flow/library.json", {
+      repo: "https://github.com/Pause-Games/flow",
+      forks: [
+        {
+          authored: "fork/flow.ui.d.ts",
+          moduleId: "flow.ui",
+          namespace: "flow.ui",
+          apiDoc: "api-doc/flow.ui.json",
+          upstreamLua: ["source/upstream/flow/ui.lua"],
+        },
+      ],
+      behaviorVerdicts,
+    });
+    return root;
+  }
+
+  function refusalMessage(root: string): string {
+    try {
+      readLibraryData(root);
+    } catch (error) {
+      if (error instanceof LibraryDataError) return error.message;
+      throw error;
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+    throw new Error("readLibraryData accepted the folder");
+  }
+
+  test("verdicts read back as a field of their library, a slot only where the list names one", () => {
+    const verdicts: BehaviorVerdict[] = [
+      { list: "valueReturns", name: "draw", reason: "ui.lua:3 forwards a void call" },
+      { list: "emptyObjectSlots", name: "draw", slot: "return", reason: "ui.lua:3 says so" },
+    ];
+    const root = withVerdicts({ "flow.ui": verdicts });
+    try {
+      const flow = readLibraryData(root).find((library) => library.dir.endsWith("flow"));
+      expect(flow?.behaviorVerdicts).toEqual({ "flow.ui": verdicts });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test.each([
+    ["an unknown list", { list: "arity", name: "draw", reason: "r" }, "unknown list"],
+    [
+      "a valueReturns verdict naming a slot",
+      { list: "valueReturns", name: "draw", slot: "x", reason: "r" },
+      "whose entries name no slot",
+    ],
+    [
+      "a slot-list verdict without a slot",
+      { list: "nilTolerantRequired", name: "draw", reason: "r" },
+      '"slot"',
+    ],
+    ["a verdict without a reason", { list: "valueReturns", name: "draw" }, '"reason"'],
+  ])("%s is refused", (_case, verdict, expected) => {
+    expect(refusalMessage(withVerdicts({ "flow.ui": [verdict] }))).toContain(expected);
+  });
+
+  test("a namespace the library does not measure is refused", () => {
+    const message = refusalMessage(
+      withVerdicts({ "flow.layout": [{ list: "valueReturns", name: "x", reason: "r" }] }),
+    );
+    expect(message).toContain('behaviorVerdicts "flow.layout" names no fork this library measures');
+  });
 });

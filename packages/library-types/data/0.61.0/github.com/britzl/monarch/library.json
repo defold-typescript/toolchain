@@ -37,5 +37,14 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "monarch.transitions.gui": [
+      {
+        "list": "valueReturns",
+        "name": "slide_in_left",
+        "reason": "upstream returns `slide_in(…)` (transitions/gui.lua:43), a local whose body returns nothing (transitions/gui.lua:36)"
+      }
+    ]
   }
 }

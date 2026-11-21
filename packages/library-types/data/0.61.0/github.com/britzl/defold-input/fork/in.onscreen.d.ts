@@ -17,19 +17,34 @@ declare module 'in.onscreen' {
 	export const ANALOG_UP: Hash;
 	export const ANALOG_DOWN: Hash;
 
+	/** What a control's callback receives (`onscreen.lua:32`): the touch position, the
+	 * control's node id, and whether it is pressed or was just released. */
+	type ControlData = {
+		x: number;
+		y: number;
+		id: Hash;
+		pressed: boolean;
+		released?: boolean;
+	};
+
+	type ControlCallback = (action: Hash, node: Opaque<"node">, data: ControlData) => void;
+
 	type OnscreenInstance = {
 		reset: () => void;
 		register_button: (
 			node: Opaque<"node">,
-			settings: {} | undefined,
-			fn: (action: Hash, node: Opaque<"node">, touch: {}) => void,
+			settings: object | undefined,
+			fn: ControlCallback,
 		) => void;
 		register_analog: (
 			node: Opaque<"node">,
 			settings: { radius?: number; threshold?: number } | undefined,
-			fn: (action: Hash, node: Opaque<"node">, touch: {}) => void,
+			fn: ControlCallback,
 		) => void;
-		on_input: (action_id: Hash, action: {}) => boolean;
+		on_input: (
+			action_id: Hash | undefined,
+			action: Partial<go.on_input.Action>,
+		) => boolean;
 	};
 
 	/**
@@ -43,21 +58,21 @@ declare module 'in.onscreen' {
 
 	export function register_button(
 		node: Opaque<"node">,
-		settings: {} | undefined,
-		fn: (action: Hash, node: Opaque<"node">, touch: {}) => void,
+		settings: object | undefined,
+		fn: ControlCallback,
 		instance?: OnscreenInstance,
 	): void;
 
 	export function register_analog(
 		node: Opaque<"node">,
 		settings: { radius?: number; threshold?: number } | undefined,
-		fn: (action: Hash, node: Opaque<"node">, touch: {}) => void,
+		fn: ControlCallback,
 		instance?: OnscreenInstance,
 	): void;
 
 	export function on_input(
-		action_id: Hash,
-		action: {},
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
 		instance?: OnscreenInstance,
 	): boolean;
 }

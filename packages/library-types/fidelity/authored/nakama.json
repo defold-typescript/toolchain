@@ -19,5 +19,1524 @@
   "variadicMembers": 0,
   "overloadedMembers": 0,
   "placeholderMembers": 66,
-  "callableCoverage": 1
+  "callableCoverage": 1,
+  "valueReturns": [
+    "add_friends",
+    "add_group_users",
+    "authenticate_apple",
+    "authenticate_device",
+    "authenticate_email",
+    "authenticate_facebook",
+    "authenticate_facebook_instant_game",
+    "authenticate_game_center",
+    "authenticate_google",
+    "authenticate_steam",
+    "ban_group_users",
+    "block_friends",
+    "create_api_account",
+    "create_api_account_apple",
+    "create_api_account_device",
+    "create_api_account_email",
+    "create_api_account_facebook",
+    "create_api_account_facebook_instant_game",
+    "create_api_account_game_center",
+    "create_api_account_google",
+    "create_api_account_steam",
+    "create_api_channel_message",
+    "create_api_channel_message_list",
+    "create_api_create_group_request",
+    "create_api_delete_storage_object_id",
+    "create_api_delete_storage_objects_request",
+    "create_api_event",
+    "create_api_friend",
+    "create_api_friend_list",
+    "create_api_group",
+    "create_api_group_list",
+    "create_api_group_user_list",
+    "create_api_leaderboard_record",
+    "create_api_leaderboard_record_list",
+    "create_api_link_steam_request",
+    "create_api_list_subscriptions_request",
+    "create_api_match",
+    "create_api_match_list",
+    "create_api_notification",
+    "create_api_notification_list",
+    "create_api_read_storage_object_id",
+    "create_api_read_storage_objects_request",
+    "create_api_rpc",
+    "create_api_session",
+    "create_api_session_logout_request",
+    "create_api_session_refresh_request",
+    "create_api_storage_object",
+    "create_api_storage_object_ack",
+    "create_api_storage_object_acks",
+    "create_api_storage_object_list",
+    "create_api_storage_objects",
+    "create_api_subscription_list",
+    "create_api_tournament",
+    "create_api_tournament_list",
+    "create_api_tournament_record_list",
+    "create_api_update_account_request",
+    "create_api_user",
+    "create_api_user_group_list",
+    "create_api_users",
+    "create_api_validate_purchase_apple_request",
+    "create_api_validate_purchase_facebook_instant_request",
+    "create_api_validate_purchase_google_request",
+    "create_api_validate_purchase_huawei_request",
+    "create_api_validate_purchase_response",
+    "create_api_validate_subscription_apple_request",
+    "create_api_validate_subscription_google_request",
+    "create_api_validate_subscription_response",
+    "create_api_validated_purchase",
+    "create_api_validated_subscription",
+    "create_api_write_storage_object",
+    "create_api_write_storage_objects_request",
+    "create_group",
+    "create_group_user_list_group_user",
+    "create_protobuf_any",
+    "create_rpc_status",
+    "create_user_group_list_user_group",
+    "create_write_leaderboard_record_request_leaderboard_record_write",
+    "create_write_tournament_record_request_tournament_record_write",
+    "delete_account",
+    "delete_friends",
+    "delete_group",
+    "delete_leaderboard_record",
+    "delete_notifications",
+    "delete_storage_objects",
+    "delete_tournament_record",
+    "demote_group_users",
+    "event",
+    "get_account",
+    "get_subscription",
+    "get_users",
+    "healthcheck",
+    "import_facebook_friends",
+    "import_steam_friends",
+    "join_group",
+    "join_tournament",
+    "kick_group_users",
+    "leave_group",
+    "link_apple",
+    "link_custom",
+    "link_device",
+    "link_email",
+    "link_facebook",
+    "link_facebook_instant_game",
+    "link_game_center",
+    "link_google",
+    "link_steam",
+    "list_channel_messages",
+    "list_friends",
+    "list_group_users",
+    "list_groups",
+    "list_leaderboard_records",
+    "list_leaderboard_records_around_owner",
+    "list_matches",
+    "list_notifications",
+    "list_storage_objects",
+    "list_storage_objects2",
+    "list_subscriptions",
+    "list_tournament_records",
+    "list_tournament_records_around_owner",
+    "list_tournaments",
+    "list_user_groups",
+    "promote_group_users",
+    "read_storage_objects",
+    "rpc_func",
+    "rpc_func2",
+    "session_logout",
+    "session_refresh",
+    "unlink_apple",
+    "unlink_custom",
+    "unlink_device",
+    "unlink_email",
+    "unlink_facebook",
+    "unlink_facebook_instant_game",
+    "unlink_game_center",
+    "unlink_google",
+    "unlink_steam",
+    "update_account",
+    "update_group",
+    "validate_purchase_apple",
+    "validate_purchase_facebook_instant",
+    "validate_purchase_google",
+    "validate_purchase_huawei",
+    "validate_subscription_apple",
+    "validate_subscription_google",
+    "write_leaderboard_record",
+    "write_storage_objects",
+    "write_tournament_record",
+    "write_tournament_record2"
+  ],
+  "nilTolerantRequired": [
+    {
+      "name": "authenticate_apple",
+      "slot": "token"
+    },
+    {
+      "name": "authenticate_custom",
+      "slot": "id"
+    },
+    {
+      "name": "authenticate_device",
+      "slot": "id"
+    },
+    {
+      "name": "authenticate_email",
+      "slot": "email"
+    },
+    {
+      "name": "authenticate_email",
+      "slot": "password"
+    },
+    {
+      "name": "authenticate_facebook",
+      "slot": "token"
+    },
+    {
+      "name": "authenticate_facebook_instant_game",
+      "slot": "signedPlayerInfo"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "bundleId"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "playerId"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "publicKeyUrl"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "salt"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "signature"
+    },
+    {
+      "name": "authenticate_game_center",
+      "slot": "timestampSeconds"
+    },
+    {
+      "name": "authenticate_google",
+      "slot": "token"
+    },
+    {
+      "name": "authenticate_steam",
+      "slot": "token"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "custom_id_str"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "devices_arr"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "disable_time_str"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "email_str"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "verify_time_str"
+    },
+    {
+      "name": "create_api_account",
+      "slot": "wallet_str"
+    },
+    {
+      "name": "create_api_account_apple",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_account_custom",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_account_device",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_account_email",
+      "slot": "email_str"
+    },
+    {
+      "name": "create_api_account_email",
+      "slot": "password_str"
+    },
+    {
+      "name": "create_api_account_facebook",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_account_facebook_instant_game",
+      "slot": "signed_player_info_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "bundle_id_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "player_id_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "public_key_url_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "salt_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "signature_str"
+    },
+    {
+      "name": "create_api_account_game_center",
+      "slot": "timestamp_seconds_str"
+    },
+    {
+      "name": "create_api_account_google",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_account_steam",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "channel_id_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "code_int"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "content_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "group_id_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "message_id_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "persistent_bool"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "room_name_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "sender_id_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "user_id_one_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "user_id_two_str"
+    },
+    {
+      "name": "create_api_channel_message",
+      "slot": "username_str"
+    },
+    {
+      "name": "create_api_channel_message_list",
+      "slot": "cacheable_cursor_str"
+    },
+    {
+      "name": "create_api_channel_message_list",
+      "slot": "messages_arr"
+    },
+    {
+      "name": "create_api_channel_message_list",
+      "slot": "next_cursor_str"
+    },
+    {
+      "name": "create_api_channel_message_list",
+      "slot": "prev_cursor_str"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "avatar_url_str"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "description_str"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "lang_tag_str"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "max_count_int"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "name_str"
+    },
+    {
+      "name": "create_api_create_group_request",
+      "slot": "open_bool"
+    },
+    {
+      "name": "create_api_delete_storage_object_id",
+      "slot": "collection_str"
+    },
+    {
+      "name": "create_api_delete_storage_object_id",
+      "slot": "key_str"
+    },
+    {
+      "name": "create_api_delete_storage_object_id",
+      "slot": "version_str"
+    },
+    {
+      "name": "create_api_delete_storage_objects_request",
+      "slot": "object_ids_arr"
+    },
+    {
+      "name": "create_api_event",
+      "slot": "external_bool"
+    },
+    {
+      "name": "create_api_event",
+      "slot": "name_str"
+    },
+    {
+      "name": "create_api_event",
+      "slot": "timestamp_str"
+    },
+    {
+      "name": "create_api_friend",
+      "slot": "state_int"
+    },
+    {
+      "name": "create_api_friend",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_friend_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_friend_list",
+      "slot": "friends_arr"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "avatar_url_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "creator_id_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "description_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "edge_count_int"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "lang_tag_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "max_count_int"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "name_str"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "open_bool"
+    },
+    {
+      "name": "create_api_group",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_group_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_group_list",
+      "slot": "groups_arr"
+    },
+    {
+      "name": "create_api_group_user_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_group_user_list",
+      "slot": "group_users_arr"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "expiry_time_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "leaderboard_id_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "max_num_score_int"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "num_score_int"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "owner_id_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "rank_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "score_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "subscore_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_leaderboard_record",
+      "slot": "username_str"
+    },
+    {
+      "name": "create_api_leaderboard_record_list",
+      "slot": "next_cursor_str"
+    },
+    {
+      "name": "create_api_leaderboard_record_list",
+      "slot": "owner_records_arr"
+    },
+    {
+      "name": "create_api_leaderboard_record_list",
+      "slot": "prev_cursor_str"
+    },
+    {
+      "name": "create_api_leaderboard_record_list",
+      "slot": "rank_count_str"
+    },
+    {
+      "name": "create_api_leaderboard_record_list",
+      "slot": "records_arr"
+    },
+    {
+      "name": "create_api_link_steam_request",
+      "slot": "sync_bool"
+    },
+    {
+      "name": "create_api_list_subscriptions_request",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_list_subscriptions_request",
+      "slot": "limit_int"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "authoritative_bool"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "handler_name_str"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "label_str"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "match_id_str"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "size_int"
+    },
+    {
+      "name": "create_api_match",
+      "slot": "tick_rate_int"
+    },
+    {
+      "name": "create_api_match_list",
+      "slot": "matches_arr"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "code_int"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "content_str"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "persistent_bool"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "sender_id_str"
+    },
+    {
+      "name": "create_api_notification",
+      "slot": "subject_str"
+    },
+    {
+      "name": "create_api_notification_list",
+      "slot": "cacheable_cursor_str"
+    },
+    {
+      "name": "create_api_notification_list",
+      "slot": "notifications_arr"
+    },
+    {
+      "name": "create_api_read_storage_object_id",
+      "slot": "collection_str"
+    },
+    {
+      "name": "create_api_read_storage_object_id",
+      "slot": "key_str"
+    },
+    {
+      "name": "create_api_read_storage_object_id",
+      "slot": "user_id_str"
+    },
+    {
+      "name": "create_api_read_storage_objects_request",
+      "slot": "object_ids_arr"
+    },
+    {
+      "name": "create_api_rpc",
+      "slot": "http_key_str"
+    },
+    {
+      "name": "create_api_rpc",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_rpc",
+      "slot": "payload_str"
+    },
+    {
+      "name": "create_api_session",
+      "slot": "created_bool"
+    },
+    {
+      "name": "create_api_session",
+      "slot": "refresh_token_str"
+    },
+    {
+      "name": "create_api_session",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_session_logout_request",
+      "slot": "refresh_token_str"
+    },
+    {
+      "name": "create_api_session_logout_request",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_session_refresh_request",
+      "slot": "token_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "collection_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "key_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "permission_read_int"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "permission_write_int"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "user_id_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "value_str"
+    },
+    {
+      "name": "create_api_storage_object",
+      "slot": "version_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "collection_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "key_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "user_id_str"
+    },
+    {
+      "name": "create_api_storage_object_ack",
+      "slot": "version_str"
+    },
+    {
+      "name": "create_api_storage_object_acks",
+      "slot": "acks_arr"
+    },
+    {
+      "name": "create_api_storage_object_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_storage_object_list",
+      "slot": "objects_arr"
+    },
+    {
+      "name": "create_api_storage_objects",
+      "slot": "objects_arr"
+    },
+    {
+      "name": "create_api_subscription_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_subscription_list",
+      "slot": "prev_cursor_str"
+    },
+    {
+      "name": "create_api_subscription_list",
+      "slot": "validated_subscriptions_arr"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "authoritative_bool"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "can_enter_bool"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "category_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "description_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "duration_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "end_active_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "end_time_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "max_num_score_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "max_size_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "next_reset_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "prev_reset_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "size_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "sort_order_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "start_active_int"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "start_time_str"
+    },
+    {
+      "name": "create_api_tournament",
+      "slot": "title_str"
+    },
+    {
+      "name": "create_api_tournament_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_tournament_list",
+      "slot": "tournaments_arr"
+    },
+    {
+      "name": "create_api_tournament_record_list",
+      "slot": "next_cursor_str"
+    },
+    {
+      "name": "create_api_tournament_record_list",
+      "slot": "owner_records_arr"
+    },
+    {
+      "name": "create_api_tournament_record_list",
+      "slot": "prev_cursor_str"
+    },
+    {
+      "name": "create_api_tournament_record_list",
+      "slot": "rank_count_str"
+    },
+    {
+      "name": "create_api_tournament_record_list",
+      "slot": "records_arr"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "avatar_url_str"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "display_name_str"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "lang_tag_str"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "location_str"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "timezone_str"
+    },
+    {
+      "name": "create_api_update_account_request",
+      "slot": "username_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "apple_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "avatar_url_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "display_name_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "edge_count_int"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "facebook_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "facebook_instant_game_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "gamecenter_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "google_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "lang_tag_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "location_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "online_bool"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "steam_id_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "timezone_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_user",
+      "slot": "username_str"
+    },
+    {
+      "name": "create_api_user_group_list",
+      "slot": "cursor_str"
+    },
+    {
+      "name": "create_api_user_group_list",
+      "slot": "user_groups_arr"
+    },
+    {
+      "name": "create_api_users",
+      "slot": "users_arr"
+    },
+    {
+      "name": "create_api_validate_purchase_apple_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_purchase_apple_request",
+      "slot": "receipt_str"
+    },
+    {
+      "name": "create_api_validate_purchase_facebook_instant_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_purchase_facebook_instant_request",
+      "slot": "signed_request_str"
+    },
+    {
+      "name": "create_api_validate_purchase_google_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_purchase_google_request",
+      "slot": "purchase_str"
+    },
+    {
+      "name": "create_api_validate_purchase_huawei_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_purchase_huawei_request",
+      "slot": "purchase_str"
+    },
+    {
+      "name": "create_api_validate_purchase_huawei_request",
+      "slot": "signature_str"
+    },
+    {
+      "name": "create_api_validate_purchase_response",
+      "slot": "validated_purchases_arr"
+    },
+    {
+      "name": "create_api_validate_subscription_apple_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_subscription_apple_request",
+      "slot": "receipt_str"
+    },
+    {
+      "name": "create_api_validate_subscription_google_request",
+      "slot": "persist_bool"
+    },
+    {
+      "name": "create_api_validate_subscription_google_request",
+      "slot": "receipt_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "product_id_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "provider_response_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "purchase_time_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "refund_time_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "seen_before_bool"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "transaction_id_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_validated_purchase",
+      "slot": "user_id_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "active_bool"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "create_time_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "expiry_time_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "original_transaction_id_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "product_id_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "provider_notification_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "provider_response_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "purchase_time_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "refund_time_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "update_time_str"
+    },
+    {
+      "name": "create_api_validated_subscription",
+      "slot": "user_id_str"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "collection_str"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "key_str"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "permission_read_int"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "permission_write_int"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "value_str"
+    },
+    {
+      "name": "create_api_write_storage_object",
+      "slot": "version_str"
+    },
+    {
+      "name": "create_api_write_storage_objects_request",
+      "slot": "objects_arr"
+    },
+    {
+      "name": "create_group",
+      "slot": "avatarUrl"
+    },
+    {
+      "name": "create_group",
+      "slot": "description"
+    },
+    {
+      "name": "create_group",
+      "slot": "langTag"
+    },
+    {
+      "name": "create_group",
+      "slot": "maxCount"
+    },
+    {
+      "name": "create_group",
+      "slot": "name"
+    },
+    {
+      "name": "create_group",
+      "slot": "open"
+    },
+    {
+      "name": "create_group_user_list_group_user",
+      "slot": "state_int"
+    },
+    {
+      "name": "create_protobuf_any",
+      "slot": "type_str"
+    },
+    {
+      "name": "create_rpc_status",
+      "slot": "code_int"
+    },
+    {
+      "name": "create_rpc_status",
+      "slot": "details_arr"
+    },
+    {
+      "name": "create_rpc_status",
+      "slot": "message_str"
+    },
+    {
+      "name": "create_user_group_list_user_group",
+      "slot": "state_int"
+    },
+    {
+      "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+      "slot": "score_str"
+    },
+    {
+      "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+      "slot": "subscore_str"
+    },
+    {
+      "name": "create_write_tournament_record_request_tournament_record_write",
+      "slot": "metadata_str"
+    },
+    {
+      "name": "create_write_tournament_record_request_tournament_record_write",
+      "slot": "score_str"
+    },
+    {
+      "name": "create_write_tournament_record_request_tournament_record_write",
+      "slot": "subscore_str"
+    },
+    {
+      "name": "delete_storage_objects",
+      "slot": "objectIds"
+    },
+    {
+      "name": "event",
+      "slot": "external"
+    },
+    {
+      "name": "event",
+      "slot": "name"
+    },
+    {
+      "name": "event",
+      "slot": "timestamp"
+    },
+    {
+      "name": "import_facebook_friends",
+      "slot": "token"
+    },
+    {
+      "name": "import_steam_friends",
+      "slot": "token"
+    },
+    {
+      "name": "link_apple",
+      "slot": "token"
+    },
+    {
+      "name": "link_custom",
+      "slot": "id"
+    },
+    {
+      "name": "link_device",
+      "slot": "id"
+    },
+    {
+      "name": "link_email",
+      "slot": "email"
+    },
+    {
+      "name": "link_email",
+      "slot": "password"
+    },
+    {
+      "name": "link_facebook",
+      "slot": "token"
+    },
+    {
+      "name": "link_facebook_instant_game",
+      "slot": "signedPlayerInfo"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "bundleId"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "playerId"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "publicKeyUrl"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "salt"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "signature"
+    },
+    {
+      "name": "link_game_center",
+      "slot": "timestampSeconds"
+    },
+    {
+      "name": "link_google",
+      "slot": "token"
+    },
+    {
+      "name": "link_steam",
+      "slot": "sync"
+    },
+    {
+      "name": "list_subscriptions",
+      "slot": "cursor"
+    },
+    {
+      "name": "list_subscriptions",
+      "slot": "limit"
+    },
+    {
+      "name": "read_storage_objects",
+      "slot": "objectIds"
+    },
+    {
+      "name": "rpc_func",
+      "slot": "payload"
+    },
+    {
+      "name": "session_logout",
+      "slot": "refreshToken"
+    },
+    {
+      "name": "session_logout",
+      "slot": "token"
+    },
+    {
+      "name": "session_refresh",
+      "slot": "token"
+    },
+    {
+      "name": "unlink_apple",
+      "slot": "token"
+    },
+    {
+      "name": "unlink_custom",
+      "slot": "id"
+    },
+    {
+      "name": "unlink_device",
+      "slot": "id"
+    },
+    {
+      "name": "unlink_email",
+      "slot": "email"
+    },
+    {
+      "name": "unlink_email",
+      "slot": "password"
+    },
+    {
+      "name": "unlink_facebook",
+      "slot": "token"
+    },
+    {
+      "name": "unlink_facebook_instant_game",
+      "slot": "signedPlayerInfo"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "bundleId"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "playerId"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "publicKeyUrl"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "salt"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "signature"
+    },
+    {
+      "name": "unlink_game_center",
+      "slot": "timestampSeconds"
+    },
+    {
+      "name": "unlink_google",
+      "slot": "token"
+    },
+    {
+      "name": "unlink_steam",
+      "slot": "token"
+    },
+    {
+      "name": "update_account",
+      "slot": "avatarUrl"
+    },
+    {
+      "name": "update_account",
+      "slot": "displayName"
+    },
+    {
+      "name": "update_account",
+      "slot": "langTag"
+    },
+    {
+      "name": "update_account",
+      "slot": "location"
+    },
+    {
+      "name": "update_account",
+      "slot": "timezone"
+    },
+    {
+      "name": "update_account",
+      "slot": "username"
+    },
+    {
+      "name": "validate_purchase_apple",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_purchase_apple",
+      "slot": "receipt"
+    },
+    {
+      "name": "validate_purchase_facebook_instant",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_purchase_facebook_instant",
+      "slot": "signedRequest"
+    },
+    {
+      "name": "validate_purchase_google",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_purchase_google",
+      "slot": "purchase"
+    },
+    {
+      "name": "validate_purchase_huawei",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_purchase_huawei",
+      "slot": "purchase"
+    },
+    {
+      "name": "validate_purchase_huawei",
+      "slot": "signature"
+    },
+    {
+      "name": "validate_subscription_apple",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_subscription_apple",
+      "slot": "receipt"
+    },
+    {
+      "name": "validate_subscription_google",
+      "slot": "persist"
+    },
+    {
+      "name": "validate_subscription_google",
+      "slot": "receipt"
+    },
+    {
+      "name": "write_leaderboard_record",
+      "slot": "metadata"
+    },
+    {
+      "name": "write_leaderboard_record",
+      "slot": "score"
+    },
+    {
+      "name": "write_leaderboard_record",
+      "slot": "subscore"
+    },
+    {
+      "name": "write_storage_objects",
+      "slot": "objects"
+    },
+    {
+      "name": "write_tournament_record",
+      "slot": "metadata"
+    },
+    {
+      "name": "write_tournament_record",
+      "slot": "score"
+    },
+    {
+      "name": "write_tournament_record",
+      "slot": "subscore"
+    },
+    {
+      "name": "write_tournament_record2",
+      "slot": "metadata"
+    },
+    {
+      "name": "write_tournament_record2",
+      "slot": "score"
+    },
+    {
+      "name": "write_tournament_record2",
+      "slot": "subscore"
+    }
+  ],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [],
+  "staleBehaviorVerdicts": []
 }

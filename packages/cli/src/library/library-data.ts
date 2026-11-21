@@ -79,6 +79,22 @@ export interface AuthoredParityException {
   reason: string;
 }
 
+/** The authored-parity report's behavior lists, which a `BehaviorVerdict` answers. */
+export const BEHAVIOR_LISTS = ["valueReturns", "nilTolerantRequired", "emptyObjectSlots"] as const;
+
+export type BehaviorList = (typeof BEHAVIOR_LISTS)[number];
+
+/** One behavior-list entry judged not to be a defect. `slot` names the parameter, or
+ * `return`, for the two lists whose entries carry one, and is absent for
+ * `valueReturns`. `reason` cites upstream's file and line, as a parity exception's
+ * does. */
+export interface BehaviorVerdict {
+  list: BehaviorList;
+  name: string;
+  slot?: string;
+  reason: string;
+}
+
 /** A parity floor, one entry per reported axis. Both are required: an entry naming a
  * single axis would leave the other unratcheted while every surrounding assertion stayed
  * green, which is the failure this shape exists to make impossible. */
@@ -128,6 +144,8 @@ export interface LibraryJson {
   floors?: Record<string, LibraryFloor>;
   // Keyed by the fork's namespace.
   parityExceptions?: Record<string, AuthoredParityException[]>;
+  // Keyed by the fork's namespace.
+  behaviorVerdicts?: Record<string, BehaviorVerdict[]>;
 }
 
 // The hashes of one library archive, and the upstream commits that carry them.
@@ -165,6 +183,7 @@ export interface LibraryData {
   indexSlots: Record<string, IndexSlotEntry>;
   floors: Record<string, LibraryFloor>;
   parityExceptions: Record<string, AuthoredParityException[]>;
+  behaviorVerdicts: Record<string, BehaviorVerdict[]>;
   usage: string[];
 }
 
@@ -620,14 +639,79 @@ function readExceptions(
 ): Record<string, AuthoredParityException[]> {
   if (raw === undefined) return {};
   const exceptions = parseAuthoredExceptions(raw, file);
-  for (const namespace of Object.keys(exceptions)) {
+  assertMeasuredForks(file, "parityExceptions", exceptions, measuredForks);
+  return exceptions;
+}
+
+function assertMeasuredForks(
+  file: string,
+  key: string,
+  byNamespace: Record<string, unknown>,
+  measuredForks: readonly AuthoredTarget[],
+): void {
+  for (const namespace of Object.keys(byNamespace)) {
     if (!measuredForks.some((fork) => fork.namespace === namespace)) {
-      throw new Error(
-        `${file}: parityExceptions "${namespace}" names no fork this library measures.`,
-      );
+      throw new Error(`${file}: ${key} "${namespace}" names no fork this library measures.`);
     }
   }
-  return exceptions;
+}
+
+/**
+ * The behavior verdicts' parse-time contract: a plain object mapping each namespace to
+ * an array of `{ list, name, slot?, reason }` entries, `list` from the closed set, and
+ * `slot` present exactly for the two lists whose entries name one.
+ */
+export function parseBehaviorVerdicts(
+  raw: unknown,
+  file: string,
+): Record<string, BehaviorVerdict[]> {
+  if (!isPlainObject(raw)) {
+    throw new Error(
+      `${file}: expected a JSON object of behavior verdicts, got ${describeValue(raw)}`,
+    );
+  }
+  const verdicts: Record<string, BehaviorVerdict[]> = {};
+  for (const [namespace, entries] of Object.entries(raw)) {
+    if (!Array.isArray(entries)) {
+      throw new Error(
+        `${file}: "${namespace}" must be an array of entries, got ${describeValue(entries)}`,
+      );
+    }
+    verdicts[namespace] = entries.map((entry) => {
+      if (!isPlainObject(entry)) {
+        throw new Error(`${file}: "${namespace}" holds a non-object entry ${describeValue(entry)}`);
+      }
+      const name = exceptionField(entry, "name", file, `a verdict of "${namespace}"`);
+      const at = `"${namespace}.${name}"`;
+      const list = entry.list;
+      if (!BEHAVIOR_LISTS.includes(list as BehaviorList)) {
+        throw new Error(
+          `${file}: ${at} has unknown list ${describeValue(list)} — expected one of ${BEHAVIOR_LISTS.join(", ")}`,
+        );
+      }
+      const reason = exceptionField(entry, "reason", file, at);
+      if (list === "valueReturns") {
+        if (entry.slot !== undefined) {
+          throw new Error(`${file}: ${at} answers valueReturns, whose entries name no slot`);
+        }
+        return { list, name, reason };
+      }
+      const slot = exceptionField(entry, "slot", file, at);
+      return { list: list as BehaviorList, name, slot, reason };
+    });
+  }
+  return verdicts;
+}
+
+function readBehaviorVerdicts(
+  file: string,
+  raw: unknown,
+  measuredForks: readonly AuthoredTarget[],
+): Record<string, BehaviorVerdict[]> {
+  if (raw === undefined) return {};
+  const verdicts = parseBehaviorVerdicts(raw, file);
+  assertMeasuredForks(file, "behaviorVerdicts", verdicts, measuredForks);
+  return verdicts;
 }
 
 function usageFiles(dataDir: string, dir: string): string[] {
@@ -757,6 +841,7 @@ function readLibrary(dataDir: string, dir: string, library: Partial<LibraryJson>
       ]),
     ),
     parityExceptions: readExceptions(file, library.parityExceptions, measuredForks),
+    behaviorVerdicts: readBehaviorVerdicts(file, library.behaviorVerdicts, measuredForks),
     usage: usageFiles(dataDir, dir),
   };
 }
@@ -871,6 +956,16 @@ export function readLibraryExceptions(
   const file = libraryFile(repo);
   const { parityExceptions } = readJson<LibraryJson>(dataDir, file);
   return parityExceptions === undefined ? {} : parseAuthoredExceptions(parityExceptions, file);
+}
+
+/** One library's behavior verdicts, for a measurement that holds only the fork's target. */
+export function readLibraryBehaviorVerdicts(
+  dataDir: string,
+  repo: string,
+): Record<string, BehaviorVerdict[]> {
+  const file = libraryFile(repo);
+  const { behaviorVerdicts } = readJson<LibraryJson>(dataDir, file);
+  return behaviorVerdicts === undefined ? {} : parseBehaviorVerdicts(behaviorVerdicts, file);
 }
 
 /** A library's `library.json` as it sits on disk, for a tool that rewrites one field. */

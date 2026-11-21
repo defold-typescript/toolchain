@@ -11,7 +11,11 @@ import {
   classifyFieldAxis,
   hasTrailingDiscard,
 } from "./authored-parity";
-import { type AuthoredParityException, parseAuthoredExceptions } from "./library-data";
+import {
+  type AuthoredParityException,
+  type BehaviorVerdict,
+  parseAuthoredExceptions,
+} from "./library-data";
 import { LIBRARY_DATA_DIR } from "./package-root";
 import {
   type AuthoredTarget,
@@ -95,8 +99,7 @@ function surfaceReport(
   return buildAuthoredParity(
     root,
     { ...SURFACE_TARGET, ...(instanceType === undefined ? {} : { instanceType }) },
-    exceptions,
-    JSON.stringify({ elements }),
+    { exceptions, verdicts: {}, apiDoc: JSON.stringify({ elements }), forkSource: "" },
   );
 }
 
@@ -707,8 +710,12 @@ describe("a phantom field enters neither side of the coverage figure", () => {
         fidelity: "fidelity/mod.json",
         upstreamLua: ["upstream/mod.lua"],
       },
-      {},
-      readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+      {
+        exceptions: {},
+        verdicts: {},
+        apiDoc: readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+        forkSource: "",
+      },
     );
   }
 
@@ -1142,7 +1149,9 @@ describe("a fork offering several call shapes is measured against the set", () =
   // settings, `register_modal`, `register_scene`, `show_scene` and `wrap.gui_applet.new`
   // a class or a plain table of hooks, `show_scene` also a registered name, and the
   // `wrap.wrap` facade's `node` and `go` one value, an array or a record, and its
-  // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes. `asobi.realtime`'s
+  // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes. `orthographic.camera`'s
+  // `bounds` and `deadzone` take the four edges, or only a camera id to remove them.
+  // `asobi.realtime`'s
   // `join_match`, `find_or_create_match` and `join_world` take the callback second, or
   // options then the callback, as `asobi.http`'s `delete` takes the callback or a body
   // then the callback, and `asobi.api.auth`'s `guest_device` the callback or device
@@ -1163,6 +1172,7 @@ describe("a fork offering several call shapes is measured against the set", () =
       "wrap.gui_scene: 2",
       "wrap.gui_applet: 3",
       "wrap.wrap: 3",
+      "orthographic.camera: 2",
       "monarch.transitions.gui: 1",
       "def_behavior_tree: 1",
       "asobi.realtime: 3",
@@ -1389,20 +1399,20 @@ describe("the ledger cannot outlive the defect it justifies", () => {
 });
 
 // The two classes the ledger was built for, both read out of the pinned `camera.lua`:
-// three members whose LuaDoc says the camera.script calls them, and six one-line stubs
+// three members whose LuaDoc says the camera.script calls them, and ten one-line stubs
 // whose whole body is `error("… is deprecated")`. Declaring a member that throws on
-// every call is worse than not declaring it, so all six are absent from the fork.
+// every call is worse than not declaring it, so all ten are absent from the fork.
 describe("orthographic.camera declares upstream's live surface and none of its dead one", () => {
   const report = buildAuthoredParity(DATA_DIR, target("orthographic.camera"));
 
-  // The nine exceptions are a callable-axis instrument and stay one: the field
+  // The thirteen exceptions are a callable-axis instrument and stay one: the field
   // correction that closed this target's constants neither added an entry nor made an
   // existing one unnecessary, which the ledger would have thrown on outright.
   test("closing the field axis left the callable exceptions untouched", () => {
     expect(report.fieldCoverage).toBe(1);
     expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
-    expect(report.parityExceptions.length).toBe(9);
+    expect(report.parityExceptions.length).toBe(13);
   });
 });
 
@@ -1484,8 +1494,12 @@ describe("an upstream colon method is measured against the instance type's metho
         upstreamLua: ["upstream/mod.lua"],
         ...(instanceType === undefined ? {} : { instanceType }),
       },
-      {},
-      readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+      {
+        exceptions: {},
+        verdicts: {},
+        apiDoc: readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+        forkSource: "",
+      },
     );
   }
 
@@ -1764,8 +1778,12 @@ describe("only a refusal the fork left unanswered is charged", () => {
         fidelity: "fidelity/mod.json",
         upstreamLua: ["upstream/mod.lua"],
       },
-      { mod: exceptions },
-      readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+      {
+        exceptions: { mod: exceptions },
+        verdicts: {},
+        apiDoc: readFileSync(join(root, "api-doc/mod.json"), "utf8"),
+        forkSource: "",
+      },
     );
   }
 
@@ -3252,5 +3270,178 @@ describe("the twenty-six members nakama withdrew are accounted for", () => {
       (name) => core.has(name) || socket.has(name) || session.has(name),
     );
     expect(resurfaced).toEqual([]);
+  });
+});
+
+describe("the behavior lists compare what the fork's signatures promise with what upstream's bodies do", () => {
+  /** The report over one upstream `.lua` and a fork `.d.ts` declaring `mod`, both
+   * written to a data folder so the fork is lowered the way a real target is. */
+  function behaviorReport(
+    lua: string[],
+    fork: string[],
+    verdicts: Record<string, BehaviorVerdict[]> = {},
+  ): AuthoredParityReport {
+    const root = tempRoot("authored-parity-behavior-");
+    mkdirSync(join(root, "upstream"), { recursive: true });
+    mkdirSync(join(root, "mod/fork"), { recursive: true });
+    writeFileSync(
+      join(root, "upstream/mod.lua"),
+      `${["local M = {}", ...lua, "return M"].join("\n")}\n`,
+    );
+    writeFileSync(
+      join(root, "mod/fork/mod.d.ts"),
+      `${["declare module 'mod' {", ...fork, "}"].join("\n")}\n`,
+    );
+    return buildAuthoredParity(root, SURFACE_TARGET, { exceptions: {}, verdicts });
+  }
+
+  const CREATE = ["function M.create(node)", "\tlocal instance = {}", "\treturn instance", "end"];
+  const BUTTON = [
+    "function M.button(node_id, action_id)",
+    "\tif action_id == nil then return end",
+    "\tprint(node_id)",
+    "end",
+  ];
+
+  test("a void-declared member whose upstream body returns a value is listed", () => {
+    const report = behaviorReport(CREATE, ["export function create(node: string): void;"]);
+    expect(report.valueReturns).toEqual(["create"]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("a member declaring what it returns is not", () => {
+    const report = behaviorReport(CREATE, [
+      "type Instance = { id: number };",
+      "export function create(node: string): Instance;",
+    ]);
+    expect(report.valueReturns).toEqual([]);
+  });
+
+  test("a required parameter whose upstream body nil-checks it is listed, by the fork's name", () => {
+    const report = behaviorReport(BUTTON, [
+      "export function button(node_id: string, action_id: Hash): void;",
+    ]);
+    expect(report.nilTolerantRequired).toEqual([{ name: "button", slot: "action_id" }]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("an optional parameter, or one whose type admits undefined, is not", () => {
+    for (const declared of [
+      "action_id?: Hash",
+      "action_id: Hash | undefined",
+      "action_id: MaybeHash",
+      "action_id: any",
+    ]) {
+      const report = behaviorReport(BUTTON, [
+        "type MaybeHash = Hash | undefined;",
+        `export function button(node_id: string, ${declared}): void;`,
+      ]);
+      expect(report.nilTolerantRequired).toEqual([]);
+    }
+  });
+
+  test("an overload that omits the parameter makes it tolerant", () => {
+    const report = behaviorReport(BUTTON, [
+      "export function button(node_id: string, action_id: Hash): void;",
+      "export function button(node_id: string): void;",
+    ]);
+    expect(report.nilTolerantRequired).toEqual([]);
+  });
+
+  test("a slot typed `{}`, directly, through a local alias or inside a callback, is listed", () => {
+    const report = behaviorReport(
+      ["function M.group(id, config, fn)", "\treturn { id = id }", "end"],
+      [
+        "type table = {};",
+        "export function group(id: string, config: table | undefined, fn: (data: {}) => void): table;",
+      ],
+    );
+    expect(report.emptyObjectSlots).toEqual([
+      { name: "group", slot: "config" },
+      { name: "group", slot: "fn" },
+      { name: "group", slot: "return" },
+    ]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("a slot with fields, or `{}` only as an intersection arm, is not", () => {
+    const report = behaviorReport(
+      ["function M.group(id, config)", "\treturn config", "end"],
+      [
+        "type Config = { x: number };",
+        "export function group(id: string & {}, config: Config): Config;",
+      ],
+    );
+    expect(report.emptyObjectSlots).toEqual([]);
+  });
+
+  test("a verdict with a reason removes its entry and is reported among the applied ones", () => {
+    const verdict: BehaviorVerdict = {
+      list: "nilTolerantRequired",
+      name: "button",
+      slot: "action_id",
+      reason: "upstream button.lua:12 returns before reading a nil action_id",
+    };
+    const report = behaviorReport(
+      BUTTON,
+      ["export function button(node_id: string, action_id: Hash): void;"],
+      { mod: [verdict] },
+    );
+    expect(report.nilTolerantRequired).toEqual([]);
+    expect(report.behaviorVerdicts).toEqual([verdict]);
+    expect(report.staleBehaviorVerdicts).toEqual([]);
+  });
+
+  test("a verdict whose mismatch is gone is reported stale", () => {
+    const verdict: BehaviorVerdict = {
+      list: "valueReturns",
+      name: "create",
+      reason: "upstream create.lua:3 returns an internal handle",
+    };
+    const report = behaviorReport(
+      CREATE,
+      ["type Instance = { id: number };", "export function create(node: string): Instance;"],
+      { mod: [verdict] },
+    );
+    expect(report.behaviorVerdicts).toEqual([]);
+    expect(report.staleBehaviorVerdicts).toEqual([verdict]);
+  });
+});
+
+describe("the measured corpus answers every behavior-list entry", () => {
+  const CORRECTED = new Set([
+    "https://github.com/britzl/gooey",
+    "https://github.com/britzl/defold-input",
+    "https://github.com/britzl/monarch",
+    "https://github.com/britzl/defold-orthographic",
+  ]);
+  const reports = authoredParityTargets(DATA_DIR).map((entry) => ({
+    entry,
+    report: buildAuthoredParity(DATA_DIR, entry),
+  }));
+
+  test("the Gooey, defold-input, Monarch and Orthographic forks list nothing a verdict leaves open", () => {
+    const open = reports
+      .filter(({ entry }) => CORRECTED.has(entry.repo))
+      .flatMap(({ entry, report }) => [
+        ...report.valueReturns.map((name) => `${entry.namespace}.${name}: value return`),
+        ...report.nilTolerantRequired.map(
+          ({ name, slot }) => `${entry.namespace}.${name}(${slot}): nil-tolerant`,
+        ),
+        ...report.emptyObjectSlots.map(
+          ({ name, slot }) => `${entry.namespace}.${name}(${slot}): {}`,
+        ),
+      ]);
+    expect(reports.filter(({ entry }) => CORRECTED.has(entry.repo)).length).toBe(15);
+    expect(open).toEqual([]);
+  });
+
+  test("no measured fork carries a verdict whose mismatch is gone", () => {
+    const stale = reports.flatMap(({ entry, report }) =>
+      report.staleBehaviorVerdicts.map(
+        (verdict) => `${entry.namespace}.${verdict.name} (${verdict.list})`,
+      ),
+    );
+    expect(stale).toEqual([]);
   });
 });

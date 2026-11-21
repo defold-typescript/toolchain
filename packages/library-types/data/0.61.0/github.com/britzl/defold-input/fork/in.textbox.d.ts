@@ -26,5 +26,8 @@ declare module 'in.textbox' {
 		node_or_string: Opaque<"node"> | string,
 		text?: string,
 	): string | undefined;
-	export function on_input(action_id: Hash, action: {}): boolean;
+	export function on_input(
+		action_id: Hash | undefined,
+		action: Partial<go.on_input.Action>,
+	): boolean;
 }
