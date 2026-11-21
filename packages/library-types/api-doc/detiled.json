@@ -15,7 +15,7 @@
           "name": "logger_instance",
           "doc": "",
           "types": [
-            "detiled_logger | LuaTable | undefined"
+            "detiled_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

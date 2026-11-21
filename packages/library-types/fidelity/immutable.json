@@ -5,5 +5,8 @@
   "unknownFallbacks": 0,
   "unknownTokens": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "coverage": 1,
+  "tableParams": 2,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

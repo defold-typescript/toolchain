@@ -1,9 +1,12 @@
 {
   "namespace": "live_unbundler",
-  "totalMembers": 83,
-  "totalTypeTokens": 94,
+  "totalMembers": 139,
+  "totalTypeTokens": 156,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 56,
-  "coverage": 1
+  "undocumentedMembers": 96,
+  "coverage": 1,
+  "tableParams": 0,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

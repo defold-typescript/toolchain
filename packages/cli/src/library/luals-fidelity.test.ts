@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport } from "./luals-fidelity";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LibraryModel, parseLualsSource } from "./parse-luals";
+import { buildTargetFidelity, readLualsTargets } from "./sync-luals-types";
 
 const tinyModel: LibraryModel = {
   interfaces: [
@@ -529,5 +531,54 @@ describe("buildFidelityReport with an ambient stdlib rename", () => {
     const report = buildFidelityReport("demo", stdlibRenameModel, {});
 
     expect(report.unknownTokens).toEqual(["debuginfo"]);
+  });
+});
+
+describe("buildFidelityReport emit-defect counters", () => {
+  test("counts the parameters a caller passes a bare table to, wherever it sits in the parameter's type", () => {
+    const model = parseLualsSource(`---@class demo.slot
+---@field data table
+
+local M = {}
+
+---@param context table
+---@param extra table|nil
+---@param lookup table<string, integer>
+---@param name string
+---@return table
+function M.attach(context, extra, lookup, name) end
+
+---@param slot demo.slot
+---@param cb fun(t: table)
+function M.watch(slot, cb) end
+
+return M
+`);
+
+    expect(buildFidelityReport("demo", model, {}).tableParams).toBe(2);
+  });
+
+  test("counts a literal module assignment the emitted module does not export", () => {
+    const parsed = parseLualsSource(`local M = {}
+M.SPEED = 1
+M.timer = nil
+return M
+`);
+    const { moduleConstants: _emitted, ...dropped } = parsed;
+
+    expect(buildFidelityReport("demo", parsed, {}).droppedAssignments).toBe(0);
+    expect(buildFidelityReport("demo", dropped, {}).droppedAssignments).toBe(1);
+  });
+
+  test("no shipped LuaLS module leaves a type unexported or a literal module assignment undeclared", () => {
+    const defects = readLualsTargets(LIBRARY_DATA_DIR)
+      .map((target) => buildTargetFidelity(LIBRARY_DATA_DIR, target))
+      .filter((report) => report.unexportedTypes > 0 || report.droppedAssignments > 0)
+      .map(
+        (report) =>
+          `${report.namespace}: ${report.unexportedTypes} unexported, ${report.droppedAssignments} dropped`,
+      );
+
+    expect(defects).toEqual([]);
   });
 });

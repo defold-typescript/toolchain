@@ -60,14 +60,32 @@
     {
       "type": "FUNCTION",
       "name": "add_quests",
-      "brief": "Add quests to the system from config file or table\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")",
-      "description": "Add quests to the system from config file or table\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")",
+      "brief": "Add quests to the current config from config file or table. Can be called any time.\nOther quests and their progress are kept. Quests with the same id are replaced.\nQuest configs are not saved: add the same quests again after loading the state.\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")\nquest.add_quests({ [\"week_42:streaks\"] = { autostart = true, tasks = { { action = \"streak_points\", required = 5 } } } })",
+      "description": "Add quests to the current config from config file or table. Can be called any time.\nOther quests and their progress are kept. Quests with the same id are replaced.\nQuest configs are not saved: add the same quests again after loading the state.\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")\nquest.add_quests({ [\"week_42:streaks\"] = { autostart = true, tasks = { { action = \"streak_points\", required = 5 } } } })",
       "parameters": [
         {
           "name": "quest_config_or_path",
           "doc": "Lua table or path to quest config. Example: \"/resources/quests.json\"",
           "types": [
             "LuaMap<string, quest_config> | Record<string, quest_config> | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_quests",
+      "brief": "Remove quests from config together with their progress and completed marks.\nRemoved quests are not started again by autostart. Unknown ids only clear their saved state.\nquest.remove_quests({ \"week_42:streaks\", \"week_42:coins\" })",
+      "description": "Remove quests from config together with their progress and completed marks.\nRemoved quests are not started again by autostart. Unknown ids only clear their saved state.\nquest.remove_quests({ \"week_42:streaks\", \"week_42:coins\" })",
+      "parameters": [
+        {
+          "name": "quest_ids",
+          "doc": "Quest ids to remove",
+          "types": [
+            "string[]"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -567,7 +585,7 @@
           "name": "logger_instance",
           "doc": "",
           "types": [
-            "quest_logger | LuaTable | undefined"
+            "quest_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -578,8 +596,8 @@
     {
       "type": "FUNCTION",
       "name": "reset_state",
-      "brief": "Reset Module quest state, probably you want to use it only in case of soft game reload",
-      "description": "Reset Module quest state, probably you want to use it only in case of soft game reload",
+      "brief": "Reset Module quest state and quests config, probably you want to use it only in case of soft game reload",
+      "description": "Reset Module quest state and quests config, probably you want to use it only in case of soft game reload",
       "parameters": [],
       "returnvalues": []
     },

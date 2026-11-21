@@ -1,9 +1,12 @@
 {
   "namespace": "ads_wrapper.ads_networks.game_distribution",
-  "totalMembers": 25,
-  "totalTypeTokens": 25,
+  "totalMembers": 26,
+  "totalTypeTokens": 26,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 0,
-  "coverage": 1
+  "undocumentedMembers": 1,
+  "coverage": 1,
+  "tableParams": 1,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

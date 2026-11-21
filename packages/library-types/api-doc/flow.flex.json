@@ -1167,6 +1167,330 @@
           ]
         }
       ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FLEX_DIRECTION_COLUMN",
+      "brief": "Children are stacked top-to-bottom (default).",
+      "description": "Children are stacked top-to-bottom (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FLEX_DIRECTION_ROW",
+      "brief": "Children are arranged left-to-right.",
+      "description": "Children are arranged left-to-right.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_FLEX_START",
+      "brief": "Children packed toward the start of the main axis.",
+      "description": "Children packed toward the start of the main axis.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_CENTER",
+      "brief": "Children centered along the main axis.",
+      "description": "Children centered along the main axis.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_FLEX_END",
+      "brief": "Children packed toward the end of the main axis.",
+      "description": "Children packed toward the end of the main axis.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_SPACE_BETWEEN",
+      "brief": "Children distributed with equal space between them; first and last touch the edges.",
+      "description": "Children distributed with equal space between them; first and last touch the edges.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_SPACE_AROUND",
+      "brief": "Children distributed with equal space around each child.",
+      "description": "Children distributed with equal space around each child.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "JUSTIFY_SPACE_EVENLY",
+      "brief": "Children distributed with equal space between and around all children.",
+      "description": "Children distributed with equal space between and around all children.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_AUTO",
+      "brief": "Inherit alignment from parent (align_self only).",
+      "description": "Inherit alignment from parent (align_self only).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_FLEX_START",
+      "brief": "Children packed at the cross-axis start.",
+      "description": "Children packed at the cross-axis start.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_CENTER",
+      "brief": "Children centered on the cross axis.",
+      "description": "Children centered on the cross axis.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_FLEX_END",
+      "brief": "Children packed at the cross-axis end.",
+      "description": "Children packed at the cross-axis end.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ALIGN_STRETCH",
+      "brief": "Children stretched to fill the cross-axis dimension (default).",
+      "description": "Children stretched to fill the cross-axis dimension (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_LEFT",
+      "brief": "Apply to the left edge.",
+      "description": "Apply to the left edge.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_TOP",
+      "brief": "Apply to the top edge.",
+      "description": "Apply to the top edge.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_RIGHT",
+      "brief": "Apply to the right edge.",
+      "description": "Apply to the right edge.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_BOTTOM",
+      "brief": "Apply to the bottom edge.",
+      "description": "Apply to the bottom edge.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_ALL",
+      "brief": "Apply to all four edges at once.",
+      "description": "Apply to all four edges at once.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_HORIZONTAL",
+      "brief": "Apply to left and right edges simultaneously.",
+      "description": "Apply to left and right edges simultaneously.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_VERTICAL",
+      "brief": "Apply to top and bottom edges simultaneously.",
+      "description": "Apply to top and bottom edges simultaneously.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_START",
+      "brief": "Logical start edge (left in LTR, right in RTL).",
+      "description": "Logical start edge (left in LTR, right in RTL).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "EDGE_END",
+      "brief": "Logical end edge (right in LTR, left in RTL).",
+      "description": "Logical end edge (right in LTR, left in RTL).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DISPLAY_FLEX",
+      "brief": "Standard flex layout (default).",
+      "description": "Standard flex layout (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DISPLAY_NONE",
+      "brief": "Element is hidden and takes no space.",
+      "description": "Element is hidden and takes no space.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OVERFLOW_VISIBLE",
+      "brief": "Children may overflow the container (default).",
+      "description": "Children may overflow the container (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OVERFLOW_HIDDEN",
+      "brief": "Children are clipped to the container bounds.",
+      "description": "Children are clipped to the container bounds.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OVERFLOW_SCROLL",
+      "brief": "Container is scrollable (use the Scroll component for full behavior).",
+      "description": "Container is scrollable (use the Scroll component for full behavior).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WRAP_NO_WRAP",
+      "brief": "All children stay on one line (default).",
+      "description": "All children stay on one line (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WRAP_WRAP",
+      "brief": "Children wrap to additional lines.",
+      "description": "Children wrap to additional lines.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WRAP_WRAP_REVERSE",
+      "brief": "Children wrap in reverse.",
+      "description": "Children wrap in reverse.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POSITION_TYPE_STATIC",
+      "brief": "Positioned in the normal flow (default).",
+      "description": "Positioned in the normal flow (default).",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POSITION_TYPE_RELATIVE",
+      "brief": "Offset from normal position without leaving the flow.",
+      "description": "Offset from normal position without leaving the flow.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POSITION_TYPE_ABSOLUTE",
+      "brief": "Removed from flow; positioned relative to container.",
+      "description": "Removed from flow; positioned relative to container.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIRECTION_INHERIT",
+      "brief": "Inherit text direction from parent.",
+      "description": "Inherit text direction from parent.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIRECTION_LTR",
+      "brief": "Left-to-right text direction.",
+      "description": "Left-to-right text direction.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DIRECTION_RTL",
+      "brief": "Right-to-left text direction.",
+      "description": "Right-to-left text direction.",
+      "types": [
+        "string"
+      ]
     }
   ]
 }

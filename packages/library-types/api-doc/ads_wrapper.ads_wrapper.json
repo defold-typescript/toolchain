@@ -164,7 +164,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -191,7 +191,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -218,7 +218,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -245,7 +245,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -280,7 +280,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -315,7 +315,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -350,7 +350,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -385,7 +385,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -420,7 +420,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -455,7 +455,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -482,7 +482,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -557,7 +557,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -592,7 +592,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -627,7 +627,7 @@
           "name": "params",
           "doc": "additional parameters",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -754,7 +754,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -781,7 +781,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -867,7 +867,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -885,7 +885,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -947,7 +947,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -965,7 +965,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1016,7 +1016,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1043,7 +1043,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1061,7 +1061,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1096,7 +1096,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1123,7 +1123,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1141,7 +1141,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"

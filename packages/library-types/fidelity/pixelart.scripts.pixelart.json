@@ -1,9 +1,12 @@
 {
   "namespace": "pixelart.scripts.pixelart",
-  "totalMembers": 21,
-  "totalTypeTokens": 24,
+  "totalMembers": 23,
+  "totalTypeTokens": 26,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 0,
-  "coverage": 1
+  "undocumentedMembers": 1,
+  "coverage": 1,
+  "tableParams": 0,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

@@ -6,7 +6,7 @@ declare module 'demo.demo' {
 	/**
 	 * A widget.
 	 */
-	interface widget {
+	export interface widget {
 		count: number;
 		/**
 		 * Resize the widget.

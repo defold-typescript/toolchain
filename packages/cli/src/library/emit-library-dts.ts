@@ -1,7 +1,7 @@
 /**
  * Renders a `LibraryModel` (from `parse-luals.ts`) into the `.d.ts` `resolve` serves:
- * a single `declare module '<moduleId>' { ... }` block of plain `interface`s, `type`
- * aliases, and `export function`s, mapping every member type through the shipped
+ * a single `declare module '<moduleId>' { ... }` block of exported `interface`s, `type`
+ * aliases, `const`s, and `function`s, mapping every member type through the shipped
  * `mapLualsType`. Pure and deterministic — output depends only on the model and the
  * options — so a pinned print and an archive print of the same sources agree
  * byte-for-byte.
@@ -319,7 +319,7 @@ function renderAlias(alias: LibraryAlias, ctx: ModelContext): string[] {
   const lines: string[] = [];
   pushDoc(lines, alias.doc, INDENT, alias.deprecated);
   lines.push(
-    `${INDENT}type ${declaredName(ctx, alias.name)} = ${mapTypes(alias.types, scopeAliasBody(ctx, alias))};`,
+    `${INDENT}export type ${declaredName(ctx, alias.name)} = ${mapTypes(alias.types, scopeAliasBody(ctx, alias))};`,
   );
   return lines;
 }
@@ -330,7 +330,6 @@ function renderInterface(
   interfaceNames: ReadonlySet<string>,
   externalTokens: ReadonlySet<string>,
   indexBase: LibraryIndexBase | undefined,
-  exported = false,
 ): string[] {
   const lines: string[] = [];
   pushDoc(lines, iface.brief, INDENT, iface.deprecated);
@@ -338,8 +337,11 @@ function renderInterface(
   const params = renderGenericParams(iface.generics, ifaceCtx);
   const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames, externalTokens);
   const name = declaredName(ctx, iface.name);
-  const exportKeyword = exported ? "export " : "";
-  lines.push(`${INDENT}${exportKeyword}interface ${name}${params}${extendsClause} {`);
+  // Every interface is exported: a reserved-name re-export (`export { new_ as new }`)
+  // turns off the ambient module's implicit exports, and a re-exported table's
+  // interface merges with the same-named `export const` instead of failing TS2395
+  // against a local interface.
+  lines.push(`${INDENT}export interface ${name}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
     if (!isPublicField(field)) continue;
@@ -403,7 +405,8 @@ function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext)
       TS_IDENTIFIER.test(field.name) && !TS_RESERVED_NAMES.has(field.name)
         ? field.name
         : sanitizeTypeName(field.name);
-    lines.push(`${INDENT}export const ${name}: ${mapTypes(field.types, ctx)};`);
+    const type = mapTypes(field.types, ctx);
+    lines.push(`${INDENT}export const ${name}: ${field.readonly ? `Readonly<${type}>` : type};`);
   }
   return lines;
 }
@@ -568,9 +571,6 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
 
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const externalTokens = new Set(Object.keys(opts.externalTypes ?? {}));
-  // A re-exported table's interface is exported so it merges with the same-named
-  // `export const` instead of failing TS2395 against a local interface.
-  const tableInterfaces = new Set((model.moduleTables ?? []).map((table) => table.table));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
   out.push(...renderExternalImports(opts.externalTypes));
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
@@ -581,16 +581,7 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
       out.push(...renderModuleConstants(iface.fields, ctx));
       continue;
     }
-    out.push(
-      ...renderInterface(
-        iface,
-        ctx,
-        interfaceNames,
-        externalTokens,
-        opts.indexBase,
-        tableInterfaces.has(iface.name),
-      ),
-    );
+    out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBase));
   }
   out.push(...renderModuleConstants(model.moduleConstants ?? [], ctx));
   for (const fn of model.moduleFunctions) {

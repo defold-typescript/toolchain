@@ -1,9 +1,12 @@
 {
   "namespace": "saver.saver",
-  "totalMembers": 51,
-  "totalTypeTokens": 81,
+  "totalMembers": 53,
+  "totalTypeTokens": 83,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 8,
-  "coverage": 1
+  "undocumentedMembers": 9,
+  "coverage": 1,
+  "tableParams": 5,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

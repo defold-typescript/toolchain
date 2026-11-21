@@ -21,11 +21,13 @@ export interface LibraryModel {
   // standalone interface. Set only when a returned local resolves to an opened class,
   // so a module with a plain returned table carries no key.
   moduleObject?: string;
-  // Each column-0 `<table>.<NAME>` that starts a non-function assignment, in source
+  // Each column-0 `<table>.<NAME>` that starts a non-function assignment, and each
+  // `NAME = ...` entry of a column-0 `local <table> = { ... }` constructor, in source
   // order, with its receiver: an unannotated constant can be typed via the
-  // `moduleConstants` override only under a name assigned on `moduleReturn`. Omitted
-  // when empty, like `moduleObject`.
-  moduleAssignments?: { table: string; name: string }[];
+  // `moduleConstants` override only under a name assigned on `moduleReturn`.
+  // `literalType` is the LuaLS type of a literal or literal-table value, absent for
+  // any other value. Omitted when empty, like `moduleObject`.
+  moduleAssignments?: ModuleAssignment[];
   // The identifier of the last column-0 `return <ident>` in the file: the table the
   // module hands back. Omitted when the file has none (a dotted or call-expression
   // return, or only indented ones).
@@ -35,9 +37,17 @@ export interface LibraryModel {
   // (`flex.Node.new()`), not module functions. Omitted when empty, like
   // `moduleAssignments`.
   moduleTables?: { name: string; table: string; functions: LibraryMethod[] }[];
-  // Module-level constants the Lua assigns without an annotation, added by the
-  // `moduleConstants` override and emitted as `export const`s. Omitted when empty.
+  // Module-level constants: each literal the returned table is assigned, typed by the
+  // `---@field` its class declares for it or else by the literal, plus those the
+  // `moduleConstants` override adds or retypes. Emitted as `export const`s. Omitted
+  // when empty.
   moduleConstants?: LibraryField[];
+}
+
+export interface ModuleAssignment {
+  table: string;
+  name: string;
+  literalType?: string;
 }
 
 export interface LibraryInterface {
@@ -108,6 +118,9 @@ export interface LibraryField {
   doc: string;
   isOptional: boolean;
   visibility?: LibraryFieldVisibility;
+  // A module constant whose members are fixed, an `---@enum` table: its members are
+  // emitted read-only. Set only when true.
+  readonly?: true;
 }
 
 export interface LibraryGeneric {
@@ -130,6 +143,7 @@ interface Pending {
   overloads: LibraryOverload[];
   visibility?: LibraryMethodVisibility;
   deprecated?: string;
+  isEnum?: true;
 }
 
 const emptyPending = (): Pending => ({
@@ -607,6 +621,151 @@ const MODULE_ASSIGN = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*[=,]/;
 // metatable self-index (`Node.__index = Node`).
 const TABLE_ALIAS = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\s*$/;
 
+/** `line` without a trailing `--` comment; a `--` inside a quoted string stays. */
+function stripLuaComment(line: string): string {
+  let quote: string | null = null;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote !== null) {
+      if (c === "\\") i++;
+      else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (c === "-" && line[i + 1] === "-") {
+      return line.slice(0, i);
+    }
+  }
+  return line;
+}
+
+/** `text`'s net `{`/`}` depth, braces inside quoted strings aside. */
+function braceDepth(text: string): number {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote !== null) {
+      if (c === "\\") i++;
+      else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (c === "{") {
+      depth++;
+    } else if (c === "}") {
+      depth--;
+    }
+  }
+  return depth;
+}
+
+/** A table constructor's entries, split on its top-level `,` and `;`. */
+function splitTableEntries(inner: string): string[] {
+  const entries: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let start = 0;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i];
+    if (quote !== null) {
+      if (c === "\\") i++;
+      else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (c === "{" || c === "(" || c === "[") {
+      depth++;
+    } else if (c === "}" || c === ")" || c === "]") {
+      depth--;
+    } else if (depth === 0 && (c === "," || c === ";")) {
+      entries.push(inner.slice(start, i));
+      start = i + 1;
+    }
+  }
+  entries.push(inner.slice(start));
+  return entries.map((entry) => entry.trim()).filter((entry) => entry !== "");
+}
+
+const TABLE_ENTRY = /^([A-Za-z_]\w*)\s*=\s*([\s\S]+)$/;
+const DOUBLE_QUOTED = /^"((?:[^"\\]|\\.)*)"$/;
+const SINGLE_QUOTED = /^'((?:[^'\\]|\\.)*)'$/;
+const PLAIN_NUMBER = /^-?\d+(?:\.\d+)?$/;
+const LUA_NUMBER = /^-?(?:0[xX][0-9a-fA-F]+|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)$/;
+
+/**
+ * The LuaLS type of a Lua literal or of a table constructor whose every entry is
+ * `NAME = <literal or such a table>`, or `undefined` for any other value (`nil`, a
+ * call, a name, an expression, an empty or positional table). `asConst` keeps each
+ * literal's own type (`"json"`, `1`, `true`), as an `---@enum` value is fixed;
+ * otherwise a value widens to `string`, `number` or `boolean`, as a module field the
+ * library may reassign.
+ */
+function literalTypeOf(value: string, asConst: boolean): string | undefined {
+  const text = value.trim();
+  const quoted = DOUBLE_QUOTED.exec(text) ?? SINGLE_QUOTED.exec(text);
+  if (quoted !== null) {
+    const content = quoted[1] as string;
+    return asConst && !/["\\]/.test(content) ? `"${content}"` : "string";
+  }
+  if (LUA_NUMBER.test(text)) return asConst && PLAIN_NUMBER.test(text) ? text : "number";
+  if (text === "true" || text === "false") return asConst ? text : "boolean";
+  if (!text.startsWith("{") || !text.endsWith("}") || braceDepth(text) !== 0) return undefined;
+  const entries = splitTableEntries(text.slice(1, -1));
+  if (entries.length === 0) return undefined;
+  const members: string[] = [];
+  for (const entry of entries) {
+    const match = TABLE_ENTRY.exec(entry);
+    const memberType = match ? literalTypeOf(match[2] as string, asConst) : undefined;
+    if (match === null || memberType === undefined) return undefined;
+    members.push(`${match[1]}: ${memberType}`);
+  }
+  return `{ ${members.join(", ")} }`;
+}
+
+/** The `NAME = <value>` entries of a table constructor, each with its value's literal type. */
+function constructorEntries(table: string, text: string): ModuleAssignment[] {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return [];
+  return splitTableEntries(trimmed.slice(1, -1)).flatMap((entry) => {
+    const match = TABLE_ENTRY.exec(entry);
+    if (match === null) return [];
+    const literalType = literalTypeOf(match[2] as string, false);
+    return [{ table, name: match[1] as string, ...(literalType ? { literalType } : {}) }];
+  });
+}
+
+/**
+ * A module constant for each name the returned table is first assigned a literal,
+ * skipping a name the module already exports as a function, a re-exported table or a
+ * module-object field. A `---@field` the table's class declares for the name supplies
+ * its type, doc and visibility, as the annotation outranks the inferred literal; an
+ * `---@enum` value with no such field is read-only.
+ */
+function literalModuleConstants(
+  assignments: readonly ModuleAssignment[],
+  notes: ReadonlyMap<ModuleAssignment, { doc: string; isEnum: boolean }>,
+  moduleReturn: string | undefined,
+  classFields: readonly LibraryField[] | undefined,
+  taken: ReadonlySet<string>,
+): LibraryField[] {
+  const seen = new Set(taken);
+  const constants: LibraryField[] = [];
+  for (const assignment of assignments) {
+    if (assignment.table !== moduleReturn || assignment.literalType === undefined) continue;
+    if (seen.has(assignment.name)) continue;
+    seen.add(assignment.name);
+    const note = notes.get(assignment);
+    const field = classFields?.find((f) => f.name === assignment.name);
+    constants.push({
+      name: assignment.name,
+      types: field ? field.types : [assignment.literalType],
+      doc: note?.doc || field?.doc || "",
+      isOptional: false,
+      ...(field?.visibility ? { visibility: field.visibility } : {}),
+      ...(note?.isEnum && field === undefined ? { readonly: true as const } : {}),
+    });
+  }
+  return constants;
+}
+
 type ModuleTable = NonNullable<LibraryModel["moduleTables"]>[number];
 
 interface TableAlias {
@@ -713,7 +872,15 @@ export function parseLualsSource(source: string): LibraryModel {
   const byName = new Map<string, LibraryInterface>();
   const aliases: LibraryAlias[] = [];
   const moduleFunctions: LibraryMethod[] = [];
-  const moduleAssignments: { table: string; name: string }[] = [];
+  const moduleAssignments: ModuleAssignment[] = [];
+  // What a module constant takes from its assignment line: the doc above it and
+  // whether an `---@enum` tags it.
+  const assignmentNotes = new Map<ModuleAssignment, { doc: string; isEnum: boolean }>();
+  // Each column-0 `local <table> = { ... }` constructor's entries, by table.
+  const constructorAssignments = new Map<string, ModuleAssignment[]>();
+  // A table constructor still open after its column-0 line: the text read so far,
+  // and what to record once it closes.
+  let openTable = null as { text: string; close: (text: string) => void } | null;
   let moduleReturn: string | undefined;
   const receiverBinding = new Map<string, string>();
   const functionReceivers = new Map<LibraryMethod, string>();
@@ -807,7 +974,27 @@ export function parseLualsSource(source: string): LibraryModel {
     }
   };
 
+  // Record a column-0 table constructor, now or once its closing brace is read.
+  const readTable = (rhs: string, close: (text: string) => void): void => {
+    const text = stripLuaComment(rhs);
+    if (text.trim().startsWith("{") && braceDepth(text) > 0) openTable = { text, close };
+    else close(text);
+  };
+
   for (const raw of source.split("\n")) {
+    if (openTable) {
+      // A constructor's body is indented and ends at a column-0 `}`; any other
+      // column-0 line means the constructor is not one this reader can follow.
+      if (/^\s/.test(raw) || raw.trim() === "" || raw.startsWith("}")) {
+        openTable.text += ` ${stripLuaComment(raw)}`;
+        if (braceDepth(openTable.text) <= 0) {
+          openTable.close(openTable.text);
+          openTable = null;
+        }
+        continue;
+      }
+      openTable = null;
+    }
     if (openAlias) {
       if (raw.startsWith("---|")) {
         const { type } = readTypeToken(raw.slice(4).trim());
@@ -929,6 +1116,10 @@ export function parseLualsSource(source: string): LibraryModel {
           pending.visibility = tag as LibraryMethodVisibility;
           break;
         }
+        case "enum": {
+          pending.isEnum = true;
+          break;
+        }
         case "deprecated": {
           // `rest` is already trimmed and is `""` for the bare form, which is the
           // only form the fixtures actually ship; the text form is carried too.
@@ -981,15 +1172,30 @@ export function parseLualsSource(source: string): LibraryModel {
       lastOpenedClass = null;
       openClass = null;
       pending = emptyPending();
+      if (variable) {
+        readTable(raw.slice(localAssign[0].length), (text) => {
+          constructorAssignments.set(variable, constructorEntries(variable, text));
+        });
+      }
       continue;
     }
 
     const moduleAssign = MODULE_ASSIGN.exec(raw);
     if (moduleAssign) {
-      moduleAssignments.push({
+      const assignment: ModuleAssignment = {
         table: moduleAssign[1] as string,
         name: moduleAssign[2] as string,
-      });
+      };
+      moduleAssignments.push(assignment);
+      const isEnum = pending.isEnum === true;
+      assignmentNotes.set(assignment, { doc: pending.doc.join("\n"), isEnum });
+      pending = emptyPending();
+      if (raw.slice(moduleAssign[0].length - 1).startsWith("=")) {
+        readTable(raw.slice(moduleAssign[0].length), (text) => {
+          const literalType = literalTypeOf(text, isEnum);
+          if (literalType !== undefined) assignment.literalType = literalType;
+        });
+      }
       const alias = TABLE_ALIAS.exec(raw);
       if (alias) {
         tableAliases.push({
@@ -1032,14 +1238,34 @@ export function parseLualsSource(source: string): LibraryModel {
     ? extractModuleTables(moduleReturn, moduleFunctions, functionReceivers, tableAliases, byName)
     : { moduleFunctions, moduleTables: [] };
 
+  // The returned table's constructor entries are assigned before any `M.NAME = ...`.
+  const assignments = [
+    ...(moduleReturn ? (constructorAssignments.get(moduleReturn) ?? []) : []),
+    ...moduleAssignments,
+  ];
+  const moduleConstants = literalModuleConstants(
+    assignments,
+    assignmentNotes,
+    moduleReturn,
+    moduleReturn
+      ? byName.get(receiverBinding.get(moduleReturn) ?? moduleReturn)?.fields
+      : undefined,
+    new Set([
+      ...split.moduleFunctions.map((fn) => fn.name),
+      ...split.moduleTables.map((table) => table.name),
+      ...(moduleObject ? (byName.get(moduleObject)?.fields ?? []).map((f) => f.name) : []),
+    ]),
+  );
+
   return {
     interfaces,
     aliases,
     moduleFunctions: split.moduleFunctions,
     ...(moduleObject ? { moduleObject } : {}),
-    ...(moduleAssignments.length > 0 ? { moduleAssignments } : {}),
+    ...(assignments.length > 0 ? { moduleAssignments: assignments } : {}),
     ...(moduleReturn ? { moduleReturn } : {}),
     ...(split.moduleTables.length > 0 ? { moduleTables: split.moduleTables } : {}),
+    ...(moduleConstants.length > 0 ? { moduleConstants } : {}),
   };
 }
 

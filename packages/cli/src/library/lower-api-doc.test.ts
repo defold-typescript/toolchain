@@ -58,14 +58,14 @@ test("a module function lowers its param/return tokens to emitter-equivalent Typ
     {
       name: "context",
       doc: "the context",
-      types: ["LuaTable"],
+      types: ["LuaTable | PlainTable"],
       is_optional: "False",
       is_vararg: "False",
     },
     {
       name: "style",
       doc: "the style",
-      types: ["LuaTable | undefined"],
+      types: ["LuaTable | PlainTable | undefined"],
       is_optional: "False",
       is_vararg: "False",
     },

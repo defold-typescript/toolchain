@@ -5,7 +5,7 @@ import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dt
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { type ReadLibraryOptions, readLibraryData } from "./library-data";
 import { lowerLibraryModel } from "./lower-api-doc";
-import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
+import { buildFidelityReport, type LualsFidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
 import type { LibrarySourceTree } from "./source-tree";
 
@@ -213,6 +213,7 @@ export function buildTargetModel(
     ...(own?.moduleAssignments ? { moduleAssignments: own.moduleAssignments } : {}),
     ...(own?.moduleReturn ? { moduleReturn: own.moduleReturn } : {}),
     ...(own?.moduleTables ? { moduleTables: own.moduleTables } : {}),
+    ...(own?.moduleConstants ? { moduleConstants: own.moduleConstants } : {}),
   };
   return target.annotationOverrides
     ? applyAnnotationOverrides(model, target.annotationOverrides)
@@ -224,7 +225,7 @@ export function lualsFidelityPath(target: LualsTarget): string {
   return `fidelity/${target.namespace}.json`;
 }
 
-export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
+export function buildTargetFidelity(packageRoot: string, target: LualsTarget): LualsFidelityReport {
   return buildFidelityReport(
     target.namespace,
     buildTargetModel(packageRoot, target),

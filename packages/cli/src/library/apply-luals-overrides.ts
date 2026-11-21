@@ -158,6 +158,13 @@ export function applyAnnotationOverrides(
       });
     }
     model.moduleObject = objectName;
+    // A module-object field is already an `export const`, so a literal the parser
+    // also read for that name is not declared twice.
+    if (model.moduleConstants !== undefined) {
+      model.moduleConstants = model.moduleConstants.filter(
+        (constant) => !object.fields.some((field) => field.name === constant.name),
+      );
+    }
   }
   const constants = Object.entries(overrides.moduleConstants ?? {});
   if (constants.length > 0) {
@@ -185,12 +192,16 @@ export function applyAnnotationOverrides(
           `applyAnnotationOverrides: module constant "${name}" is already declared by module object "${model.moduleObject}".`,
         );
       }
-      moduleConstants.push({
+      // A recipe entry retypes a literal the parser already read, in its place.
+      const parsed = moduleConstants.findIndex((c) => c.name === name);
+      const retyped = {
         name,
         types: [constant.type],
-        doc: constant.doc ?? "",
+        doc: constant.doc ?? (parsed === -1 ? "" : (moduleConstants[parsed]?.doc ?? "")),
         isOptional: false,
-      });
+      };
+      if (parsed === -1) moduleConstants.push(retyped);
+      else moduleConstants[parsed] = retyped;
     }
     model.moduleConstants = moduleConstants;
   }

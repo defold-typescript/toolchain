@@ -105,6 +105,54 @@
     },
     {
       "type": "FUNCTION",
+      "name": "get_motion_quality",
+      "brief": "Returns the effects quality to run at. `?motionQuality=full` or",
+      "description": "Returns the effects quality to run at. `?motionQuality=full` or\n`?motionQuality=reduced` wins; next comes the host's `window.minit.motionQuality`\nwhen it is one of the two; otherwise it returns `\"reduced\"` when\n`prefers_reduced_motion` returns `true`, else `\"full\"`. Outside an HTML5 build it\nreturns `\"full\"`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "\"full\" | \"reduced\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "prefers_reduced_motion",
+      "brief": "Returns whether the player or the operating system prefers reduced motion.",
+      "description": "Returns whether the player or the operating system prefers reduced motion.\n`?reducedMotion=1` or `?reducedMotion=true` forces `true` and `?reducedMotion=0` or\n`?reducedMotion=false` forces `false`; next comes the host's\n`window.minit.prefersReducedMotion` when it is a boolean; otherwise it returns\nwhether the browser matches the `prefers-reduced-motion: reduce` media query, or\n`false` when the browser cannot tell. Outside an HTML5 build it returns `false`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_device_tier",
+      "brief": "Returns the player's device tier. `?deviceTier=` set to `low`, `medium`, `high` or",
+      "description": "Returns the player's device tier. `?deviceTier=` set to `low`, `medium`, `high` or\n`unknown` wins; next comes the host's `window.minit.deviceTier` when it is one of\nthe four; otherwise it returns `\"unknown\"`, which is also its result outside an\nHTML5 build.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "\"low\" | \"medium\" | \"high\" | \"unknown\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "is_viewable",
       "brief": "Returns whether the game is visible to the player right now: the host's",
       "description": "Returns whether the game is visible to the player right now: the host's\n`window.minit.isViewable()` when it has one, else whether `document.visibilityState`\nis `visible`. It reads the value again on every call. Outside an HTML5 build it\nreturns `true`.",

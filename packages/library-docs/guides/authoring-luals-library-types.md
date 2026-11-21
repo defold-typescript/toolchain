@@ -200,10 +200,21 @@ type is absent from the model, when the module class already declares the field
 (upstream added the `---@field`, so delete the entry), when a module function has the
 same name, and when the parser already treats a different class as the module object.
 
-Other libraries assign constants to the module table with no annotation at all:
-live-unbundler writes `M.MSG_ALL_LOADED = hash("all_loaded")` and
-`M.RES_BOTH = 3` at the top of its module file, so the lane exports neither. A
-`moduleConstants` override types each one with a LuaLS token and an optional doc line:
+Constants the module table holds export with no recipe entry. Each column-0
+`M.NAME = <literal>` on the table the module's own file returns (`return M`), and
+each `NAME = <literal>` entry of that table's `local M = { ... }` constructor, emits
+as an `export const` typed by its literal: panthera's `M.OPTIONS_LOOP = { is_loop = true }`
+emits as `{ is_loop: boolean }`. A `---@field` the table's class declares for the
+name supplies the type and doc instead, so panthera's `SPEED = 1` entry emits as the
+documented `SPEED: number` its class declares. An `---@enum` table keeps each
+value's own type, read-only: saver's `M.FORMAT` emits as
+`Readonly<{ JSON: "json"; LUA: "lua"; SERIALIZED: "serialized" }>`. A name the
+module also exports as a function is not a constant.
+
+A value that is not a literal stays undeclared: live-unbundler writes
+`M.MSG_ALL_LOADED = hash("liveupdater_all_loaded")` and `M.RES_BOTH = RES_BOTH`,
+which the lane cannot type. A `moduleConstants` override types such a name with a
+LuaLS token and an optional doc line, and retypes a literal the lane already exports:
 
 ```json
 "annotationOverrides": {
@@ -216,8 +227,8 @@ live-unbundler writes `M.MSG_ALL_LOADED = hash("all_loaded")` and
 
 Each entry emits as a documented `export const MSG_ALL_LOADED: Hash;` and appears on
 the `/api` page, and its token counts toward the fidelity report like any annotation.
-Only a column-0 `M.NAME = ...` on the table the module's own file returns
-(`return M`) counts as an assignment, as does the first target of
+Only a column-0 `M.NAME = ...` or a constructor entry on the table the module's own
+file returns (`return M`) counts as an assignment, as does the first target of
 `M.DEBUG, M[1] = 1, "DEBUG"`; an assignment on another table, such as
 `Other.NAME = 1`, does not. The override throws when the returned table never has
 the name assigned at column 0, when a module function has the same name, and when
@@ -320,6 +331,12 @@ spaced `--- @deprecated` is treated as prose, as it is for every other tag.
   now lowers to the callable type `(...args: any[]) => unknown`. A rename that *should*
   have applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
+- **`tableParams`** — parameters typed by a bare `table`. Each emits as
+  `LuaTable | PlainTable`, which takes any table a caller holds, interface-typed
+  values and object literals included, but checks none of its fields; informational.
+- **`unexportedTypes`** and **`droppedAssignments`** — interfaces or type aliases the
+  module declares without `export`, and literal module assignments it exports nothing
+  for. Both stay `0` for every shipped library; a test fails otherwise.
 
 Each report's `coverage` is pinned by a committed floor, the module's entry in `floors`
 in the library's `library.json`, so a regeneration that lowers it fails the suite

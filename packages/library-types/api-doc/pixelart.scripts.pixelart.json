@@ -307,6 +307,24 @@
           ]
         }
       ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POST_PROCESS",
+      "brief": "Post Process targets",
+      "description": "Post Process targets",
+      "types": [
+        "{ PIXELATE: string; RENDER: string }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "render_shadows",
+      "brief": "",
+      "description": "",
+      "types": [
+        "boolean"
+      ]
     }
   ]
 }

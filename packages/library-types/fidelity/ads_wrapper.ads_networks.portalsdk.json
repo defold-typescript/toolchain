@@ -1,9 +1,12 @@
 {
   "namespace": "ads_wrapper.ads_networks.portalsdk",
-  "totalMembers": 20,
-  "totalTypeTokens": 24,
+  "totalMembers": 21,
+  "totalTypeTokens": 25,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 8,
-  "coverage": 1
+  "undocumentedMembers": 9,
+  "coverage": 1,
+  "tableParams": 0,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

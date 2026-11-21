@@ -9001,6 +9001,12 @@ member the fork leaves undocumented, so its editor hover text matches the librar
 `import * as dicebag from 'dicebag.dicebag'` — so it matches what Fetch Libraries
 installs at runtime.
 
+A module printed from a library's LuaLS annotations exports every interface and type
+alias it declares, so `import type` names any of them. A parameter the library
+annotates as a bare `table` takes an object literal or a value typed by an interface
+as well as a `LuaTable`, and each literal or `---@enum` table the module table holds
+is an `export const`, an enum keeping each value's own type.
+
 When the archive cannot be printed — a version the corrections do not fit, or an
 annotation the printer cannot map — `resolve` prints the sources library data
 pins instead and warns:
