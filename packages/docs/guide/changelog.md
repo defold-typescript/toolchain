@@ -16,6 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **`msg.post` requires a required payload** ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)), and **id tables read `undefined` for a missing id**.
 > - **Filtered systems narrow `entities`** ([Filters](./entity-systems.md#filters)).
 > - **`JSON`, `Date` and other JavaScript globals Defold's Lua lacks fail the build** ([TypeScript gotchas](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build)).
+> - **LuaLS library modules take plain tables, export their types and declare their constants** ([Vendored library types](./resolve.md#vendored-library-types)).
 
 ### Breaking
 
@@ -33,6 +34,10 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **JavaScript globals Defold's Lua lacks fail the build:** a reference to `JSON`, `Date`, `RegExp`, `encodeURIComponent` or another global TypeScriptToLua leaves as a bare Lua global, which compiled with no diagnostic and raised on `nil` at runtime, is an error in `build`, `watch` and the editor that names the replacement, such as `json.encode` and `json.decode` for `JSON` ([TypeScript gotchas](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build)).
+- **Library modules printed from LuaLS annotations accept and export what the Lua does** ([Vendored library types](./resolve.md#vendored-library-types)):
+  - **Bare `table` parameters** take an object literal or a value typed by an interface as well as a `LuaTable`, so `druid.new(self)` in a Druid GUI script and `saver.save_file_by_name(data, "data.json")` with an interface-typed `data` compile.
+  - **Every interface and type alias is exported**, so `import type` names the types of a module that also exports a function named `new`, such as Druid's, Pigeon's and Squid's.
+  - **Module constants are declared without a recipe entry:** a literal or literal table the module table holds, such as `panthera.SPEED` and `panthera.OPTIONS_LOOP`, and an `---@enum` table such as `saver.FORMAT`, whose values keep their own types.
 
 ## v0.68.0
 

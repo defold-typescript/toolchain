@@ -87,7 +87,7 @@
           "name": "self",
           "doc": "",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -105,7 +105,7 @@
           "name": "self",
           "doc": "",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -114,7 +114,7 @@
           "name": "predicates",
           "doc": "",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"

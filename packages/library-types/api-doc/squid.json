@@ -8,8 +8,8 @@
     {
       "type": "FUNCTION",
       "name": "init",
-      "brief": "------\n------\n------\n------\nInitialize Squid for error and crash handling and logging",
-      "description": "------\n------\n------\n------\nInitialize Squid for error and crash handling and logging",
+      "brief": "------\n------\nInitialize Squid for error and crash handling and logging",
+      "description": "------\n------\nInitialize Squid for error and crash handling and logging",
       "parameters": [],
       "returnvalues": []
     },

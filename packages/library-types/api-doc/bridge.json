@@ -1743,6 +1743,533 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.on",
+      "description": "Subscribe to multiplayer events. Use the bridge.EVENT_NAME.MULTIPLAYER_* constants. The callback receives: `multiplayer_state_changed` - state string (see bridge.MULTIPLAYER_STATE) `multiplayer_room_left` - reason string (see bridge.ROOM_LEAVE_REASON) `multiplayer_room_updated` - room table `multiplayer_player_joined` - player table `multiplayer_player_left` - player table `multiplayer_player_updated` - player table `multiplayer_host_changed` - new host player table or nil `multiplayer_message_received` - message table { type, data, from } `multiplayer_sync_state_received` - world table (see set_sync_state)",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "function(_, data)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.is_supported",
+      "description": "Check if multiplayer is supported on the current platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.state",
+      "description": "Connection state - \"disconnected\", \"connecting\", \"connected\" or \"reconnecting\" (see bridge.MULTIPLAYER_STATE).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.is_in_room",
+      "description": "Check if the player is in a room (connected or reconnecting).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.is_host",
+      "description": "Check if the local player is the room host.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.player_id",
+      "description": "The local player id in the room, nil outside of a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.host_id",
+      "description": "The room host player id, nil outside of a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.room_id",
+      "description": "The room code other players type to join, nil outside of a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.region",
+      "description": "Region of the next created or matched room and of get_rooms, e.g. \"eu\". nil until set_region, get_regions or the first room call.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.room",
+      "description": "The current room with the shape { id, type, maxPlayers, isOpen, isVisible, hostId, properties }, nil outside of a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.players",
+      "description": "The players in the current room, each with the shape { id, name, isHost, isConnected, properties }. Empty outside of a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.is_invite_supported",
+      "description": "Check if the platform can share an invite link to the current room, see invite_to_room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.launch_room_id",
+      "description": "The room code from the invite link the game was opened with, pass it to join_room. nil when there is none or once the player has entered any room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.sync_state",
+      "description": "The last world - set with set_sync_state or received. Empty when there is none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.create_room",
+      "description": "Create a room and enter it as the host. A hidden room (the default) is for friends - only players the room code was shared with can join.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional (may be omitted) { maxPlayers, isVisible (default false), isOpen (default true), filter (lets quick match and filtered room lists find a visible room), properties, playerName, playerProperties, syncState (true or { updatesPerSecond }, see set_sync_state) }.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, room_id)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_ROOM_FULL",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.join_room",
+      "description": "Join a room by its code.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional (may be omitted) { playerName, playerProperties, syncState (true or { updatesPerSecond }, see set_sync_state) }.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_ROOM_FULL",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.join_or_create_room",
+      "description": "Quick match - enter a visible room with the same maxPlayers and exactly the same filter, or create a visible one (its creator becomes the host). A created room also gets the filter values in its properties.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional (may be omitted) { maxPlayers, filter, properties, playerName, playerProperties, syncState (true or { updatesPerSecond }, see set_sync_state) }.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, room_id)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_ROOM_FULL",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.get_rooms",
+      "description": "Get visible open rooms with a free seat, for a room browser. Each room has the shape { id, type, maxPlayers, playerCount, filter, properties }.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional (may be omitted) { filter (only rooms created with exactly this filter), maxPlayers, limit }.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, rooms)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_ROOM_FULL",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.get_regions",
+      "description": "Get region ids for a region picker, e.g. { \"eu\", \"us\", \"ap\" }. Also sets region to the default one if it is still unknown.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, regions)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_NOT_SUPPORTED",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_region",
+      "description": "Set the region (an id from get_regions) of the next created or matched room and of get_rooms. The current room stays where it is; join_room by code always enters the region of the code.",
+      "parameters": [
+        {
+          "name": "region",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.invite_to_room",
+      "description": "Ask the platform to share a link to the current room. Whoever opens it starts the game with the room code in launch_room_id.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional (may be omitted) { text, image, ... }.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_, result)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error), error is the code, e.g. MULTIPLAYER_ROOM_FULL",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.leave_room",
+      "description": "Leave the current room.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_room_open",
+      "description": "Host only. Stop (or resume) accepting new players, e.g. once the match starts.",
+      "parameters": [
+        {
+          "name": "is_open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_room_visible",
+      "description": "Host only. Show (or hide) the room in the room list and matchmaking.",
+      "parameters": [
+        {
+          "name": "is_visible",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_room_properties",
+      "description": "Host only. Update the room properties - keys are merged, a json.null value removes the key.",
+      "parameters": [
+        {
+          "name": "properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_player_properties",
+      "description": "Update the local player properties - keys are merged, a json.null value removes the key.",
+      "parameters": [
+        {
+          "name": "properties",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.send",
+      "description": "Send a message to other players in the room. It arrives in the multiplayer_message_received event as { type, data, from }.",
+      "parameters": [
+        {
+          "name": "message_type",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "Optional message data (any JSON-compatible value).",
+          "types": [
+            "table",
+            "string",
+            "number",
+            "boolean",
+            "nil"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional { to }, where to is \"all\", \"others\" (default), \"host\" (see bridge.MULTIPLAYER_TARGET), a player id or a table of player ids.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.multiplayer.set_sync_state",
+      "description": "Set the local game world. When the room is entered with syncState, the host sends its world to the other players up to updatesPerSecond times a second (1-10, default 10) and they get it in the multiplayer_sync_state_received event. The server keeps the last world - a new host gets it in the same event and goes on from it. Works outside a room too, e.g. to set the starting world before create_room. Reset to an empty table when the room is left.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "The whole world (JSON-compatible), up to 64 KB.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
     }
   ]
 }

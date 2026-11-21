@@ -110,6 +110,36 @@ describe("mapLualsType table", () => {
   });
 });
 
+describe("mapLualsType bare table by position", () => {
+  const input = (token: string): string => mapLualsType(token, ctx(), "input").ts;
+
+  test("a bare table the caller supplies also takes a plain table", () => {
+    expect(input("table")).toBe("LuaTable | PlainTable");
+  });
+
+  test("a nilable bare table the caller supplies takes a plain table too", () => {
+    expect(input("table|nil")).toBe("LuaTable | PlainTable | undefined");
+    expect(input("table?")).toBe("LuaTable | PlainTable | undefined");
+  });
+
+  test("an array of bare tables the caller supplies takes plain tables", () => {
+    expect(input("table[]")).toBe("(LuaTable | PlainTable)[]");
+  });
+
+  test("a bare table handed back stays LuaTable", () => {
+    expect(mapLualsType("table", ctx(), "output").ts).toBe("LuaTable");
+    expect(mapLualsType("table|nil", ctx(), "output").ts).toBe("LuaTable | undefined");
+  });
+
+  test("a callback's table param stays LuaTable while its returned table takes a plain table", () => {
+    expect(input("fun(t: table): table")).toBe("(t: LuaTable) => LuaTable | PlainTable");
+  });
+
+  test("a keyed table the caller supplies keeps its LuaMap spelling", () => {
+    expect(input("table<string, integer>")).toBe("LuaMap<string, number> | Record<string, number>");
+  });
+});
+
 describe("mapLualsType inline object", () => {
   test("object literal maps each field and uses semicolons", () => {
     expect(ts("{path: string, id: integer}")).toBe("{ path: string; id: number }");

@@ -24,7 +24,7 @@
           "name": "def",
           "doc": "Renderer definition table; must contain create_node",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -73,7 +73,7 @@
           "name": "self",
           "doc": "The gui_script self table to mount onto",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -100,7 +100,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -135,7 +135,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -162,7 +162,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -198,7 +198,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -233,7 +233,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -277,7 +277,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -321,7 +321,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -356,7 +356,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -401,7 +401,7 @@
           "name": "self",
           "doc": "The gui_script self table with a mounted renderer",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"

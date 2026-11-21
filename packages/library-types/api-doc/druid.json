@@ -15,7 +15,7 @@
           "name": "context",
           "doc": "The Druid context. Usually, this is the self of the gui_script. It is passed into all Druid callbacks.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -24,7 +24,7 @@
           "name": "style",
           "doc": "The Druid style table to override style parameters for this Druid instance.",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -59,7 +59,7 @@
           "name": "module",
           "doc": "Lua table with component",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -77,7 +77,7 @@
           "name": "style",
           "doc": "Default style",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -271,7 +271,7 @@
           "name": "logger_instance",
           "doc": "",
           "types": [
-            "druid_logger | LuaTable | undefined"
+            "druid_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -1409,7 +1409,7 @@
               "name": "action",
               "doc": "Action from on_input",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -1444,7 +1444,7 @@
               "name": "action",
               "doc": "Action from on_input",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -1453,7 +1453,7 @@
               "name": "touch",
               "doc": "Touch action",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -2312,7 +2312,7 @@
               "name": "points",
               "doc": "Array of vector3 points",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -4296,7 +4296,7 @@
               "name": "druid_style",
               "doc": "",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -4586,7 +4586,7 @@
               "name": "nodes",
               "doc": "Nodes table from gui.clone_tree",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -5809,7 +5809,7 @@
               "name": "node_or_container",
               "doc": "The node or container to add",
               "types": [
-                "Opaque<\"node\"> | string | druid_container | LuaTable"
+                "Opaque<\"node\"> | string | druid_container | LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6307,7 +6307,7 @@
               "name": "data",
               "doc": "The new data array",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6349,7 +6349,7 @@
               "name": "data",
               "doc": "The data to add",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6428,7 +6428,7 @@
               "name": "data",
               "doc": "The data to remove",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -6479,7 +6479,7 @@
               "name": "data",
               "doc": "",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -9848,7 +9848,7 @@
               "name": "style",
               "doc": "The Druid style table",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -9901,7 +9901,7 @@
               "name": "action",
               "doc": "Action from on_input",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -9936,7 +9936,7 @@
               "name": "message",
               "doc": "Message from on_message",
               "types": [
-                "LuaTable"
+                "LuaTable | PlainTable"
               ],
               "is_optional": "False",
               "is_vararg": "False"
@@ -9981,7 +9981,7 @@
               "name": "whitelist_components",
               "doc": "The array of component to whitelist, nil to clear it",
               "types": [
-                "LuaTable | druid_component[] | undefined"
+                "LuaTable | PlainTable | druid_component[] | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -10007,7 +10007,7 @@
               "name": "blacklist_components",
               "doc": "The array of component to blacklist, nil to clear it",
               "types": [
-                "LuaTable | druid_component[] | undefined"
+                "LuaTable | PlainTable | druid_component[] | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -10894,7 +10894,7 @@
               "name": "nodes",
               "doc": "Nodes table from gui.clone_tree",
               "types": [
-                "LuaTable | undefined"
+                "LuaTable | PlainTable | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"

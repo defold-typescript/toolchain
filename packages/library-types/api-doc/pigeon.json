@@ -8,8 +8,8 @@
     {
       "type": "FUNCTION",
       "name": "define",
-      "brief": "------------------------\n------------------------\n------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
-      "description": "------------------------\n------------------------\n------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "brief": "------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "description": "------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
       "parameters": [
         {
           "name": "message_id",
@@ -112,7 +112,7 @@
           "name": "context",
           "doc": "@Optional context to be passed to the callback function.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -268,7 +268,7 @@
           "name": "message",
           "doc": "@Optional definition message table to check before sending.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -312,7 +312,7 @@
           "name": "message",
           "doc": "@Optional message table to check.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -356,7 +356,7 @@
           "name": "module",
           "doc": "@Lua module being replacement for logging. Nil resets to default print logger.",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

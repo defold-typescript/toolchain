@@ -1,9 +1,12 @@
 {
   "namespace": "ads_wrapper.ads_networks.poki_legacy",
-  "totalMembers": 22,
-  "totalTypeTokens": 26,
+  "totalMembers": 23,
+  "totalTypeTokens": 27,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 11,
-  "coverage": 1
+  "undocumentedMembers": 12,
+  "coverage": 1,
+  "tableParams": 1,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

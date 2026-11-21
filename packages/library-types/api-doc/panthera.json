@@ -15,7 +15,7 @@
           "name": "logger_instance",
           "doc": "A logger object that follows the specified logging interface. Pass nil to use empty logger",
           "types": [
-            "panthera_logger | LuaTable | undefined"
+            "panthera_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -33,7 +33,7 @@
           "name": "animation_or_path",
           "doc": "Lua table with animation data or path to JSON animation file in custom resources",
           "types": [
-            "string | LuaTable"
+            "string | LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -77,7 +77,7 @@
           "name": "animation_or_path",
           "doc": "Lua table with animation data or path to JSON animation file in custom resources",
           "types": [
-            "string | LuaTable"
+            "string | LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -121,7 +121,7 @@
           "name": "animation_or_path",
           "doc": "Lua table with animation data or path to JSON animation file in custom resources",
           "types": [
-            "string | LuaTable"
+            "string | LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -1548,6 +1548,42 @@
             "number"
           ]
         }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SPEED",
+      "brief": "Default speed of all animations",
+      "description": "Default speed of all animations",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OPTIONS_LOOP",
+      "brief": "",
+      "description": "",
+      "types": [
+        "{ is_loop: boolean }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OPTIONS_SKIP_INIT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "{ is_skip_init: boolean }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OPTIONS_SKIP_INIT_LOOP",
+      "brief": "",
+      "description": "",
+      "types": [
+        "{ is_skip_init: boolean; is_loop: boolean }"
       ]
     }
   ]

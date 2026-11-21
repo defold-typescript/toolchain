@@ -529,7 +529,7 @@ describe("parseLualsSource signature params", () => {
       { name: "b", types: ["table"], doc: "", isOptional: true, isVararg: false },
     ]);
     const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
-    expect(dts).toContain("f(this: void, a: number, b?: LuaTable): void");
+    expect(dts).toContain("f(this: void, a: number, b?: LuaTable | PlainTable): void");
   });
 });
 
@@ -926,8 +926,8 @@ describe("parseLualsSource module table assignments", () => {
       lua("local M = {}", "local Other = {}", "Other.A = 1", "M.B = 2", "return M"),
     );
     expect(model.moduleAssignments).toEqual([
-      { table: "Other", name: "A" },
-      { table: "M", name: "B" },
+      { table: "Other", name: "A", literalType: "number" },
+      { table: "M", name: "B", literalType: "number" },
     ]);
     expect(model.moduleReturn).toBe("M");
   });
@@ -944,12 +944,59 @@ describe("parseLualsSource module table assignments", () => {
       ),
     );
     expect("moduleReturn" in model).toBe(false);
-    expect(model.moduleAssignments).toEqual([{ table: "M", name: "A" }]);
+    expect(model.moduleAssignments).toEqual([{ table: "M", name: "A", literalType: "number" }]);
   });
 
   test("a dotted return sets no moduleReturn", () => {
     const model = parseLualsSource(lua("local M = {}", "M.A = 1", "return M.inner"));
     expect("moduleReturn" in model).toBe(false);
+  });
+
+  test("the returned table's constructor entries are assignments, typed when their value is a literal", () => {
+    const model = parseLualsSource(
+      lua(
+        "local helper = { X = 1 }",
+        "local M = {",
+        "  SPEED = 1, -- a speed",
+        "  name = 'demo',",
+        "  run = function() end,",
+        "}",
+        "M.LIMITS = { low = 0, high = { value = 1.5 } }",
+        "M.timer = nil",
+        "return M",
+      ),
+    );
+
+    expect(model.moduleAssignments).toEqual([
+      { table: "M", name: "SPEED", literalType: "number" },
+      { table: "M", name: "name", literalType: "string" },
+      { table: "M", name: "run" },
+      { table: "M", name: "LIMITS", literalType: "{ low: number, high: { value: number } }" },
+      { table: "M", name: "timer" },
+    ]);
+    expect(model.moduleConstants?.map((c) => [c.name, c.types])).toEqual([
+      ["SPEED", ["number"]],
+      ["name", ["string"]],
+      ["LIMITS", ["{ low: number, high: { value: number } }"]],
+    ]);
+  });
+
+  test("a constructor a column-0 line interrupts records no literal, and that line still parses", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "M.LIST = {", "  A = 1,", "function M.f() end", "return M"),
+    );
+
+    expect(model.moduleAssignments).toEqual([{ table: "M", name: "LIST" }]);
+    expect(model.moduleFunctions.map((fn) => fn.name)).toEqual(["f"]);
+    expect("moduleConstants" in model).toBe(false);
+  });
+
+  test("a name the module exports as a function is not also a constant", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "M.on_done = false", "function M.on_done() end", "return M"),
+    );
+
+    expect("moduleConstants" in model).toBe(false);
   });
 
   test("a source with no column-0 table assignment carries no moduleAssignments key", () => {

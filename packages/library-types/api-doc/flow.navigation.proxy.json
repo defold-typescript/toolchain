@@ -50,7 +50,7 @@
           "name": "self",
           "doc": "The runtime instance created by M.attach()",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"

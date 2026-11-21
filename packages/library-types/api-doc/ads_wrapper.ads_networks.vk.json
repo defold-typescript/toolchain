@@ -33,7 +33,7 @@
           "name": "params",
           "doc": "",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -365,6 +365,15 @@
             "boolean"
           ]
         }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NAME",
+      "brief": "",
+      "description": "",
+      "types": [
+        "string"
       ]
     }
   ]

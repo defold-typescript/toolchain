@@ -15,7 +15,7 @@
           "name": "params",
           "doc": "",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -401,6 +401,15 @@
             "(...args: any[]) => unknown"
           ]
         }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NAME",
+      "brief": "",
+      "description": "",
+      "types": [
+        "string"
       ]
     }
   ]

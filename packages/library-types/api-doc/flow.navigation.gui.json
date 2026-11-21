@@ -41,7 +41,7 @@
           "name": "adapter",
           "doc": "The adapter instance created by M.new()",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -59,7 +59,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -77,7 +77,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -103,7 +103,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -121,7 +121,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -139,7 +139,7 @@
           "name": "options",
           "doc": "Optional {screen_id=...} to target a specific screen",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -157,7 +157,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -183,7 +183,7 @@
           "name": "adapter",
           "doc": "The adapter instance",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"

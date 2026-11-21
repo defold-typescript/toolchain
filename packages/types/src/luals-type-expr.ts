@@ -14,7 +14,7 @@
 
 import { luaMultiReturn } from "./library-signature";
 
-export type LualsLeafResolver = (leaf: string) => string | undefined;
+export type LualsLeafResolver = (leaf: string, position: LualsPosition) => string | undefined;
 
 /**
  * Who supplies the value a type describes: `"input"` for a slot the caller fills
@@ -22,7 +22,8 @@ export type LualsLeafResolver = (leaf: string) => string | undefined;
  * for one the engine or library hands back (a return, a property read back, a
  * callback's parameters). Only `"input"` widens a string-keyed `table<K, V>` to also
  * accept an object literal, so `"output"` renders exactly what an unpositioned
- * mapping does.
+ * mapping does. Each leaf reaches the resolver with the position it sits in, so a
+ * lane can widen its own leaves the same way.
  */
 export type LualsPosition = "input" | "output";
 
@@ -320,7 +321,7 @@ function mapToken(raw: string, walk: Walk): string {
   if (token.startsWith('"') && token.endsWith('"')) return token;
   if (NUMERIC_LITERAL.test(token) || token === "true" || token === "false") return token;
 
-  const leaf = walk.resolveLeaf(token);
+  const leaf = walk.resolveLeaf(token, walk.position);
   if (leaf !== undefined) return leaf;
   walk.unknowns.push(token);
   return "unknown";

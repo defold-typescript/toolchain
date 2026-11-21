@@ -76,7 +76,7 @@
           "name": "logger_instance",
           "doc": "A logger object that follows the specified logging interface, including methods for `trace`, `debug`, `info`, `warn`, `error`. Pass `nil` to remove the default logger.",
           "types": [
-            "event_logger | LuaTable | undefined"
+            "event_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

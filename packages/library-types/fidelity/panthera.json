@@ -1,9 +1,12 @@
 {
   "namespace": "panthera",
-  "totalMembers": 113,
-  "totalTypeTokens": 153,
+  "totalMembers": 117,
+  "totalTypeTokens": 157,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 38,
-  "coverage": 1
+  "undocumentedMembers": 41,
+  "coverage": 1,
+  "tableParams": 4,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

@@ -15,7 +15,7 @@
           "name": "self",
           "doc": "The .script self table",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -50,7 +50,7 @@
           "name": "self",
           "doc": "The .script self table initialized by M.init()",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -68,7 +68,7 @@
           "name": "self",
           "doc": "The .script self table",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -86,7 +86,7 @@
           "name": "message",
           "doc": "The incoming message payload",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "True",
           "is_vararg": "False"

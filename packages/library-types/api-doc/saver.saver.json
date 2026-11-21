@@ -8,14 +8,14 @@
     {
       "type": "FUNCTION",
       "name": "set_logger",
-      "brief": "File format enum (mirrors saver_internal.FORMAT)\nCustomize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
-      "description": "File format enum (mirrors saver_internal.FORMAT)\nCustomize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
+      "brief": "Customize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
+      "description": "Customize the logging mechanism used by Defold Saver.\nYou can use Defold Log library or provide a custom logger.\nlocal log = require(\"log.log\")\nlocal saver = require(\"saver.saver\")\n\nsaver.set_logger(log.get_logger(\"saver\"))",
       "parameters": [
         {
           "name": "logger_instance",
           "doc": "A logger object that follows the specified logging interface, including methods for trace, debug, info, warn, error. Pass nil to remove the default logger.",
           "types": [
-            "saver_logger | LuaTable | undefined"
+            "saver_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -145,7 +145,7 @@
           "name": "data",
           "doc": "The state to set the game state to.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -180,7 +180,7 @@
           "name": "table_reference",
           "doc": "The table reference to bind to the game state.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -199,14 +199,14 @@
     {
       "type": "FUNCTION",
       "name": "save_file_by_path",
-      "brief": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nsaver.save_file_by_path(data, file_path)",
-      "description": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nsaver.save_file_by_path(data, file_path)",
+      "brief": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = project_path .. \"/resources/data.json\"\nsaver.save_file_by_path(data, file_path)",
+      "description": "Saves the specified data to a file at the specified path. The data format is chosen by file path extension.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = project_path .. \"/resources/data.json\"\nsaver.save_file_by_path(data, file_path)",
       "parameters": [
         {
           "name": "data",
           "doc": "The lua table to save to the file.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -278,8 +278,8 @@
     {
       "type": "FUNCTION",
       "name": "load_file_by_path",
-      "brief": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
-      "description": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = saver.get_save_path(project_path .. \"/resources/data.json\")\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
+      "brief": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = project_path .. \"/resources/data.json\"\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
+      "description": "Loads the data from a file at the specified path.\n-- Get project path works on build from the Defold Editor only\nlocal project_path = saver.get_current_game_project_folder()\n-- Use path to the resources folder\nlocal file_path = project_path .. \"/resources/data.json\"\nlocal data = saver.load_file_by_path(file_path)\npprint(data)\nNOTE: For binary data like images, use `saver.load_binary_by_path` instead.",
       "parameters": [
         {
           "name": "path",
@@ -391,21 +391,21 @@
     {
       "type": "FUNCTION",
       "name": "save_file_by_name",
-      "brief": "Saves the specified data to a file with the specified name. The file is saved in the game save folder. Filename supports subfolders.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
-      "description": "Saves the specified data to a file with the specified name. The file is saved in the game save folder. Filename supports subfolders.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
+      "brief": "Saves the specified data to a file with the specified name. The file is saved in the game save folder.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
+      "description": "Saves the specified data to a file with the specified name. The file is saved in the game save folder.\nlocal data = {\nscore = 100,\nlevel = 1\n}\n\n-- Save the data to the game save folder\nsaver.save_file_by_name(data, \"data.json\")",
       "parameters": [
         {
           "name": "data",
           "doc": "The lua table to save to the file.",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
         },
         {
           "name": "filename",
-          "doc": "The name of the file to save the data to. Can contain subfolders.",
+          "doc": "The name of the file to save the data to.",
           "types": [
             "string"
           ],
@@ -449,7 +449,7 @@
         },
         {
           "name": "filename",
-          "doc": "The name of the file to save the data to. Can contain subfolders.",
+          "doc": "The name of the file to save the data to.",
           "types": [
             "string"
           ],
@@ -470,12 +470,12 @@
     {
       "type": "FUNCTION",
       "name": "load_file_by_name",
-      "brief": "Loads the data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
-      "description": "Loads the data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
+      "brief": "Loads the data from a file with the specified name. The file is loaded from the game save folder.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
+      "description": "Loads the data from a file with the specified name. The file is loaded from the game save folder.\nlocal data = saver.load_file_by_name(\"data.json\")\npprint(data)\nNOTE: For binary data like images, use saver.load_binary_by_name instead.",
       "parameters": [
         {
           "name": "filename",
-          "doc": "The name of the file to load the data from. Can contain subfolders.",
+          "doc": "The name of the file to load the data from.",
           "types": [
             "string"
           ],
@@ -505,12 +505,12 @@
     {
       "type": "FUNCTION",
       "name": "load_binary_by_name",
-      "brief": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.",
-      "description": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder. Filename supports subfolders.",
+      "brief": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder.",
+      "description": "Loads the binary data from a file with the specified name. The file is loaded from the game save folder.",
       "parameters": [
         {
           "name": "filename",
-          "doc": "The name of the file to load the binary data from. Can contain subfolders.",
+          "doc": "The name of the file to load the binary data from.",
           "types": [
             "string"
           ],
@@ -531,12 +531,12 @@
     {
       "type": "FUNCTION",
       "name": "delete_file_by_name",
-      "brief": "Deletes the file with the specified name. The file is deleted from the game save folder. Filename supports subfolders.\nsaver.delete_file_by_name(\"data.json\")",
-      "description": "Deletes the file with the specified name. The file is deleted from the game save folder. Filename supports subfolders.\nsaver.delete_file_by_name(\"data.json\")",
+      "brief": "Deletes the file with the specified name. The file is deleted from the game save folder.\nsaver.delete_file_by_name(\"data.json\")",
+      "description": "Deletes the file with the specified name. The file is deleted from the game save folder.\nsaver.delete_file_by_name(\"data.json\")",
       "parameters": [
         {
           "name": "filename",
-          "doc": "The name of the file to delete. Can contain subfolders.",
+          "doc": "The name of the file to delete.",
           "types": [
             "string"
           ],
@@ -557,12 +557,12 @@
     {
       "type": "FUNCTION",
       "name": "is_file_exists_by_name",
-      "brief": "Checks if the file exists with the specified name. The file is checked in the game save folder. Filename supports subfolders.",
-      "description": "Checks if the file exists with the specified name. The file is checked in the game save folder. Filename supports subfolders.",
+      "brief": "Checks if the file exists with the specified name. The file is checked in the game save folder.\nlocal is_header_downloaded = saver.is_file_exists_by_name(\"header.png\")",
+      "description": "Checks if the file exists with the specified name. The file is checked in the game save folder.\nlocal is_header_downloaded = saver.is_file_exists_by_name(\"header.png\")",
       "parameters": [
         {
           "name": "filename",
-          "doc": "The name of the file to check. Can contain subfolders.",
+          "doc": "The name of the file to check.",
           "types": [
             "string"
           ],
@@ -583,12 +583,12 @@
     {
       "type": "FUNCTION",
       "name": "get_save_path",
-      "brief": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned. Filename supports subfolders.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"\n\nlocal file_path_2 = saver.get_save_path(\"profiles/profile1.json\")\nprint(file_path_2) -- \"/Users/user/Library/Application Support/Defold Saver/profiles/profile1.json\"",
-      "description": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned. Filename supports subfolders.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"\n\nlocal file_path_2 = saver.get_save_path(\"profiles/profile1.json\")\nprint(file_path_2) -- \"/Users/user/Library/Application Support/Defold Saver/profiles/profile1.json\"",
+      "brief": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"",
+      "description": "Returns the absolute path to the game save folder. If a file name is provided, the path to the file in the game save folder is returned.\nlocal folder_path = saver.get_save_path()\nprint(folder_path) -- \"/Users/user/Library/Application Support/Defold Saver/\"\n\nlocal file_path = saver.get_save_path(\"data.json\")\nprint(file_path) -- \"/Users/user/Library/Application Support/Defold Saver/data.json\"",
       "parameters": [
         {
           "name": "filename",
-          "doc": "The name of the file to get the path for. Can contain subfolders. If nil, returns the folder path.",
+          "doc": "The name of the file to get the path for. If nil, returns the folder path.",
           "types": [
             "string | undefined"
           ],
@@ -693,8 +693,8 @@
     {
       "type": "FUNCTION",
       "name": "apply_migrations",
-      "brief": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nsaver.apply_migrations()",
-      "description": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nsaver.apply_migrations()",
+      "brief": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nA save from a newer game version keeps its migration version: back on the newer game, its migrations do not run twice.\nsaver.apply_migrations()",
+      "description": "Applies the migrations set by saver.set_migrations function. It should be called after loading the game state manually with saver.init() function.\nA save from a newer game version keeps its migration version: back on the newer game, its migrations do not run twice.\nsaver.apply_migrations()",
       "parameters": [],
       "returnvalues": []
     },
@@ -999,6 +999,24 @@
     {
       "type": "TYPEDEF",
       "name": "saver_storage"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "autosave_timer_counter",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FORMAT",
+      "brief": "File format enum (mirrors saver_internal.FORMAT)",
+      "description": "File format enum (mirrors saver_internal.FORMAT)",
+      "types": [
+        "{ JSON: \"json\"; LUA: \"lua\"; SERIALIZED: \"serialized\" }"
+      ]
     }
   ]
 }

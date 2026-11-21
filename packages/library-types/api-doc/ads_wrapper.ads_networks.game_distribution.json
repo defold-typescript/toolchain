@@ -15,7 +15,7 @@
           "name": "params",
           "doc": "",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -299,11 +299,11 @@
     },
     {
       "type": "VARIABLE",
-      "name": "LISTENER",
-      "brief": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message.",
-      "description": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message.",
+      "name": "NAME",
+      "brief": "",
+      "description": "",
       "types": [
-        "Hash"
+        "string"
       ]
     },
     {
@@ -367,6 +367,15 @@
       "description": "Banner `size` option for a 160x600 banner.",
       "types": [
         "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "LISTENER",
+      "brief": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message.",
+      "description": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message.",
+      "types": [
+        "Hash"
       ]
     }
   ]

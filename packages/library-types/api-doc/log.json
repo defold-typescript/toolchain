@@ -87,8 +87,8 @@
     {
       "type": "FUNCTION",
       "name": "set_file",
-      "brief": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder on a device.\nPass nil to disable",
-      "description": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder on a device.\nPass nil to disable",
+      "brief": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder otherwise.\nSave folder has no nested dirs (`sys.get_save_file`), so `/` is replaced with `_` (`logs_game.log`).\nPass nil to disable",
+      "description": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder otherwise.\nSave folder has no nested dirs (`sys.get_save_file`), so `/` is replaced with `_` (`logs_game.log`).\nPass nil to disable",
       "parameters": [
         {
           "name": "path",
@@ -284,8 +284,8 @@
         {
           "type": "FUNCTION",
           "name": "set_file_nearby",
-          "brief": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nEditor and desktop builds only, since it requires the project folder",
-          "description": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nEditor and desktop builds only, since it requires the project folder",
+          "brief": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nNeeds `game.project` in the working directory, so it only works when the game is\nstarted from the project root: the editor, or a desktop build launched from there",
+          "description": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nNeeds `game.project` in the working directory, so it only works when the game is\nstarted from the project root: the editor, or a desktop build launched from there",
           "parameters": [],
           "returnvalues": [
             {

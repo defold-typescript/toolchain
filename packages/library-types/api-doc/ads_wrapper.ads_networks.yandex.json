@@ -51,7 +51,7 @@
           "name": "params",
           "doc": "",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -375,7 +375,7 @@
           "name": "position",
           "doc": "table `{x = string, y = string}`",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -401,7 +401,7 @@
           "name": "size",
           "doc": "table `{width = string, height = string}`",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -431,6 +431,15 @@
             "boolean"
           ]
         }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NAME",
+      "brief": "",
+      "description": "",
+      "types": [
+        "string"
       ]
     }
   ]

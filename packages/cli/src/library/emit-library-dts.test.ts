@@ -3,7 +3,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { appendNotes, libraryIndexBaseNotes } from "@defold-typescript/types";
+import { failingFences, writeFenceProject } from "../guide-fence-gate";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
+import { applyAnnotationOverrides } from "./apply-luals-overrides";
 import {
   emitLibraryDeclarations,
   isPublicField,
@@ -11,9 +13,14 @@ import {
   sanitizeTypeName,
 } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LibraryModel, type LibraryParam, parseLualsSource } from "./parse-luals";
 import { printedModule } from "./print-corpus";
-import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
+import {
+  buildTargetModel,
+  emitLualsTargetDeclarations,
+  readLualsTargets,
+} from "./sync-luals-types";
 
 const roots: string[] = [];
 
@@ -1502,7 +1509,7 @@ test("an alias naming itself maps its body past its own declaration, while other
 
   const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
 
-  expect(out).toContain('\ttype hash = Opaque<"userdata"> | Hash;');
+  expect(out).toContain('\texport type hash = Opaque<"userdata"> | Hash;');
   expect(out).toContain("\t\tid: hash;");
 });
 
@@ -1515,7 +1522,7 @@ test("an alias naming itself with no rename to fall back to keeps its own declar
 
   const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
 
-  expect(out).toContain("\ttype demo_tree = LuaTable<string, demo_tree>;");
+  expect(out).toContain("\texport type demo_tree = LuaTable<string, demo_tree>;");
 });
 
 test("a declaration named like an engine type is declared and referenced as <name>_, leaving the engine name free", () => {
@@ -1535,7 +1542,7 @@ test("a declaration named like an engine type is declared and referenced as <nam
 
   const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
 
-  expect(out).toContain("\ttype Url_ = Url | string;");
+  expect(out).toContain("\texport type Url_ = Url | string;");
   expect(out).toContain(
     "\texport function send_to(this: void, receiver: Url_, sender: Url): void;",
   );
@@ -1570,7 +1577,7 @@ test("a target rename's value reserves its name like a core one", () => {
     typeRenames: { vector3: "Vector3" },
   });
 
-  expect(out).toContain("\tinterface Vector3_ {");
+  expect(out).toContain("\texport interface Vector3_ {");
   expect(out).toContain("\texport function move(this: void, to: Vector3, point: Vector3_): void;");
   expect(out).not.toContain("interface Vector3 {");
 });
@@ -1631,6 +1638,177 @@ return M
   expect(out).toMatch(/export const X: \{\s+"new"\(this: void/);
   expect(out).not.toMatch(/export const X: \{[^}]*first/);
   expect(out).not.toMatch(/export function new_?\(/);
+});
+
+function compileUsage(moduleId: string, declaration: string, usage: string) {
+  const fence = { label: "usage", rel: "usage.ts", body: usage };
+  const project = writeFenceProject([fence], {
+    libraryModules: [moduleId],
+    corpus: new Map([[moduleId, declaration]]),
+    tmpPrefix: "emit-library-dts-usage-",
+  });
+  roots.push(project.root);
+  return failingFences([fence], project);
+}
+
+test("a bare table param also takes a plain table while the same field and return stay LuaTable", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "slot",
+        generics: [],
+        fields: [{ name: "data", types: ["table"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "attach",
+        brief: "",
+        generics: [],
+        params: [
+          typedParam("context", ["table"]),
+          { ...typedParam("extra", ["table|nil"]), isNilable: true },
+          typedParam("lookup", ["table<string, integer>"]),
+        ],
+        returns: [typedParam("", ["table"])],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out).toContain(
+    "export function attach(this: void, context: LuaTable | PlainTable, extra: LuaTable | PlainTable | undefined, lookup: LuaMap<string, number> | Record<string, number>): LuaTable;",
+  );
+  expect(out).toContain("\t\tdata: LuaTable;");
+});
+
+test("a generated bare-table self param takes an interface-typed value and an object literal, not engine userdata", () => {
+  const model = parseLualsSource(`local M = {}
+
+---@param self table
+---@param name string
+function M.bind(self, name) end
+
+return M
+`);
+  const declaration = emitLibraryDeclarations(model, { moduleId: "demo.bind" });
+
+  const failing = compileUsage(
+    "demo.bind",
+    declaration,
+    `import * as lib from "demo.bind";
+
+interface Props {
+  readonly name: string;
+  count: number;
+}
+declare const props: Props;
+lib.bind(props, "a");
+lib.bind({ name: "b" }, "b");
+// @ts-expect-error a vector is engine userdata, not a table
+lib.bind(vmath.vector3(), "c");
+`,
+  );
+
+  expect(failing).toEqual({});
+});
+
+test("every interface and alias is exported, so a module re-exporting a reserved name still lets a consumer name its types", () => {
+  const model = parseLualsSource(`---@class demo.widget
+---@field size demo.size
+
+---@alias demo.size integer
+
+local M = {}
+
+---@return demo.widget
+function M.new() end
+
+return M
+`);
+  const declaration = emitLibraryDeclarations(model, { moduleId: "demo.widgets" });
+
+  expect(declaration).toContain("\texport interface demo_widget {");
+  expect(declaration).toContain("\texport type demo_size = number;");
+  expect(declaration).toContain("\texport { new_ as new };");
+  expect(
+    compileUsage(
+      "demo.widgets",
+      declaration,
+      `import type { demo_size, demo_widget } from "demo.widgets";
+import * as widgets from "demo.widgets";
+
+const widget: demo_widget = widgets.new();
+const size: demo_size = widget.size;
+`,
+    ),
+  ).toEqual({});
+});
+
+test("no shipped LuaLS module declares an interface or type alias without exporting it", () => {
+  const unexported = readLualsTargets(LIBRARY_DATA_DIR).flatMap((target) =>
+    emitLualsTargetDeclarations(LIBRARY_DATA_DIR, target)
+      .split("\n")
+      .filter((line) => /^\t(interface|type) /.test(line))
+      .map((line) => `${target.moduleId}: ${line.trim()}`),
+  );
+
+  expect(unexported).toEqual([]);
+});
+
+const CONSTANTS_SOURCE = `local M = {}
+
+--- File format enum
+---@enum FORMAT
+M.FORMAT = {
+	JSON = "json", -- Save as JSON
+	LUA = "lua",
+}
+
+M.SPEED = 1
+
+---Save the game.
+function M.save() end
+
+return M
+`;
+
+test("emits module constants without a recipe", () => {
+  const out = emitLibraryDeclarations(parseLualsSource(CONSTANTS_SOURCE), {
+    moduleId: "demo.demo",
+  });
+
+  expect(out).toContain('\texport const FORMAT: Readonly<{ JSON: "json"; LUA: "lua" }>;');
+  expect(out).toContain("\texport const SPEED: number;");
+  expect(docAbove(out, "export const FORMAT:")).toBe("File format enum");
+  expect(docAbove(out, "export function save(")).toBe("Save the game.");
+
+  const overridden = emitLibraryDeclarations(
+    applyAnnotationOverrides(parseLualsSource(CONSTANTS_SOURCE), {
+      moduleConstants: { SPEED: { type: "hash", doc: "Speed handle." } },
+    }),
+    { moduleId: "demo.demo" },
+  );
+
+  expect(overridden.split("export const SPEED:")).toHaveLength(2);
+  expect(overridden).toContain("\texport const SPEED: Hash;");
+  expect(docAbove(overridden, "export const SPEED:")).toBe("Speed handle.");
+});
+
+test("the shipped saver and panthera modules export their enum, speed and preset options", async () => {
+  const saver = await printedModule(LIBRARY_DATA_DIR, "saver.saver");
+  const panthera = await printedModule(LIBRARY_DATA_DIR, "panthera.panthera");
+
+  expect(saver).toContain(
+    '\texport const FORMAT: Readonly<{ JSON: "json"; LUA: "lua"; SERIALIZED: "serialized" }>;',
+  );
+  expect(panthera).toContain("\texport const SPEED: number;");
+  expect(docAbove(panthera, "export const SPEED:")).toBe("Default speed of all animations");
+  expect(panthera).toContain("\texport const OPTIONS_LOOP: { is_loop: boolean };");
 });
 
 test("a dotted name sanitizing onto another declared name throws, naming both and the generated name", () => {

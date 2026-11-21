@@ -12,13 +12,20 @@
 
 import {
   buildModelContext,
+  type EmitLibraryOptions,
   type ExternalTypeRef,
+  emitLibraryDeclarations,
   isPublicField,
   isPublicMethod,
   scopeAliasBody,
 } from "./emit-library-dts";
-import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
-import type { LibraryGeneric, LibraryModel } from "./parse-luals";
+import {
+  countInputBareTables,
+  type MapContext,
+  mapLualsType,
+  scopeGenerics,
+} from "./map-luals-types";
+import type { LibraryGeneric, LibraryModel, LibraryParam } from "./parse-luals";
 
 export interface FidelityReport {
   namespace: string;
@@ -30,8 +37,53 @@ export interface FidelityReport {
   coverage: number;
 }
 
+/**
+ * The LuaLS lane's report, which also counts what the emitted module loses: a
+ * parameter typed by a bare `table` (it takes `LuaTable | PlainTable`, not the
+ * caller's own table shape), an interface or alias declared without `export` (a
+ * consumer cannot name it), and a literal module assignment the module exports
+ * nothing for.
+ */
+export interface LualsFidelityReport extends FidelityReport {
+  tableParams: number;
+  unexportedTypes: number;
+  droppedAssignments: number;
+}
+
 function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+const EXPORTED_VALUE = /^\texport (?:const|function) ([A-Za-z_$][\w$]*)/;
+const RE_EXPORTED_VALUE = /^\texport \{ [\w$]+ as ([\w$]+) \};$/;
+const UNEXPORTED_TYPE = /^\t(?:interface|type) /;
+
+/** What the emitted module loses, read from the declaration text the module serves. */
+function emitLosses(
+  model: LibraryModel,
+  options: EmitLibraryOptions,
+): Pick<LualsFidelityReport, "unexportedTypes" | "droppedAssignments"> {
+  const lines = emitLibraryDeclarations(model, options).split("\n");
+  const exported = new Set(
+    lines.flatMap((line) => {
+      const name = EXPORTED_VALUE.exec(line)?.[1] ?? RE_EXPORTED_VALUE.exec(line)?.[1];
+      return name === undefined ? [] : [name];
+    }),
+  );
+  // A constant its class's `---@field` marks non-public is hidden on purpose.
+  const hidden = new Set(
+    (model.moduleConstants ?? []).filter((c) => !isPublicField(c)).map((c) => c.name),
+  );
+  const literalNames = new Set(
+    (model.moduleAssignments ?? [])
+      .filter((a) => a.table === model.moduleReturn && a.literalType !== undefined)
+      .map((a) => a.name)
+      .filter((name) => !hidden.has(name)),
+  );
+  return {
+    unexportedTypes: lines.filter((line) => UNEXPORTED_TYPE.test(line)).length,
+    droppedAssignments: [...literalNames].filter((name) => !exported.has(name)).length,
+  };
 }
 
 /**
@@ -43,21 +95,30 @@ function round3(value: number): number {
  * param and return of every method and module function, every module constant, and
  * every alias expression is mapped, and a field, param or alias with no type token
  * counts as one `(untyped)` fallback; `undocumentedMembers` counts
- * fields/methods/moduleFunctions/moduleConstants whose doc or brief is empty. Deterministic; no I/O.
+ * fields/methods/moduleFunctions/moduleConstants whose doc or brief is empty. The
+ * loss counters read the module this model emits. Deterministic; no I/O.
  */
 export function buildFidelityReport(
   namespace: string,
   model: LibraryModel,
   typeRenames: Record<string, string>,
   externalTypes?: Record<string, ExternalTypeRef>,
-): FidelityReport {
+): LualsFidelityReport {
   const ctx = buildModelContext(model, typeRenames, externalTypes);
 
   let totalMembers = 0;
   let totalTypeTokens = 0;
   let unknownFallbacks = 0;
   let undocumentedMembers = 0;
+  let tableParams = 0;
   const unknownTokens = new Set<string>();
+
+  const mapParams = (params: readonly LibraryParam[], mapCtx: MapContext): void => {
+    for (const param of params) {
+      mapSlot(param.types, mapCtx);
+      if (param.types.some((token) => countInputBareTables(token, mapCtx) > 0)) tableParams++;
+    }
+  };
 
   const mapTokens = (tokens: string[], mapCtx: MapContext): void => {
     for (const token of tokens) {
@@ -114,7 +175,7 @@ export function buildFidelityReport(
       if (undocumented(method.brief)) undocumentedMembers++;
       const methodCtx = scopeGenerics(ifaceCtx, method.generics);
       mapConstraints(method.generics, methodCtx);
-      for (const param of method.params) mapSlot(param.types, methodCtx);
+      mapParams(method.params, methodCtx);
       for (const ret of method.returns) mapTokens(ret.types, methodCtx);
     }
   }
@@ -126,7 +187,7 @@ export function buildFidelityReport(
     if (undocumented(fn.brief)) undocumentedMembers++;
     const fnCtx = scopeGenerics(ctx, fn.generics);
     mapConstraints(fn.generics, fnCtx);
-    for (const param of fn.params) mapSlot(param.types, fnCtx);
+    mapParams(fn.params, fnCtx);
     for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
   }
 
@@ -151,5 +212,7 @@ export function buildFidelityReport(
     unknownTokens: [...unknownTokens].sort(),
     undocumentedMembers,
     coverage,
+    tableParams,
+    ...emitLosses(model, { moduleId: namespace, typeRenames, externalTypes }),
   };
 }

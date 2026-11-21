@@ -59,7 +59,7 @@
           "name": "message",
           "doc": "",
           "types": [
-            "LuaTable | undefined"
+            "LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -275,7 +275,7 @@
           "name": "entity_data",
           "doc": "",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -311,7 +311,7 @@
           "name": "entities",
           "doc": "",
           "types": [
-            "LuaMap<string, LuaTable> | Record<string, LuaTable>"
+            "LuaMap<string, LuaTable | PlainTable> | Record<string, LuaTable | PlainTable>"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -347,7 +347,7 @@
           "name": "components",
           "doc": "",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown>"
+            "LuaMap<string, unknown> | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -391,7 +391,7 @@
           "name": "components",
           "doc": "additional components to merge with prefab",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown> | undefined"
+            "LuaMap<string, unknown> | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -426,7 +426,7 @@
           "name": "component_data",
           "doc": "",
           "types": [
-            "LuaTable | string | number | boolean"
+            "LuaTable | PlainTable | string | number | boolean"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -585,7 +585,7 @@
           "name": "components",
           "doc": "",
           "types": [
-            "LuaMap<string, unknown> | Record<string, unknown> | undefined"
+            "LuaMap<string, unknown> | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -760,7 +760,7 @@
           "name": "logger_instance",
           "doc": "",
           "types": [
-            "decore_logger | LuaTable | undefined"
+            "decore_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

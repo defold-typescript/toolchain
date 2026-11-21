@@ -70,6 +70,8 @@ const SCALARS: Readonly<Record<string, string>> = {
  */
 const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
 
+const BARE_TABLE_INPUT = "LuaTable | PlainTable";
+
 /**
  * The library lane's leaf vocabulary, handed to the shared grammar in
  * `@defold-typescript/types`. Bare `table` and `function` are leaves there, so a
@@ -80,10 +82,14 @@ const CALLABLE_UNSPECIFIED = "(...args: any[]) => unknown";
  * so lowering it to `unknown` loses nothing an author wrote — the same reasoning that
  * already exempts `any` from the fallback count. It is not a `SCALARS` entry, which
  * maps real Lua type names.
+ *
+ * A bare `table` the caller supplies also takes `PlainTable`: TSTL's `LuaTable` is
+ * built with `new LuaTable()`, so on its own it rejects the interface-typed value or
+ * object literal a caller holds, though both compile to the same Lua table.
  */
 function leafResolver(ctx: MapContext): LualsLeafResolver {
-  return (token) => {
-    if (token === "table") return "LuaTable";
+  return (token, position) => {
+    if (token === "table") return position === "input" ? BARE_TABLE_INPUT : "LuaTable";
     if (token === "function") return CALLABLE_UNSPECIFIED;
     if (token === LUALS_VARARG_TOKEN) return "unknown";
     const scalar = SCALARS[token];
@@ -112,6 +118,26 @@ export function mapLualsType(
   position: LualsPosition = "output",
 ): MapResult {
   return mapLualsExpression(token, leafResolver(ctx), position);
+}
+
+/**
+ * The bare `table` leaves a caller fills when `token` types a parameter, each of
+ * which emits as `LuaTable | PlainTable`. Walks the token exactly as a parameter is
+ * mapped, so a callback's own `table` params, which the library fills, are not
+ * counted.
+ */
+export function countInputBareTables(token: string, ctx: MapContext): number {
+  const resolve = leafResolver(ctx);
+  let count = 0;
+  mapLualsExpression(
+    token,
+    (leaf, position) => {
+      if (leaf === "table" && position === "input") count++;
+      return resolve(leaf, position);
+    },
+    "input",
+  );
+  return count;
 }
 
 /**

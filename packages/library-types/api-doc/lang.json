@@ -300,7 +300,7 @@
           "name": "logger_instance",
           "doc": "",
           "types": [
-            "lang_logger | LuaTable | undefined"
+            "lang_logger | LuaTable | PlainTable | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"

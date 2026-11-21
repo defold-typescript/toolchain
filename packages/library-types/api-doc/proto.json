@@ -15,7 +15,7 @@
           "name": "proto_config_or_path",
           "doc": "Lua table or path to proto list config. Example: \"/resources/proto.json\"",
           "types": [
-            "LuaTable | string"
+            "LuaTable | PlainTable | string"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -86,7 +86,7 @@
           "name": "data",
           "doc": "@The data to encode",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -156,7 +156,7 @@
           "name": "data",
           "doc": "@The data to verify",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -191,7 +191,7 @@
           "name": "data",
           "doc": "@The data to update",
           "types": [
-            "LuaTable"
+            "LuaTable | PlainTable"
           ],
           "is_optional": "False",
           "is_vararg": "False"

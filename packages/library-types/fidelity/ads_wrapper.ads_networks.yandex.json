@@ -1,9 +1,12 @@
 {
   "namespace": "ads_wrapper.ads_networks.yandex",
-  "totalMembers": 24,
-  "totalTypeTokens": 26,
+  "totalMembers": 25,
+  "totalTypeTokens": 27,
   "unknownFallbacks": 0,
   "unknownTokens": [],
-  "undocumentedMembers": 8,
-  "coverage": 1
+  "undocumentedMembers": 9,
+  "coverage": 1,
+  "tableParams": 3,
+  "unexportedTypes": 0,
+  "droppedAssignments": 0
 }

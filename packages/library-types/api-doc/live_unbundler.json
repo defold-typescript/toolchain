@@ -61,6 +61,137 @@
     },
     {
       "type": "FUNCTION",
+      "name": "set_bench_log",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bench_mark",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "event",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "details",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_verify_hashes",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_parallel_downloads",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "count",
+          "doc": "",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_parallel_downloads",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_post_budget",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "sec",
+          "doc": "",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_post_budget",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "has_module",
       "brief": "",
       "description": "",
@@ -352,6 +483,42 @@
     },
     {
       "type": "FUNCTION",
+      "name": "focus",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "lane_or_low",
+          "doc": "M.PRIORITY_IDS.*, or the low priority",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "high_priority",
+          "doc": "required when lane_or_low is a number",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
       "name": "request_module_load",
       "brief": "",
       "description": "",
@@ -361,6 +528,103 @@
           "doc": "",
           "types": [
             "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_module_status",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "{ state: number; position: number | undefined; low: LuaTable; high: LuaTable }"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pin_module",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_high_upgrade_ready",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "promote_module",
+      "brief": "Call only after the collection proxy reading this module is unloaded.",
+      "description": "Call only after the collection proxy reading this module is unloaded.",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "(ok: boolean) => void"
           ],
           "is_optional": "False",
           "is_vararg": "False"
@@ -410,6 +674,22 @@
           "description": "",
           "types": [
             "boolean | undefined"
+          ]
+        },
+        {
+          "name": "focus_low",
+          "brief": "set by M.focus, overrides priority for the low resolution",
+          "description": "set by M.focus, overrides priority for the low resolution",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "focus_high",
+          "brief": "set by M.focus, overrides priority for the high resolution",
+          "description": "set by M.focus, overrides priority for the high resolution",
+          "types": [
+            "number | undefined"
           ]
         }
       ]
@@ -471,6 +751,38 @@
           "types": [
             "LuaTable<string, number> | undefined"
           ]
+        },
+        {
+          "name": "file_md5",
+          "brief": "chunked md5 of each .arcd0; absent → no cache check",
+          "description": "chunked md5 of each .arcd0; absent → no cache check",
+          "types": [
+            "LuaTable<string, string> | undefined"
+          ]
+        },
+        {
+          "name": "md5_chunk_size",
+          "brief": "chunk size of file_md5: hashmd5 of the concatenated hex md5 of each chunk",
+          "description": "chunk size of file_md5: hashmd5 of the concatenated hex md5 of each chunk",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "file_md5_size",
+          "brief": "bytes covered by file_md5: the archive up to its dmanifest entry",
+          "description": "bytes covered by file_md5: the archive up to its dmanifest entry",
+          "types": [
+            "LuaTable<string, number> | undefined"
+          ]
+        },
+        {
+          "name": "merged_archives",
+          "brief": "pack name -> member archive names",
+          "description": "pack name -> member archive names",
+          "types": [
+            "LuaTable<string, string[]> | undefined"
+          ]
         }
       ]
     },
@@ -514,6 +826,46 @@
           "description": "archive name -> archive size in bytes (0 if the manifest has no sizes)",
           "types": [
             "LuaTable<string, number>"
+          ]
+        },
+        {
+          "name": "md5",
+          "brief": "archive name -> chunked md5 of .arcd0 (empty when manifest has no file_md5)",
+          "description": "archive name -> chunked md5 of .arcd0 (empty when manifest has no file_md5)",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        },
+        {
+          "name": "md5_chunk_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "md5_size",
+          "brief": "archive name -> bytes covered by md5",
+          "description": "archive name -> bytes covered by md5",
+          "types": [
+            "LuaTable<string, number>"
+          ]
+        },
+        {
+          "name": "merged_into",
+          "brief": "member archive name -> pack name",
+          "description": "member archive name -> pack name",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        },
+        {
+          "name": "pack_set",
+          "brief": "set of pack archive names from merged_archives",
+          "description": "set of pack archive names from merged_archives",
+          "types": [
+            "LuaTable<string, boolean>"
           ]
         },
         {
@@ -685,6 +1037,38 @@
           "types": [
             "string | undefined"
           ]
+        },
+        {
+          "name": "download_class",
+          "brief": "M.DOWNLOAD_CLASS.*, set when the item is queued",
+          "description": "M.DOWNLOAD_CLASS.*, set when the item is queued",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "verify_attempts",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "mount_attempts",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "retry_at",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
         }
       ]
     },
@@ -797,6 +1181,60 @@
           "types": [
             "liveupdater_resolution_progress"
           ]
+        },
+        {
+          "name": "gate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_resolution_progress"
+          ]
+        },
+        {
+          "name": "downloading",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_active_download[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_active_download",
+      "properties": [
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "bytes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "in_gate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
         }
       ]
     },
@@ -866,6 +1304,225 @@
             "LuaTable<string, liveupdater_module>"
           ]
         }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_in_flight_state",
+      "properties": [
+        {
+          "name": "item",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_queue_item"
+          ]
+        },
+        {
+          "name": "bytes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "phase",
+          "brief": "M.IN_FLIGHT_PHASE.*",
+          "description": "M.IN_FLIGHT_PHASE.*",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_mount_job",
+      "properties": [
+        {
+          "name": "load_info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_queue_item"
+          ]
+        },
+        {
+          "name": "dl_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "size_ok",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_staged_high",
+      "properties": [
+        {
+          "name": "load_info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_queue_item"
+          ]
+        },
+        {
+          "name": "pending_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mounted",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_cache_md5_state",
+      "properties": [
+        {
+          "name": "md5",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ok",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "failed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "retried",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_cache_check_entry",
+      "properties": [
+        {
+          "name": "file_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "md5",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "chunk_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "initialized",
+      "brief": "",
+      "description": "",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PRIORITY_IDS",
+      "brief": "",
+      "description": "",
+      "types": [
+        "{ BLOCKING: number; FOCUS: number; PREFETCH: number; BACKGROUND: number }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DOWNLOAD_CLASS",
+      "brief": "Parallel download slot classes. A smaller id keeps the slot when two claims share a priority.",
+      "description": "Parallel download slot classes. A smaller id keeps the slot when two claims share a priority.",
+      "types": [
+        "{ BLOCKING: number; BOOT: number; OTHER: number }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RESOLUTION",
+      "brief": "Resolution ids. Values double as session_bytes and progress keys (.low / .high).",
+      "description": "Resolution ids. Values double as session_bytes and progress keys (.low / .high).",
+      "types": [
+        "{ LOW: string; HIGH: string }"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "STATUS",
+      "brief": "Module status, worst first: a module shows the smallest id across its files and dependencies.",
+      "description": "Module status, worst first: a module shows the smallest id across its files and dependencies.",
+      "types": [
+        "{ ABSENT: number; NOT_REQUESTED: number; QUEUED: number; DOWNLOADING: number; MOUNTING: number; READY: number }"
       ]
     },
     {
