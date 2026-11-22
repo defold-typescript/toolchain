@@ -41,6 +41,7 @@ export {
   guiScriptResourcesOf,
 } from "./gui-node-index";
 export { buildInputActionIndex } from "./input-action-index";
+export { isMissingJsGlobalDiagnostic } from "./js-runtime-globals";
 export type {
   ExtensionDependency,
   LibraryIncludedEntries,

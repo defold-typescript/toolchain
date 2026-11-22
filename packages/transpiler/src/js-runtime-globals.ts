@@ -45,6 +45,14 @@ export const MISSING_JS_GLOBALS: ReadonlyMap<string, string> = new Map([
   ["WeakRef", ""],
 ]);
 
+// Outside TypeScript's own ranges and TypeScript-to-Lua's serial range, which
+// starts at 100000, so the code alone identifies the diagnostic.
+export const MISSING_JS_GLOBAL_CODE = 990_001;
+
+export function isMissingJsGlobalDiagnostic(diagnostic: ts.Diagnostic): boolean {
+  return diagnostic.code === MISSING_JS_GLOBAL_CODE;
+}
+
 export function missingJsGlobalMessage(name: string): string {
   const replacement = MISSING_JS_GLOBALS.get(name);
   const problem = `\`${name}\` does not exist in Defold's Lua, so this reference reads nil at runtime`;
@@ -63,15 +71,18 @@ function isDefaultLibraryOnly(program: ts.Program, symbol: ts.Symbol): boolean {
   );
 }
 
-// A type erases, but a class `extends` clause, though its node is a type node,
-// is a value the class reads.
-function isClassExtendsExpression(node: ts.Node): boolean {
-  return (
-    ts.isExpressionWithTypeArguments(node) &&
-    ts.isHeritageClause(node.parent) &&
-    node.parent.token === ts.SyntaxKind.ExtendsKeyword &&
-    ts.isClassLike(node.parent.parent)
-  );
+// A type erases, but two type-node forms are values the emitted Lua reads: an
+// instantiation expression (`WeakRef<object>`), which lowers to the bare name,
+// and a class `extends` clause. An interface `extends` or a class `implements`
+// clause erases like any other type.
+function isValueTypeNode(node: ts.Node): boolean {
+  if (!ts.isExpressionWithTypeArguments(node)) {
+    return false;
+  }
+  if (!ts.isHeritageClause(node.parent)) {
+    return true;
+  }
+  return node.parent.token === ts.SyntaxKind.ExtendsKeyword && ts.isClassLike(node.parent.parent);
 }
 
 function referencedSymbol(
@@ -101,7 +112,7 @@ export function findMissingJsGlobals(
   const checker = program.getTypeChecker();
   const diagnostics: ts.Diagnostic[] = [];
   const visit = (node: ts.Node): void => {
-    if (ts.isTypeNode(node) && !isClassExtendsExpression(node)) {
+    if (ts.isTypeNode(node) && !isValueTypeNode(node)) {
       return;
     }
     if (ts.isIdentifier(node)) {
@@ -118,7 +129,7 @@ export function findMissingJsGlobals(
         start,
         length: node.getEnd() - start,
         category: ts.DiagnosticCategory.Error,
-        code: 0,
+        code: MISSING_JS_GLOBAL_CODE,
         messageText: missingJsGlobalMessage(node.text),
       });
       return;

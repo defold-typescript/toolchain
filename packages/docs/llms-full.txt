@@ -107,7 +107,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 ##### Toolchain & workflow
 
-- [Transpile diagnostics](./transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor, advisory-only and never blocking `tsc --noEmit`.
+- [Transpile diagnostics](./transpile-diagnostics.md) — the scaffolded `@defold-typescript/tstl-plugin` language-service plugin that surfaces TypeScript-to-Lua transpile errors live in the editor as suggestions, marks missing JavaScript globals as errors, and never blocks `tsc --noEmit`.
 - [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](./agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](./agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
 - [Helper scripts](./helper-scripts.md) — where build, codegen, and maintenance scripts live: a project-root `/scripts` folder run with Bun, typed by their own `scripts/tsconfig.json`, kept off the Lua build path and out of the Defold-typed `src/` surface.
@@ -1592,7 +1592,7 @@ export const now = Date.now();
 
 **Why.** The Lua build type-checks against TypeScript's ES2022 library, which declares every JavaScript global. TypeScriptToLua rewrites many of them into Lua (`Math.floor` becomes `math.floor`; `Object.keys`, `parseInt`, `Map`, `Set`, `Promise` and the `Error` classes come from its runtime library), but leaves others as they are: `JSON.stringify(x)` compiles to `JSON:stringify(x)` and `new Date()` to `__TS__New(Date)`. Defold's Lua has no `JSON` or `Date`, so each reads `nil` and raises the first time it runs.
 
-**What fails.** [`build`](./build.md) and [`watch`](./watch.md) report an error naming the file, line, column and global, with the Defold replacement where there is one, and write no Lua for that file; the editor marks the reference. A local, an import or a project declaration of the same name is not a reference to the global, and neither is a type such as `let d: Date`.
+**What fails.** Every value reference to one of these globals counts, including a class `extends Date` clause and an instantiation such as `const Ref = WeakRef<object>`, which compiles to the bare `WeakRef`. [`build`](./build.md) and [`watch`](./watch.md) report an error naming the file, line, column and global, with the Defold replacement where there is one, and write no Lua for that file; the editor marks the reference as an error. A local, an import or a project declaration of the same name is not a reference to the global, and neither is a type such as `let d: Date`, an interface `extends Date` or a class `implements Date`.
 
 | Global | Use instead |
 | --- | --- |
@@ -1605,7 +1605,7 @@ These fail with no replacement named: `Boolean`, `BigInt`, `eval`, `escape`, `un
 
 **What does not fail.** A global TypeScriptToLua rewrites in some form is not on the list: `Math`, `Number`, `Object`, `Array`, `String`, `Symbol`, `parseInt`, `parseFloat`, `isNaN` and `isFinite`. TypeScriptToLua reports the members it cannot rewrite itself (`Object.freeze is unsupported.`), but the bare value, such as `const m = Math` or `isNaN` passed as a callback, still compiles with no error and reads `nil` at runtime.
 
-**How we pin this.** `packages/transpiler/src/js-runtime-globals.test.ts` compiles every form of every global in the ES2022 library, runs the Lua in Lua 5.1, and fails when the checked list drifts from what TypeScriptToLua leaves unrewritten; `packages/transpiler/src/program-diagnostics.test.ts` checks the error on the build and editor paths.
+**How we pin this.** `packages/transpiler/src/js-runtime-globals.test.ts` compiles every form of every global in the ES2022 library, runs the Lua in Lua 5.1, and fails when the checked list drifts from what TypeScriptToLua leaves unrewritten; `packages/transpiler/src/program-diagnostics.test.ts` checks the error on the build and editor paths, and `packages/tstl-plugin/src/index.test.ts` checks the editor keeps it an error.
 
 #### npm packages do not resolve — vendor the source instead
 
@@ -10425,7 +10425,7 @@ Both stay silent rather than guess, and the two boundaries are separate:
 - If the component-id universe has a **hole** — a scene that would not parse, a file that could not be read, a dependency [`resolve`](./resolve.md) has not materialized — the fragment check reports nothing at all rather than reporting every address as unreachable. A check that could not run has no honest span to sit on in an editor, so the build is where you see it named as suppressed.
 - A script **no scene hosts** has no world this project can prove, so it is never reported as naming a foreign one. This is per file, and independent of the hole above: a suppressed fragment check does not silence the world check.
 
-Both are suggestions, never errors — see [it is advisory, not blocking](#it-is-advisory-not-blocking).
+Both are suggestions, never errors — see [which diagnostics are errors](#which-diagnostics-are-errors).
 
 #### Address completions — game-object paths and component ids
 
@@ -10501,9 +10501,11 @@ A relative form is answered differently, because the question is different: its 
 
 The panel is shown only for suggestions the plugin contributed, only when the declaring file can be named exactly, and — inside an address argument — only for the half the caret is standing in, the same split the list itself uses. Everything else falls through to whatever your editor would have shown: the editor's own entries, another extension's, and any id the project cannot attribute exactly — a scene that failed to parse, a script two game objects both claim, a path composed only inside a collection that is itself instanced. Those still complete as before; they just get the editor's default panel rather than a guessed one.
 
-#### It is advisory, not blocking
+#### Which diagnostics are errors
 
-Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
+One kind of diagnostic the plugin appends is an `Error`: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build). Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
+
+The plugin **never blocks `tsc --noEmit`** either way: a language-service plugin runs only in the editor, so a project that type-checks clean stays clean in CI with the plugin active. The build path remains the source of truth for what compiles.
 
 #### How it relates to the gotchas guide
 
