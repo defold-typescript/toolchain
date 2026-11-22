@@ -778,7 +778,7 @@ export const now = Date.now();
 
 **Why.** The Lua build type-checks against TypeScript's ES2022 library, which declares every JavaScript global. TypeScriptToLua rewrites many of them into Lua (`Math.floor` becomes `math.floor`; `Object.keys`, `parseInt`, `Map`, `Set`, `Promise` and the `Error` classes come from its runtime library), but leaves others as they are: `JSON.stringify(x)` compiles to `JSON:stringify(x)` and `new Date()` to `__TS__New(Date)`. Defold's Lua has no `JSON` or `Date`, so each reads `nil` and raises the first time it runs.
 
-**What fails.** [`build`](./build.md) and [`watch`](./watch.md) report an error naming the file, line, column and global, with the Defold replacement where there is one, and write no Lua for that file; the editor marks the reference. A local, an import or a project declaration of the same name is not a reference to the global, and neither is a type such as `let d: Date`.
+**What fails.** Every value reference to one of these globals counts, including a class `extends Date` clause and an instantiation such as `const Ref = WeakRef<object>`, which compiles to the bare `WeakRef`. [`build`](./build.md) and [`watch`](./watch.md) report an error naming the file, line, column and global, with the Defold replacement where there is one, and write no Lua for that file; the editor marks the reference as an error. A local, an import or a project declaration of the same name is not a reference to the global, and neither is a type such as `let d: Date`, an interface `extends Date` or a class `implements Date`.
 
 | Global | Use instead |
 | --- | --- |
@@ -791,7 +791,7 @@ These fail with no replacement named: `Boolean`, `BigInt`, `eval`, `escape`, `un
 
 **What does not fail.** A global TypeScriptToLua rewrites in some form is not on the list: `Math`, `Number`, `Object`, `Array`, `String`, `Symbol`, `parseInt`, `parseFloat`, `isNaN` and `isFinite`. TypeScriptToLua reports the members it cannot rewrite itself (`Object.freeze is unsupported.`), but the bare value, such as `const m = Math` or `isNaN` passed as a callback, still compiles with no error and reads `nil` at runtime.
 
-**How we pin this.** `packages/transpiler/src/js-runtime-globals.test.ts` compiles every form of every global in the ES2022 library, runs the Lua in Lua 5.1, and fails when the checked list drifts from what TypeScriptToLua leaves unrewritten; `packages/transpiler/src/program-diagnostics.test.ts` checks the error on the build and editor paths.
+**How we pin this.** `packages/transpiler/src/js-runtime-globals.test.ts` compiles every form of every global in the ES2022 library, runs the Lua in Lua 5.1, and fails when the checked list drifts from what TypeScriptToLua leaves unrewritten; `packages/transpiler/src/program-diagnostics.test.ts` checks the error on the build and editor paths, and `packages/tstl-plugin/src/index.test.ts` checks the editor keeps it an error.
 
 ## npm packages do not resolve — vendor the source instead
 

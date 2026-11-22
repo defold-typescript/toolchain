@@ -200,6 +200,8 @@ describe("findMissingJsGlobals", () => {
       "export const d = encodeURIComponent(text);",
       "export const e = { JSON };",
       "export class Stamp extends Date {}",
+      "const Ref = WeakRef<Date>;",
+      "export const r = new Ref({});",
       "",
     ].join("\n");
     const expected = [
@@ -209,6 +211,7 @@ describe("findMissingJsGlobals", () => {
       ["= encodeURIComponent", "encodeURIComponent"],
       ["{ JSON }", "JSON"],
       ["extends Date", "Date"],
+      ["= WeakRef<", "WeakRef"],
     ] as const;
     const { program, sourceFile } = mainOf(source);
     const diagnostics = findMissingJsGlobals(program, sourceFile);
@@ -260,6 +263,13 @@ describe("findMissingJsGlobals", () => {
       "a global the project itself declares",
       "export const f = JSON.stringify(1);\n",
       { "globals.d.ts": "declare var JSON: JSON;\n" },
+    ],
+    ["an interface inheriting the global", "export interface Stamp extends Date {}\n", {}],
+    ["a class implementing the global", "export class Stamp implements Date {}\n", {}],
+    [
+      "an instantiation of a local of the same name",
+      "function WeakRef<T>(value: T): T {\n  return value;\n}\nexport const r = WeakRef<number>;\n",
+      {},
     ],
   ])("reports nothing for %s", (_label, source, extra) => {
     const { program, sourceFile } = mainOf(source, extra);

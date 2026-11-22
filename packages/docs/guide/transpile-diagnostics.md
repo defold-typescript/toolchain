@@ -35,7 +35,7 @@ Both stay silent rather than guess, and the two boundaries are separate:
 - If the component-id universe has a **hole** — a scene that would not parse, a file that could not be read, a dependency [`resolve`](./resolve.md) has not materialized — the fragment check reports nothing at all rather than reporting every address as unreachable. A check that could not run has no honest span to sit on in an editor, so the build is where you see it named as suppressed.
 - A script **no scene hosts** has no world this project can prove, so it is never reported as naming a foreign one. This is per file, and independent of the hole above: a suppressed fragment check does not silence the world check.
 
-Both are suggestions, never errors — see [it is advisory, not blocking](#it-is-advisory-not-blocking).
+Both are suggestions, never errors — see [which diagnostics are errors](#which-diagnostics-are-errors).
 
 ## Address completions — game-object paths and component ids
 
@@ -111,9 +111,11 @@ A relative form is answered differently, because the question is different: its 
 
 The panel is shown only for suggestions the plugin contributed, only when the declaring file can be named exactly, and — inside an address argument — only for the half the caret is standing in, the same split the list itself uses. Everything else falls through to whatever your editor would have shown: the editor's own entries, another extension's, and any id the project cannot attribute exactly — a scene that failed to parse, a script two game objects both claim, a path composed only inside a collection that is itself instanced. Those still complete as before; they just get the editor's default panel rather than a guessed one.
 
-## It is advisory, not blocking
+## Which diagnostics are errors
 
-Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
+One kind of diagnostic the plugin appends is an `Error`: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build). Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
+
+The plugin **never blocks `tsc --noEmit`** either way: a language-service plugin runs only in the editor, so a project that type-checks clean stays clean in CI with the plugin active. The build path remains the source of truth for what compiles.
 
 ## How it relates to the gotchas guide
 

@@ -283,13 +283,37 @@ describe("tstl-plugin", () => {
     ).toBe(true);
   });
 
-  test("marks every appended diagnostic advisory, never an error", () => {
+  test("marks every appended TypeScript-to-Lua diagnostic advisory, never an error", () => {
     const { service, base } = decoratedService(UNSUPPORTED_SOURCE);
     const appended = service.getSemanticDiagnostics("main.ts").slice(base.length);
     expect(appended.length).toBeGreaterThan(0);
     for (const diagnostic of appended) {
       expect(diagnostic.category).toBe(ts.DiagnosticCategory.Suggestion);
     }
+  });
+
+  test("keeps a missing JavaScript global an error while the rest stay advisory", () => {
+    const source = [
+      UNSUPPORTED_SOURCE,
+      "function next(): void {}",
+      "export const s = JSON.stringify({ a: 1 });",
+      "",
+    ].join("\n");
+    const { service, base } = decoratedService(source);
+    const appended = service.getSemanticDiagnostics("main.ts").slice(base.length);
+    const categoryOf = (pattern: RegExp) =>
+      appended
+        .filter((d) =>
+          pattern.test(
+            typeof d.messageText === "string" ? d.messageText : d.messageText.messageText,
+          ),
+        )
+        .map((d) => d.category);
+    expect(categoryOf(/^`JSON` does not exist/)).toEqual([ts.DiagnosticCategory.Error]);
+    expect(categoryOf(/Bitwise operations/)).toEqual([ts.DiagnosticCategory.Suggestion]);
+    expect(categoryOf(/^`next` is a file-level Lua local/)).toEqual([
+      ts.DiagnosticCategory.Suggestion,
+    ]);
   });
 
   test("returns exactly the base diagnostics for a clean file", () => {

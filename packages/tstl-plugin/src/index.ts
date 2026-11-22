@@ -19,6 +19,7 @@ import {
   isAddressClass,
   isBunTestSource,
   isFragmentCaret,
+  isMissingJsGlobalDiagnostic,
   PROJECT_EXTENSIONS,
   resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
@@ -367,10 +368,14 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!program || isBunTestSource(fileName)) {
         return prior;
       }
-      // Advisory category so a valid project's `tsc --noEmit` stays clean — the
-      // plugin adds signal, never hard errors on supported code.
+      // The build fails on a missing JavaScript global, so the editor shows it as
+      // the error it is; everything else the plugin adds stays advisory, signal
+      // rather than a hard error on code the build accepts.
       const transpiler = getProgramDiagnostics(program, program.getSourceFile(fileName)).map(
-        (diagnostic) => ({ ...diagnostic, category: ts.DiagnosticCategory.Suggestion }),
+        (diagnostic) =>
+          isMissingJsGlobalDiagnostic(diagnostic)
+            ? diagnostic
+            : { ...diagnostic, category: ts.DiagnosticCategory.Suggestion },
       );
       // The same advisory posture, and the same absent-cache early return the
       // completion path takes: a host that cannot enumerate files has no scene
