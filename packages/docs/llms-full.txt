@@ -5787,7 +5787,12 @@ A filter picks the entities a system sees. Build one from component names and ot
 | `rejectAll(...)` | lacks at least one component or fails at least one filter given |
 | `rejectAny(...)` | has none of the components and passes none of the filters given |
 
-Inside a system, the entity each callback gets has the components the top-level `requireAll` names, and so does each entity in the system's `entities`. A filter nested inside it, and the other three filters, narrow nothing:
+Inside a system, the entity each callback gets has the components the filter makes certain, and so does each entity in the system's `entities`:
+
+- `requireAll` makes each component it names present, along with those a nested `requireAll` requires.
+- `requireAny` gives a union with one member per alternative. An `in` check that rules one out, such as `!("frozen" in e)`, leaves the others' components present; an `=== undefined` check does not narrow the union. Under a `requireAll`, each combination of alternatives is one member.
+- `rejectAll` and `rejectAny` narrow nothing.
+- A narrowed component cannot be set to `undefined` through the narrowed entity. To take one away, assign the entity to the plain type first (`const plain: Ent = e`), clear it there, and call [`changed`](#the-world).
 
 ```ts title="filters.ts"
 import { processingSystem, rejectAny, requireAll, requireAny } from "@defold-typescript/types/ecs";
@@ -5806,13 +5811,16 @@ export const settle = processingSystem<Ent>()(requireAll("velocity", rejectAny("
   },
 });
 
-export const watch = processingSystem<Ent>()(requireAny("velocity", "frozen"), {
-  process(e) {
-    if (e.velocity !== undefined) {
-      print(`${e.name} moves at ${e.velocity.x}`);
-    }
+export const watch = processingSystem<Ent>()(
+  requireAll("position", requireAny("velocity", "frozen")),
+  {
+    process(e) {
+      if (!("frozen" in e)) {
+        print(`${e.name} at ${e.position.x} moves at ${e.velocity.x}`);
+      }
+    },
   },
-});
+);
 ```
 
 A name that is not a component of the entity type fails to compile, nested or not:
@@ -5828,17 +5836,29 @@ export const broken = processingSystem<Ent>()(
 );
 ```
 
-A function `(system, entity) => boolean` is a filter too. It narrows nothing:
+A function `(system, entity) => boolean` is a filter too. Declared as a type predicate, it narrows the entity to the asserted type; returning a plain `boolean`, it narrows nothing:
 
 ```ts title="custom-filter.ts"
-import { processingSystem } from "@defold-typescript/types/ecs";
+import { processingSystem, type With } from "@defold-typescript/types/ecs";
 import type { Ent } from "./entities";
 
 export const high = processingSystem<Ent>()(
-  (_system: unknown, e: Ent) => e.position !== undefined && e.position.y > 100,
+  (_system: unknown, e: Ent): e is With<Ent, "position"> =>
+    e.position !== undefined && e.position.y > 100,
   {
     process(e) {
-      print(`${e.name} is high`);
+      print(`${e.name} is high at ${e.position.y}`);
+    },
+  },
+);
+
+export const named = processingSystem<Ent>()(
+  (_system: unknown, e: Ent): boolean => e.name !== "",
+  {
+    process(e) {
+      if (e.position !== undefined) {
+        print(`${e.name} is at ${e.position.x}`);
+      }
     },
   },
 );
@@ -5852,11 +5872,17 @@ export const high = processingSystem<Ent>()(
 - Parentheses group, and `&` binds tighter than `|`, as `and` does `or` in Lua: `a|b&c` means `a|(b&c)`.
 - Names are letters, digits and `_`. `!` comes once, before a name or a group, and a pattern has no spaces.
 
-A string filter narrows nothing. In a literal pattern, a name that is not a component of the entity type fails to compile; a pattern typed as `string` is checked only for its syntax, when `filter` runs. `filter` throws on a bad pattern, naming the position where it stops; `tryFilter` returns `{ ok: true, filter }` or `{ ok: false, error }` instead:
+A pattern of names joined by `&` alone, such as `position&velocity`, narrows like `requireAll` of those names; any other pattern narrows nothing. In a literal pattern, a name that is not a component of the entity type fails to compile; a pattern typed as `string` is checked only for its syntax, when `filter` runs. `filter` throws on a bad pattern, naming the position where it stops; `tryFilter` returns `{ ok: true, filter }` or `{ ok: false, error }` instead:
 
 ```ts title="string-filters.ts"
 import { filter, processingSystem, tryFilter } from "@defold-typescript/types/ecs";
 import type { Ent } from "./entities";
+
+export const drift = processingSystem<Ent>()(filter("position&velocity"), {
+  process(e, dt) {
+    e.position.x += e.velocity.x * dt;
+  },
+});
 
 export const placed = processingSystem<Ent>()(filter("position&(velocity|frozen)"), {
   process(e) {
@@ -6330,7 +6356,7 @@ Take the entities that have either of two components
 
 </td><td>
 
-`requireAny`; it narrows nothing, so check a component before reading it
+`requireAny`; an `in` check that rules one out, such as `!("sprite" in e)`, makes the other present
 
 </td><td>
 
@@ -6650,7 +6676,7 @@ The fields every system carries. `ecs` sets `world`, `entities`, `indices` and `
 | --- | --- | --- |
 | `world` | `World<E> \| undefined` | The world the system belongs to. |
 | `active` | `boolean` | Whether `update` and `refresh` run the system. |
-| `entities` | `readonly E[]`, narrowed by a `requireAll` filter | The entities the system holds, in the order it processes them. |
+| `entities` | `readonly E[]`, narrowed by the filter | The entities the system holds, in the order it processes them. |
 | `indices` | `Record<number, number>` | Each held entity's position in `entities`, keyed by the entity's id in the system's world. |
 | `index` | `number` | The system's 1-based position in its world. |
 | `modified` | `boolean` | Whether the system's entities changed since its last update. |
