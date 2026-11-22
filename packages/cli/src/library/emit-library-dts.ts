@@ -401,12 +401,20 @@ function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext)
   for (const field of fields) {
     if (!isPublicField(field)) continue;
     pushDoc(lines, field.doc, INDENT);
-    const name =
-      TS_IDENTIFIER.test(field.name) && !TS_RESERVED_NAMES.has(field.name)
-        ? field.name
-        : sanitizeTypeName(field.name);
-    const type = mapTypes(field.types, ctx);
-    lines.push(`${INDENT}export const ${name}: ${field.readonly ? `Readonly<${type}>` : type};`);
+    const mapped = mapTypes(field.types, ctx);
+    const type = field.readonly ? `Readonly<${mapped}>` : mapped;
+    if (TS_RESERVED_NAMES.has(field.name)) {
+      // A reserved name (`default`, `delete`) is illegal as a `const` binding, so it is
+      // declared under an internal name and re-exported under the Lua field's own. Unlike
+      // `renderModuleFunction`, the internal binding stays unexported: the table has no
+      // `<name>_` field behind it.
+      const internal = `${field.name}_`;
+      lines.push(`${INDENT}const ${internal}: ${type};`);
+      lines.push(`${INDENT}export { ${internal} as ${field.name} };`);
+      continue;
+    }
+    const name = TS_IDENTIFIER.test(field.name) ? field.name : sanitizeTypeName(field.name);
+    lines.push(`${INDENT}export const ${name}: ${type};`);
   }
   return lines;
 }

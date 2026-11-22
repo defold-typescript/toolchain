@@ -1799,6 +1799,31 @@ test("emits module constants without a recipe", () => {
   expect(docAbove(overridden, "export const SPEED:")).toBe("Speed handle.");
 });
 
+test("a module constant named by a reserved word compiles and is reached under its own name", () => {
+  const declaration = emitLibraryDeclarations(
+    parseLualsSource(`local M = {}
+
+M.default = 1
+
+return M
+`),
+    { moduleId: "demo.reserved" },
+  );
+
+  expect(
+    compileUsage(
+      "demo.reserved",
+      declaration,
+      `import * as lib from "demo.reserved";
+
+const value: number = lib.default;
+// @ts-expect-error the internal binding has no Lua field behind it
+lib.default_;
+`,
+    ),
+  ).toEqual({});
+});
+
 test("the shipped saver and panthera modules export their enum, speed and preset options", async () => {
   const saver = await printedModule(LIBRARY_DATA_DIR, "saver.saver");
   const panthera = await printedModule(LIBRARY_DATA_DIR, "panthera.panthera");
