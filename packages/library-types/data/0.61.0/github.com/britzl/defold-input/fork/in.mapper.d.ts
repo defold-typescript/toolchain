@@ -7,8 +7,11 @@
  * @noResolution
  */
 declare module 'in.mapper' {
-	/** The in-game action a trigger is bound to, returned as given; `mapper.md` binds strings. */
-	type MappedAction = Hash | string | number;
+	/**
+	 * The in-game action a trigger is bound to, as given: any value `assert(action)`
+	 * accepts, a table included, stored and returned unread.
+	 */
+	type MappedAction = Hash | string | number | true | object;
 
 	/**
 	 * @param gamepad - Gamepad index to bind the trigger to. **0️⃣ 0-based; passed to `in.mapper` unchanged.**

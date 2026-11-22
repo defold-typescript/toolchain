@@ -80,6 +80,19 @@ onscreen.register_button(_node, undefined, (event, _control, data) => {
 // `mapper.md`'s bindings: a trigger constant to a string action.
 mapper.bind(triggers.KEY_LEFT, "move_left", 1);
 
+// `mapper.lua:26` asserts only that the action is truthy, `:30` stores it unread, and
+// `:73` returns it as given, so a table, a hash or a number binds too, and `bind`
+// returns the previous action or `nil`.
+mapper.bind(triggers.KEY_RIGHT, { kind: "move", dx: 1 });
+mapper.bind(triggers.KEY_UP, hash("up"));
+mapper.bind(triggers.KEY_DOWN, 2);
+const _boundTable: ReturnType<typeof mapper.on_input> = { kind: "move", dx: 1 };
+const _previousTable: ReturnType<typeof mapper.bind> = { kind: "move", dx: 1 };
+const _unbound: ReturnType<typeof mapper.on_input> = undefined;
+const _noPrevious: ReturnType<typeof mapper.bind> = undefined;
+// @ts-expect-error `assert(action)` raises on `false`.
+mapper.bind(triggers.KEY_SPACE, false);
+
 // `accelerometer.lua:47` returns early from a pointer action, so one without
 // `acc_x` is accepted.
 accelerometer.on_input({ x: 10, y: 20 });
@@ -93,3 +106,7 @@ void _gestureSettings;
 void _keyboardInput;
 void _onscreenButton;
 void _textboxType;
+void _boundTable;
+void _previousTable;
+void _unbound;
+void _noPrevious;

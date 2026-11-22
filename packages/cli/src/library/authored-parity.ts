@@ -539,7 +539,6 @@ function admitsUndefined(node: ts.TypeNode, names: ForkTypes, seen: Set<ts.Node>
   seen.add(node);
   if (ts.isParenthesizedTypeNode(node)) return admitsUndefined(node.type, names, seen);
   if (ts.isUnionTypeNode(node)) return node.types.some((arm) => admitsUndefined(arm, names, seen));
-  if (ts.isLiteralTypeNode(node)) return node.literal.kind === ts.SyntaxKind.NullKeyword;
   if (UNDEFINED_ADMITTING.has(node.kind)) return true;
   const target = aliasTarget(node, names);
   return target !== undefined && admitsUndefined(target, names, seen);
