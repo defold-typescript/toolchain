@@ -7,13 +7,7 @@ import { overlayProgram } from "./call-check";
 import { BOX2D_BACKENDS } from "./contexts";
 import { describeDiagnostic } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
-import {
-  generateProbes,
-  optionFormCalls,
-  PROBE_FILES,
-  type ProbeGeneration,
-  probeTarget,
-} from "./witness";
+import { generateProbes, PROBE_FILES, type ProbeGeneration, probeTarget } from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const OPTION_FIXTURE = resolve(import.meta.dir, "option-form-fixture.d.ts");
@@ -138,35 +132,35 @@ describe("option-table forms", () => {
     const fixture = [
       "export {};",
       "declare global {",
-      "  namespace probe_fixture {",
-      "    function pick(id: number): number;",
-      "    function pick(id: number, options: { readonly all?: boolean }): string;",
-      "    function needs(id: number, options?: { readonly all: boolean }): void;",
-      "    function strict(id: number, options: { readonly all?: boolean }): void;",
+      "  namespace sys {",
+      "    function probe_fixture_pick(id: number): number;",
+      "    function probe_fixture_pick(id: number, options: { readonly all?: boolean }): string;",
+      "    function probe_fixture_needs(id: number, options?: { readonly all: boolean }): void;",
+      "    function probe_fixture_strict(id: number, options: { readonly all?: boolean }): void;",
       "  }",
       "}",
     ].join("\n");
-    const program = overlayProgram(
-      surfaceProgram(probeTarget()),
-      new Map([[OPTION_FIXTURE, fixture]]),
+    const generated = generateProbes(
+      undefined,
+      "v2",
+      overlayProgram(surfaceProgram(probeTarget()), new Map([[OPTION_FIXTURE, fixture]])),
     );
-    const candidate = (name: string) => ({ name, kind: "go" as const, args: ["1"] });
+    const fixtureForms = (name: string) =>
+      generated.calls.filter((call) => call.name === name && call.variant.startsWith("options-"));
 
     test("each form carries the returns of the overload the checker resolves for it", () => {
-      const { calls } = optionFormCalls(program, [candidate("probe_fixture.pick")]);
-      expect(calls.map((call) => [call.variant, call.call, call.returns])).toEqual([
-        ["options-omitted", "probe_fixture.pick(1)", { kinds: [["number"]], variadic: false }],
-        ["options-empty", "probe_fixture.pick(1, {})", { kinds: [["string"]], variadic: false }],
+      expect(
+        fixtureForms("sys.probe_fixture_pick").map((call) => [call.variant, call.returns]),
+      ).toEqual([
+        ["options-omitted", { kinds: [["number"]], variadic: false }],
+        ["options-empty", { kinds: [["string"]], variadic: false }],
       ]);
     });
 
     test("a table the call cannot leave out gets no forms, and one refusing {} is unwitnessed", () => {
-      const generated = optionFormCalls(program, [
-        candidate("probe_fixture.strict"),
-        candidate("probe_fixture.needs"),
-      ]);
-      expect(generated.calls.map((call) => call.name)).toEqual([]);
-      expect(generated.unwitnessed.map((entry) => entry.name)).toEqual(["probe_fixture.needs"]);
+      expect(fixtureForms("sys.probe_fixture_strict")).toEqual([]);
+      expect(fixtureForms("sys.probe_fixture_needs")).toEqual([]);
+      expect(generated.unwitnessed.map((entry) => entry.name)).toEqual(["sys.probe_fixture_needs"]);
       expect(generated.unwitnessed[0]?.reason).toStartWith(
         "the checker rejects an empty options table:",
       );
