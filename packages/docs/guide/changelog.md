@@ -45,6 +45,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Bare `table` parameters** take an object literal or a value typed by an interface as well as a `LuaTable`, so `druid.new(self)` in a Druid GUI script and `saver.save_file_by_name(data, "data.json")` with an interface-typed `data` compile.
   - **Every interface and type alias is exported**, so `import type` names the types of a module that also exports a function named `new`, such as Druid's, Pigeon's and Squid's.
   - **Module constants are declared without a recipe entry:** a literal or literal table the module table holds, such as `panthera.SPEED` and `panthera.OPTIONS_LOOP`, and an `---@enum` table such as `saver.FORMAT`, whose values keep their own types.
+  - **A module constant named by a reserved word**, such as `default` or `delete`, compiles and is read under its own name, as in `lib.default`.
 
 ## v0.68.0
 
