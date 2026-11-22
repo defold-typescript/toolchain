@@ -584,9 +584,9 @@ function memberWitness(type: ts.Type, kind: LuaKind, scope: Scope): string | und
   return undefined;
 }
 
-// A function whose longest signature ends in a table that has no required
-// field, with the positive witnesses of every parameter before it.
-export interface OptionCandidate {
+// A function whose longest signature ends in a table, with the positive
+// witnesses of every parameter before it.
+interface OptionCandidate {
   readonly name: string;
   readonly kind: ScriptKind;
   readonly args: readonly string[];
@@ -601,22 +601,19 @@ interface FunctionCalls {
   options?: OptionCandidate;
 }
 
-// A table `{}` is a value of: not an array, and every field optional.
-function isOptionsTable(param: Param | undefined, checker: ts.TypeChecker): boolean {
+// A table that is not an array or tuple, whether or not `{}` satisfies it.
+function isTrailingTable(param: Param | undefined, checker: ts.TypeChecker): boolean {
   if (param === undefined || param.rest) return false;
   const type = checker.getNonNullableType(param.type);
   const kinds = kindsOf(type, checker);
   if (kinds === "any" || kinds.length !== 1 || kinds[0] !== "table") return false;
-  if (checker.isArrayType(type) || checker.isTupleType(type)) return false;
-  return checker
-    .getPropertiesOfType(type)
-    .every((property) => (property.flags & ts.SymbolFlags.Optional) !== 0);
+  return !checker.isArrayType(type) && !checker.isTupleType(type);
 }
 
 // Each candidate called without its options table and with `{}`, when the
 // checker lets the call leave the table out, each form carrying the returns of
 // the signature the checker resolves for it.
-export function optionFormCalls(
+function optionFormCalls(
   program: ts.Program,
   candidates: readonly OptionCandidate[],
 ): { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } {
@@ -710,7 +707,7 @@ function callsFor(
         out.calls.push({ name: fqn, variant: label, kind: context.kind, call, returns });
       }
       const positive = witnessAll(present);
-      if (longer && isOptionsTable(params[present - 1], checker)) {
+      if (longer && isTrailingTable(params[present - 1], checker)) {
         out.options = { name: fqn, kind: context.kind, args: positive.slice(0, present - 1) };
       }
       out.signature ??= {
@@ -981,6 +978,7 @@ function denied(fqn: string): boolean {
 export function generateProbes(
   target: ApiTarget = probeTarget(),
   backend: Box2DBackend = "v2",
+  program: ts.Program = surfaceProgram(target),
 ): ProbeGeneration {
   const tags = box2dBackends(target.id);
   const bindings = new Map(
@@ -992,7 +990,6 @@ export function generateProbes(
       ),
     ).map((binding) => [`${binding.namespace}.${binding.name}`, binding]),
   );
-  const program = surfaceProgram(target);
   const checker = program.getTypeChecker();
   const members = declaredMembers(program, comparedNamespaces(target));
   const constants = new Set(members.constants.keys());
