@@ -3325,10 +3325,22 @@ describe("the behavior lists compare what the fork's signatures promise with wha
     expect(report.callableCoverage).toBe(1);
   });
 
+  test("a required parameter typed `null` but not `undefined` is listed, directly or by alias", () => {
+    for (const declared of ["action_id: Hash | null", "action_id: NullableHash"]) {
+      const report = behaviorReport(BUTTON, [
+        "type NullableHash = Hash | null;",
+        `export function button(node_id: string, ${declared}): void;`,
+      ]);
+      expect(report.nilTolerantRequired).toEqual([{ name: "button", slot: "action_id" }]);
+      expect(report.callableCoverage).toBe(1);
+    }
+  });
+
   test("an optional parameter, or one whose type admits undefined, is not", () => {
     for (const declared of [
       "action_id?: Hash",
       "action_id: Hash | undefined",
+      "action_id: Hash | null | undefined",
       "action_id: MaybeHash",
       "action_id: any",
     ]) {
