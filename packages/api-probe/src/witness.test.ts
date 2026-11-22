@@ -41,6 +41,22 @@ describe("witness generation", () => {
     );
   });
 
+  test("render state toggles keep a positive call and never pass the alpha-test state Metal rejects", () => {
+    const toggles = ["render.enable_state", "render.disable_state"];
+    for (const name of toggles) {
+      const positive = v2.calls.filter((call) => call.name === name && call.witness === undefined);
+      expect(positive.map((call) => call.kind)).toContain("render");
+    }
+    const alphaTest = generations.flatMap((generation) =>
+      generation.calls
+        .filter(
+          (call) => toggles.includes(call.name) && call.call.includes("graphics.STATE_ALPHA_TEST"),
+        )
+        .map((call) => `${generation.backend} ${call.variant}: ${call.call}`),
+    );
+    expect(alphaTest).toEqual([]);
+  });
+
   test(
     "every generated file type-checks and transpiles with zero diagnostics",
     () => {

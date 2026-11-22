@@ -400,6 +400,10 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "model.get_mesh_enabled:2": '"Cube"',
   "model.set_mesh_enabled:2": '"Cube"',
   "profiler.view_recorded_frame:1": "{ frame: 0 }",
+  // The Metal backend has no alpha-test pipeline state and asserts when a
+  // render command enables or disables it; every backend applies blending.
+  "render.enable_state:1": "graphics.STATE_BLEND",
+  "render.disable_state:1": "graphics.STATE_BLEND",
   "resource.create_atlas:1": 'fresh("/probe_atlas", ".texturesetc")',
   "resource.create_buffer:1": 'fresh("/probe_buffer", ".bufferc")',
   "resource.create_sound_data:1": 'fresh("/probe_sound", ".wavc")',
