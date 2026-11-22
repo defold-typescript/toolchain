@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   add,
   addSystem,
+  type Filter,
   filter,
   processingSystem,
   rejectAll,
@@ -16,6 +17,7 @@ import {
   sortedSystem,
   system,
   tryFilter,
+  type With,
   world,
 } from "./index";
 
@@ -35,6 +37,8 @@ interface Ent {
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+type SpringOrDragged = With<Ent, "spring"> | With<Ent, "dragged">;
 
 describe("filter narrowing", () => {
   test("requireAll makes its components present in process and onAdd", () => {
@@ -81,11 +85,11 @@ describe("filter narrowing", () => {
     expect(built.process).toBeTypeOf("function");
   });
 
-  test("requireAny, rejectAll, rejectAny and a custom filter narrow nothing", () => {
+  test("requireAny makes no single alternative certain, and rejectAll, rejectAny and a boolean custom filter narrow nothing", () => {
     const factory = processingSystem<Ent>();
     const any = factory(requireAny("spring", "active"), {
       process(e) {
-        // @ts-expect-error requireAny leaves `spring` optional
+        // @ts-expect-error `spring` stays optional until a check rules `active` out
         const k: number = e.spring.k;
         void k;
       },
@@ -126,6 +130,132 @@ describe("filter narrowing", () => {
       },
     });
     expect(built.update).toBeTypeOf("function");
+  });
+});
+
+describe("requireAny narrows to each alternative", () => {
+  test("an in check that rules one alternative out leaves the other's components present", () => {
+    const built = processingSystem<Ent>()(requireAny("spring", "dragged"), {
+      process(e) {
+        const exact: Equal<typeof e, SpringOrDragged> = true;
+        if (!("spring" in e)) {
+          const d: boolean = e.dragged;
+          void d;
+        }
+        // @ts-expect-error neither alternative is certain before a check
+        const k: number = e.spring.k;
+        void [exact, k];
+      },
+    });
+    expect(built.process).toBeTypeOf("function");
+  });
+
+  test("requireAll over requireAny narrows to each combination", () => {
+    const built = processingSystem<Ent>()(requireAll("active", requireAny("spring", "dragged")), {
+      process(e) {
+        const exact: Equal<
+          typeof e,
+          With<Ent, "active" | "spring"> | With<Ent, "active" | "dragged">
+        > = true;
+        const a: boolean = e.active;
+        if (!("spring" in e)) {
+          const d: boolean = e.dragged;
+          void d;
+        }
+        void [exact, a];
+      },
+    });
+    expect(built.process).toBeTypeOf("function");
+  });
+
+  test("onAdd, this.entities and the returned system's entities carry the same alternatives", () => {
+    const built = processingSystem<Ent>()(requireAny("spring", "dragged"), {
+      onAdd(e) {
+        const exact: Equal<typeof e, SpringOrDragged> = true;
+        void exact;
+      },
+      postProcess() {
+        for (const e of this.entities ?? []) {
+          const exact: Equal<typeof e, SpringOrDragged> = true;
+          void exact;
+        }
+      },
+    });
+    const held: Equal<NonNullable<typeof built.entities>[number], SpringOrDragged> = true;
+    expect(held).toBe(true);
+  });
+
+  test("a pattern of names joined by & narrows like requireAll, and any other pattern narrows nothing", () => {
+    const factory = processingSystem<Ent>();
+    const joined = factory(filter("spring&active"), {
+      process(e) {
+        const k: number = e.spring.k;
+        const a: boolean = e.active;
+        void [k, a];
+      },
+    });
+    const either = factory(filter("spring|active"), {
+      process(e) {
+        // @ts-expect-error a pattern with `|` leaves `spring` optional
+        const k: number = e.spring.k;
+        void k;
+      },
+    });
+    const negated = factory(filter("!dragged"), {
+      process(e) {
+        // @ts-expect-error a pattern with `!` leaves `dragged` optional
+        const d: boolean = e.dragged;
+        void d;
+      },
+    });
+    expect([joined, either, negated]).toHaveLength(3);
+  });
+
+  test("a type-predicate function filter narrows to its asserted type, and a boolean one narrows nothing", () => {
+    const factory = processingSystem<Ent>();
+    const asserted = factory(
+      (_s: unknown, e: Ent): e is Ent & { spring: Spring } => e.spring !== undefined,
+      {
+        process(e) {
+          const k: number = e.spring.k;
+          void k;
+        },
+      },
+    );
+    const plain = factory((_s: unknown, e: Ent): boolean => e.spring !== undefined, {
+      process(e) {
+        // @ts-expect-error a boolean function filter leaves `spring` optional
+        const k: number = e.spring.k;
+        void k;
+      },
+    });
+    expect([asserted, plain]).toHaveLength(2);
+  });
+
+  test("rejectAny narrows nothing, a two-argument Filter annotation still narrows, and a misspelled alternative is an error", () => {
+    const rejects = processingSystem<Ent>()(rejectAny("dragged"), {
+      process(e) {
+        // @ts-expect-error rejectAny leaves `dragged` optional
+        const d: boolean = e.dragged;
+        void d;
+      },
+    });
+    const annotated: Filter<"spring", "spring"> = requireAll("spring");
+    const kept = processingSystem<Ent>()(annotated, {
+      process(e) {
+        const k: number = e.spring.k;
+        void k;
+      },
+    });
+    // Never called: the definitions hold what the types reject, and only the compiler reads them.
+    const rejected = () => {
+      processingSystem<Ent>()(
+        // @ts-expect-error `sprng` is not a component of Ent
+        requireAny("sprng", "dragged"),
+        { process() {} },
+      );
+    };
+    expect([rejects, kept, rejected]).toHaveLength(3);
   });
 });
 
@@ -228,17 +358,6 @@ describe("string filters", () => {
     expect([accepted.process, rejected]).toEqual([expect.any(Function), expect.any(Function)]);
   });
 
-  test("a string filter narrows nothing", () => {
-    const built = processingSystem<Ent>()(filter("spring&active"), {
-      process(e) {
-        // @ts-expect-error a string filter leaves `spring` optional
-        const k: number = e.spring.k;
-        void k;
-      },
-    });
-    expect(built.process).toBeTypeOf("function");
-  });
-
   test("a pattern typed as string is not checked", () => {
     const pattern: string = "sprng|actve";
     const built = processingSystem<Ent>()(filter(pattern), { process() {} });
@@ -334,17 +453,8 @@ describe("entities takes the filter's narrowing", () => {
     expect(ks).toEqual([undefined, undefined, undefined, undefined]);
   });
 
-  test("requireAny, the rejects, a string filter, a function filter and no filter narrow nothing", () => {
+  test("the rejects, a pattern with |, a boolean function filter and no filter narrow nothing", () => {
     const factory = processingSystem<Ent>();
-    const any = factory(requireAny("spring"), {
-      postProcess() {
-        for (const e of this.entities ?? []) {
-          // @ts-expect-error requireAny leaves `spring` optional
-          const k: number = e.spring.k;
-          void k;
-        }
-      },
-    });
     const rejectsAll = factory(rejectAll("spring"), {
       postProcess() {
         for (const e of this.entities ?? []) {
@@ -363,10 +473,10 @@ describe("entities takes the filter's narrowing", () => {
         }
       },
     });
-    const pattern = factory(filter("spring"), {
+    const pattern = factory(filter("spring|active"), {
       postProcess() {
         for (const e of this.entities ?? []) {
-          // @ts-expect-error a string filter leaves `spring` optional
+          // @ts-expect-error a pattern with `|` leaves `spring` optional
           const k: number = e.spring.k;
           void k;
         }
@@ -375,7 +485,7 @@ describe("entities takes the filter's narrowing", () => {
     const custom = factory((_system: unknown, e: Ent) => e.spring !== undefined, {
       postProcess() {
         for (const e of this.entities ?? []) {
-          // @ts-expect-error a function filter leaves `spring` optional
+          // @ts-expect-error a boolean function filter leaves `spring` optional
           const k: number = e.spring.k;
           void k;
         }
@@ -390,7 +500,7 @@ describe("entities takes the filter's narrowing", () => {
         }
       },
     });
-    expect([any, rejectsAll, rejectsAny, pattern, custom, unfiltered]).toHaveLength(6);
+    expect([rejectsAll, rejectsAny, pattern, custom, unfiltered]).toHaveLength(5);
   });
 
   test("this.entities is undefined until the system joins a world", () => {

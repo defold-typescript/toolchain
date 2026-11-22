@@ -1033,10 +1033,15 @@ function keyedFactory(make: MakeSystem, key: string | undefined): MakeSystem {
 
 declare const filterKeys: unique symbol;
 
-interface FilterKeys<R extends string, U extends string> {
+// `branches` is a union of the key sets an entity may pass with, one per
+// alternative a `requireAny` opens; `required` holds the keys every branch has.
+interface FilterKeys<R extends string, U extends string, B extends Branch> {
   readonly required: R;
   readonly used: U;
+  readonly branches: B;
 }
+
+type Branch = { readonly k: string };
 
 // Method syntax keeps the parameters bivariant, so a filter written for a
 // narrower entity or system type still fits.
@@ -1049,27 +1054,55 @@ type FilterCall = {
  *
  * @remarks
  * A system calls it as `filter(system, entity)`, and `update` calls it as `filter(world, system)`.
- * A filter built by `requireAll` and its siblings records the components it requires (`R`) and
- * the components it names (`U`), so a system's callbacks see the required components as present
- * and a name the entity type lacks is a compile error.
+ * A filter built by `requireAll` and its siblings records the components it requires (`R`), the
+ * components it names (`U`) and the alternative sets of components an entity may pass with
+ * (`B`, one `{ k }` per alternative), so a system's callbacks see an alternative's components as
+ * present and a name the entity type lacks is a compile error.
  *
  * @see requireAll
  * @see https://defold-typescript.github.io/toolchain/entity-systems#filters
  */
-export type Filter<R extends string = string, U extends string = string> = FilterCall & {
-  readonly [filterKeys]?: FilterKeys<R, U>;
+export type Filter<
+  R extends string = string,
+  U extends string = string,
+  B extends { readonly k: string } = { readonly k: R },
+> = FilterCall & {
+  readonly [filterKeys]?: FilterKeys<R, U, B>;
 };
 
 type FilterToken = string | Filter;
 
 type KeysIn<F> = F extends { readonly [filterKeys]?: infer K }
-  ? NonNullable<K> extends FilterKeys<infer R, infer U>
-    ? { required: R; used: U }
-    : { required: never; used: never }
-  : { required: never; used: never };
+  ? NonNullable<K> extends FilterKeys<infer R, infer U, infer B>
+    ? { required: R; used: U; branches: B }
+    : { required: never; used: never; branches: { readonly k: never } }
+  : { required: never; used: never; branches: { readonly k: never } };
 
 type RequiredBy<T> = T extends string ? T : KeysIn<T>["required"];
 type UsedBy<T> = T extends string ? T : KeysIn<T>["used"];
+type BranchesBy<T> = T extends string ? { readonly k: T } : KeysIn<T>["branches"];
+
+// Every pairing of a branch from `A` with one from `B`, each the union of both key sets.
+type JoinBranches<A, B> = A extends { readonly k: infer KA extends string }
+  ? B extends { readonly k: infer KB extends string }
+    ? { readonly k: KA | KB }
+    : never
+  : never;
+
+// The branches of a `requireAll` over `T`: the cross product of each token's branches.
+type AllBranches<T extends readonly unknown[]> = T extends readonly [infer Head, ...infer Rest]
+  ? JoinBranches<BranchesBy<Head>, AllBranches<Rest>>
+  : { readonly k: never };
+
+type NarrowBranches<E, B> = B extends { readonly k: infer K extends string } ? With<E, K> : never;
+
+// The entity a system over filter `F` sees: `E` with one alternative's components
+// present per branch, or `E` narrowed to a predicate filter's asserted type.
+type Narrowed<E, F> = F extends {
+  bivariant(subject: unknown, candidate: unknown): candidate is infer X;
+}["bivariant"]
+  ? X & E
+  : NarrowBranches<E, KeysIn<F>["branches"]>;
 
 // A filter typed as plain `Filter` names no known keys, so it is not checked.
 type KnownKeys<E, F> = string extends KeysIn<F>["used"]
@@ -1094,6 +1127,14 @@ type PatternNames<
       ? PatternNames<Rest, "", Names | (Name extends "" ? never : Name)>
       : PatternNames<Rest, `${Name}${C}`, Names>
     : Names | (Name extends "" ? never : Name);
+
+// The names a pattern requires when it joins names with `&` alone; any other
+// pattern, and one typed as `string`, requires none.
+type PatternRequired<P extends string> = string extends P
+  ? never
+  : P extends `${string}${Exclude<PatternOperator, "&">}${string}`
+    ? never
+    : PatternNames<P>;
 
 /** `E` with the components `K` present. */
 export type With<E, K> = [K] extends [never]
@@ -1366,9 +1407,9 @@ export interface SystemFactory<E> {
   <F extends Filter, D extends object>(
     this: void,
     filter: F & KnownKeys<E, F>,
-    def: Definition<D, PlainSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-      ThisType<System<E, D, With<E, KeysIn<F>["required"]>>>,
-  ): System<E, D, With<E, KeysIn<F>["required"]>>;
+    def: Definition<D, PlainSystemCallbacks<E, Narrowed<E, F>>> &
+      ThisType<System<E, D, Narrowed<E, F>>>,
+  ): System<E, D, Narrowed<E, F>>;
 }
 
 /**
@@ -1384,9 +1425,9 @@ export interface SystemFactory<E> {
 export type ProcessingSystemFactory<E> = <F extends Filter, D extends object>(
   this: void,
   filter: F & KnownKeys<E, F>,
-  def: Definition<D, ProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-    ThisType<System<E, D, With<E, KeysIn<F>["required"]>>>,
-) => System<E, D, With<E, KeysIn<F>["required"]>>;
+  def: Definition<D, ProcessingSystemCallbacks<E, Narrowed<E, F>>> &
+    ThisType<System<E, D, Narrowed<E, F>>>,
+) => System<E, D, Narrowed<E, F>>;
 
 /**
  * Builds a sorted system from a definition, with or without a filter.
@@ -1417,9 +1458,9 @@ export interface SortedSystemFactory<E> {
   <F extends Filter, D extends object>(
     this: void,
     filter: F & KnownKeys<E, F>,
-    def: Definition<D, SortedSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-      ThisType<SortedSystem<E, D, With<E, KeysIn<F>["required"]>>>,
-  ): SortedSystem<E, D, With<E, KeysIn<F>["required"]>>;
+    def: Definition<D, SortedSystemCallbacks<E, Narrowed<E, F>>> &
+      ThisType<SortedSystem<E, D, Narrowed<E, F>>>,
+  ): SortedSystem<E, D, Narrowed<E, F>>;
 }
 
 /**
@@ -1435,9 +1476,9 @@ export interface SortedSystemFactory<E> {
 export type SortedProcessingSystemFactory<E> = <F extends Filter, D extends object>(
   this: void,
   filter: F & KnownKeys<E, F>,
-  def: Definition<D, SortedProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
-    ThisType<SortedSystem<E, D, With<E, KeysIn<F>["required"]>>>,
-) => SortedSystem<E, D, With<E, KeysIn<F>["required"]>>;
+  def: Definition<D, SortedProcessingSystemCallbacks<E, Narrowed<E, F>>> &
+    ThisType<SortedSystem<E, D, Narrowed<E, F>>>,
+) => SortedSystem<E, D, Narrowed<E, F>>;
 
 /**
  * Holds entities and systems.
@@ -1598,7 +1639,8 @@ export interface World<E> {
  *
  * @remarks
  * A system built with it sees each named component as present in its callbacks, along with the
- * components a nested `requireAll` requires.
+ * components a nested `requireAll` requires. Over a nested `requireAny`, the entity is a union
+ * with one member per combination of alternatives.
  *
  * @param tokens Component names and filters.
  * @returns The filter.
@@ -1622,11 +1664,12 @@ export interface World<E> {
  */
 export function requireAll<const T extends readonly FilterToken[]>(
   ...tokens: T
-): Filter<RequiredBy<T[number]>, UsedBy<T[number]>> {
+): Filter<RequiredBy<T[number]>, UsedBy<T[number]>, AllBranches<T>> {
   checkTokens(...tokens);
   return requireAllFilter(tokens as readonly Token[]) as Filter<
     RequiredBy<T[number]>,
-    UsedBy<T[number]>
+    UsedBy<T[number]>,
+    AllBranches<T>
   >;
 }
 
@@ -1635,11 +1678,14 @@ export function requireAll<const T extends readonly FilterToken[]>(
  * filter given.
  *
  * @remarks
- * It narrows no component, since no single one is certain.
+ * A system built with it sees a union with one member per alternative, each with that
+ * alternative's components present. An `in` check that rules an alternative out, such as
+ * `!("sprite" in e)`, leaves the others; a `=== undefined` check does not narrow the union.
  *
  * @param tokens Component names and filters.
  * @returns The filter.
  * @throws When a token is neither a component name nor a filter.
+ * @see https://defold-typescript.github.io/toolchain/entity-systems#filters
  * @example
  * ```ts
  * import { processingSystem, requireAny } from "@defold-typescript/types/ecs";
@@ -1649,10 +1695,10 @@ export function requireAll<const T extends readonly FilterToken[]>(
  *   label?: Url;
  * }
  *
- * export const visible = processingSystem<Ent>()(requireAny("sprite", "label"), {
+ * export const labelOnly = processingSystem<Ent>()(requireAny("sprite", "label"), {
  *   process(e) {
- *     if (e.sprite !== undefined) {
- *       msg.post(e.sprite, "enable");
+ *     if (!("sprite" in e)) {
+ *       msg.post(e.label, "enable");
  *     }
  *   },
  * });
@@ -1660,9 +1706,13 @@ export function requireAll<const T extends readonly FilterToken[]>(
  */
 export function requireAny<const T extends readonly FilterToken[]>(
   ...tokens: T
-): Filter<never, UsedBy<T[number]>> {
+): Filter<never, UsedBy<T[number]>, BranchesBy<T[number]>> {
   checkTokens(...tokens);
-  return requireAnyFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
+  return requireAnyFilter(tokens as readonly Token[]) as Filter<
+    never,
+    UsedBy<T[number]>,
+    BranchesBy<T[number]>
+  >;
 }
 
 /**
@@ -1734,8 +1784,9 @@ export function rejectAny<const T extends readonly FilterToken[]>(
  * @remarks
  * A pattern holds component names of letters, digits and `_`, joined by `&` (and) and `|` (or),
  * each optionally prefixed by `!` (not) and grouped with parentheses. `&` binds tighter than `|`,
- * so `a|b&c` is `a|(b&c)`. A pattern filter narrows no component, but a name the entity type
- * lacks is still a compile error.
+ * so `a|b&c` is `a|(b&c)`. A pattern of names joined by `&` alone narrows like `requireAll` of
+ * those names; any other pattern narrows no component. A name the entity type lacks is a compile
+ * error either way.
  *
  * @param pattern The pattern, with no whitespace.
  * @returns The filter.
@@ -1760,8 +1811,10 @@ export function rejectAny<const T extends readonly FilterToken[]>(
  * });
  * ```
  */
-export function filter<const P extends string>(pattern: P): Filter<never, PatternNames<P>> {
-  return patternFilter(pattern) as Filter<never, PatternNames<P>>;
+export function filter<const P extends string>(
+  pattern: P,
+): Filter<PatternRequired<P>, PatternNames<P>> {
+  return patternFilter(pattern) as Filter<PatternRequired<P>, PatternNames<P>>;
 }
 
 /**
@@ -1783,9 +1836,14 @@ export function filter<const P extends string>(pattern: P): Filter<never, Patter
  */
 export function tryFilter<const P extends string>(
   pattern: P,
-): { ok: true; filter: Filter<never, PatternNames<P>> } | { ok: false; error: string } {
+):
+  | { ok: true; filter: Filter<PatternRequired<P>, PatternNames<P>> }
+  | { ok: false; error: string } {
   try {
-    return { ok: true, filter: patternFilter(pattern) as Filter<never, PatternNames<P>> };
+    return {
+      ok: true,
+      filter: patternFilter(pattern) as Filter<PatternRequired<P>, PatternNames<P>>,
+    };
   } catch (error) {
     return { ok: false, error: error as string };
   }

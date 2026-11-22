@@ -427,7 +427,7 @@ export function watch(pattern: string) { // [!code ++]
 } // [!code ++]
 ```
 
-- **`filter("light&!flying")`** takes a lit firefly on a leaf. A string filter narrows nothing, so `beacons` checks `e.light` before it reads it.
+- **`filter("light&!flying")`** takes a lit firefly on a leaf. Only a pattern of names joined by `&` alone narrows, so `beacons` checks `e.light` before it reads it.
 - **`tryFilter(pattern)`** returns `{ ok: true, filter }` or `{ ok: false, error }`. `filter` would throw on a pattern that does not parse, and a pattern typed in a settings file can be wrong.
 
 Now the script. Fireflies start lit or dark, flying or resting, and a click asks whether the firefly under the pointer is catchable:
@@ -1224,7 +1224,7 @@ export function scare(cursor: Vector3) { // [!code ++]
 } // [!code ++]
 ```
 
-- **The filter is a function** `(system, entity) => boolean`. Any function of that shape is a filter, and like a string filter it narrows nothing.
+- **The filter is a function** `(system, entity) => boolean`. Any function of that shape is a filter. Returning a plain `boolean`, as this one does, it narrows nothing; a type predicate would narrow to the type it asserts.
 - **`nocache: true`** makes `scare` filter the whole world each update. It gets no `onAdd` or `onRemove`, since nothing joins or leaves.
 - **`cursor`** is a vector the script updates as the pointer moves. The filter reads it each time it runs.
 
