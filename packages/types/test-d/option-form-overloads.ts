@@ -73,3 +73,17 @@ http.request(
   undefined,
   { report_progress: progress },
 );
+
+declare const storedOptions: http.RequestOptions;
+http.request(
+  "http://example.com",
+  "GET",
+  (_self, _id, response) => {
+    const status = response.status;
+    const _status: Identical<typeof status, number | undefined> = true;
+    void _status;
+  },
+  undefined,
+  undefined,
+  storedOptions,
+);

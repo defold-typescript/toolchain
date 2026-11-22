@@ -69,7 +69,7 @@ declare global {
      * @param callback - response callback function. A progress event carries `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`, so `response.status === undefined` marks one. `id` is an internal message identifier; do not use it.
      * @param headers - optional table with custom headers
      * @param post_data - optional data to send
-     * @param options - request options with `report_progress` set
+     * @param options - request options with `report_progress` set to `true` or to a `boolean` value, for example one from an `http.RequestOptions`
      * @example
      * ```ts
      * function update_my_progress_bar(self: unknown, fraction: number) {
@@ -144,7 +144,7 @@ declare global {
         path?: string;
         ignore_cache?: boolean;
         chunked_transfer?: boolean;
-        report_progress: boolean;
+        report_progress?: boolean;
         proxy?: string;
       },
     ): void;
