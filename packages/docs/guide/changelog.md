@@ -22,7 +22,8 @@ What changed in each published `defold-typescript` toolchain release.
 ### Breaking
 
 - **Engine calls are typed by what the engine does with the arguments you pass:**
-  - **`msg.post`** requires the payload of a built-in message with a required field, which the engine rejects with "Field ... not specified": `msg.post("@system:", "exit")` is a compile error, as is leaving out a required field of a message a typed receiver declares ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
+  - **`msg.post`** requires the payload of a built-in message with a required field, which the engine rejects with "Field ... not specified": `msg.post("@system:", "exit")` is a compile error, as is leaving out a required field of a message a typed receiver declares. An id typed as a union, such as `"apply_force" | "play_sound"`, takes a payload valid for every member and requires it when any member does ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
+  - **`gui.set` and `gui.animate`** with a property name typed as a union, such as `"color" | "fill_angle"`, take a value every named property accepts, so a vector for a scalar property is a compile error.
   - **Id tables** from `collectionfactory.create`, `gui.clone_tree`, `gui.get_tree`, `gui.get_layouts`, `model.get_mesh_aabb` and the rows of `tilemap.get_tiles` return `undefined` from `get` for an id they do not hold, and still iterate and pass to `go.delete`.
   - **`http.request`** with `report_progress` set to `true` or to a `boolean` value, such as one from an `http.RequestOptions` value, hands its callback the progress events too, typed with `bytes_sent`, `bytes_received`, `bytes_total` and `url` and no `status`, so `response.status` is `number | undefined` there.
 - **The Gooey, defold-input, Monarch, Orthographic and Nakama types follow what their Lua does**, so each README's setup compiles, forwarded from `on_input` or `on_message` included:
@@ -36,6 +37,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **`physics.raycast` returns what the engine pushes for each call form:** one hit or `undefined` without an options table, and a list of hits or `undefined` with one, so neither needs an `Array.isArray` check.
+- **`gui.get` and `go.property` accept an argument typed as a union of the kinds they take**, such as a `gui.get` property typed `"position" | Hash` or a `go.property` value typed `number | Vector3`.
 - **A built-in message field that holds an engine constant takes its type:** `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`, on every Defold target that declares the type ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
 
 ### Fixed

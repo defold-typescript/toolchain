@@ -100,7 +100,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     },
     driftSignature: {
       fqn: "gui.set",
-      from: "value: NodePropertyWrite<NodePropertyName<K>>,",
+      from: "value: NodePropertyWriteEach<K>,",
       to: "value: number | Vector4 | Vector3 | Quaternion,",
     },
     driftDoc: {
@@ -431,9 +431,9 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "go.set": 3,
   // the descriptions-side pin for this one, and its rationale, live in the
   // "no JSDoc description" test below
-  "go.property": 8,
+  "go.property": 9,
   "gui.animate": 4,
-  "gui.get": 3,
+  "gui.get": 4,
   "gui.set": 6,
   "msg.post": 2,
   "msg.url": 6,
@@ -534,13 +534,14 @@ describe("curried and multi-paragraph overload rendering", () => {
     expect(get.slice(1)).toEqual([null, null]);
 
     const property = goDescriptions["go.property"] ?? [];
-    // 8 is the published overload count for `go.property` (one documented plus the
-    // seven deprecated typed forms); the slice below enumerates the trailing seven,
-    // so the two assertions pin the same set from both ends.
-    expect(property).toHaveLength(8);
+    // 9 is the published overload count for `go.property` (one documented plus the
+    // seven deprecated typed forms and the deprecated union form); the slice below
+    // enumerates the trailing eight, so the two assertions pin the same set from
+    // both ends.
+    expect(property).toHaveLength(9);
     expect(typeof property[0]).toBe("string");
-    // the seven trailing overloads carry a `@deprecated`-only JSDoc
-    expect(property.slice(1)).toEqual([null, null, null, null, null, null, null]);
+    // the eight trailing overloads carry a `@deprecated`-only JSDoc
+    expect(property.slice(1)).toEqual([null, null, null, null, null, null, null, null]);
   });
 
   test("msg.post's description keeps its paragraph breaks and bullet lines", () => {

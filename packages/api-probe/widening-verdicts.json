@@ -1,0 +1,19 @@
+{
+  "msg.post overload1-required message_id base sound": "A plain string id stays open for custom and receiver-declared messages, so its payload stays optional though some built-in ids require one.",
+  "msg.post overload2-optional message_id base sound": "A plain string id stays open for custom and receiver-declared messages, so it accepts the empty payload some built-in ids refuse.",
+  "vmath.clamp required min union sound": "min must be a number or the vector type of value, which TypeScript cannot require of an argument typed as a union.",
+  "vmath.clamp required max union sound": "max must be a number or the vector type of value, which TypeScript cannot require of an argument typed as a union.",
+  "vmath.lerp overload1-required v1 mixed sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.lerp overload1-required v2 mixed sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.mul_per_elem required v1 union sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.mul_per_elem required v2 union sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.dot required v1 union sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.dot required v2 union sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.slerp overload1-required v1 mixed sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "vmath.slerp overload1-required v2 mixed sound": "v1 and v2 must be the same vector type, which TypeScript cannot require when one is typed as a union.",
+  "bullet3d.constraint.create_cone_twist unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
+  "bullet3d.constraint.create_generic_6dof unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
+  "bullet3d.constraint.create_hinge unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
+  "bullet3d.constraint.create_point_to_point unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
+  "bullet3d.constraint.create_slider unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor."
+}

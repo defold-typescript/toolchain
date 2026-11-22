@@ -449,7 +449,7 @@ function signatureParams(signature: ts.Signature, checker: ts.TypeChecker): Para
 
 // `go.get<P>()(url, key)`: the empty call only applies a type argument, so the
 // inner signature is the one Lua sees.
-function isTypeApplication(signature: ts.Signature): boolean {
+export function isTypeApplication(signature: ts.Signature): boolean {
   return (
     signature.getParameters().length === 0 &&
     (signature.getTypeParameters()?.length ?? 0) > 0 &&
@@ -662,6 +662,7 @@ function callsFor(
   constants: ReadonlySet<string>,
   urls: Set<string>,
   binding: BindingFunction | undefined,
+  includeDenied = false,
 ): FunctionCalls {
   const namespace = fqn.slice(0, fqn.lastIndexOf("."));
   const context = contextFor(namespace);
@@ -682,7 +683,7 @@ function callsFor(
   signatures.forEach((signature, index) => {
     const overload = signatures.length > 1 ? `overload${index + 1}` : undefined;
     const name = overload === undefined ? fqn : `${fqn}:${overload}`;
-    if (overload !== undefined && PROBE_DENYLIST[name] !== undefined) return;
+    if (!includeDenied && overload !== undefined && PROBE_DENYLIST[name] !== undefined) return;
     const params = signatureParams(signature, checker);
     const scope = { fqn, overload, context, checker, constants, urls };
     const required = params.filter((param) => !param.optional).length;
@@ -973,6 +974,32 @@ function denied(fqn: string): boolean {
   if (PROBE_DENYLIST[fqn] !== undefined) return true;
   const namespace = fqn.slice(0, fqn.lastIndexOf("."));
   return PROBE_DENYLIST[`${namespace}.*`] !== undefined;
+}
+
+const BASE_VARIANT = /^(overload\d+-)?(required|optional)$/;
+
+export interface BaseCalls {
+  readonly calls: readonly ProbeCall[];
+  readonly unwitnessed: readonly Unwitnessed[];
+}
+
+// The positive calls the probe builds for every declared function, denied ones
+// included: the checker runs them, and the engine never does.
+export function baseCalls(
+  target: ApiTarget = probeTarget(),
+  program: ts.Program = surfaceProgram(target),
+): BaseCalls {
+  const checker = program.getTypeChecker();
+  const members = declaredMembers(program, comparedNamespaces(target));
+  const constants = new Set(members.constants.keys());
+  const calls: ProbeCall[] = [];
+  const unwitnessed: Unwitnessed[] = [];
+  for (const [fqn, symbol] of members.functions) {
+    const generated = callsFor(target, fqn, symbol, checker, constants, new Set(), undefined, true);
+    calls.push(...generated.calls.filter((call) => BASE_VARIANT.test(call.variant)));
+    unwitnessed.push(...generated.unwitnessed);
+  }
+  return { calls, unwitnessed };
 }
 
 export function generateProbes(
