@@ -396,7 +396,11 @@ function renderInterface(
  * the standalone interface, since consumers reach them as `squid.TRACE`, not
  * `Squid.TRACE` — and the model's `moduleConstants`.
  */
-function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext): string[] {
+function renderModuleConstants(
+  fields: readonly LibraryField[],
+  ctx: MapContext,
+  taken: Set<string>,
+): string[] {
   const lines: string[] = [];
   for (const field of fields) {
     if (!isPublicField(field)) continue;
@@ -405,18 +409,65 @@ function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext)
     const type = field.readonly ? `Readonly<${mapped}>` : mapped;
     if (TS_RESERVED_NAMES.has(field.name)) {
       // A reserved name (`default`, `delete`) is illegal as a `const` binding, so it is
-      // declared under an internal name and re-exported under the Lua field's own. Unlike
-      // `renderModuleFunction`, the internal binding stays unexported: the table has no
-      // `<name>_` field behind it.
-      const internal = `${field.name}_`;
+      // declared under an internal name and re-exported under the Lua field's own. The
+      // internal name avoids every other binding the module declares, so it can neither
+      // redeclare a constant nor merge with a function, table or type. Unlike
+      // `renderModuleFunction`, it stays unexported: the table has no field behind it.
+      let internal = `${field.name}_`;
+      while (taken.has(internal)) internal += "_";
+      taken.add(internal);
       lines.push(`${INDENT}const ${internal}: ${type};`);
       lines.push(`${INDENT}export { ${internal} as ${field.name} };`);
       continue;
     }
-    const name = TS_IDENTIFIER.test(field.name) ? field.name : sanitizeTypeName(field.name);
-    lines.push(`${INDENT}export const ${name}: ${type};`);
+    lines.push(`${INDENT}export const ${constantBinding(field.name)}: ${type};`);
   }
   return lines;
+}
+
+/** The binding a non-reserved module constant is declared under. */
+function constantBinding(name: string): string {
+  return TS_IDENTIFIER.test(name) ? name : sanitizeTypeName(name);
+}
+
+function isReservedCallName(name: string): boolean {
+  return TS_RESERVED_NAMES.has(name) || !TS_IDENTIFIER.test(name);
+}
+
+/** The binding a module function is declared under: its own name or its internal alias. */
+function functionBinding(fn: LibraryMethod): string {
+  return isReservedCallName(fn.name) ? `${sanitizeTypeName(fn.name)}_` : fn.name;
+}
+
+/**
+ * Every top-level name the module block declares apart from the reserved constants'
+ * internals, which are allocated against this set. Type names count too: an export
+ * specifier carries every meaning of its local name, so a same-named interface would
+ * be re-exported under the constant's name as well.
+ */
+function moduleBindings(
+  model: LibraryModel,
+  ctx: MapContext,
+  externalTypes: Record<string, ExternalTypeRef> | undefined,
+): Set<string> {
+  const taken = new Set<string>();
+  for (const alias of model.aliases) taken.add(declaredName(ctx, alias.name));
+  const constantFields = [...(model.moduleConstants ?? [])];
+  for (const iface of model.interfaces) {
+    if (iface.name === model.moduleObject) constantFields.push(...iface.fields);
+    else taken.add(declaredName(ctx, iface.name));
+  }
+  for (const alias of Object.values(externalTypeRenames(externalTypes))) taken.add(alias);
+  for (const field of constantFields) {
+    if (isPublicField(field) && !TS_RESERVED_NAMES.has(field.name)) {
+      taken.add(constantBinding(field.name));
+    }
+  }
+  for (const fn of model.moduleFunctions) {
+    if (isPublicMethod(fn)) taken.add(functionBinding(fn));
+  }
+  for (const table of model.moduleTables ?? []) taken.add(table.name);
+  return taken;
 }
 
 /** A dot-called function's `<generics>(this: void, ...params): ret` signature. */
@@ -459,15 +510,12 @@ function renderModuleFunction(
   const lines: string[] = [];
   pushDoc(lines, fn.brief, INDENT, fn.deprecated, slotNoteDocs(fn, indexBase));
   const signature = dotCallSignature(fn, ctx);
-  const isReserved = TS_RESERVED_NAMES.has(fn.name) || !TS_IDENTIFIER.test(fn.name);
-  if (isReserved) {
+  const binding = functionBinding(fn);
+  lines.push(`${INDENT}export function ${binding}${signature};`);
+  if (isReservedCallName(fn.name)) {
     // A reserved call name (`new`, `delete`) is illegal as a `function` identifier,
     // so it is declared under an internal alias and re-exported under its real name.
-    const internal = `${sanitizeTypeName(fn.name)}_`;
-    lines.push(`${INDENT}export function ${internal}${signature};`);
-    lines.push(`${INDENT}export { ${internal} as ${fn.name} };`);
-  } else {
-    lines.push(`${INDENT}export function ${fn.name}${signature};`);
+    lines.push(`${INDENT}export { ${binding} as ${fn.name} };`);
   }
   return lines;
 }
@@ -576,6 +624,7 @@ export function declaredName(ctx: MapContext, name: string): string {
  */
 export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOptions): string {
   const ctx = buildModelContext(model, opts.typeRenames, opts.externalTypes);
+  const taken = moduleBindings(model, ctx, opts.externalTypes);
 
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const externalTokens = new Set(Object.keys(opts.externalTypes ?? {}));
@@ -586,12 +635,12 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
     // The module object's fields become module-level `export const`s (below), so it is
     // not also rendered as a standalone interface.
     if (iface.name === model.moduleObject) {
-      out.push(...renderModuleConstants(iface.fields, ctx));
+      out.push(...renderModuleConstants(iface.fields, ctx, taken));
       continue;
     }
     out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBase));
   }
-  out.push(...renderModuleConstants(model.moduleConstants ?? [], ctx));
+  out.push(...renderModuleConstants(model.moduleConstants ?? [], ctx, taken));
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
     out.push(...renderModuleFunction(fn, ctx, opts.indexBase));
