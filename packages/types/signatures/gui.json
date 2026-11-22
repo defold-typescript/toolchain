@@ -1,8 +1,8 @@
 {
   "gui.animate": {
     "signatures": [
-      "gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, to: NodePropertyAnimateTo<NodePropertyName<K>>, easing: gui.Easing | Vector, duration: number): void",
-      "gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, to: NodePropertyAnimateTo<NodePropertyName<K>>, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
+      "gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, to: NodePropertyAnimateToEach<K>, easing: gui.Easing | Vector, duration: number): void",
+      "gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, to: NodePropertyAnimateToEach<K>, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void",
       "gui.animate(node: Opaque<\"node\">, property: Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void",
       "gui.animate(node: Opaque<\"node\">, property: Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<\"node\">) => void, playback?: gui.Playback): void"
     ],
@@ -17,17 +17,19 @@
     "signatures": [
       "gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K): gui.NodeProperties[NodePropertyName<K>]",
       "gui.get(node: Opaque<\"node\">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
-      "gui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]"
+      "gui.get(node: Opaque<\"node\">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]",
+      "gui.get(node: Opaque<\"node\">, property: keyof gui.NodeProperties | gui.Prop | Hash): gui.NodeProperties[keyof gui.NodeProperties] | number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]"
     ],
     "docs": [
       "Instead of using specific getters such as gui.get_position or gui.get_scale, you can use gui.get instead and supply the property as a string or a `gui.PROP_*` constant. Only these node properties are supported:\n\n- `\"position\"`\n- `\"rotation\"`\n- `\"euler\"`\n- `\"scale\"`\n- `\"color\"`\n- `\"outline\"`\n- `\"shadow\"`\n- `\"size\"`\n- `\"fill_angle\"` (pie)\n- `\"inner_radius\"` (pie)\n- `\"leading\"` (text)\n- `\"tracking\"` (text)\n- `\"slice9\"` (slice9)\n\nEach property but the four scalars (`fill_angle`, `inner_radius`, `leading` and `tracking`) also exposes its components as `\"<name>.x\"` to `\"<name>.w\"`. Getting `\"rotation\"` returns a vmath.quat, another vector property a vmath.vector4, and a component or a scalar property a single number. To get a material constant, pass its name as a hash.",
       "Gets a material constant of a node, or any property named by a hash. Pass the constant's name as a hash, such as `hash(\"tint\")`. Reading an array constant without `index` returns every element in a table.",
-      "Gets a material constant of a node, or any property named by a hash. Pass the constant's name as a hash, such as `hash(\"tint\")`. Reading an array constant without `index` returns every element in a table."
+      "Gets a material constant of a node, or any property named by a hash. Pass the constant's name as a hash, such as `hash(\"tint\")`. Reading an array constant without `index` returns every element in a table.",
+      "Gets a node property named by a value that may be either a property name or a hash, such as one typed `\"position\" | Hash`. The result is any value either form returns; narrow it before use."
     ]
   },
   "gui.set": {
     "signatures": [
-      "gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void",
+      "gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<\"node\">, property: K, value: NodePropertyWriteEach<K>): void",
       "gui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void",
       "gui.set(node: Opaque<\"node\">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void",
       "gui.set(url: Url, property: \"material\" | \"materials\" | \"fonts\" | \"textures\" | Hash, value: Hash): void",

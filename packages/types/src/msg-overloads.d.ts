@@ -1,6 +1,33 @@
 /** @noSelfInFile */
 import type { Hash, Url } from "./core-types";
 
+// The payload one message id posts to receiver `R`: a built-in id's first,
+// then one the receiver declares, then the open payload.
+type PostPayload<R, K> = K extends BuiltinMessageId
+  ? MessagePayload<K>
+  : K extends keyof ReceiverMessages<R>
+    ? ReceiverMessages<R>[K]
+    : MessagePayload<K>;
+
+// Whether one message id requires its payload: a built-in or receiver-declared
+// id whose payload has a required field.
+type PostRequiresPayload<R, K> = K extends BuiltinMessageId | keyof ReceiverMessages<R>
+  ? Record<never, never> extends PostPayload<R, K>
+    ? false
+    : true
+  : false;
+
+// A payload valid for every id in `K`. Inferring one parameter from the union
+// of each id's payload function intersects the payloads; distributing over `K`
+// would accept a payload valid for any one id.
+type PostPayloadForEach<R, K> = (
+  K extends unknown
+    ? (message: PostPayload<R, K>) => void
+    : never
+) extends (message: infer P) => void
+  ? P
+  : never;
+
 declare global {
   /**
    * A `Url` that also names the messages its receiver declares. `__receives` is
@@ -81,6 +108,11 @@ declare global {
      * built-in message arrives without one, and a script reading a declared
      * field would read `nil`. An id whose fields are all optional, a
      * `CustomMessages` id and an undeclared id keep it optional.
+     *
+     * An id typed as a union of ids, such as `"apply_force" | "play_sound"`,
+     * takes a payload valid for every member, and requires it when any member
+     * does. An id that may be any string keeps the payload optional, which is
+     * also what lets the editor offer every id while one is being typed.
      */
     function post<
       R extends SceneAddress | Hash | Url,
@@ -88,15 +120,11 @@ declare global {
     >(
       receiver: R,
       message_id: K,
-      ...message: K extends BuiltinMessageId
-        ? Record<never, never> extends MessagePayload<K>
-          ? [message?: MessagePayload<K>]
-          : [message: MessagePayload<K>]
-        : K extends keyof ReceiverMessages<R>
-          ? Record<never, never> extends ReceiverMessages<R>[K]
-            ? [message?: ReceiverMessages<R>[K]]
-            : [message: ReceiverMessages<R>[K]]
-          : [message?: MessagePayload<K>]
+      ...message: string extends K
+        ? [message?: PostPayloadForEach<R, K>]
+        : true extends PostRequiresPayload<R, K>
+          ? [message: PostPayloadForEach<R, K>]
+          : [message?: PostPayloadForEach<R, K>]
     ): void;
     function post(
       receiver: SceneAddress | Url | Hash,

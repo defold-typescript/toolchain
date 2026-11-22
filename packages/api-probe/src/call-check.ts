@@ -12,6 +12,8 @@ export interface CheckedCall {
 export interface CallCheck {
   readonly checker: ts.TypeChecker;
   readonly calls: readonly CheckedCall[];
+  // The errors the checker reports on each of the declarations.
+  readonly declarations: readonly (readonly string[])[];
 }
 
 const CALLS_FILE = "probe-calls.ts";
@@ -47,8 +49,13 @@ export function overlayProgram(
 }
 
 // Checks each call as a statement of one module beside the surface entry,
-// after the probe urls and `fresh` as a probe script declares them.
-export function checkCalls(program: ts.Program, calls: readonly string[]): CallCheck {
+// after the probe urls and `fresh` as a probe script declares them, and after
+// `declarations`, one statement each, which the calls may refer to.
+export function checkCalls(
+  program: ts.Program,
+  calls: readonly string[],
+  declarations: readonly string[] = [],
+): CallCheck {
   const [entry] = program.getRootFileNames();
   if (entry === undefined) throw new Error("api-probe: the surface program has no root");
   const file = resolve(dirname(entry), CALLS_FILE);
@@ -58,17 +65,19 @@ export function checkCalls(program: ts.Program, calls: readonly string[]): CallC
       ([id, address]) => `export const ${id} = msg.url(${JSON.stringify(address)});`,
     ),
   ];
-  const text = [...prelude, ...calls.map((call) => `${call};`)].join("\n");
+  const head = prelude.length + declarations.length;
+  const text = [...prelude, ...declarations, ...calls.map((call) => `${call};`)].join("\n");
   const checked = overlayProgram(program, new Map([[file, text]]));
   const source = checked.getSourceFile(file);
   if (source === undefined) throw new Error(`api-probe: ${file} is not in the call check`);
   const statements = source.statements;
-  if (statements.length !== prelude.length + calls.length) {
+  if (statements.length !== head + calls.length) {
     throw new Error(
-      `api-probe: the call check parsed ${statements.length} statements for ${prelude.length} prelude lines and ${calls.length} calls`,
+      `api-probe: the call check parsed ${statements.length} statements for ${prelude.length} prelude lines, ${declarations.length} declarations and ${calls.length} calls`,
     );
   }
   const errors = calls.map((): string[] => []);
+  const declared = declarations.map((): string[] => []);
   const diagnostics = [
     ...checked.getSyntacticDiagnostics(source),
     ...checked.getSemanticDiagnostics(source),
@@ -79,15 +88,14 @@ export function checkCalls(program: ts.Program, calls: readonly string[]): CallC
       (statement) => start >= statement.getStart(source) && start < statement.end,
     );
     const text = ts.flattenDiagnosticMessageText(diagnostic.messageText, " ");
-    const call = errors[at - prelude.length];
-    if (call === undefined) throw new Error(`api-probe: the call check's prelude fails: ${text}`);
-    call.push(text);
+    if (at < prelude.length) throw new Error(`api-probe: the call check's prelude fails: ${text}`);
+    (at < head ? declared[at - prelude.length] : errors[at - head])?.push(text);
   }
   const checker = checked.getTypeChecker();
   return {
     checker,
     calls: calls.map((_, i) => {
-      const statement = statements[prelude.length + i];
+      const statement = statements[head + i];
       const expression =
         statement !== undefined && ts.isExpressionStatement(statement)
           ? statement.expression
@@ -99,5 +107,6 @@ export function checkCalls(program: ts.Program, calls: readonly string[]): CallC
       const signature = checker.getResolvedSignature(expression);
       return signature === undefined ? { errors: failed } : { errors: failed, signature };
     }),
+    declarations: declared,
   };
 }

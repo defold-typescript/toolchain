@@ -2365,6 +2365,15 @@ msg.post("@system:", "exit", { code: 0 }); // leaving out `{ code }` is a compil
 msg.post(".", "acquire_input_focus"); // no fields, no payload needed
 ```
 
+An id typed as a union of ids takes a payload valid for every member, and requires it when any member does:
+
+```ts
+function push(id: "apply_force" | "play_sound") {
+  // `apply_force` requires `force` and `position`, so leaving them out is a compile error
+  msg.post("#", id, { force: vmath.vector3(), position: vmath.vector3() });
+}
+```
+
 A field that holds an engine constant takes that constant group's type where the target declares it: `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`. On a target that declares no such type, the field stays `number`.
 
 The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, whose payload is unchecked until you declare it — so an undeclared id always compiles, and [declaring one](#declaring-your-own-messages) buys it the same checking a built-in id gets:
@@ -15678,6 +15687,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: string): ScriptProperty<string>
+- go.property(name: string, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion): ScriptProperty<number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion>
 - go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWrite<P, K>, ...options: [] | [GoPropertyOptions]) => void
 - go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWrite<AddressCatalog<R>["catalog"], K>): void
 - go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWrite<AddressCatalog<R>["catalog"], K>, options: GoPropertyOptions): void
@@ -15928,8 +15938,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### gui
 
-- gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, to: NodePropertyAnimateTo<NodePropertyName<K>>, easing: gui.Easing | Vector, duration: number): void
-- gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, to: NodePropertyAnimateTo<NodePropertyName<K>>, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
+- gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, to: NodePropertyAnimateToEach<K>, easing: gui.Easing | Vector, duration: number): void
+- gui.animate<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, to: NodePropertyAnimateToEach<K>, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
 - gui.animate(node: Opaque<"node">, property: Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
 - gui.animate(node: Opaque<"node">, property: Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
 - function cancel_animations(node: Opaque<"node">, property?: keyof gui.NodeProperties | gui.Prop | Hash): void;
@@ -15941,6 +15951,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - gui.get<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K): gui.NodeProperties[NodePropertyName<K>]
 - gui.get(node: Opaque<"node">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - gui.get(node: Opaque<"node">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
+- gui.get(node: Opaque<"node">, property: keyof gui.NodeProperties | gui.Prop | Hash): gui.NodeProperties[keyof gui.NodeProperties] | number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - function get_adjust_mode(node: Opaque<"node">): gui.Adjust;
 - function get_alpha(node: Opaque<"node">): number;
 - function get_blend_mode(node: Opaque<"node">): gui.Blend;
@@ -16011,7 +16022,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
-- gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
+- gui.set<K extends keyof gui.NodeProperties | gui.Prop>(node: Opaque<"node">, property: K, value: NodePropertyWriteEach<K>): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash): void
@@ -16340,7 +16351,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: K extends BuiltinMessageId ? Record<never, never> extends MessagePayload<K> ? [message?: MessagePayload<K>] : [message: MessagePayload<K>] : K extends keyof ReceiverMessages<R> ? Record<never, never> extends ReceiverMessages<R>[K] ? [message?: ReceiverMessages<R>[K]] : [message: ReceiverMessages<R>[K]] : [message?: MessagePayload<K>]): void
+- msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, ...message: string extends K ? [message?: PostPayloadForEach<R, K>] : true extends PostRequiresPayload<R, K> ? [message: PostPayloadForEach<R, K>] : [message?: PostPayloadForEach<R, K>]): void
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: SceneAddress | Hash | Url | undefined): Url

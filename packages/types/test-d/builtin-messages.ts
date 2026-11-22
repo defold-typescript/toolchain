@@ -46,6 +46,16 @@ msg.post(_url, "apply_force", { force: 1, position: _v3 });
 // @ts-expect-error apply_force requires force and position
 msg.post(_url, "apply_force", {});
 
+declare const _forceOrSound: "apply_force" | "play_sound";
+
+// @ts-expect-error apply_force requires its payload, so a union with it does too
+msg.post(_url, _forceOrSound);
+
+msg.post(_url, _forceOrSound, { force: _v3, position: _v3 });
+
+// @ts-expect-error the payload must suit apply_force as well as play_sound
+msg.post(_url, _forceOrSound, { gain: 1 });
+
 const _rayResponse: BuiltinMessages["ray_cast_response"] = {
   fraction: 0,
   position: _v3,

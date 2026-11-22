@@ -28,6 +28,15 @@ msg.post("@system:", "exit", { code: 0 }); // leaving out `{ code }` is a compil
 msg.post(".", "acquire_input_focus"); // no fields, no payload needed
 ```
 
+An id typed as a union of ids takes a payload valid for every member, and requires it when any member does:
+
+```ts
+function push(id: "apply_force" | "play_sound") {
+  // `apply_force` requires `force` and `position`, so leaving them out is a compile error
+  msg.post("#", id, { force: vmath.vector3(), position: vmath.vector3() });
+}
+```
+
 A field that holds an engine constant takes that constant group's type where the target declares it: `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`. On a target that declares no such type, the field stays `number`.
 
 The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, whose payload is unchecked until you declare it — so an undeclared id always compiles, and [declaring one](#declaring-your-own-messages) buys it the same checking a built-in id gets:

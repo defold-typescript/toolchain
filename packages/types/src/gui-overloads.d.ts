@@ -41,6 +41,27 @@ type NodePropertyAnimateTo<N extends keyof gui.NodeProperties> = N extends "rota
     ? number
     : number | Vector3 | Vector4;
 
+// A value every property a union `K` names accepts. Inferring one parameter
+// from the union of each name's setter intersects their value types, where
+// distributing over `K` would accept a value any one of them takes. The
+// `infer` constraint keeps the kinds a value may hold readable from the
+// declaration.
+type NodePropertyWriteEach<K> = (
+  K extends unknown
+    ? (value: NodePropertyWrite<NodePropertyName<K>>) => void
+    : never
+) extends (value: infer V extends number | Vector3 | Vector4 | Quaternion) => void
+  ? V
+  : never;
+
+type NodePropertyAnimateToEach<K> = (
+  K extends unknown
+    ? (to: NodePropertyAnimateTo<NodePropertyName<K>>) => void
+    : never
+) extends (to: infer V extends number | Vector3 | Vector4 | Quaternion) => void
+  ? V
+  : never;
+
 declare global {
   namespace gui {
     /**
@@ -154,6 +175,27 @@ declare global {
       options: gui.PropertyOptions,
     ): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[];
     /**
+     * Gets a node property named by a value that may be either a property name
+     * or a hash, such as one typed `"position" | Hash`. The result is any value
+     * either form returns; narrow it before use.
+     *
+     * @param node - node to get the property for
+     * @param property - the property to retrieve, as a name or a hash
+     * @returns the property value
+     */
+    function get(
+      node: Opaque<"node">,
+      property: keyof gui.NodeProperties | gui.Prop | Hash,
+    ):
+      | gui.NodeProperties[keyof gui.NodeProperties]
+      | number
+      | Vector4
+      | Quaternion
+      | Matrix4
+      | number[]
+      | Vector4[]
+      | Matrix4[];
+    /**
      * Instead of using specific setters such as gui.set_position or gui.set_scale,
      * you can use gui.set instead and supply the property as a string or a
      * `gui.PROP_*` constant. Only the node properties gui.get lists are supported.
@@ -191,7 +233,7 @@ declare global {
     function set<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
-      value: NodePropertyWrite<NodePropertyName<K>>,
+      value: NodePropertyWriteEach<K>,
     ): void;
     /**
      * Sets a material constant of a node, or any property named by a hash. If a
@@ -409,7 +451,7 @@ declare global {
     function animate<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
-      to: NodePropertyAnimateTo<NodePropertyName<K>>,
+      to: NodePropertyAnimateToEach<K>,
       easing: gui.Easing | Vector,
       duration: number,
     ): void;
@@ -493,7 +535,7 @@ declare global {
     function animate<K extends keyof gui.NodeProperties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
-      to: NodePropertyAnimateTo<NodePropertyName<K>>,
+      to: NodePropertyAnimateToEach<K>,
       easing: gui.Easing | Vector,
       duration: number,
       delay: number,

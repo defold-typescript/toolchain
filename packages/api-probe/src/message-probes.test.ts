@@ -160,8 +160,8 @@ describe("omitted-payload message probes", () => {
   test("the verdict comes from the checker: a msg.post leaving the payload optional accepts it", () => {
     const original = readFileSync(MSG_OVERLOADS, "utf8");
     const loosened = original.replace(
-      ": [message: MessagePayload<K>]",
-      ": [message?: MessagePayload<K>]",
+      "? [message: PostPayloadForEach<R, K>]",
+      "? [message?: PostPayloadForEach<R, K>]",
     );
     expect(loosened).not.toBe(original);
     const target = probeTarget();
