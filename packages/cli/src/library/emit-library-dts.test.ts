@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { appendNotes, libraryIndexBaseNotes } from "@defold-typescript/types";
-import { failingFences, writeFenceProject } from "../guide-fence-gate";
+import * as ts from "typescript";
+import { describeDiagnostic, failingFences, writeFenceProject } from "../guide-fence-gate";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { applyAnnotationOverrides } from "./apply-luals-overrides";
 import {
@@ -1651,6 +1652,24 @@ function compileUsage(moduleId: string, declaration: string, usage: string) {
   return failingFences([fence], project);
 }
 
+// `compileUsage` runs under the scaffold's `skipLibCheck: true`, which hides errors
+// inside the declaration itself (a redeclared binding); `library check` compiles a
+// printed declaration with it off.
+function declarationErrors(declaration: string): string[] {
+  const dir = mkdtempSync(join(tmpdir(), "emit-library-dts-strict-"));
+  roots.push(dir);
+  const file = join(dir, "module.d.ts");
+  writeFileSync(file, declaration);
+  const program = ts.createProgram([file], {
+    noEmit: true,
+    skipLibCheck: false,
+    strict: true,
+    types: [],
+    lib: ["lib.es2022.d.ts"],
+  });
+  return ts.getPreEmitDiagnostics(program).map(describeDiagnostic);
+}
+
 test("a bare table param also takes a plain table while the same field and return stay LuaTable", () => {
   const model: LibraryModel = {
     interfaces: [
@@ -1819,6 +1838,61 @@ return M
 const value: number = lib.default;
 // @ts-expect-error the internal binding has no Lua field behind it
 lib.default_;
+`,
+    ),
+  ).toEqual({});
+});
+
+test("a reserved constant beside a constant holding its internal name keeps both fields", () => {
+  const declaration = emitLibraryDeclarations(
+    parseLualsSource(`local M = {}
+
+M.default = 1
+
+M.default_ = "fallback"
+
+return M
+`),
+    { moduleId: "demo.reserved" },
+  );
+
+  expect(declarationErrors(declaration)).toEqual([]);
+  expect(
+    compileUsage(
+      "demo.reserved",
+      declaration,
+      `import * as lib from "demo.reserved";
+
+const value: number = lib.default;
+const fallback: string = lib.default_;
+`,
+    ),
+  ).toEqual({});
+});
+
+test("a reserved constant beside a module function holding its internal name keeps both", () => {
+  const declaration = emitLibraryDeclarations(
+    parseLualsSource(`local M = {}
+
+M.delete = true
+
+---@return integer
+function M.delete_() end
+
+return M
+`),
+    { moduleId: "demo.reserved_fn" },
+  );
+
+  expect(declarationErrors(declaration)).toEqual([]);
+  expect(
+    compileUsage(
+      "demo.reserved_fn",
+      declaration,
+      `import * as lib from "demo.reserved_fn";
+
+const flag: boolean = lib.delete;
+const count: number = lib.delete_();
 `,
     ),
   ).toEqual({});
