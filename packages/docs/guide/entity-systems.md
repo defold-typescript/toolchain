@@ -70,6 +70,7 @@ Inside a system, the entity each callback gets has the components the filter mak
 - `requireAll` makes each component it names present, along with those a nested `requireAll` requires.
 - `requireAny` gives a union with one member per alternative. An `in` check that rules one out, such as `!("frozen" in e)`, leaves the others' components present; an `=== undefined` check does not narrow the union. Under a `requireAll`, each combination of alternatives is one member.
 - `rejectAll` and `rejectAny` narrow nothing.
+- A component name typed as `string`, and a filter typed as plain `Filter`, make no component certain, since either could stand for any component. Literal names beside one in a `requireAll` still do: `requireAll("position", name)` makes `position` present.
 - A narrowed component cannot be set to `undefined` through the narrowed entity. To take one away, assign the entity to the plain type first (`const plain: Ent = e`), clear it there, and call [`changed`](#the-world).
 
 ```ts title="filters.ts"
@@ -150,7 +151,7 @@ export const named = processingSystem<Ent>()(
 - Parentheses group, and `&` binds tighter than `|`, as `and` does `or` in Lua: `a|b&c` means `a|(b&c)`.
 - Names are letters, digits and `_`. `!` comes once, before a name or a group, and a pattern has no spaces.
 
-A pattern of names joined by `&` alone, such as `position&velocity`, narrows like `requireAll` of those names; any other pattern narrows nothing. In a literal pattern, a name that is not a component of the entity type fails to compile; a pattern typed as `string` is checked only for its syntax, when `filter` runs. `filter` throws on a bad pattern, naming the position where it stops; `tryFilter` returns `{ ok: true, filter }` or `{ ok: false, error }` instead:
+A pattern of names joined by `&` alone, such as `position&velocity`, narrows like `requireAll` of those names; any other pattern narrows nothing. A pattern typed as a union, such as `"position" | "velocity"`, narrows to one member per pattern, each as that pattern alone would. In a literal pattern, a name that is not a component of the entity type fails to compile; a pattern typed as `string` is checked only for its syntax, when `filter` runs. `filter` throws on a bad pattern, naming the position where it stops; `tryFilter` returns `{ ok: true, filter }` or `{ ok: false, error }` instead:
 
 ```ts title="string-filters.ts"
 import { filter, processingSystem, tryFilter } from "@defold-typescript/types/ecs";

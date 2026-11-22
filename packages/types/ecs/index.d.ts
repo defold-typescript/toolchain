@@ -51,11 +51,17 @@ type KeysIn<F> = F extends {
         readonly k: never;
     };
 };
-type RequiredBy<T> = T extends string ? T : KeysIn<T>["required"];
+type Literal<K> = string extends K ? never : K;
+type LiteralBranches<B> = B extends {
+    readonly k: infer K extends string;
+} ? {
+    readonly k: Literal<K>;
+} : never;
+type RequiredBy<T> = T extends string ? Literal<T> : Literal<KeysIn<T>["required"]>;
 type UsedBy<T> = T extends string ? T : KeysIn<T>["used"];
 type BranchesBy<T> = T extends string ? {
-    readonly k: T;
-} : KeysIn<T>["branches"];
+    readonly k: Literal<T>;
+} : LiteralBranches<KeysIn<T>["branches"]>;
 type JoinBranches<A, B> = A extends {
     readonly k: infer KA extends string;
 } ? B extends {
@@ -68,7 +74,7 @@ type AllBranches<T extends readonly unknown[]> = T extends readonly [infer Head,
 };
 type NarrowBranches<E, B> = B extends {
     readonly k: infer K extends string;
-} ? With<E, K> : never;
+} ? With<E, Literal<K>> : never;
 type Narrowed<E, F> = F extends {
     bivariant(subject: unknown, candidate: unknown): candidate is infer X;
 }["bivariant"] ? X & E : NarrowBranches<E, KeysIn<F>["branches"]>;
@@ -78,6 +84,9 @@ type KnownKeys<E, F> = string extends KeysIn<F>["used"] ? unknown : [Exclude<Key
 type PatternOperator = "&" | "|" | "!" | "(" | ")";
 type PatternNames<P extends string, Name extends string = "", Names extends string = never> = string extends P ? string : P extends `${infer C}${infer Rest}` ? C extends PatternOperator ? PatternNames<Rest, "", Names | (Name extends "" ? never : Name)> : PatternNames<Rest, `${Name}${C}`, Names> : Names | (Name extends "" ? never : Name);
 type PatternRequired<P extends string> = string extends P ? never : P extends `${string}${Exclude<PatternOperator, "&">}${string}` ? never : PatternNames<P>;
+type PatternBranches<P extends string> = P extends string ? {
+    readonly k: PatternRequired<P>;
+} : never;
 /** `E` with the components `K` present. */
 export type With<E, K> = [K] extends [never] ? E : E & {
     [P in K & keyof E]-?: Exclude<E[P], undefined>;
@@ -644,8 +653,9 @@ export declare function rejectAny<const T extends readonly FilterToken[]>(...tok
  * A pattern holds component names of letters, digits and `_`, joined by `&` (and) and `|` (or),
  * each optionally prefixed by `!` (not) and grouped with parentheses. `&` binds tighter than `|`,
  * so `a|b&c` is `a|(b&c)`. A pattern of names joined by `&` alone narrows like `requireAll` of
- * those names; any other pattern narrows no component. A name the entity type lacks is a compile
- * error either way.
+ * those names; any other pattern narrows no component. A pattern typed as a union of patterns
+ * narrows to one member per pattern, each as that pattern alone would. A name the entity type
+ * lacks is a compile error either way.
  *
  * @param pattern The pattern, with no whitespace.
  * @returns The filter.
@@ -670,7 +680,7 @@ export declare function rejectAny<const T extends readonly FilterToken[]>(...tok
  * });
  * ```
  */
-export declare function filter<const P extends string>(pattern: P): Filter<PatternRequired<P>, PatternNames<P>>;
+export declare function filter<const P extends string>(pattern: P): Filter<PatternRequired<P>, PatternNames<P>, PatternBranches<P>>;
 /**
  * Builds a filter as `filter` does, returning the error instead of throwing it.
  *
@@ -690,7 +700,7 @@ export declare function filter<const P extends string>(pattern: P): Filter<Patte
  */
 export declare function tryFilter<const P extends string>(pattern: P): {
     ok: true;
-    filter: Filter<PatternRequired<P>, PatternNames<P>>;
+    filter: Filter<PatternRequired<P>, PatternNames<P>, PatternBranches<P>>;
 } | {
     ok: false;
     error: string;

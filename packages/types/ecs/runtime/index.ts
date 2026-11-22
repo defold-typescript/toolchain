@@ -1078,9 +1078,17 @@ type KeysIn<F> = F extends { readonly [filterKeys]?: infer K }
     : { required: never; used: never; branches: { readonly k: never } }
   : { required: never; used: never; branches: { readonly k: never } };
 
-type RequiredBy<T> = T extends string ? T : KeysIn<T>["required"];
+// A name typed as `string` could be any component, so it makes none certain.
+type Literal<K> = string extends K ? never : K;
+type LiteralBranches<B> = B extends { readonly k: infer K extends string }
+  ? { readonly k: Literal<K> }
+  : never;
+
+type RequiredBy<T> = T extends string ? Literal<T> : Literal<KeysIn<T>["required"]>;
 type UsedBy<T> = T extends string ? T : KeysIn<T>["used"];
-type BranchesBy<T> = T extends string ? { readonly k: T } : KeysIn<T>["branches"];
+type BranchesBy<T> = T extends string
+  ? { readonly k: Literal<T> }
+  : LiteralBranches<KeysIn<T>["branches"]>;
 
 // Every pairing of a branch from `A` with one from `B`, each the union of both key sets.
 type JoinBranches<A, B> = A extends { readonly k: infer KA extends string }
@@ -1094,7 +1102,9 @@ type AllBranches<T extends readonly unknown[]> = T extends readonly [infer Head,
   ? JoinBranches<BranchesBy<Head>, AllBranches<Rest>>
   : { readonly k: never };
 
-type NarrowBranches<E, B> = B extends { readonly k: infer K extends string } ? With<E, K> : never;
+type NarrowBranches<E, B> = B extends { readonly k: infer K extends string }
+  ? With<E, Literal<K>>
+  : never;
 
 // The entity a system over filter `F` sees: `E` with one alternative's components
 // present per branch, or `E` narrowed to a predicate filter's asserted type.
@@ -1135,6 +1145,11 @@ type PatternRequired<P extends string> = string extends P
   : P extends `${string}${Exclude<PatternOperator, "&">}${string}`
     ? never
     : PatternNames<P>;
+
+// One branch per pattern a union-typed `P` may hold, each requiring what that pattern requires.
+type PatternBranches<P extends string> = P extends string
+  ? { readonly k: PatternRequired<P> }
+  : never;
 
 /** `E` with the components `K` present. */
 export type With<E, K> = [K] extends [never]
@@ -1785,8 +1800,9 @@ export function rejectAny<const T extends readonly FilterToken[]>(
  * A pattern holds component names of letters, digits and `_`, joined by `&` (and) and `|` (or),
  * each optionally prefixed by `!` (not) and grouped with parentheses. `&` binds tighter than `|`,
  * so `a|b&c` is `a|(b&c)`. A pattern of names joined by `&` alone narrows like `requireAll` of
- * those names; any other pattern narrows no component. A name the entity type lacks is a compile
- * error either way.
+ * those names; any other pattern narrows no component. A pattern typed as a union of patterns
+ * narrows to one member per pattern, each as that pattern alone would. A name the entity type
+ * lacks is a compile error either way.
  *
  * @param pattern The pattern, with no whitespace.
  * @returns The filter.
@@ -1813,8 +1829,8 @@ export function rejectAny<const T extends readonly FilterToken[]>(
  */
 export function filter<const P extends string>(
   pattern: P,
-): Filter<PatternRequired<P>, PatternNames<P>> {
-  return patternFilter(pattern) as Filter<PatternRequired<P>, PatternNames<P>>;
+): Filter<PatternRequired<P>, PatternNames<P>, PatternBranches<P>> {
+  return patternFilter(pattern) as Filter<PatternRequired<P>, PatternNames<P>, PatternBranches<P>>;
 }
 
 /**
@@ -1837,12 +1853,16 @@ export function filter<const P extends string>(
 export function tryFilter<const P extends string>(
   pattern: P,
 ):
-  | { ok: true; filter: Filter<PatternRequired<P>, PatternNames<P>> }
+  | { ok: true; filter: Filter<PatternRequired<P>, PatternNames<P>, PatternBranches<P>> }
   | { ok: false; error: string } {
   try {
     return {
       ok: true,
-      filter: patternFilter(pattern) as Filter<PatternRequired<P>, PatternNames<P>>,
+      filter: patternFilter(pattern) as Filter<
+        PatternRequired<P>,
+        PatternNames<P>,
+        PatternBranches<P>
+      >,
     };
   } catch (error) {
     return { ok: false, error: error as string };

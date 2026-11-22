@@ -259,6 +259,146 @@ describe("requireAny narrows to each alternative", () => {
   });
 });
 
+describe("a widened name or a union of patterns narrows only what every alternative requires", () => {
+  type SpringOrActive = With<Ent, "spring"> | With<Ent, "active">;
+
+  test("filter over a union of patterns narrows to one member per pattern", () => {
+    const build = (p: "spring" | "active") =>
+      processingSystem<Ent>()(filter(p), {
+        process(e) {
+          const exact: Equal<typeof e, SpringOrActive> = true;
+          if (!("spring" in e)) {
+            const a: boolean = e.active;
+            void a;
+          }
+          // @ts-expect-error an entity passing `active` alone has no `spring`
+          const k: number = e.spring.k;
+          void [exact, k];
+        },
+        postProcess() {
+          for (const e of this.entities ?? []) {
+            const exact: Equal<typeof e, SpringOrActive> = true;
+            void exact;
+          }
+        },
+      });
+    const built = build("spring");
+    const held: Equal<NonNullable<typeof built.entities>[number], SpringOrActive> = true;
+    expect(held).toBe(true);
+  });
+
+  test("a successful tryFilter over a union of patterns narrows to one member per pattern", () => {
+    const build = (p: "spring" | "active") => {
+      const result = tryFilter(p);
+      if (!result.ok) {
+        return undefined;
+      }
+      return processingSystem<Ent>()(result.filter, {
+        process(e) {
+          const exact: Equal<typeof e, SpringOrActive> = true;
+          // @ts-expect-error an entity passing `active` alone has no `spring`
+          const k: number = e.spring.k;
+          void [exact, k];
+        },
+      });
+    };
+    expect(build("active")?.process).toBeTypeOf("function");
+  });
+
+  test("a pattern in the union that requires nothing makes nothing certain", () => {
+    const build = (q: "spring" | "!dragged") =>
+      processingSystem<Ent>()(filter(q), {
+        process(e) {
+          const exact: Equal<typeof e, With<Ent, "spring"> | Ent> = true;
+          // @ts-expect-error an entity passing `!dragged` has no `spring`
+          const k: number = e.spring.k;
+          void [exact, k];
+        },
+      });
+    expect(build("!dragged").process).toBeTypeOf("function");
+  });
+
+  test("patterns that all require a name keep it present", () => {
+    const build = (two: "spring&active" | "spring&dragged") =>
+      processingSystem<Ent>()(filter(two), {
+        process(e) {
+          const exact: Equal<
+            typeof e,
+            With<Ent, "spring" | "active"> | With<Ent, "spring" | "dragged">
+          > = true;
+          const k: number = e.spring.k;
+          void [exact, k];
+        },
+      });
+    expect(build("spring&dragged").process).toBeTypeOf("function");
+  });
+
+  test("a name typed as string makes no component certain", () => {
+    const build = (name: string) => {
+      const any = processingSystem<Ent>()(requireAny(name), {
+        process(e) {
+          const exact: Equal<typeof e, Ent> = true;
+          // @ts-expect-error `name` may hold any component, so `dragged` is unchecked
+          const d: boolean = e.dragged;
+          void [exact, d];
+        },
+      });
+      const all = processingSystem<Ent>()(requireAll(name), {
+        process(e) {
+          const exact: Equal<typeof e, Ent> = true;
+          // @ts-expect-error `name` may hold any component, so `dragged` is unchecked
+          const d: boolean = e.dragged;
+          void [exact, d];
+        },
+      });
+      const anyHeld: Equal<NonNullable<typeof any.entities>[number], Ent> = true;
+      const allHeld: Equal<NonNullable<typeof all.entities>[number], Ent> = true;
+      return [anyHeld, allHeld];
+    };
+    expect(build("dragged")).toEqual([true, true]);
+  });
+
+  test("a literal name beside a widened one in requireAll stays present", () => {
+    const build = (name: string) => {
+      const annotated: Filter<"spring", string> = requireAll("spring", name);
+      const built = processingSystem<Ent>()(requireAll("spring", requireAny(name)), {
+        process(e) {
+          const exact: Equal<typeof e, With<Ent, "spring">> = true;
+          const k: number = e.spring.k;
+          // @ts-expect-error `name` may hold any component, so `dragged` is unchecked
+          const d: boolean = e.dragged;
+          void [exact, k, d];
+        },
+        postProcess() {
+          for (const e of this.entities ?? []) {
+            const exact: Equal<typeof e, With<Ent, "spring">> = true;
+            void exact;
+          }
+        },
+      });
+      return [annotated, built];
+    };
+    expect(build("dragged")).toHaveLength(2);
+  });
+
+  test("a filter typed as plain Filter makes no component certain, and a literal name beside it does", () => {
+    const loose: Filter = requireAll("spring");
+    const alone = processingSystem<Ent>()(loose, {
+      process(e) {
+        const exact: Equal<typeof e, Ent> = true;
+        void exact;
+      },
+    });
+    const beside = processingSystem<Ent>()(requireAll("spring", loose), {
+      process(e) {
+        const exact: Equal<typeof e, With<Ent, "spring">> = true;
+        void exact;
+      },
+    });
+    expect([alone, beside]).toHaveLength(2);
+  });
+});
+
 describe("definitions that fail to compile", () => {
   test("a misspelled component key, at the top level or nested, and update on a processing system", () => {
     // Never called: the definitions hold what the types reject, and only the compiler reads them.
