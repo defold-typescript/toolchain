@@ -200,8 +200,8 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     },
     driftSignature: {
       fqn: "http.request",
-      from: "report_progress: boolean;",
-      to: "report_progress?: boolean;",
+      from: "report_progress?: boolean;",
+      to: "report_progress: boolean;",
     },
     driftDoc: {
       fqn: "http.request",
