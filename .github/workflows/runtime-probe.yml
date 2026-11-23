@@ -38,10 +38,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4"
+      # Defold's bob.jar is compiled for Java 25 (class file version 69).
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
       - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun run --cwd packages/api-probe test:probe
