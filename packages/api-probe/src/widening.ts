@@ -1,9 +1,10 @@
+import { basename } from "node:path";
 import ts from "typescript";
 import { comparedNamespaces } from "../../types/scripts/engine-binding-diff";
 import { declaredMembers } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { type CheckedCall, checkCalls } from "./call-check";
-import { baseCalls, isTypeApplication, type ProbeCall, probeTarget } from "./witness";
+import { baseCalls, isTypeApplication, probeTarget, type Unwitnessed } from "./witness";
 
 // A widened argument the declaration handles worse than the members it
 // covers. `sound`: the widened call compiles though a member call does not, or
@@ -41,6 +42,26 @@ export interface Widening {
   readonly findings: readonly WideningFinding[];
   readonly checked: readonly CheckedSlot[];
   readonly unchecked: readonly UncheckedEntry[];
+}
+
+// A call that reaches a checked function with arguments that compile. The call
+// to `name` may sit inside it, as a filter does inside a system factory call.
+export interface BaseCall {
+  readonly name: string;
+  readonly variant: string;
+  readonly call: string;
+}
+
+// What the gate checks: each function by the name its base calls carry.
+export interface WideningSurface {
+  readonly functions: ReadonlyMap<string, ts.Symbol>;
+  readonly calls: readonly BaseCall[];
+  readonly unwitnessed: readonly Unwitnessed[];
+  // Statements the call check places before the calls, such as imports.
+  readonly prelude?: readonly string[];
+  // The string literals a slot keyed `<fn> <slot>` is checked with, beside
+  // `string`, in place of the members its declared type holds.
+  readonly literals?: ReadonlyMap<string, readonly string[]>;
 }
 
 export function findingKey(finding: WideningFinding): string {
@@ -295,10 +316,16 @@ function replaced(text: string, start: number, end: number, value: string): stri
   return `${text.slice(0, start)}${value}${text.slice(end)}`;
 }
 
-// Each argument of `call` and each property of a table argument, with the
-// call text that puts a widened value there.
+// The outermost call in `node` whose callee reads `name`.
+function callTo(node: ts.Node, name: string, source: ts.SourceFile): ts.CallExpression | undefined {
+  if (ts.isCallExpression(node) && node.expression.getText(source) === name) return node;
+  return ts.forEachChild(node, (child) => callTo(child, name, source));
+}
+
+// Each argument of the call to `call.name` and each property of a table
+// argument, with the base call's text that puts a widened value there.
 function slotsOf(
-  call: ProbeCall,
+  call: BaseCall,
   signatures: readonly ts.Signature[],
   checker: ts.TypeChecker,
 ): Slot[] {
@@ -311,12 +338,13 @@ function slotsOf(
   ) {
     return [];
   }
+  const target = callTo(statement.expression, call.name, source) ?? statement.expression;
   const overload = /^overload(\d+)-/.exec(call.variant)?.[1];
   const own = signatures[overload === undefined ? 0 : Number(overload) - 1];
   if (own === undefined) return [];
   const text = call.call;
   const slots: Slot[] = [];
-  statement.expression.arguments.forEach((argument, index) => {
+  target.arguments.forEach((argument, index) => {
     const params = own.getParameters();
     const param = params[Math.min(index, params.length - 1)];
     const name = param?.name ?? `arg${index + 1}`;
@@ -410,7 +438,11 @@ interface Checked {
   readonly invalid: ReadonlyMap<Slot, ReadonlyMap<string, readonly string[]>>;
 }
 
-function check(program: ts.Program, plan: ReadonlyMap<Slot, readonly Form[]>): Checked {
+function check(
+  program: ts.Program,
+  plan: ReadonlyMap<Slot, readonly Form[]>,
+  prelude: readonly string[],
+): Checked {
   if (plan.size === 0) {
     return { checker: program.getTypeChecker(), results: new Map(), invalid: new Map() };
   }
@@ -430,7 +462,7 @@ function check(program: ts.Program, plan: ReadonlyMap<Slot, readonly Form[]>): C
   }
   const texts = [...bindings.keys()];
   const declarations = texts.map((text) => `declare const ${bindings.get(text)}: ${text};`);
-  const checked = checkCalls(program, calls, declarations);
+  const checked = checkCalls(program, calls, declarations, prelude);
   const declarationErrors = new Map(
     texts.map((text, i) => [text, checked.declarations[i] ?? []] as const),
   );
@@ -455,14 +487,27 @@ function typeText(type: ts.Type, checker: ts.TypeChecker): string {
   return readable(checker.typeToString(type, undefined, TYPE_TEXT));
 }
 
-// Where the widened call resolves to a return or callback parameter type a
-// member call's does not fit, a sentence naming it.
+// Where the widened call resolves to a type a member call's does not fit, a
+// sentence naming it: a captured value's type when the call captures one, else
+// its return or a callback parameter's type.
 function uncovered(
   member: string,
-  own: ts.Signature,
-  widened: ts.Signature,
+  ownCall: CheckedCall,
+  widenedCall: CheckedCall,
   checker: ts.TypeChecker,
 ): string | undefined {
+  const captured = widenedCall.captures ?? [];
+  if (captured.length > 0) {
+    for (const [at, type] of captured.entries()) {
+      const ownType = ownCall.captures?.[at];
+      if (ownType !== undefined && !checker.isTypeAssignableTo(ownType, type)) {
+        return `captures ${typeText(type, checker)}, but member ${member} captures ${typeText(ownType, checker)}`;
+      }
+    }
+    return undefined;
+  }
+  const own = ownCall.signature as ts.Signature;
+  const widened = widenedCall.signature as ts.Signature;
   const returned = own.getReturnType();
   const widenedReturn = widened.getReturnType();
   if (!checker.isTypeAssignableTo(returned, widenedReturn)) {
@@ -532,28 +577,47 @@ function judge(
     );
   }
   for (const [label, result] of members) {
-    const detail = uncovered(label, result.signature as ts.Signature, widened.signature, checker);
+    const detail = uncovered(label, result, widened, checker);
     if (detail !== undefined) return finding("sound", detail);
   }
   return undefined;
 }
 
-// Every function on `program`'s surface that branches on an argument's type,
-// called with each member of each argument's domain and with widened forms of
-// it, judged against the member calls.
-export function wideningFindings(program: ts.Program, target: ApiTarget = probeTarget()): Widening {
+function literalDomain(literals: readonly string[]): Domain {
+  return {
+    members: literals.map((literal) => ({ text: JSON.stringify(literal), literalOf: "string" })),
+    open: new Set(["string"]),
+  };
+}
+
+// The engine functions `target` declares, with the witness generator's base calls.
+export function engineSurface(
+  program: ts.Program,
+  target: ApiTarget = probeTarget(),
+): WideningSurface {
+  const { functions } = declaredMembers(program, comparedNamespaces(target));
+  const { calls, unwitnessed } = baseCalls(target, program);
+  return { functions, calls, unwitnessed };
+}
+
+// Every function of `surface` that branches on an argument's type, called with
+// each member of each argument's domain and with widened forms of it, judged
+// against the member calls.
+export function wideningFindings(
+  program: ts.Program,
+  surface: WideningSurface = engineSurface(program),
+): Widening {
   const checker = program.getTypeChecker();
-  const declared = declaredMembers(program, comparedNamespaces(target));
-  const base = baseCalls(target, program);
-  const callsByName = new Map<string, ProbeCall[]>();
-  for (const call of base.calls) {
+  const prelude = surface.prelude ?? [];
+  const callsByName = new Map<string, BaseCall[]>();
+  for (const call of surface.calls) {
     const own = callsByName.get(call.name) ?? [];
     own.push(call);
     callsByName.set(call.name, own);
   }
   const unchecked: UncheckedEntry[] = [];
   const slots: Slot[] = [];
-  for (const [fqn, symbol] of declared.functions) {
+  for (const [fqn, symbol] of surface.functions) {
     const signatures = checker
       .getTypeOfSymbol(symbol)
       .getCallSignatures()
@@ -564,7 +628,7 @@ export function wideningFindings(program: ts.Program, target: ApiTarget = probeT
     if (!branching) continue;
     const calls = callsByName.get(fqn) ?? [];
     if (calls.length === 0) {
-      const reasons = base.unwitnessed
+      const reasons = surface.unwitnessed
         .filter((entry) => entry.name === fqn || entry.name.startsWith(`${fqn}:`))
         .map((entry) => entry.reason);
       unchecked.push({
@@ -576,16 +640,21 @@ export function wideningFindings(program: ts.Program, target: ApiTarget = probeT
     }
     const templates = new Set<string>();
     for (const call of calls) {
-      for (const slot of slotsOf(call, signatures, checker)) {
-        if (templates.has(slot.template)) continue;
-        templates.add(slot.template);
+      for (const declaredSlot of slotsOf(call, signatures, checker)) {
+        if (templates.has(declaredSlot.template)) continue;
+        templates.add(declaredSlot.template);
+        const literals = surface.literals?.get(`${fqn} ${declaredSlot.name}`);
+        const slot =
+          literals === undefined
+            ? declaredSlot
+            : { ...declaredSlot, domain: literalDomain(literals) };
         const { members, open } = slot.domain;
         if (members.length >= 2 || open.size > 0) slots.push(slot);
       }
     }
   }
   const plan = new Map(slots.map((slot) => [slot, formsOf(slot.domain)] as const));
-  const first = check(program, plan);
+  const first = check(program, plan, prelude);
   // The first accepted and the first rejected member, which need the member
   // results, are checked with their two members in a second pass.
   const mixed = new Map<Slot, Form[]>();
@@ -606,7 +675,7 @@ export function wideningFindings(program: ts.Program, target: ApiTarget = probeT
       { label: "mixed", text, members: [accepted.label, rejected.label] },
     ]);
   }
-  const second = check(program, mixed);
+  const second = check(program, mixed, prelude);
   const findings: WideningFinding[] = [];
   const checked: CheckedSlot[] = [];
   for (const slot of slots) {
@@ -644,4 +713,132 @@ export function wideningFindings(program: ts.Program, target: ApiTarget = probeT
     });
   }
   return { findings, checked, unchecked };
+}
+
+const ECS_NAMESPACE = "ecs";
+// The components of the fixture's `Ent` a name slot's base call holds, and the
+// patterns a pattern slot is checked with: one requiring two components, one
+// requiring none.
+const ECS_NAMES = ["position", "velocity"] as const;
+const ECS_PATTERNS = ["position&velocity", "velocity|frozen"] as const;
+const UNWRAP_FILTER = "__filterOf";
+const CAPTURING_DEF = "onAdd(e) { __capture(e); }";
+
+function isFilterAlias(type: ts.Type): boolean {
+  return type.aliasSymbol?.name === "Filter";
+}
+
+// `direct` for a function that returns a filter, `result` for one that returns
+// it under `filter` in one member of a result union.
+function filterReturn(returned: ts.Type, checker: ts.TypeChecker): "direct" | "result" | undefined {
+  if (isFilterAlias(returned)) return "direct";
+  const held = (returned.isUnion() ? returned.types : [returned]).some((member) => {
+    const property = checker.getPropertyOfType(member, "filter");
+    return property !== undefined && isFilterAlias(checker.getTypeOfSymbol(property));
+  });
+  return held ? "result" : undefined;
+}
+
+function isSystemFactory(returned: ts.Type): boolean {
+  const name = returned.aliasSymbol?.name ?? returned.getSymbol()?.name ?? "";
+  return name.endsWith("SystemFactory");
+}
+
+// The definition a system over a filter takes, with each property it requires
+// set: `onAdd` captures the entity it receives.
+function capturingDefinition(factory: ts.Type, checker: ts.TypeChecker): string {
+  const filtered = factory
+    .getCallSignatures()
+    .find((signature) => signature.getParameters().length === 2);
+  const def = filtered?.getParameters()[1];
+  const required =
+    def === undefined
+      ? []
+      : checker
+          .getPropertiesOfType(checker.getTypeOfSymbol(def))
+          .filter((property) => (property.flags & ts.SymbolFlags.Optional) === 0)
+          .map((property) => `, ${property.name}: undefined as never`);
+  return `{ ${CAPTURING_DEF}${required.join("")} }`;
+}
+
+// The filter constructors and system factories of the `ecs` namespace that the
+// program's root, the ECS fixture, exports beside its entity type `Ent`. Each
+// constructor builds the filter of a processing system over `Ent`, and each
+// factory builds a system over a `requireAll` filter; the system captures the
+// entity its callback receives. A name slot is checked with `Ent`'s keys, a
+// pattern slot with `ECS_PATTERNS`.
+export function ecsSurface(program: ts.Program): WideningSurface {
+  const checker = program.getTypeChecker();
+  const [root] = program.getRootFileNames();
+  const source = root === undefined ? undefined : program.getSourceFile(root);
+  const fixture = source === undefined ? undefined : checker.getSymbolAtLocation(source);
+  if (root === undefined || fixture === undefined) {
+    throw new Error("api-probe: the ECS program's root is not a module");
+  }
+  const exported = new Map(checker.getExportsOfModule(fixture).map((s) => [s.name, s] as const));
+  const ent = exported.get("Ent");
+  const namespace = exported.get(ECS_NAMESPACE);
+  if (ent === undefined || namespace === undefined) {
+    throw new Error(`api-probe: ${root} exports no Ent or ${ECS_NAMESPACE}`);
+  }
+  const names = checker
+    .getPropertiesOfType(checker.getDeclaredTypeOfSymbol(ent))
+    .map((property) => property.name);
+  const functions = new Map<string, ts.Symbol>();
+  const calls: BaseCall[] = [];
+  const unwitnessed: Unwitnessed[] = [];
+  const literals = new Map<string, readonly string[]>();
+  const system = (filterText: string) =>
+    `${ECS_NAMESPACE}.processingSystem<Ent>()(${filterText}, { ${CAPTURING_DEF} })`;
+  for (const symbol of checker.getExportsOfModule(checker.getAliasedSymbol(namespace))) {
+    const fn = `${ECS_NAMESPACE}.${symbol.name}`;
+    const [signature] = checker.getTypeOfSymbol(symbol).getCallSignatures();
+    if (signature === undefined) continue;
+    const returned = signature.getReturnType();
+    const built = filterReturn(returned, checker);
+    if (built !== undefined) {
+      functions.set(fn, symbol);
+      const params = signature.getParameters();
+      const [param] = params;
+      const argument = argumentType(signature, 0, checker);
+      const rest = restIndex(signature) === 0;
+      const pattern =
+        !rest &&
+        argument !== undefined &&
+        (constrained(argument).flags & ts.TypeFlags.String) !== 0;
+      if (param === undefined || params.length !== 1 || !(rest || pattern)) {
+        unwitnessed.push({
+          name: fn,
+          reason: "a filter constructor the gate calls takes a rest of names or one pattern",
+        });
+        continue;
+      }
+      literals.set(`${fn} ${param.name}`, rest ? names : ECS_PATTERNS);
+      const args = rest
+        ? ECS_NAMES.map((name) => JSON.stringify(name)).join(", ")
+        : JSON.stringify(ECS_PATTERNS[0]);
+      const filterText = built === "direct" ? `${fn}(${args})` : `${UNWRAP_FILTER}(${fn}(${args}))`;
+      calls.push({ name: fn, variant: "required", call: system(filterText) });
+    } else if (isSystemFactory(returned)) {
+      functions.set(fn, symbol);
+      const key = signature.getParameters().length > 0 ? '"widened"' : "";
+      const filterText = `${ECS_NAMESPACE}.requireAll(${JSON.stringify(ECS_NAMES[1])})`;
+      calls.push({
+        name: fn,
+        variant: "required",
+        call: `${fn}<Ent>(${key})(${filterText}, ${capturingDefinition(returned, checker)})`,
+      });
+    }
+  }
+  const specifier = `./${basename(root).replace(/\.ts$/, "")}`;
+  return {
+    functions,
+    calls,
+    unwitnessed,
+    literals,
+    prelude: [
+      `import { type Ent, ${ECS_NAMESPACE} } from ${JSON.stringify(specifier)};`,
+      `declare function ${UNWRAP_FILTER}<R>(result: R): R extends { readonly ok: true; readonly filter: infer F } ? F : never;`,
+    ],
+  };
 }

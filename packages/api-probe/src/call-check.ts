@@ -3,10 +3,12 @@ import ts from "typescript";
 import { PROBE_URLS } from "./contexts";
 
 // What the checker makes of one probe call: the errors it reports on the call,
-// and the signature it resolves the call to when there are none.
+// and the signature it resolves the call to when there are none, with the type
+// argument each `__capture(value)` inside the call resolves to, in source order.
 export interface CheckedCall {
   readonly errors: readonly string[];
   readonly signature?: ts.Signature;
+  readonly captures?: readonly ts.Type[];
 }
 
 export interface CallCheck {
@@ -17,6 +19,8 @@ export interface CallCheck {
 }
 
 const CALLS_FILE = "probe-calls.ts";
+// Records the type its argument has where a probe call places it.
+const CAPTURE = "__capture";
 
 // `program` with each of `files` read in place of what is on disk; a file not
 // on disk is added as a root. Every other file keeps its parsed source.
@@ -48,22 +52,43 @@ export function overlayProgram(
   });
 }
 
+function capturesIn(node: ts.Node, checker: ts.TypeChecker): ts.Type[] {
+  const found: ts.Type[] = [];
+  const visit = (child: ts.Node): void => {
+    if (
+      ts.isCallExpression(child) &&
+      ts.isIdentifier(child.expression) &&
+      child.expression.text === CAPTURE
+    ) {
+      const [param] = checker.getResolvedSignature(child)?.getParameters() ?? [];
+      if (param !== undefined) found.push(checker.getTypeOfSymbol(param));
+    }
+    ts.forEachChild(child, visit);
+  };
+  visit(node);
+  return found;
+}
+
 // Checks each call as a statement of one module beside the surface entry,
-// after the probe urls and `fresh` as a probe script declares them, and after
-// `declarations`, one statement each, which the calls may refer to.
+// after the probe urls, `fresh` as a probe script declares them, `__capture`
+// and `surfacePrelude`, and after `declarations`, one statement each, which
+// the calls may refer to.
 export function checkCalls(
   program: ts.Program,
   calls: readonly string[],
   declarations: readonly string[] = [],
+  surfacePrelude: readonly string[] = [],
 ): CallCheck {
   const [entry] = program.getRootFileNames();
   if (entry === undefined) throw new Error("api-probe: the surface program has no root");
   const file = resolve(dirname(entry), CALLS_FILE);
   const prelude = [
     "export declare function fresh(prefix: string, suffix?: string): string;",
+    `export declare function ${CAPTURE}<T>(value: T): void;`,
     ...Object.entries(PROBE_URLS).map(
       ([id, address]) => `export const ${id} = msg.url(${JSON.stringify(address)});`,
     ),
+    ...surfacePrelude,
   ];
   const head = prelude.length + declarations.length;
   const text = [...prelude, ...declarations, ...calls.map((call) => `${call};`)].join("\n");
@@ -105,7 +130,11 @@ export function checkCalls(
         return { errors: failed };
       }
       const signature = checker.getResolvedSignature(expression);
-      return signature === undefined ? { errors: failed } : { errors: failed, signature };
+      if (signature === undefined) return { errors: failed };
+      const captures = capturesIn(expression, checker);
+      return captures.length > 0
+        ? { errors: failed, signature, captures }
+        : { errors: failed, signature };
     }),
     declarations: declared,
   };
