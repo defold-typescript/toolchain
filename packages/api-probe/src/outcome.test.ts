@@ -77,6 +77,40 @@ describe("parseProbeLog", () => {
     expect(outcome?.returns).toBeUndefined();
   });
 
+  test("attaches each ok call's RETF lines to its outcome as sorted kinds per path", () => {
+    const outcomes = parseProbeLog([
+      "DEBUG:SCRIPT: RET\tf\tv\t1\ttable",
+      "DEBUG:SCRIPT: RETF\tf\tv\t1.version\tstring",
+      "DEBUG:SCRIPT: RETF\tf\tv\t1[number]\tstring",
+      "DEBUG:SCRIPT: RETF\tf\tv\t1[number]\tnumber",
+      "DEBUG:SCRIPT: PROBE\tf\tv\tok\t",
+    ]);
+    expect(outcomes).toEqual([
+      {
+        name: "f",
+        variant: "v",
+        outcome: "ok",
+        message: "",
+        returns: ["table"],
+        fields: { "1.version": ["string"], "1[number]": ["number", "string"] },
+      },
+    ]);
+  });
+
+  test("a RETF line attaches only to the call that printed it, and never to a raised one", () => {
+    const outcomes = parseProbeLog([
+      "DEBUG:SCRIPT: RETF\tother\tv\t1.version\tstring",
+      "DEBUG:SCRIPT: RET\tf\tv\t1\ttable",
+      "DEBUG:SCRIPT: PROBE\tf\tv\tok\t",
+      "DEBUG:SCRIPT: RETF\tg\tv\t1.version\tstring",
+      "DEBUG:SCRIPT: PROBE\tg\tv\terr\tboom",
+    ]);
+    expect(outcomes.map((o) => [o.name, o.fields])).toEqual([
+      ["f", {}],
+      ["g", undefined],
+    ]);
+  });
+
   test("an ERROR line in a posted message's frames fails that post with the raw line", () => {
     const outcomes = parseProbeLog([
       "DEBUG:SCRIPT: POST\tmessage.load\trequired\t3",

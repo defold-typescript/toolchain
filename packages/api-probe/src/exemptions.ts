@@ -321,7 +321,9 @@ export function evaluateProbe(
       }
       if (outcome.outcome === "ok") {
         const problems =
-          call?.returns === undefined ? [] : returnMismatches(call.returns, outcome.returns ?? []);
+          call?.returns === undefined
+            ? []
+            : returnMismatches(call.returns, outcome.returns ?? [], outcome.fields);
         if (problems.length === 0) {
           if (exemption) failures.stale.push(`${key}: now ends ok; delete the exemption`);
           continue;

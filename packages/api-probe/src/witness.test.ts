@@ -119,7 +119,8 @@ describe("option-table forms", () => {
       'gui.play_flipbook(gui.get_node("box"), "anim", () => {}, {})',
     ]);
     for (const call of forms("physics.raycast")) {
-      expect(call.returns).toEqual({ kinds: [["nil", "table"]], variadic: false });
+      expect([call.returns?.kinds, call.returns?.variadic]).toEqual([[["nil", "table"]], false]);
+      expect(call.returns?.shapes?.[0]).toBeDefined();
     }
   });
 
@@ -152,8 +153,8 @@ describe("option-table forms", () => {
       expect(
         fixtureForms("sys.probe_fixture_pick").map((call) => [call.variant, call.returns]),
       ).toEqual([
-        ["options-omitted", { kinds: [["number"]], variadic: false }],
-        ["options-empty", { kinds: [["string"]], variadic: false }],
+        ["options-omitted", { kinds: [["number"]], shapes: [undefined], variadic: false }],
+        ["options-empty", { kinds: [["string"]], shapes: [undefined], variadic: false }],
       ]);
     });
 

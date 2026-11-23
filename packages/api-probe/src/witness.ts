@@ -6,13 +6,7 @@ import {
   type LuaKind,
   readBindingsForTarget,
 } from "../../types/scripts/engine-binding-extract";
-import {
-  type DeclaredKinds,
-  declaredKinds,
-  declaredMembers,
-  surfaceProgram,
-  UnmappedLuaKindError,
-} from "../../types/scripts/lua-kind";
+import { type DeclaredKinds, declaredMembers, surfaceProgram } from "../../types/scripts/lua-kind";
 import { type ApiTarget, loadApiTargets } from "../../types/scripts/regen";
 import { INDEX_SLOT_CLASSIFICATIONS } from "../../types/src/index-slot-classifications";
 import { checkCalls } from "./call-check";
@@ -43,13 +37,16 @@ import { messageProbes } from "./message-probes";
 import { acceptedWitnesses, narrowingVerdict, negativeWitness } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { propertyProbes } from "./property-probes";
+import { type DeclaredShape, declaredShape, kindsOf } from "./table-shapes";
 
 const CORE_TYPES_FILE = resolve(import.meta.dir, "../../types/src/core-types.ts");
 
 // The values a signature declares it returns: one entry per position, and
-// whether a rest element allows more.
+// whether a rest element allows more. `shapes` holds, per position, the keys a
+// returned table declares, where it declares any.
 export interface DeclaredReturns {
   readonly kinds: readonly DeclaredKinds[];
+  readonly shapes?: readonly (DeclaredShape | undefined)[];
   readonly variadic: boolean;
 }
 
@@ -494,27 +491,25 @@ function probedIndexClass(key: string): string | undefined {
     : undefined;
 }
 
-function kindsOf(type: ts.Type, checker: ts.TypeChecker): DeclaredKinds {
-  try {
-    return declaredKinds(type, checker);
-  } catch (error) {
-    if (error instanceof UnmappedLuaKindError) return "any";
-    throw error;
-  }
-}
-
 // `LuaMultiReturn<[A, B?]>` declares one value per tuple element, `void` none,
 // and any other type one.
 export function declaredReturns(signature: ts.Signature, checker: ts.TypeChecker): DeclaredReturns {
   const returned = signature.getReturnType();
-  if (returned.flags & ts.TypeFlags.Void) return { kinds: [], variadic: false };
+  if (returned.flags & ts.TypeFlags.Void) return { kinds: [], shapes: [], variadic: false };
   const tuple =
     returned.aliasSymbol?.name === "LuaMultiReturn" ? returned.aliasTypeArguments?.[0] : undefined;
-  if (tuple === undefined) return { kinds: [kindsOf(returned, checker)], variadic: false };
-  if (!checker.isTupleType(tuple)) return { kinds: [], variadic: true };
+  if (tuple === undefined) {
+    return {
+      kinds: [kindsOf(returned, checker)],
+      shapes: [declaredShape(returned, checker)],
+      variadic: false,
+    };
+  }
+  if (!checker.isTupleType(tuple)) return { kinds: [], shapes: [], variadic: true };
   const target = (tuple as ts.TypeReference).target as ts.TupleType;
   const elements = checker.getTypeArguments(tuple as ts.TypeReference);
   const kinds: DeclaredKinds[] = [];
+  const shapes: (DeclaredShape | undefined)[] = [];
   let variadic = false;
   elements.forEach((element, i) => {
     const flags = target.elementFlags[i] ?? ts.ElementFlags.Required;
@@ -528,8 +523,9 @@ export function declaredReturns(signature: ts.Signature, checker: ts.TypeChecker
         ? [...new Set<LuaKind>([...elementKinds, "nil"])].sort()
         : elementKinds,
     );
+    shapes.push(declaredShape(element, checker));
   });
-  return { kinds, variadic };
+  return { kinds, shapes, variadic };
 }
 
 // The positive argument when it already is of `kind`, else restated as `kind`
@@ -588,6 +584,8 @@ function memberWitness(type: ts.Type, kind: LuaKind, scope: Scope): string | und
 // witnesses of every parameter before it.
 interface OptionCandidate {
   readonly name: string;
+  // The function as called, with the type argument that picks its overload.
+  readonly callee: string;
   readonly kind: ScriptKind;
   readonly args: readonly string[];
 }
@@ -617,9 +615,9 @@ function optionFormCalls(
   program: ts.Program,
   candidates: readonly OptionCandidate[],
 ): { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } {
-  const forms = candidates.flatMap(({ name, args }) => [
-    `${name}(${args.join(", ")})`,
-    `${name}(${[...args, "{}"].join(", ")})`,
+  const forms = candidates.flatMap(({ callee, args }) => [
+    `${callee}(${args.join(", ")})`,
+    `${callee}(${[...args, "{}"].join(", ")})`,
   ]);
   const { checker, calls: checked } = checkCalls(program, forms);
   const out: { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } = { calls: [], unwitnessed: [] };
@@ -654,6 +652,21 @@ function optionFormCalls(
   return out;
 }
 
+// The Box2D backend a signature's `Backend` type parameter selects, and
+// whether a call must name it: only a backend without a default does.
+function signatureBackend(
+  signature: ts.Signature,
+): { readonly backend: string; readonly explicit: boolean } | undefined {
+  const parameter = signature.getTypeParameters()?.find((p) => p.symbol.name === "Backend");
+  const constraint = parameter?.getConstraint();
+  if (parameter === undefined || constraint === undefined || !constraint.isStringLiteral()) {
+    return undefined;
+  }
+  return { backend: constraint.value, explicit: parameter.getDefault() === undefined };
+}
+
+// With a `backend`, a signature another Box2D backend selects is left out, and
+// the one this backend selects is called the way a script on it calls it.
 function callsFor(
   target: ApiTarget,
   fqn: string,
@@ -663,6 +676,7 @@ function callsFor(
   urls: Set<string>,
   binding: BindingFunction | undefined,
   includeDenied = false,
+  backend?: Box2DBackend,
 ): FunctionCalls {
   const namespace = fqn.slice(0, fqn.lastIndexOf("."));
   const context = contextFor(namespace);
@@ -684,6 +698,10 @@ function callsFor(
     const overload = signatures.length > 1 ? `overload${index + 1}` : undefined;
     const name = overload === undefined ? fqn : `${fqn}:${overload}`;
     if (!includeDenied && overload !== undefined && PROBE_DENYLIST[name] !== undefined) return;
+    const selected = backend === undefined ? undefined : signatureBackend(signature);
+    if (selected !== undefined && selected.backend !== backend) return;
+    const callee =
+      selected?.explicit === true ? `${fqn}<${JSON.stringify(selected.backend)}>` : fqn;
     const params = signatureParams(signature, checker);
     const scope = { fqn, overload, context, checker, constants, urls };
     const required = params.filter((param) => !param.optional).length;
@@ -701,7 +719,7 @@ function callsFor(
       params.slice(0, count).map((param, i) => slotWitness(param, i + 1, { ...scope, handles }));
     try {
       for (const [variant, count] of variants) {
-        const call = `${fqn}(${witnessAll(count).join(", ")})`;
+        const call = `${callee}(${witnessAll(count).join(", ")})`;
         if (seen.has(call)) continue;
         const label = overload === undefined ? variant : `${overload}-${variant}`;
         seen.set(call, label);
@@ -709,7 +727,12 @@ function callsFor(
       }
       const positive = witnessAll(present);
       if (longer && isTrailingTable(params[present - 1], checker)) {
-        out.options = { name: fqn, kind: context.kind, args: positive.slice(0, present - 1) };
+        out.options = {
+          name: fqn,
+          callee,
+          kind: context.kind,
+          args: positive.slice(0, present - 1),
+        };
       }
       out.signature ??= {
         names: signature.getParameters().map((param) => param.name),
@@ -726,7 +749,7 @@ function callsFor(
         const withSlot = (expression: string, count = Math.max(required, slot)) => {
           const args = positive.slice(0, count);
           args[i] = expression;
-          return `${fqn}(${args.join(", ")})`;
+          return `${callee}(${args.join(", ")})`;
         };
         // Each slot gets its negative call from the first probed signature that
         // declares it: a kind every signature refuses is a kind that one refuses.
@@ -1038,7 +1061,17 @@ export function generateProbes(
     const urls = new Set<string>();
     const binding = bindings.get(fqn);
     if (binding !== undefined) probed.set(fqn, binding);
-    const generated = callsFor(target, fqn, symbol, checker, constants, urls, binding);
+    const generated = callsFor(
+      target,
+      fqn,
+      symbol,
+      checker,
+      constants,
+      urls,
+      binding,
+      false,
+      backend,
+    );
     calls.push(...generated.calls);
     unwitnessed.push(...generated.unwitnessed);
     skipped.push(...generated.skipped);

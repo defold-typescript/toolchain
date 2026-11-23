@@ -15,13 +15,23 @@ function evaluateReturns(
   call: ProbeCall,
   returns: readonly string[],
   exemptions: Record<string, Exemption> = {},
+  fields?: Record<string, string[]>,
 ) {
   return evaluateProbe(
     [
       {
         backend: "v2",
         calls: [call],
-        outcomes: [{ name: call.name, variant: call.variant, outcome: "ok", message: "", returns }],
+        outcomes: [
+          {
+            name: call.name,
+            variant: call.variant,
+            outcome: "ok",
+            message: "",
+            returns,
+            ...(fields === undefined ? {} : { fields }),
+          },
+        ],
       },
     ],
     exemptions,
@@ -107,5 +117,69 @@ describe("option-form returns under the probe gate", () => {
     expect(evaluateReturns(empty, ["table"], { [key]: accepted }).stale).toEqual([
       `${key}: now ends ok; delete the exemption`,
     ]);
+  });
+});
+
+describe("Box2D world queries under each backend", () => {
+  const v3 = generateProbes(undefined, "v3");
+  const positives = (calls: readonly ProbeCall[], name: string) =>
+    calls.filter((c) => c.name === name && c.witness === undefined && c.index === undefined);
+
+  test("each pass calls and checks the overload its backend selects", () => {
+    expect(positives(v2.calls, "b2d.world.cast_ray").map((c) => [c.variant, c.call])).toEqual([
+      ["overload1-required", expect.stringMatching(/^b2d\.world\.cast_ray\(/)],
+      ["overload1-optional", expect.stringMatching(/^b2d\.world\.cast_ray\(/)],
+    ]);
+    const v3Calls = positives(v3.calls, "b2d.world.cast_ray");
+    expect(v3Calls.map((c) => [c.variant, c.call])).toEqual([
+      ["overload2-required", expect.stringMatching(/^b2d\.world\.cast_ray<"v3">\(/)],
+      ["overload2-optional", expect.stringMatching(/^b2d\.world\.cast_ray<"v3">\(/)],
+    ]);
+    const hit = v3Calls[0]?.returns?.shapes?.[0]?.index?.value.shape;
+    expect(hit?.fields.fixture).toBeUndefined();
+    expect(hit?.fields.shape?.shape?.fields.material).toEqual({ kinds: ["number"] });
+  });
+
+  test("an option form on the v3 pass resolves the v3 overload", () => {
+    const forms = positives(v3.calls, "b2d.world.cast_ray_closest").filter((c) =>
+      c.variant.startsWith("options-"),
+    );
+    expect(forms.map((c) => [c.variant, c.call])).toEqual([
+      ["options-omitted", expect.stringMatching(/^b2d\.world\.cast_ray_closest<"v3">\(/)],
+      ["options-empty", expect.stringMatching(/^b2d\.world\.cast_ray_closest<"v3">\(/)],
+    ]);
+    for (const form of forms) {
+      expect(form.returns?.shapes?.[0]?.fields.shape?.shape?.fields.material).toEqual({
+        kinds: ["number"],
+      });
+    }
+  });
+});
+
+describe("returned table fields under the probe gate", () => {
+  const call = v2.calls.find((c) => c.name === "sys.get_engine_info" && c.witness === undefined);
+  if (call === undefined) throw new Error("no positive call to sys.get_engine_info");
+  const shape = call.returns?.shapes?.[0];
+  if (shape === undefined) throw new Error("sys.get_engine_info declares no table shape");
+  const key = `${call.name}:${call.variant}`;
+  const withoutVersion = Object.fromEntries(
+    Object.entries(shape.fields).flatMap(([name, field]) =>
+      name === "version" || field.kinds === "any" || field.kinds.includes("nil")
+        ? []
+        : [[`1.${name}`, [field.kinds[0] as string]]],
+    ),
+  );
+
+  test("a returned table missing a declared field fails", () => {
+    expect(evaluateReturns(call, ["table"], {}, withoutVersion).returnKinds).toEqual([
+      `${key}: value 1 field version is absent, declared string`,
+    ]);
+  });
+
+  test("an accepted ok verdict clears a field mismatch", () => {
+    const accepted: Exemption = { outcome: "ok", verdict: "accepted", reason: "test" };
+    const cleared = evaluateReturns(call, ["table"], { [key]: accepted }, withoutVersion);
+    expect(cleared.returnKinds).toEqual([]);
+    expect(cleared.stale).toEqual([]);
   });
 });
