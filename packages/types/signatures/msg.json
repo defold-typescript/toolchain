@@ -13,13 +13,21 @@
     "signatures": [
       "msg.url(): Url",
       "msg.url(urlstring: SceneAddress | Hash | Url | undefined): Url",
-      "msg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url",
+      "msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash | undefined): Url",
+      "msg.url(socket: undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): Url",
+      "msg.url(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: undefined): Url",
       "msg.url<M extends object>(): ReceiverUrl<M>",
       "msg.url<M extends object>(urlstring: SceneAddress | Hash | Url | undefined): ReceiverUrl<M>",
-      "msg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>"
+      "msg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash | undefined): ReceiverUrl<M>",
+      "msg.url<M extends object>(socket: undefined, path: string | Hash | undefined, fragment: string | Hash | undefined): ReceiverUrl<M>",
+      "msg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash | undefined, fragment: undefined): ReceiverUrl<M>"
     ],
     "docs": [
       "Construct a URL. A URL is `[socket:][path][#fragment]`.",
+      null,
+      null,
+      null,
+      null,
       null,
       null,
       null,

@@ -2,15 +2,18 @@ import { spawn } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import type ts from "typescript";
 import { engineCacheDir, engineCachePath } from "../../cli/src/bob";
 import { defaultDefoldIo, runBobCommand } from "../../cli/src/bob-command";
 import { runBuild } from "../../cli/src/build";
 import { engineDownloadUrl, targetPlatform } from "../../cli/src/debug-launcher";
 import { type EngineProcess, launchEngine } from "../../cli/src/engine-launch";
+import { surfaceProgram } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { BOX2D_BACKENDS, type Box2DBackend } from "./contexts";
 import type { Unverified } from "./index-probes";
 import { type ProbeOutcome, parseProbeLog } from "./outcome";
+import { engineSurface, type MemberCall, memberCalls } from "./widening";
 import { generateProbes, type ProbeCall, probeTarget } from "./witness";
 
 const PROJECT_DIR = resolve(import.meta.dir, "..", "project");
@@ -127,9 +130,11 @@ export function builtEngine(cwd: string): string {
 async function runPass(
   target: ApiTarget,
   backend: Box2DBackend,
+  program: ts.Program,
+  members: readonly MemberCall[],
   opts: RunProbeOptions,
 ): Promise<ProbePass> {
-  const generation = generateProbes(target, backend);
+  const generation = generateProbes(target, backend, program, members);
   const head = engineHead(target);
 
   const cwd = mkdtempSync(join(tmpdir(), `defold-api-probe-${backend}-`));
@@ -184,12 +189,17 @@ async function runPass(
   };
 }
 
-// Builds the probe project with the generated calls through `runBuild` and bob,
-// once per Box2D backend, runs each build in the engine, and returns every
-// `PROBE` line it printed.
+// Builds the probe project with the generated calls, the widening gate's
+// literal member calls among them, through `runBuild` and bob, once per Box2D
+// backend, runs each build in the engine, and returns every `PROBE` line it
+// printed.
 export async function runProbe(opts: RunProbeOptions = {}): Promise<ProbeRun> {
   const target = opts.target ?? probeTarget();
+  const program = surfaceProgram(target);
+  const members = memberCalls(program, engineSurface(program, target));
   const passes: ProbePass[] = [];
-  for (const backend of BOX2D_BACKENDS) passes.push(await runPass(target, backend, opts));
+  for (const backend of BOX2D_BACKENDS) {
+    passes.push(await runPass(target, backend, program, members, opts));
+  }
   return { target: target.id, passes };
 }

@@ -4,7 +4,14 @@ import { comparedNamespaces } from "../../types/scripts/engine-binding-diff";
 import { declaredMembers } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { type CheckedCall, checkCalls } from "./call-check";
-import { baseCalls, isTypeApplication, probeTarget, type Unwitnessed } from "./witness";
+import {
+  baseCalls,
+  type DeclaredReturns,
+  declaredReturns,
+  isTypeApplication,
+  probeTarget,
+  type Unwitnessed,
+} from "./witness";
 
 // A widened argument the declaration handles worse than the members it
 // covers. `sound`: the widened call compiles though a member call does not, or
@@ -600,15 +607,12 @@ export function engineSurface(
   return { functions, calls, unwitnessed };
 }
 
-// Every function of `surface` that branches on an argument's type, called with
-// each member of each argument's domain and with widened forms of it, judged
-// against the member calls.
-export function wideningFindings(
-  program: ts.Program,
-  surface: WideningSurface = engineSurface(program),
-): Widening {
-  const checker = program.getTypeChecker();
-  const prelude = surface.prelude ?? [];
+// The slots of every function of `surface` that branches on an argument's
+// type, and the branching functions no base call reaches.
+function branchingSlots(
+  surface: WideningSurface,
+  checker: ts.TypeChecker,
+): { slots: Slot[]; unchecked: UncheckedEntry[] } {
   const callsByName = new Map<string, BaseCall[]>();
   for (const call of surface.calls) {
     const own = callsByName.get(call.name) ?? [];
@@ -653,6 +657,68 @@ export function wideningFindings(
       }
     }
   }
+  return { slots, unchecked };
+}
+
+// A call of a branching function with one slot holding a literal member of its
+// domain, and what the overload the checker resolves that call to returns.
+export interface MemberCall {
+  readonly name: string;
+  readonly variant: string;
+  readonly slot: string;
+  // The member's type text: `"color"`, `2`, `true` or `undefined`.
+  readonly member: string;
+  readonly call: string;
+  readonly returns: DeclaredReturns;
+}
+
+const LITERAL_VALUES = new Set(["true", "false", "undefined"]);
+
+function isLiteralValue(member: Member): boolean {
+  return member.literalOf !== undefined || LITERAL_VALUES.has(member.text);
+}
+
+// Each slot of the widening gate called with each of its literal members that
+// the checker accepts. The literal stands in the call itself, so the checker
+// types the text the engine runs.
+export function memberCalls(
+  program: ts.Program,
+  surface: WideningSurface = engineSurface(program),
+): MemberCall[] {
+  const { slots } = branchingSlots(surface, program.getTypeChecker());
+  const planned = slots.flatMap((slot) =>
+    slot.domain.members.filter(isLiteralValue).map((member) => ({
+      name: slot.fn,
+      variant: slot.variant,
+      slot: slot.name,
+      member: member.text,
+      call: slot.template.replace(PLACEHOLDER, () => member.text),
+    })),
+  );
+  if (planned.length === 0) return [];
+  const checked = checkCalls(
+    program,
+    planned.map((call) => call.call),
+    [],
+    surface.prelude ?? [],
+  );
+  return planned.flatMap((call, i) => {
+    const result = checked.calls[i];
+    if (result?.signature === undefined || result.errors.length > 0) return [];
+    return [{ ...call, returns: declaredReturns(result.signature, checked.checker) }];
+  });
+}
+
+// Every function of `surface` that branches on an argument's type, called with
+// each member of each argument's domain and with widened forms of it, judged
+// against the member calls.
+export function wideningFindings(
+  program: ts.Program,
+  surface: WideningSurface = engineSurface(program),
+): Widening {
+  const checker = program.getTypeChecker();
+  const prelude = surface.prelude ?? [];
+  const { slots, unchecked } = branchingSlots(surface, checker);
   const plan = new Map(slots.map((slot) => [slot, formsOf(slot.domain)] as const));
   const first = check(program, plan, prelude);
   // The first accepted and the first rejected member, which need the member

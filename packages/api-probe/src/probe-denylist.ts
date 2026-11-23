@@ -42,6 +42,13 @@ export const PROBE_DENYLIST: Readonly<Record<string, string>> = {
   "resource.tile_source": PROPERTY_DEFAULT,
 };
 
+// Functions whose literal member calls the probe never makes, keyed `<ns.fn>`,
+// each with the reason. Their base calls still run.
+export const MEMBER_CALL_DENYLIST: Readonly<Record<string, string>> = {
+  "msg.post":
+    "the message probes post each id through the go script's queue; a direct post such as `disable` to `#` stops the probe object",
+};
+
 // Catalog members the probe never reads or writes, keyed `<ns>.<member>`.
 const ONE_SAMPLER =
   "the probe model's material binds one sampler, so only texture0 names a texture";

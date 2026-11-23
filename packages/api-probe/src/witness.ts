@@ -35,9 +35,11 @@ import {
 } from "./index-probes";
 import { messageProbes } from "./message-probes";
 import { acceptedWitnesses, narrowingVerdict, negativeWitness } from "./negative-witness";
-import { PROBE_DENYLIST } from "./probe-denylist";
+import { MEMBER_CALL_DENYLIST, PROBE_DENYLIST } from "./probe-denylist";
 import { propertyProbes } from "./property-probes";
 import { type DeclaredShape, declaredShape, kindsOf } from "./table-shapes";
+// Type-only: `widening.ts` imports this module at runtime.
+import type { MemberCall } from "./widening";
 
 const CORE_TYPES_FILE = resolve(import.meta.dir, "../../types/src/core-types.ts");
 
@@ -1025,10 +1027,38 @@ export function baseCalls(
   return { calls, unwitnessed };
 }
 
+const MEMBER_VARIANT = "member";
+
+// The member calls whose base call this pass makes, each run in that call's
+// script. A function denied member calls, or one with a call that ends the go
+// script's run, keeps only its base calls, and a call the pass already makes
+// is not made twice.
+function memberProbes(calls: readonly ProbeCall[], members: readonly MemberCall[]): ProbeCall[] {
+  const kinds = new Map(calls.map((call) => [`${call.name} ${call.variant}`, call.kind]));
+  const final = new Set([...FINAL_CALLS].map((key) => key.slice(0, key.indexOf(":"))));
+  const seen = new Set(calls.map((call) => call.call));
+  const out: ProbeCall[] = [];
+  for (const member of members) {
+    const kind = kinds.get(`${member.name} ${member.variant}`);
+    if (kind === undefined || seen.has(member.call)) continue;
+    if (MEMBER_CALL_DENYLIST[member.name] !== undefined || final.has(member.name)) continue;
+    seen.add(member.call);
+    out.push({
+      name: member.name,
+      variant: `${MEMBER_VARIANT} ${member.variant} ${member.slot}=${member.member}`,
+      kind,
+      call: member.call,
+      returns: member.returns,
+    });
+  }
+  return out;
+}
+
 export function generateProbes(
   target: ApiTarget = probeTarget(),
   backend: Box2DBackend = "v2",
   program: ts.Program = surfaceProgram(target),
+  members: readonly MemberCall[] = [],
 ): ProbeGeneration {
   const tags = box2dBackends(target.id);
   const bindings = new Map(
@@ -1041,8 +1071,8 @@ export function generateProbes(
     ).map((binding) => [`${binding.namespace}.${binding.name}`, binding]),
   );
   const checker = program.getTypeChecker();
-  const members = declaredMembers(program, comparedNamespaces(target));
-  const constants = new Set(members.constants.keys());
+  const declared = declaredMembers(program, comparedNamespaces(target));
+  const constants = new Set(declared.constants.keys());
   const calls: ProbeCall[] = [];
   const unwitnessed: Unwitnessed[] = [];
   const skipped: SkippedSlot[] = [];
@@ -1053,9 +1083,9 @@ export function generateProbes(
   const urlsByKind = new Map<ScriptKind, Set<string>>(
     SCRIPT_KINDS.map((kind) => [kind, new Set<string>()]),
   );
-  const functions = [...members.functions.keys()].filter((fqn) => runsOn(fqn, backend, tags));
+  const functions = [...declared.functions.keys()].filter((fqn) => runsOn(fqn, backend, tags));
   for (const fqn of functions) {
-    const symbol = members.functions.get(fqn) as ts.Symbol;
+    const symbol = declared.functions.get(fqn) as ts.Symbol;
     if (denied(fqn)) continue;
     const kind = contextFor(fqn.slice(0, fqn.lastIndexOf("."))).kind;
     const urls = new Set<string>();
@@ -1096,7 +1126,9 @@ export function generateProbes(
     messages = posted;
   }
   calls.push(...added);
-  for (const call of added) {
+  const joined = memberProbes(calls, members);
+  calls.push(...joined);
+  for (const call of [...added, ...joined]) {
     for (const id of urlsIn(call.call)) urlsByKind.get(call.kind)?.add(id);
   }
   const files: Record<string, string> = {};

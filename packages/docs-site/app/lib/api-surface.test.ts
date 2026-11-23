@@ -1469,15 +1469,15 @@ describe("apiModuleSymbols", () => {
     return pageWith(parseDefoldApiDoc(raw));
   }
 
-  test("msg.url collapses its 3 fixture entries to the 6 authored override rows", () => {
+  test("msg.url collapses its 3 fixture entries to the 10 authored override rows", () => {
     const store = committedStore("msg");
     const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
       (s) => s.name === "msg.url",
     );
-    // 3 fixture entries x 6 authored signatures would render 18 rows without the
+    // 3 fixture entries x 10 authored signatures would render 30 rows without the
     // collapse; the authored set is a different length than the fixture's, so
     // neither count can stand in for the other.
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(10);
     expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
   });
 
@@ -1660,14 +1660,15 @@ describe("apiModuleSymbols", () => {
     const rows = apiModuleSymbols(fixturePage("msg"), {}, store).filter(
       (s) => s.name === "msg.url",
     );
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(10);
     expect(rows[1]?.docMarkdown).toContain("[socket:][path][#fragment]");
-    expect(rows[2]?.docMarkdown).toContain("separate arguments");
+    for (const row of rows.slice(2, 5)) expect(row.docMarkdown).toContain("separate arguments");
     expect(rows[1]?.docMarkdown).not.toBe(rows[0]?.docMarkdown);
     expect(rows[2]?.docMarkdown).not.toBe(rows[0]?.docMarkdown);
     // A receiver-typed row shares the arity, and so the entry, of the plain row it mirrors.
-    expect(rows[4]?.docMarkdown).toBe(rows[1]?.docMarkdown);
-    expect(rows[5]?.docMarkdown).toBe(rows[2]?.docMarkdown);
+    expect(rows.slice(6).map((row) => row.docMarkdown)).toEqual(
+      rows.slice(1, 5).map((row) => row.docMarkdown),
+    );
   });
 
   test("msg.url still collapses to the authored rows, each carrying its own parameters", () => {
@@ -1678,10 +1679,14 @@ describe("apiModuleSymbols", () => {
     expect(rows.map((s) => s.signature)).toEqual(store["msg.url"]?.signatures ?? []);
     expect(rows[0]?.parameters).toEqual([]);
     expect(rows[1]?.parameters.map((p) => p.name)).toEqual(["urlstring"]);
-    expect(rows[2]?.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
-    expect(rows[3]?.parameters).toEqual([]);
-    expect(rows[4]?.parameters.map((p) => p.name)).toEqual(["urlstring"]);
-    expect(rows[5]?.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
+    for (const row of rows.slice(2, 5)) {
+      expect(row.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
+    }
+    expect(rows[5]?.parameters).toEqual([]);
+    expect(rows[6]?.parameters.map((p) => p.name)).toEqual(["urlstring"]);
+    for (const row of rows.slice(7)) {
+      expect(row.parameters.map((p) => p.name)).toEqual(["socket", "path", "fragment"]);
+    }
   });
 
   test("the curried go.animate/go.get/go.set rows drop tables the row that accepts them takes over", () => {
