@@ -8,11 +8,13 @@ import {
   latestReleaseTag,
   maxVersion,
   parseArgs,
+  probeGate,
   releaseReadiness,
   releaseTagsAt,
   releaseTarget,
   resolveReleaseTarget,
   sleepSync,
+  type WorkflowRun,
 } from "./release.ts";
 
 describe("release workflow library check", () => {
@@ -50,12 +52,18 @@ describe("release workflow library check", () => {
 
 describe("parseArgs", () => {
   test("defaults to no bump spec", () => {
-    expect(parseArgs([])).toEqual({ help: false, skipCiCheck: false });
+    expect(parseArgs([])).toEqual({ help: false, skipCiCheck: false, skipProbeCheck: false });
   });
 
   test("reads the --skip-ci-check flag", () => {
     expect(parseArgs(["--skip-ci-check"]).skipCiCheck).toBe(true);
     expect(parseArgs([]).skipCiCheck).toBe(false);
+  });
+
+  test("reads the --skip-probe-check flag", () => {
+    expect(parseArgs(["--skip-probe-check"]).skipProbeCheck).toBe(true);
+    expect(parseArgs(["--skip-probe-check"]).skipCiCheck).toBe(false);
+    expect(parseArgs([]).skipProbeCheck).toBe(false);
   });
 
   test("recognizes --help and -h", () => {
@@ -343,6 +351,60 @@ describe("committed changelog is release-ready", () => {
 
   test("carries no Unreleased heading in any casing or suffix", () => {
     expect(body).not.toMatch(/^##\s+Unreleased\b/im);
+  });
+});
+
+describe("probeGate", () => {
+  const head = "a".repeat(40);
+  const other = "b".repeat(40);
+  const completed = (databaseId: number, headSha: string, conclusion: string): WorkflowRun => ({
+    databaseId,
+    headSha,
+    status: "completed",
+    conclusion,
+  });
+
+  test("passes on a completed success run on head", () => {
+    expect(probeGate([completed(10, head, "success")], head, head)).toEqual({ action: "pass" });
+  });
+
+  test("counts only the newest run on head: older red under newer green passes", () => {
+    const runs = [completed(10, head, "failure"), completed(11, head, "success")];
+    expect(probeGate(runs, head, head)).toEqual({ action: "pass" });
+  });
+
+  test("counts only the newest run on head: older green under newer red fails", () => {
+    const runs = [completed(11, head, "failure"), completed(10, head, "success")];
+    expect(probeGate(runs, head, head).action).toBe("fail");
+  });
+
+  test("watches an in-progress run on head", () => {
+    const runs: WorkflowRun[] = [
+      completed(10, head, "success"),
+      { databaseId: 12, headSha: head, status: "in_progress", conclusion: "" },
+    ];
+    expect(probeGate(runs, head, head)).toEqual({ action: "watch", runId: "12" });
+  });
+
+  test("fails on a red newest run, naming the run and how to rerun it", () => {
+    const gate = probeGate([completed(42, head, "failure")], head, head);
+    expect(gate.action).toBe("fail");
+    if (gate.action !== "fail") return;
+    expect(gate.reason).toContain("42");
+    expect(gate.reason).toContain("gh run rerun");
+  });
+
+  test("dispatches when head is the tip and has no run, ignoring green runs elsewhere", () => {
+    expect(probeGate([completed(10, other, "success")], head, head)).toEqual({
+      action: "dispatch",
+    });
+  });
+
+  test("fails when head is behind the tip and has no run", () => {
+    const gate = probeGate([completed(10, other, "success")], head, other);
+    expect(gate.action).toBe("fail");
+    if (gate.action !== "fail") return;
+    expect(gate.reason).toMatch(/tip/);
   });
 });
 

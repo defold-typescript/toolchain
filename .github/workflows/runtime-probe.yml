@@ -1,0 +1,47 @@
+name: Runtime probe
+
+# Runs the engine runtime probe (packages/api-probe, `test:probe`): it builds a
+# probe project with bob, launches the Defold engine and checks every generated
+# call against what the engine actually does. It needs Java, a window session for
+# the engine, and network access to the Defold archive and build.defold.com, so it
+# is too slow and too dependent on outside services for ci.yml. It runs on macOS
+# because the local runs that keep probe-exemptions.json green are macOS, and an
+# exemption key does not name its host.
+#
+# It runs weekly to report drift between releases, and on demand. scripts/release.ts
+# reads this workflow's runs: it tags a release only after a green run on the commit
+# it tags, and dispatches one on the default branch when that commit has none.
+
+on:
+  schedule:
+    - cron: "37 5 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  runtime-probe:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
+      # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run --cwd packages/api-probe test:probe

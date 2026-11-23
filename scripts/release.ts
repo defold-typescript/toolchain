@@ -32,6 +32,7 @@ const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 export interface Args {
   readonly help: boolean;
   readonly skipCiCheck: boolean;
+  readonly skipProbeCheck: boolean;
 }
 
 export const HELP = `Cut a release: tag the version the changelog projects, and push it.
@@ -42,23 +43,28 @@ Usage:
 
 Takes no version argument. Reads the projected next version from the top
 \`## vX.Y.Z\` heading in packages/docs/guide/changelog.md, verifies it is strictly
-greater than the latest release tag, waits for the commit's CI run to pass, then
-creates and pushes that v<version> tag. The Release workflow publishes from the
-tag via OIDC; nothing is published locally.
+greater than the latest release tag, waits for the commit's CI run and a
+runtime-probe.yml run on the same commit to pass (dispatching the probe when the
+commit has none), then creates and pushes that v<version> tag. The Release
+workflow publishes from the tag via OIDC; nothing is published locally.
 
 Flags:
   --skip-ci-check         tag without waiting for the commit's CI run to pass
+  --skip-probe-check      tag without a green runtime-probe.yml run on the commit
   -h, --help              show this help`;
 
 export function parseArgs(argv: readonly string[]): Args {
   const positional: string[] = [];
   let help = false;
   let skipCiCheck = false;
+  let skipProbeCheck = false;
   for (const arg of argv) {
     if (arg === "--help" || arg === "-h") {
       help = true;
     } else if (arg === "--skip-ci-check") {
       skipCiCheck = true;
+    } else if (arg === "--skip-probe-check") {
+      skipProbeCheck = true;
     } else if (arg.startsWith("-")) {
       throw new Error(`unknown flag: ${arg}`);
     } else {
@@ -68,7 +74,7 @@ export function parseArgs(argv: readonly string[]): Args {
   if (positional.length > 0) {
     throw new Error(`expected no arguments, got: ${positional.join(", ")}`);
   }
-  return { help, skipCiCheck };
+  return { help, skipCiCheck, skipProbeCheck };
 }
 
 function parseSemver(v: string): [number, number, number] {
@@ -159,6 +165,54 @@ export function releaseTarget(readiness: ReleaseReadiness): string {
   }
 }
 
+const PROBE_WORKFLOW = "runtime-probe.yml";
+
+export interface WorkflowRun {
+  readonly databaseId: number;
+  readonly headSha: string;
+  readonly status: string;
+  readonly conclusion: string;
+}
+
+export type ProbeGate =
+  | { readonly action: "pass" }
+  | { readonly action: "watch"; readonly runId: string }
+  | { readonly action: "dispatch" }
+  | { readonly action: "fail"; readonly reason: string };
+
+// Whether the runtime probe has vouched for `head`, the commit about to be tagged.
+// Only the newest run on `head` counts, so a rerun overrides the run before it. A
+// dispatch runs on the branch tip, so it can only stand in for a missing run when
+// `head` is the tip; a run on any other commit vouches for nothing.
+export function probeGate(runs: readonly WorkflowRun[], head: string, tip: string): ProbeGate {
+  let newest: WorkflowRun | undefined;
+  for (const candidate of runs) {
+    if (candidate.headSha !== head) continue;
+    if (newest === undefined || candidate.databaseId > newest.databaseId) newest = candidate;
+  }
+  const short = head.slice(0, 9);
+  if (newest === undefined) {
+    if (head === tip) return { action: "dispatch" };
+    return {
+      action: "fail",
+      reason:
+        `no ${PROBE_WORKFLOW} run on ${short}, and a dispatched run would probe the tip ` +
+        `${tip.slice(0, 9)} instead; release from the tip (or --skip-probe-check)`,
+    };
+  }
+  if (newest.status !== "completed") {
+    return { action: "watch", runId: String(newest.databaseId) };
+  }
+  if (newest.conclusion === "success") return { action: "pass" };
+  const id = newest.databaseId;
+  return {
+    action: "fail",
+    reason:
+      `${PROBE_WORKFLOW} run ${id} on ${short} concluded ${newest.conclusion || "without success"}; ` +
+      `fix it, or retry with gh run rerun ${id}, then re-run (or --skip-probe-check)`,
+  };
+}
+
 function run(cmd: string[], opts: { inherit?: boolean } = {}): { code: number; output: string } {
   const [bin, ...rest] = cmd;
   if (!bin) throw new Error("run() called with an empty command");
@@ -234,6 +288,82 @@ function waitForGreenCI(sha: string): void {
   }
 }
 
+function listProbeRuns(head: string): WorkflowRun[] {
+  const list = run([
+    "gh",
+    "run",
+    "list",
+    "--workflow",
+    PROBE_WORKFLOW,
+    "--commit",
+    head,
+    "--json",
+    "databaseId,headSha,status,conclusion",
+    "--limit",
+    "20",
+  ]);
+  if (list.code !== 0) {
+    die(
+      `could not query ${PROBE_WORKFLOW} runs via gh (${list.output.trim() || "command failed"}); ` +
+        "is gh installed and authenticated? (or pass --skip-probe-check)",
+    );
+  }
+  try {
+    return JSON.parse(list.output) as WorkflowRun[];
+  } catch {
+    die(`could not read the ${PROBE_WORKFLOW} run list from gh: ${list.output.trim()}`);
+  }
+}
+
+// Decide the probe gate for `head` and return the run id to watch, or nothing
+// when a green run already covers it. Started before the CI wait so the probe
+// (about 15 minutes) overlaps it.
+function startProbeGate(head: string, remoteRef: string): string | undefined {
+  const tip = run(["git", "rev-parse", remoteRef]).output.trim();
+  const gate = probeGate(listProbeRuns(head), head, tip);
+  if (gate.action === "pass") {
+    process.stdout.write(`${PROBE_WORKFLOW} already passed on ${head.slice(0, 9)}\n`);
+    return undefined;
+  }
+  if (gate.action === "watch") return gate.runId;
+  if (gate.action === "fail") die(gate.reason);
+  const branch = remoteRef.replace(/^origin\//, "");
+  const dispatch = run(["gh", "workflow", "run", PROBE_WORKFLOW, "--ref", branch]);
+  if (dispatch.code !== 0) {
+    die(
+      `could not dispatch ${PROBE_WORKFLOW} on ${branch} (${dispatch.output.trim() || "command failed"}) ` +
+        "(or pass --skip-probe-check)",
+    );
+  }
+  process.stdout.write(`dispatched ${PROBE_WORKFLOW} on ${branch} at ${head.slice(0, 9)}\n`);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    sleepSync(10_000);
+    const queued = probeGate(listProbeRuns(head), head, tip);
+    if (queued.action === "watch") return queued.runId;
+    if (queued.action === "pass") return undefined;
+    if (queued.action === "fail") die(queued.reason);
+  }
+  die(
+    `dispatched ${PROBE_WORKFLOW} but no run appeared on ${head.slice(0, 9)}; ` +
+      `check gh run list --workflow ${PROBE_WORKFLOW}, then re-run (or --skip-probe-check)`,
+  );
+}
+
+function waitForProbeRun(runId: string, head: string): void {
+  process.stdout.write(
+    `waiting for ${PROBE_WORKFLOW} run ${runId} on ${head.slice(0, 9)} to finish...\n`,
+  );
+  const watch = run(["gh", "run", "watch", runId, "--exit-status", "--interval", "30"], {
+    inherit: true,
+  });
+  if (watch.code !== 0) {
+    die(
+      `${PROBE_WORKFLOW} run ${runId} did not pass; fix it, or retry with gh run rerun ${runId}, ` +
+        "then re-run (or --skip-probe-check)",
+    );
+  }
+}
+
 function main(): void {
   let args: Args;
   try {
@@ -292,11 +422,20 @@ function main(): void {
     `latest tag:     ${latestTag}\ntarget version: ${target}\ntag:            ${tag}\n\n`,
   );
 
+  let probeRunId: string | undefined;
+  if (args.skipProbeCheck) {
+    process.stdout.write(
+      `warning: --skip-probe-check set; tagging without a green ${PROBE_WORKFLOW} run\n`,
+    );
+  } else {
+    probeRunId = startProbeGate(head, remoteRef);
+  }
   if (args.skipCiCheck) {
     process.stdout.write("warning: --skip-ci-check set; tagging without waiting for CI\n");
   } else {
     waitForGreenCI(head);
   }
+  if (probeRunId !== undefined) waitForProbeRun(probeRunId, head);
 
   if (run(["git", "rev-parse", "--verify", "--quiet", `refs/tags/${tag}`]).code === 0) {
     die(
