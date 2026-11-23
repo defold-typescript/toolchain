@@ -39,6 +39,7 @@ describe("widening findings on a fixture surface", () => {
     "    function widen_progress(o: { progress?: boolean }, cb: (r: { status: number }) => void): void;",
     "    function widen_opt<N extends 1 | 2>(n?: N): number;",
     "    function widen_agree<T extends WidenA | WidenB>(a: T, b: number | T): T;",
+    '    function widen_one<K extends "a" | (string & {})>(id: K): K extends "a" ? string : number;',
     "  }",
     "}",
   ].join("\n");
@@ -95,6 +96,12 @@ describe("widening findings on a fixture surface", () => {
 
   test("a union of arguments that must agree is verdictable", () => {
     expect(findings("sys.widen_agree")).toEqual([["sys.widen_agree required b union sound", true]]);
+  });
+
+  test("an open domain with one literal member is judged against it", () => {
+    expect(findings("sys.widen_one")).toEqual([["sys.widen_one required id base sound", true]]);
+    const [finding] = widening.findings.filter((entry) => entry.fn === "sys.widen_one");
+    expect(finding?.detail).toContain('member "a" returns string');
   });
 
   test("every fixture function gets a base call", () => {
