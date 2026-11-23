@@ -17,12 +17,49 @@ function kindOf(value: unknown): string {
   return "userdata";
 }
 
-// One `RET` line per value a call returned, trailing nils included.
+// One `RETF` line per distinct path and kind inside a returned table: a string
+// key extends the path with `.<key>`, any other key with `[<kind>]`. The walk
+// has no depth cap, since the comparison ignores paths no declaration
+// describes. Only a table that holds itself stops the walk: one table under
+// two keys, as a Box2D v2 hit's `shape` and `fixture`, is walked under both.
+function probeFields(
+  name: string,
+  variant: string,
+  path: string,
+  table: LuaTable<AnyNotNil, unknown>,
+  printed: LuaSet<string>,
+  ancestors: LuaSet<object>,
+): void {
+  if (ancestors.has(table)) return;
+  ancestors.add(table);
+  for (const [key, value] of pairs(table)) {
+    const child = type(key) === "string" ? `${path}.${key}` : `${path}[${kindOf(key)}]`;
+    const kind = kindOf(value);
+    const line = `RETF\t${name}\t${variant}\t${child}\t${kind}`;
+    if (!printed.has(line)) {
+      printed.add(line);
+      print(line);
+    }
+    if (kind === "table") {
+      probeFields(name, variant, child, value as LuaTable<AnyNotNil, unknown>, printed, ancestors);
+    }
+  }
+  ancestors.delete(table);
+}
+
+// One `RET` line per value a call returned, trailing nils included, each table
+// followed by the `RETF` lines of what it holds.
 export function probeReturn(name: string, variant: string, ...values: unknown[]): void {
   const count = select("#", ...values);
+  const printed = new LuaSet<string>();
   for (let i = 1; i <= count; i++) {
     const [value] = select(i, ...values);
-    print(`RET\t${name}\t${variant}\t${i}\t${kindOf(value)}`);
+    const kind = kindOf(value);
+    print(`RET\t${name}\t${variant}\t${i}\t${kind}`);
+    if (kind === "table") {
+      const table = value as LuaTable<AnyNotNil, unknown>;
+      probeFields(name, variant, `${i}`, table, printed, new LuaSet<object>());
+    }
   }
 }
 

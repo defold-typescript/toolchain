@@ -9,6 +9,9 @@ export interface ProbeOutcome {
   readonly message: string;
   // The kind of each value an ok call returned, from its `RET` lines.
   readonly returns?: readonly string[];
+  // The kinds held at each path inside the tables an ok call returned, from
+  // its `RETF` lines: `1.version`, `1[number].name`.
+  readonly fields?: Readonly<Record<string, readonly string[]>>;
 }
 
 const MARKER = "PROBE\t";
@@ -60,17 +63,19 @@ export function parseProbeLine(line: string): ProbeOutcome | undefined {
 }
 
 const RETURN = /\bRET\t([^\t]+)\t([^\t]+)\t(\d+)\t(\w+)/;
+const RETURN_FIELD = /\bRETF\t([^\t]+)\t([^\t]+)\t([^\t]+)\t(\w+)/;
 const POST = /\bPOST\t([^\t]+)\t([^\t]+)\t(\d+)/;
 const POSTS_DONE = /\bPOSTS_DONE\b/;
 const ENGINE_ERROR = /\bERROR:/;
 
-// Every `PROBE` line of an engine log, each ok one carrying the `RET` lines
-// the runtime printed for it just before. A message the go script posted fails
+// Every `PROBE` line of an engine log, each ok one carrying the `RET` and
+// `RETF` lines the runtime printed for it just before. A message the go script posted fails
 // on the first `ERROR:` line logged between its `POST` line and the next one:
 // the engine reports a message it cannot deliver or decode while dispatching,
 // after `msg.post` returned.
 export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
   const pending = new Map<string, string[]>();
+  const pendingFields = new Map<string, Record<string, Set<string>>>();
   const outcomes: ProbeOutcome[] = [];
   const posted = new Map<string, string>();
   let window: { key: string; frame: string } | undefined;
@@ -92,8 +97,35 @@ export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
     if (outcome !== undefined) {
       const key = `${outcome.name}\t${outcome.variant}`;
       const returns = pending.get(key);
+      const fields = pendingFields.get(key) ?? {};
       pending.delete(key);
-      outcomes.push(outcome.outcome === "ok" ? { ...outcome, returns: returns ?? [] } : outcome);
+      pendingFields.delete(key);
+      outcomes.push(
+        outcome.outcome === "ok"
+          ? {
+              ...outcome,
+              returns: returns ?? [],
+              fields: Object.fromEntries(
+                Object.entries(fields).map(([path, kinds]) => [path, [...kinds].sort()]),
+              ),
+            }
+          : outcome,
+      );
+      continue;
+    }
+    const field = RETURN_FIELD.exec(line);
+    if (field) {
+      const [, name, variant, path, kind] = field as unknown as [
+        string,
+        string,
+        string,
+        string,
+        string,
+      ];
+      const key = `${name}\t${variant}`;
+      const fields = pendingFields.get(key) ?? {};
+      fields[path] = (fields[path] ?? new Set()).add(kind);
+      pendingFields.set(key, fields);
       continue;
     }
     const value = RETURN.exec(line);
