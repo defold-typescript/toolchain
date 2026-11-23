@@ -1,0 +1,112 @@
+{
+  "info": {
+    "namespace": "messagepack",
+    "brief": "Encode Lua values and decode custom binary data in the\n[MessagePack format](https://msgpack.org/index.html).\n\nDecoding parses directly into Lua tables and strings without an intermediate\nnative tree. Container nesting is limited to 64 levels.",
+    "description": "Encode Lua values and decode custom binary data in the\n[MessagePack format](https://msgpack.org/index.html).\n\nDecoding parses directly into Lua tables and strings without an intermediate\nnative tree. Container nesting is limited to 64 levels."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "messagepack.decode",
+      "description": "Decode exactly one complete MessagePack value. Malformed, truncated,\ntrailing or unsupported data raises a Lua error.\n\nNil becomes Lua nil by default. Use `decode_null_as_userdata` to retain\nnull fields and array entries as `messagepack.null`. Arrays become\ntables indexed from 1; maps become tables. Duplicate keys use the last\nvalue. Keys must be representable in Lua; nil and NaN keys are rejected.\nThe null option also permits a MessagePack nil key as the sentinel.\n\nAll integer and floating formats become Lua numbers. Lua's double\nprecision representation can round integers beyond its exact integer\nrange. String and binary formats both become binary-safe Lua strings.\nEmpty arrays and maps both become empty tables. Extension types,\nincluding timestamps, are unsupported.",
+      "parameters": [
+        {
+          "name": "bytes",
+          "doc": "MessagePack bytes; embedded NUL bytes are supported.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional decoding settings.",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "decode_null_as_userdata",
+              "doc": "Preserve nil values as messagepack.null. Defaults to false.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The decoded Lua value.",
+          "types": [
+            "nil",
+            "boolean",
+            "number",
+            "string",
+            "table",
+            "userdata"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local bytes = assert(sys.load_resource(\"/data/config.msgpack\"))\nlocal config = messagepack.decode(bytes)</code></pre></div><div class=\"codehilite\"><pre><code class=\"language-lua\">local bytes = messagepack.encode({1, messagepack.null, 3})\nlocal values = messagepack.decode(bytes, {\n    decode_null_as_userdata = true\n})\nassert(values[2] == messagepack.null)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "messagepack.encode",
+      "description": "Encode one Lua value into a binary MessagePack string.\n\nDense tables with exactly the integer keys `1..n` become arrays.\nSparse, mixed-key and other tables become maps. Empty tables default\nto maps; `encode_empty_table_as_map = false` changes all empty tables\nin this call to arrays. Raw entries are used without table metamethods.\nMap order is unspecified. Shared tables are serialized independently;\ncyclic tables and nesting beyond 64 containers raise errors.\n\nExactly integral numbers within the signed/unsigned 64-bit ranges use\nthe smallest integer format. Other numbers use float64. Negative zero,\nNaN and infinities are preserved. Lua strings use the MessagePack string\nformat and retain every byte; decoding and re-encoding a binary-format\nvalue therefore changes its tag to a string tag.\n\nOnly `messagepack.null` (also `json.null`) is supported as userdata.\nFunctions, threads and other userdata raise errors.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "Value to encode; messagepack.null encodes as MessagePack nil.",
+          "types": [
+            "nil",
+            "boolean",
+            "number",
+            "string",
+            "table",
+            "userdata"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Optional encoding settings.",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "encode_empty_table_as_map",
+              "doc": "Encode empty tables as maps. Defaults to true; applies recursively.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "bytes",
+          "doc": "A Lua-owned binary MessagePack string.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local bytes = messagepack.encode({name = \"player\", position = {1, 2, 3}})\nlocal value = messagepack.decode(bytes)\nassert(value.position[2] == 2)</code></pre></div><div class=\"codehilite\"><pre><code class=\"language-lua\">local bytes = messagepack.encode({}, {encode_empty_table_as_map = false})\nassert(bytes == string.char(0x90))</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "messagepack.null",
+      "brief": "Null light-userdata sentinel, identical to `json.null`. It encodes as\nMessagePack nil. Decode with `decode_null_as_userdata = true` to retain\nnil values in tables instead of dropping those Lua entries.",
+      "description": "Null light-userdata sentinel, identical to `json.null`. It encodes as\nMessagePack nil. Decode with `decode_null_as_userdata = true` to retain\nnil values in tables instead of dropping those Lua entries.",
+      "types": [
+        "userdata"
+      ]
+    }
+  ]
+}

@@ -98,9 +98,9 @@
     {
       "id": "defdragon",
       "repo": "https://github.com/wraplord/extension-dragonbones",
-      "ref": "0.7.3",
+      "ref": "0.7.5",
       "refKind": "release",
-      "refDate": "2026-08-16T12:33:01Z",
+      "refDate": "2026-11-11T16:12:58Z",
       "license": "",
       "description": "Defold native extension for DragonBones 2D skeletal animation with DragonBones Pro 5.5 runtime support.",
       "docs": [
@@ -258,9 +258,9 @@
     {
       "id": "luafilesystemlfs",
       "repo": "https://github.com/britzl/defold-lfs",
-      "ref": "1.3.0",
+      "ref": "1.3.1",
       "refKind": "release",
-      "refDate": "2024-12-24T23:16:31Z",
+      "refDate": "2026-11-16T14:04:44Z",
       "license": "MIT",
       "description": "LuaFileSystem offers a portable way to access the underlying directory structure and file attributes.",
       "docs": [
@@ -268,6 +268,21 @@
           "path": "lfs/api/lfs.script_api",
           "namespace": "lfs",
           "page": "lfs"
+        }
+      ]
+    },
+    {
+      "id": "message-pack",
+      "repo": "https://github.com/defold/extension-messagepack",
+      "ref": "dc2d0b16b2f04c7a20037a6368ecbab348a30c12",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "A native MessagePack encoder and decoder for Defold. Convert Lua values and tables to compact binary strings and decode MessagePack data back into Lua for storage or network communication.",
+      "docs": [
+        {
+          "path": "messagepack/api/messagepack.script_api",
+          "namespace": "messagepack",
+          "page": "messagepack"
         }
       ]
     },
@@ -300,6 +315,21 @@
           "path": "page_visibility/api/page_visibility.script_api",
           "namespace": "page_visibility",
           "page": "page_visibility"
+        }
+      ]
+    },
+    {
+      "id": "pcg-random",
+      "repo": "https://github.com/Lerg/extension-pcgrandom",
+      "ref": "779bfe3be9249da368a2627d22e32a008ad38492",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "PCG Random Number Generator Extension for Defold wraps PCG, A Family of Better Random Number Generators. C implementation v0.98.",
+      "docs": [
+        {
+          "path": "pcgrandom/api/pcgrandom.script_api",
+          "namespace": "pcgrandom",
+          "page": "pcgrandom"
         }
       ]
     },
@@ -354,9 +384,9 @@
     {
       "id": "screenshot",
       "repo": "https://github.com/britzl/defold-screenshot",
-      "ref": "1.13.0",
+      "ref": "1.13.1",
       "refKind": "release",
-      "refDate": "2026-04-14T07:29:37Z",
+      "refDate": "2026-11-16T13:57:51Z",
       "license": "MIT",
       "description": "Take full or partial screenshots as PNG, buffer or raw pixels.",
       "docs": [
@@ -402,9 +432,9 @@
     {
       "id": "sprite-loop",
       "repo": "https://github.com/Balkan-Ram-Games/spriteloop-defold",
-      "ref": "v0.15.0-alpha",
+      "ref": "v0.16.0-alpha",
       "refKind": "tag",
-      "refDate": "2026-10-13T08:44:41Z",
+      "refDate": "2026-11-08T16:41:02Z",
       "license": "",
       "description": "SpriteLoop is a lightweight 2D cut-out animation tool for rigging characters, props, UI elements, and effects from separate PNG parts. Build parent-child rigs, animate transforms and opacity, reuse animations across skins and part variants, and export compact .spla runtime packages. The Defold extension adds SpriteLoop as a custom game object component with editor integration. Add a SpriteLoop component, assign an exported .spla package, choose its default skin, and control playback from Lua. The runtime also supports animation events, skin and part-variant switching, tinting, seeking, and querying animated part transforms for attachments and gameplay logic.",
       "docs": [

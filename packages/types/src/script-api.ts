@@ -72,11 +72,18 @@ function slotList(value: unknown): Record<string, unknown>[] {
 const REQUIRED_SUFFIX = /\s*\(required\)$/i;
 
 // Upstream writes an omissible slot in call-syntax brackets (`[options]`), the
-// same convention its own `desc` prose uses for an optional argument.
+// same convention its own `desc` prose uses for an optional argument. Left
+// unquoted, `name: [options]` is a YAML flow sequence and parses as a one-item
+// list, so that list reads as the bracketed name too.
 const BRACKETED_NAME = /^\[([^[\]]+)\]$/;
 
 function slotName(item: Record<string, unknown>): string {
-  return stringOr(item.name, "").replace(REQUIRED_SUFFIX, "");
+  const raw = item.name;
+  const name =
+    Array.isArray(raw) && raw.length === 1 && typeof raw[0] === "string"
+      ? `[${raw[0]}]`
+      : stringOr(raw, "");
+  return name.replace(REQUIRED_SUFFIX, "");
 }
 
 function isBracketed(item: Record<string, unknown>): boolean {

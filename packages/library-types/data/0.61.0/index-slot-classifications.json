@@ -43,6 +43,10 @@
     "class": "native-0",
     "evidence": "extension_imgui.cpp:imgui_StoreFont returns Size() - 1, and imgui_GetFont accepts 0 .. Size() - 1"
   },
+  "messagepack/messagepack.decode:return:value": {
+    "class": "native-1",
+    "evidence": "messagepack_lua.cpp:Set stores a decoded array element at lua_rawseti(L, -2, index + 1), so arrays count from 1"
+  },
   "mic/mic.start:param:options:device_index": {
     "class": "native-0",
     "evidence": "Zero-based index of the capture device to use"

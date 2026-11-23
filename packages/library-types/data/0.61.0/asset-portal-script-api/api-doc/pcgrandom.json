@@ -1,0 +1,1021 @@
+{
+  "info": {
+    "namespace": "pcgrandom",
+    "brief": "PCG Random Extension",
+    "description": "PCG Random Extension"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.new_rng",
+      "description": "Creates a new specified random number generator with a given seed and an optional stream for generators that support it.",
+      "parameters": [
+        {
+          "name": "pcg_type",
+          "doc": "PCG type.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seed",
+          "doc": "Seed number.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "stream",
+          "doc": "Stream number.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.new_rng_array",
+      "description": "Creates a new specified extended random number generator with a given array for the extended data, seed and an optional stream for generators that support it.",
+      "parameters": [
+        {
+          "name": "pcg_type",
+          "doc": "PCG type.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "array",
+          "doc": "Array with UINT32 numbers for the extended data, the size of the array must match the generator type.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "seed",
+          "doc": "Seed number.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "stream",
+          "doc": "Stream number.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.next",
+      "description": "Generates a pseudorandom integer number.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.bound",
+      "description": "Generates a pseudorandom integer number on [0,upper_bound) interval.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        },
+        {
+          "name": "upper_bound",
+          "doc": "Upper bound.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.range",
+      "description": "Generates a pseudorandom integer number on [lower_bound,upper_bound) interval.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        },
+        {
+          "name": "lower_bound",
+          "doc": "Lower bound.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "upper_bound",
+          "doc": "Upper bound.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.advance",
+      "description": "Advances the generator forward delta steps, but does so in logarithmic time. (Not available for non-equidistributed extended generators.)",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        },
+        {
+          "name": "delta",
+          "doc": "Delta.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.backstep",
+      "description": "Moves the generator backwards delta steps, but does so in logarithmic time. (Not available for non-equidistributed extended generators.)",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        },
+        {
+          "name": "delta",
+          "doc": "Delta.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.max",
+      "description": "Returns the greatest possible random value from the generator.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "max",
+          "doc": "Max.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.period_pow2",
+      "description": "Returns the period of the generator as a power of two. For PCG32, it returns 64, indicating a period of 2^64.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "period",
+          "doc": "Period.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.streams_pow2",
+      "description": "Returns the number of streams as a power of two. For PCG32, it returns 63, indicating 2^63 streams.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "streams",
+          "doc": "Streams.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.wrapped",
+      "description": "Tells you when the generator wraps around to the beginning (which we define as the zero state).",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "wrapped",
+          "doc": "Wrapped.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.next_uint64",
+      "description": "Generates a UINT64 pseudorandom number when used with a 64-bit generator.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "UINT64 random value represented as an 8 character long string - memory representation of a UINT64 number.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.next_real1",
+      "description": "Generates a random number on [0,1]-real-interval.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.next_real2",
+      "description": "Generates a random number on [0,1)-real-interval.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.next_res53",
+      "description": "Generates a random number on [0,1)-real-interval with 53-bit resolution using a 64-bit integer when used with a 64-bit generator.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d4",
+      "description": "Generates a random integer on [1,4] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d6",
+      "description": "Generates a random integer on [1,6] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d8",
+      "description": "Generates a random integer on [1,8] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d10",
+      "description": "Generates a random integer on [1,10] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d12",
+      "description": "Generates a random integer on [1,12] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.d20",
+      "description": "Generates a random integer on [1,20] interval like from a dice.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.toss",
+      "description": "Generates a random integer on [0,1] interval like from a toss of a coin.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.card",
+      "description": "Generates a random integer on [1,52] interval like picking a random card from a standard deck.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random value.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.card2",
+      "description": "Generates two random integers on [1,4] and [1,13] intervals like picking a random card suit and a random card from a suit.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "suit",
+          "doc": "Random suit [1,4].",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "card",
+          "doc": "Random card [1,13].",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.shuffle",
+      "description": "Shuffles the provided array in place.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        },
+        {
+          "name": "array",
+          "doc": "The array of values.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pcgrandom.delete",
+      "description": "Deletes the random generator and frees the alocated memory for it.",
+      "parameters": [
+        {
+          "name": "rng",
+          "doc": "RNG instance.",
+          "types": [
+            "lightuserdata"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_UNIQUE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_UNIQUE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG8_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG16_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG8_ONESEQ_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG16_ONESEQ_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_ONESEQ_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_ONESEQ_ONCE_INSECURE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K2",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K2_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K64",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K64_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K64_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_C64",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_C64_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_C64_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K1024",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K1024_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_C1024",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_C1024_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K16384",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG32_K16384_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_K32",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_K32_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_K32_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_C32",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_C32_ONESEQ",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_C32_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_K1024",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_K1024_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_C1024",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pcgrandom.PCG64_C1024_FAST",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

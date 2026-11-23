@@ -803,6 +803,16 @@ const BRACKETED = `
     - name: "[chars]"
       type: string
       desc: the characters to trim
+  - name: seed
+    type: function
+    desc: an unquoted bracketed slot
+    parameters:
+    - name: value
+      type: number
+      desc: the seed
+    - name: [stream]
+      type: number
+      desc: the stream
   - name: configure
     type: function
     desc: a bracketed table field
@@ -869,6 +879,17 @@ describe("scriptApiToRefDoc bracketed slots", () => {
       name: "chars",
       doc: "the characters to trim",
       types: ["string"],
+      is_optional: "True",
+    });
+  });
+
+  it("reads an unquoted bracketed slot, which YAML parses as a one-item list, as optional", () => {
+    const forms = bracketed("seed");
+    expect(forms).toHaveLength(1);
+    expect(forms[0]?.parameters[1]).toEqual({
+      name: "stream",
+      doc: "the stream",
+      types: ["number"],
       is_optional: "True",
     });
   });
