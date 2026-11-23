@@ -8,59 +8,115 @@
         "moduleConstants": {
           "MSG_INITIALIZED": {
             "type": "hash",
-            "doc": "Posted to every listener once `init` finishes."
+            "doc": "Posted to every listener once `init` finishes.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_INITIALIZED = hash(\"liveupdater_initialized\")"
+            }
           },
           "MSG_INITIALIZATION_FAILED": {
             "type": "hash",
-            "doc": "Message id reserved for a failed initialization; this version never posts it."
+            "doc": "Message id reserved for a failed initialization; this version never posts it.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_INITIALIZATION_FAILED = hash(\"liveupdater_initialization_failed\")"
+            }
           },
           "MSG_FILE_LOADED": {
             "type": "hash",
-            "doc": "Posted with `file_name` and `module_name` each time an archive is mounted."
+            "doc": "Posted with `file_name` and `module_name` each time an archive is mounted.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_FILE_LOADED = hash(\"liveupdater_file_loaded\")"
+            }
           },
           "MSG_MODULE_LOADED": {
             "type": "hash",
-            "doc": "Posted with `file_name` and `module_name` once every archive of a module is mounted."
+            "doc": "Posted with `file_name` and `module_name` once every archive of a module is mounted.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_MODULE_LOADED = hash(\"liveupdater_module_loaded\")"
+            }
           },
           "MSG_ALL_LOADED": {
             "type": "hash",
-            "doc": "Posted once every queued archive is mounted."
+            "doc": "Posted once every queued archive is mounted.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_ALL_LOADED = hash(\"liveupdater_all_loaded\")"
+            }
           },
           "MSG_NETWORK_ERROR": {
             "type": "hash",
-            "doc": "Posted when an archive download fails; the download retries after five seconds."
+            "doc": "Posted when an archive download fails; the download retries after five seconds.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.MSG_NETWORK_ERROR = hash(\"liveupdater_network_error\")"
+            }
           },
           "DEBUG": {
             "type": "integer",
-            "doc": "Debug log level passed to the `set_log_function` callback."
+            "doc": "Debug log level passed to the `set_log_function` callback.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.DEBUG, M[1] = 1, \"DEBUG\""
+            }
           },
           "INFO": {
             "type": "integer",
-            "doc": "Info log level passed to the `set_log_function` callback."
+            "doc": "Info log level passed to the `set_log_function` callback.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.INFO, M[2] = 2, \"INFO\""
+            }
           },
           "WARN": {
             "type": "integer",
-            "doc": "Warning log level passed to the `set_log_function` callback."
+            "doc": "Warning log level passed to the `set_log_function` callback.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.WARN, M[3] = 3, \"WARN\""
+            }
           },
           "ERROR": {
             "type": "integer",
-            "doc": "Error log level passed to the `set_log_function` callback."
+            "doc": "Error log level passed to the `set_log_function` callback.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.ERROR, M[4] = 4, \"ERROR\""
+            }
           },
           "FATAL": {
             "type": "integer",
-            "doc": "Fatal log level passed to the `set_log_function` callback."
+            "doc": "Fatal log level passed to the `set_log_function` callback.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.FATAL, M[5] = 5, \"FATAL\""
+            }
           },
           "RES_HIGH_ONLY": {
             "type": "liveupdater.res_mode",
-            "doc": "`res_mode` that loads only the high-resolution archives; the default."
+            "doc": "`res_mode` that loads only the high-resolution archives; the default.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.RES_HIGH_ONLY = RES_HIGH_ONLY"
+            }
           },
           "RES_LOW_ONLY": {
             "type": "liveupdater.res_mode",
-            "doc": "`res_mode` that loads only the low-resolution archives."
+            "doc": "`res_mode` that loads only the low-resolution archives.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.RES_LOW_ONLY = RES_LOW_ONLY"
+            }
           },
           "RES_BOTH": {
             "type": "liveupdater.res_mode",
-            "doc": "`res_mode` that loads both resolutions."
+            "doc": "`res_mode` that loads both resolutions.",
+            "evidence": {
+              "file": "live_unbundler/live_unbundler.lua",
+              "contains": "M.RES_BOTH = RES_BOTH"
+            }
           }
         }
       }

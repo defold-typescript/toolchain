@@ -12,7 +12,13 @@
             "methods": {
               "onAddToWorld": {
                 "params": {
-                  "world": { "type": "world" }
+                  "world": {
+                    "type": "world",
+                    "evidence": {
+                      "file": "decore/internal/event_bus_system.lua",
+                      "contains": "function M:onAddToWorld(world) world.event = event_bus.create()"
+                    }
+                  }
                 }
               }
             }

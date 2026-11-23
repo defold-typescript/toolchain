@@ -13,7 +13,11 @@
       "annotationOverrides": {
         "moduleObject": {
           "interface": "FakeRealGlassModule",
-          "fields": {}
+          "fields": {},
+          "evidence": {
+            "file": "fake_real_glass/fake_real_glass.lua",
+            "contains": "---@class FakeRealGlassModule"
+          }
         }
       }
     }

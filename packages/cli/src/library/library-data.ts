@@ -11,6 +11,7 @@ import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import { COMMIT_COMMENT } from "../extension-version";
 import { libraryName, namesSelectedBy } from "../library-match";
+import { requireOverrideEvidence } from "./apply-luals-overrides";
 import {
   compareTriples,
   isUnversioned,
@@ -389,7 +390,12 @@ interface Pin {
   license: string | undefined;
 }
 
-function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): LualsTarget[] {
+function lualsTargets(
+  dataDir: string,
+  dir: string,
+  pin: Pin,
+  entries: Partial<LualsEntry>[],
+): LualsTarget[] {
   const file = `${dir}/${RECIPE_FILE}`;
   return entries.map((entry, index) => {
     const label = entryLabel(entry, index);
@@ -397,6 +403,9 @@ function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): Lu
     // Names the target's source folder and its API model file.
     const namespace = requireModuleId(file, label, "namespace", entry.namespace);
     const sourceDir = underLibrary(file, dir, label, `source/${namespace}`);
+    if (entry.annotationOverrides !== undefined) {
+      requireOverrideEvidence(file, label, entry.annotationOverrides, join(dataDir, sourceDir));
+    }
     return {
       repo: pin.repo,
       ref: pin.ref,
@@ -813,7 +822,7 @@ function readLibrary(dataDir: string, dir: string, library: Partial<LibraryJson>
     : {};
   const pin: Pin = { repo: library.repo, ref, license: library.license };
   const file = `${dir}/${LIBRARY_FILE}`;
-  const luals = lualsTargets(dir, pin, recipe.luals ?? []);
+  const luals = lualsTargets(dataDir, dir, pin, recipe.luals ?? []);
   const scriptApi = scriptApiTargets(dir, pin, recipe.scriptApi ?? []);
   const authored = authoredTargets(dir, pin, library.forks ?? []);
   const native =

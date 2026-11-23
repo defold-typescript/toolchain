@@ -17,57 +17,101 @@
           "token.container.event.on_token_change": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/internal/token_container.lua",
+                  "contains": "---@field trigger fun(_, token_id: string, amount: number, reason: string|nil, delta: number)"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/internal/token_container.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(token_id: string, amount: number, reason: string|nil, delta: number), _)"
+                }
               }
             }
           },
           "token.container.event.on_token_visual_change": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/internal/token_container.lua",
+                  "contains": "---@field trigger fun(_, token_id: string, amount: number, delta: number)"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/internal/token_container.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(token_id: string, amount: number, delta: number), _)"
+                }
               }
             }
           },
           "token.event.on_token_change": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field trigger fun(_, container_id: string, token_id: string, amount: number, reason: string|nil, delta: number)"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(container_id: string, token_id: string, amount: number, reason: string|nil, delta: number), _)"
+                }
               }
             }
           },
           "token.event.on_token_visual_change": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field trigger fun(_, container_id: string, token_id: string, amount: number, delta: number)"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(container_id: string, token_id: string, amount: number, delta: number), _)"
+                }
               }
             }
           },
           "token.event.on_token_restore_change": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field trigger fun(_, container_id: string, token_id: string, config: token.token_restore_config)"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "token/token.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(container_id: string, token_id: string, config: token.token_restore_config), _)"
+                }
               }
             }
           },
           "token.container": {
             "methods": {
               "get": {
-                "return": "number"
+                "return": "number",
+                "evidence": {
+                  "file": "token/internal/token_container.lua",
+                  "contains": "---@return number|any function M:get(token_id)"
+                }
               }
             }
           }
@@ -76,14 +120,30 @@
           "interface": "token",
           "fields": {
             "on_token_change": {
-              "type": "token.event.on_token_change"
+              "type": "token.event.on_token_change",
+              "evidence": {
+                "file": "token/token.lua",
+                "contains": "M.on_token_change = event.create()"
+              }
             },
             "on_token_visual_change": {
-              "type": "token.event.on_token_visual_change"
+              "type": "token.event.on_token_visual_change",
+              "evidence": {
+                "file": "token/token.lua",
+                "contains": "M.on_token_visual_change = event.create()"
+              }
             },
             "on_token_restore_change": {
-              "type": "token.event.on_token_restore_change"
+              "type": "token.event.on_token_restore_change",
+              "evidence": {
+                "file": "token/token.lua",
+                "contains": "M.on_token_restore_change = event.create()"
+              }
             }
+          },
+          "evidence": {
+            "file": "token/token.lua",
+            "contains": "---@class token local M = {}"
           }
         }
       }

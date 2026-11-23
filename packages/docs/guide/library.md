@@ -174,7 +174,9 @@ It runs four checks in order, and a check that fails stops the ones after it:
    folder, and every `apiDoc` stays under `api-doc/`; every `floors`,
    `parityExceptions` and `behaviorVerdicts` key names a module its library
    measures, and every behavior verdict names a list, a member, a slot where its
-   list has one, and a reason; and no module is named by two libraries.
+   list has one, and a reason; every LuaLS annotation override names its
+   evidence, a file in its source folder and a snippet found there; and no
+   module is named by two libraries.
 2. **Print** — every module the data serves prints, as `resolve` prints it
    when a project's dependency archive is not at hand.
 3. **Compile** — one TypeScript program compiles every printed declaration,

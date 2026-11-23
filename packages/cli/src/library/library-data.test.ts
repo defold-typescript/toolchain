@@ -82,6 +82,19 @@ function writeDataFolder(): string {
   return root;
 }
 
+// The message `readLibraryData` refuses the folder with; the folder is removed either way.
+function refusalMessage(root: string): string {
+  try {
+    readLibraryData(root);
+  } catch (error) {
+    if (error instanceof LibraryDataError) return error.message;
+    throw error;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+  throw new Error("readLibraryData accepted the folder");
+}
+
 describe("readLibraryData projects each library folder into lane targets", () => {
   test("a library's targets carry its repo, license and reviewed ref, with paths under its folder", () => {
     const root = writeDataFolder();
@@ -978,18 +991,6 @@ describe("readLibraryData reads a library's behavior verdicts", () => {
     return root;
   }
 
-  function refusalMessage(root: string): string {
-    try {
-      readLibraryData(root);
-    } catch (error) {
-      if (error instanceof LibraryDataError) return error.message;
-      throw error;
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-    throw new Error("readLibraryData accepted the folder");
-  }
-
   test("verdicts read back as a field of their library, a slot only where the list names one", () => {
     const verdicts: BehaviorVerdict[] = [
       { list: "valueReturns", name: "draw", reason: "ui.lua:3 forwards a void call" },
@@ -1026,5 +1027,122 @@ describe("readLibraryData reads a library's behavior verdicts", () => {
       withVerdicts({ "flow.layout": [{ list: "valueReturns", name: "x", reason: "r" }] }),
     );
     expect(message).toContain('behaviorVerdicts "flow.layout" names no fork this library measures');
+  });
+});
+
+describe("LuaLS annotation overrides name their evidence", () => {
+  const LAYOUT = "github.com/pause-games/flow/source/flow.layout/flow/layout.lua";
+  const LAYOUT_LUA = "local M = {}\n\nfunction M.f(x)\n\tx = x or\n\t\t1\nend\n\nreturn M\n";
+  const evidence = { file: "flow/layout.lua", contains: "x = x or 1" };
+
+  function withOverrides(annotationOverrides: unknown): string {
+    const root = writeDataFolder();
+    write(root, LAYOUT, LAYOUT_LUA);
+    write(root, "github.com/pause-games/flow/recipe.json", {
+      luals: [
+        {
+          sourceGlobs: ["flow/**/*.lua"],
+          moduleId: "flow.layout",
+          namespace: "flow.layout",
+          annotationOverrides,
+        },
+      ],
+    });
+    return root;
+  }
+
+  function reads(root: string): void {
+    try {
+      readLibraryData(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  function paramOverride(paramEvidence: unknown): unknown {
+    return {
+      moduleFunctions: { f: { params: { x: { optional: true, evidence: paramEvidence } } } },
+    };
+  }
+
+  test("an override without evidence is refused, naming its path", () => {
+    const message = refusalMessage(
+      withOverrides({ moduleFunctions: { f: { params: { x: { optional: true } } } } }),
+    );
+    expect(message).toContain("recipe.json: entry flow.layout");
+    expect(message).toContain("annotationOverrides.moduleFunctions.f.params.x");
+  });
+
+  test.each([
+    [
+      "a field retype",
+      { interfaces: { I: { fields: { a: { type: "string" } } } } },
+      "interfaces.I.fields.a",
+    ],
+    [
+      "a field drop",
+      { interfaces: { I: { fields: { a: { drop: true } } } } },
+      "interfaces.I.fields.a",
+    ],
+    [
+      "a method return",
+      { interfaces: { I: { methods: { m: { return: "nil" } } } } },
+      "interfaces.I.methods.m",
+    ],
+    [
+      "an optional method",
+      { interfaces: { I: { methods: { m: { optional: true } } } } },
+      "interfaces.I.methods.m",
+    ],
+    [
+      "a call signature",
+      { interfaces: { I: { callSignature: { drop: true } } } },
+      "interfaces.I.callSignature",
+    ],
+    ["a module object", { moduleObject: { interface: "I", fields: {} } }, "moduleObject"],
+    [
+      "a module object field",
+      { moduleObject: { interface: "I", evidence, fields: { e: { type: "E" } } } },
+      "moduleObject.fields.e",
+    ],
+    ["a module constant", { moduleConstants: { C: { type: "number" } } }, "moduleConstants.C"],
+  ])("%s without evidence is refused, naming its path", (_case, overrides, path) => {
+    expect(refusalMessage(withOverrides(overrides))).toContain(`annotationOverrides.${path} `);
+  });
+
+  test("evidence naming a file absent from the source folder is refused, naming the file", () => {
+    const message = refusalMessage(
+      withOverrides(paramOverride({ file: "flow/missing.lua", contains: "x = x or 1" })),
+    );
+    expect(message).toContain("flow/missing.lua");
+  });
+
+  test("evidence naming a file outside the source folder is refused, even where that file holds the snippet", () => {
+    const root = withOverrides(paramOverride({ file: "../x.lua", contains: "x = x or 1" }));
+    write(root, "github.com/pause-games/flow/source/x.lua", "x = x or 1\n");
+    expect(refusalMessage(root)).toContain("../x.lua");
+  });
+
+  test("a snippet the file does not contain is refused, naming the snippet", () => {
+    const message = refusalMessage(
+      withOverrides(paramOverride({ file: "flow/layout.lua", contains: "x = x or 2" })),
+    );
+    expect(message).toContain('"x = x or 2"');
+  });
+
+  test("a snippet whose whitespace differs from the file's reads", () => {
+    expect(() => reads(withOverrides(paramOverride(evidence)))).not.toThrow();
+  });
+
+  test("a method override carrying only params needs no evidence of its own, but each param does", () => {
+    const method = (paramEvidence: unknown) => ({
+      interfaces: {
+        I: { methods: { m: { params: { p: { type: "string", evidence: paramEvidence } } } } },
+      },
+    });
+    expect(() => reads(withOverrides(method(evidence)))).not.toThrow();
+    expect(refusalMessage(withOverrides(method(undefined)))).toContain(
+      "annotationOverrides.interfaces.I.methods.m.params.p ",
+    );
   });
 });

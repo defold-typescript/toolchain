@@ -17,6 +17,7 @@ import type {
   AssetPortalManifest,
   PortalEntry,
 } from "../packages/cli/src/library/sync-asset-portal.ts";
+import { recipeWithoutOverrides } from "../packages/cli/src/library-data-fixture.ts";
 import {
   VERDICTS_DIR,
   VERDICTS_FILE_NAME,
@@ -146,6 +147,11 @@ function tempRoot(
           readFileSync(join(committedData, folder, file), "utf8"),
         );
         writeFileSync(join(data, folder, file), JSON.stringify(library));
+      } else if (file === "recipe.json") {
+        writeFileSync(
+          join(data, folder, file),
+          JSON.stringify(recipeWithoutOverrides(join(committedData, folder, file))),
+        );
       } else {
         copyFileSync(join(committedData, folder, file), join(data, folder, file));
       }

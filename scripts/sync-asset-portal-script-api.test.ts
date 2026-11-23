@@ -21,6 +21,7 @@ import {
   type DefoldExtensionsManifest,
   isSafePageKey,
 } from "../packages/cli/src/library/sync-defold-extensions.ts";
+import { recipeWithoutOverrides } from "../packages/cli/src/library-data-fixture.ts";
 import {
   type AssetPortalScriptApiManifest,
   type ScriptApiSource,
@@ -113,9 +114,16 @@ function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {
       ) as Record<string, unknown>;
       if (library.native !== undefined) continue;
       mkdirSync(join(data, folder), { recursive: true });
-      for (const file of ["library.json", "reviewed.json", "recipe.json"]) {
+      for (const file of ["library.json", "reviewed.json"]) {
         const from = join(REAL_DATA_DIR, folder, file);
         if (existsSync(from)) copyFileSync(from, join(data, folder, file));
+      }
+      const recipe = join(REAL_DATA_DIR, folder, "recipe.json");
+      if (existsSync(recipe)) {
+        writeFileSync(
+          join(data, folder, "recipe.json"),
+          JSON.stringify(recipeWithoutOverrides(recipe)),
+        );
       }
     }
   }

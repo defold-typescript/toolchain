@@ -6,8 +6,7 @@
       "namespace": "outline",
       "typeRenames": {
         "matrix4": "Matrix4",
-        "vector4": "Vector4",
-        "render_clear_buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
+        "vector4": "Vector4"
       },
       "ignore": [],
       "annotationOverrides": {
@@ -16,7 +15,11 @@
             "params": {
               "self": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "outline-shader/outline.lua",
+                  "contains": "self.outline_constant_buffer = render.constant_buffer()"
+                }
               }
             }
           },
@@ -24,25 +27,45 @@
             "params": {
               "self": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "outline-shader/outline.lua",
+                  "contains": "self.outline_constant_buffer.outline_color = outline_color"
+                }
               },
               "predicates": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "outline-shader/outline.lua",
+                  "contains": "render.draw(predicates.outline, { frustum = frustum.frustum })"
+                }
               },
               "frustum": {
                 "type": "{ frustum: matrix4 }",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "outline-shader/outline.lua",
+                  "contains": "render.draw(predicates.outline, { frustum = frustum.frustum })"
+                }
               },
               "clear_buffer": {
-                "type": "render_clear_buffers"
+                "type": "any",
+                "evidence": {
+                  "file": "outline-shader/outline.lua",
+                  "contains": "function outline.update(self, predicates, frustum, clear_buffer)"
+                }
               }
             }
           }
         },
         "moduleConstants": {
           "type": {
-            "type": "{ OUTLINE_STENCIL: integer, OUTLINE_INVERTED_HULL: integer }"
+            "type": "{ OUTLINE_STENCIL: integer, OUTLINE_INVERTED_HULL: integer }",
+            "evidence": {
+              "file": "outline-shader/outline.lua",
+              "contains": "outline.type = { OUTLINE_STENCIL = 1, OUTLINE_INVERTED_HULL = 2 }"
+            }
           }
         }
       }

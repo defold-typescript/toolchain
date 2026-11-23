@@ -16,19 +16,31 @@
           "ads_network": {
             "methods": {
               "request_idfa": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "ads_wrapper/wrapper.lua",
+                  "contains": "if network.request_idfa then"
+                }
               },
               "show_rewarded": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_rewarded(callback, params)"
+                    }
                   }
                 }
               },
               "show_interstitial": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_interstitial(callback, params)"
+                    }
                   }
                 }
               }
@@ -38,15 +50,27 @@
         "moduleConstants": {
           "T_REWARDED": {
             "type": "hash",
-            "doc": "Rewarded-video ad type, used to set network parameters."
+            "doc": "Rewarded-video ad type, used to set network parameters.",
+            "evidence": {
+              "file": "ads_wrapper/ads_wrapper.lua",
+              "contains": "M.T_REWARDED = hash(\"T_REWARDED\")"
+            }
           },
           "T_INTERSTITIAL": {
             "type": "hash",
-            "doc": "Interstitial ad type, used to set network parameters."
+            "doc": "Interstitial ad type, used to set network parameters.",
+            "evidence": {
+              "file": "ads_wrapper/ads_wrapper.lua",
+              "contains": "M.T_INTERSTITIAL = hash(\"T_INTERSTITIAL\")"
+            }
           },
           "T_BANNER": {
             "type": "hash",
-            "doc": "Banner ad type, used to set network parameters."
+            "doc": "Banner ad type, used to set network parameters.",
+            "evidence": {
+              "file": "ads_wrapper/ads_wrapper.lua",
+              "contains": "M.T_BANNER = hash(\"T_BANNER\")"
+            }
           }
         }
       }
@@ -67,19 +91,31 @@
           "ads_network": {
             "methods": {
               "request_idfa": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "ads_wrapper/wrapper.lua",
+                  "contains": "if network.request_idfa then"
+                }
               },
               "show_rewarded": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_rewarded(callback, params)"
+                    }
                   }
                 }
               },
               "show_interstitial": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_interstitial(callback, params)"
+                    }
                   }
                 }
               }
@@ -89,47 +125,91 @@
         "moduleConstants": {
           "ABORT": {
             "type": "hash",
-            "doc": "Result a network step returns to stop the queue early; the callback receives it as `SUCCESS`."
+            "doc": "Result a network step returns to stop the queue early; the callback receives it as `SUCCESS`.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.ABORT = hash(\"ABORT\")"
+            }
           },
           "SUCCESS": {
             "type": "hash",
-            "doc": "`response.result` when the call succeeded."
+            "doc": "`response.result` when the call succeeded.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.SUCCESS = hash(\"SUCCESS\")"
+            }
           },
           "ERROR": {
             "type": "hash",
-            "doc": "`response.result` when the call failed."
+            "doc": "`response.result` when the call failed.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.ERROR = hash(\"ERROR\")"
+            }
           },
           "C_SKIPPED": {
             "type": "hash",
-            "doc": "`response.code` when the rewarded ad was skipped."
+            "doc": "`response.code` when the rewarded ad was skipped.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.C_SKIPPED = hash(\"C_SKIPPED\")"
+            }
           },
           "C_ERROR_UNKNOWN": {
             "type": "hash",
-            "doc": "`response.code` for an unknown error."
+            "doc": "`response.code` for an unknown error.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.C_ERROR_UNKNOWN = hash(\"C_ERROR_UNKNOWN\")"
+            }
           },
           "C_ERROR_AD_BLOCK": {
             "type": "hash",
-            "doc": "`response.code` when an ad blocker caused the error."
+            "doc": "`response.code` when an ad blocker caused the error.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.C_ERROR_AD_BLOCK = hash(\"C_ERROR_AD_BLOCK\")"
+            }
           },
           "C_ERROR_NO_CONNECTION": {
             "type": "hash",
-            "doc": "`response.code` when there is no internet connection."
+            "doc": "`response.code` when there is no internet connection.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.C_ERROR_NO_CONNECTION = hash(\"C_ERROR_NO_CONNECTION\")"
+            }
           },
           "V_NONE": {
             "type": "hash",
-            "doc": "`queue.set_verbose_mode` level that logs nothing; the default."
+            "doc": "`queue.set_verbose_mode` level that logs nothing; the default.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.V_NONE = hash(\"V_NONE\")"
+            }
           },
           "V_ERROR": {
             "type": "hash",
-            "doc": "`queue.set_verbose_mode` level that logs every error."
+            "doc": "`queue.set_verbose_mode` level that logs every error.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.V_ERROR = hash(\"V_ERRORS\")"
+            }
           },
           "V_SUCCESS": {
             "type": "hash",
-            "doc": "`queue.set_verbose_mode` level that logs every success response."
+            "doc": "`queue.set_verbose_mode` level that logs every success response.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.V_SUCCESS = hash(\"V_SUCCESS\")"
+            }
           },
           "V_ALL": {
             "type": "hash",
-            "doc": "`queue.set_verbose_mode` level that logs every message."
+            "doc": "`queue.set_verbose_mode` level that logs every message.",
+            "evidence": {
+              "file": "ads_wrapper/events.lua",
+              "contains": "M.V_ALL = hash(\"V_ALL\")"
+            }
           }
         }
       }
@@ -150,19 +230,31 @@
           "ads_network": {
             "methods": {
               "request_idfa": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "ads_wrapper/wrapper.lua",
+                  "contains": "if network.request_idfa then"
+                }
               },
               "show_rewarded": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_rewarded(callback, params)"
+                    }
                   }
                 }
               },
               "show_interstitial": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_interstitial(callback, params)"
+                    }
                   }
                 }
               }
@@ -172,19 +264,35 @@
         "moduleConstants": {
           "PL_ANDROID": {
             "type": "hash",
-            "doc": "Android, as returned by `get` and checked by `is_same`."
+            "doc": "Android, as returned by `get` and checked by `is_same`.",
+            "evidence": {
+              "file": "ads_wrapper/platform.lua",
+              "contains": "M.PL_ANDROID = hash(\"PL_ANDROID\")"
+            }
           },
           "PL_IOS": {
             "type": "hash",
-            "doc": "iOS, as returned by `get` and checked by `is_same`."
+            "doc": "iOS, as returned by `get` and checked by `is_same`.",
+            "evidence": {
+              "file": "ads_wrapper/platform.lua",
+              "contains": "M.PL_IOS = hash(\"PL_IOS\")"
+            }
           },
           "PL_HTML5": {
             "type": "hash",
-            "doc": "HTML5, as returned by `get` and checked by `is_same`."
+            "doc": "HTML5, as returned by `get` and checked by `is_same`.",
+            "evidence": {
+              "file": "ads_wrapper/platform.lua",
+              "contains": "M.PL_HTML5 = hash(\"PL_HTML5\")"
+            }
           },
           "PL_OTHER": {
             "type": "hash",
-            "doc": "Any other platform, as returned by `get` and checked by `is_same`."
+            "doc": "Any other platform, as returned by `get` and checked by `is_same`.",
+            "evidence": {
+              "file": "ads_wrapper/platform.lua",
+              "contains": "M.PL_OTHER = hash(\"PL_OTHER\")"
+            }
           }
         }
       }
@@ -205,19 +313,31 @@
           "ads_network": {
             "methods": {
               "request_idfa": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "ads_wrapper/wrapper.lua",
+                  "contains": "if network.request_idfa then"
+                }
               },
               "show_rewarded": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_rewarded(callback, params)"
+                    }
                   }
                 }
               },
               "show_interstitial": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_interstitial(callback, params)"
+                    }
                   }
                 }
               }
@@ -228,7 +348,11 @@
           "add": {
             "params": {
               "fn": {
-                "type": "fun(network: ads_network, callback: ads_callback, params?: table)"
+                "type": "fun(network: ads_network, callback: ads_callback, params?: table)",
+                "evidence": {
+                  "file": "ads_wrapper/queue.lua",
+                  "contains": "---@param fn ads_callback function M.add(queue, fn)"
+                }
               }
             }
           }
@@ -251,19 +375,31 @@
           "ads_network": {
             "methods": {
               "request_idfa": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "ads_wrapper/wrapper.lua",
+                  "contains": "if network.request_idfa then"
+                }
               },
               "show_rewarded": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_rewarded(callback, params)"
+                    }
                   }
                 }
               },
               "show_interstitial": {
                 "params": {
                   "params": {
-                    "type": "any"
+                    "type": "any",
+                    "evidence": {
+                      "file": "ads_wrapper/ads_networks/ads_network.lua",
+                      "contains": "---@param params table|nil additional parameters function ads_network.show_interstitial(callback, params)"
+                    }
                   }
                 }
               }
@@ -273,11 +409,19 @@
         "moduleConstants": {
           "network1": {
             "type": "ads_network",
-            "doc": "Test network that logs each call and succeeds without showing an ad."
+            "doc": "Test network that logs each call and succeeds without showing an ad.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/test.lua",
+              "contains": "M.network1 = {"
+            }
           },
           "network2": {
             "type": "ads_network",
-            "doc": "Second test network, for trying mediation across two networks."
+            "doc": "Second test network, for trying mediation across two networks.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/test.lua",
+              "contains": "M.network2 = {"
+            }
           }
         }
       }
@@ -322,14 +466,22 @@
           "set_banner_position": {
             "params": {
               "position": {
-                "type": "string"
+                "type": "string",
+                "evidence": {
+                  "file": "ads_wrapper/ads_networks/applovin_max.lua",
+                  "contains": "---@param position number banner position ---@return ads_response function M.set_banner_position(position)"
+                }
               }
             }
           },
           "set_banner_size": {
             "params": {
               "size": {
-                "type": "string"
+                "type": "string",
+                "evidence": {
+                  "file": "ads_wrapper/ads_networks/applovin_max.lua",
+                  "contains": "---@param size number ---@return ads_response function M.set_banner_size(size)"
+                }
               }
             }
           }
@@ -337,47 +489,91 @@
         "moduleConstants": {
           "POS_BOTTOM_CENTER": {
             "type": "string",
-            "doc": "Bottom-center banner position, passed to `set_banner_position`."
+            "doc": "Bottom-center banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_BOTTOM_CENTER = \"POS_BOTTOM_CENTER\""
+            }
           },
           "POS_BOTTOM_LEFT": {
             "type": "string",
-            "doc": "Bottom-left banner position, passed to `set_banner_position`."
+            "doc": "Bottom-left banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_BOTTOM_LEFT = \"POS_BOTTOM_LEFT\""
+            }
           },
           "POS_BOTTOM_RIGHT": {
             "type": "string",
-            "doc": "Bottom-right banner position, passed to `set_banner_position`."
+            "doc": "Bottom-right banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_BOTTOM_RIGHT = \"POS_BOTTOM_RIGHT\""
+            }
           },
           "POS_NONE": {
             "type": "string",
-            "doc": "The `maxsdk.POS_NONE` banner position, passed to `set_banner_position`."
+            "doc": "The `maxsdk.POS_NONE` banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_NONE = \"POS_NONE\""
+            }
           },
           "POS_TOP_LEFT": {
             "type": "string",
-            "doc": "Top-left banner position, passed to `set_banner_position`."
+            "doc": "Top-left banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_TOP_LEFT = \"POS_TOP_LEFT\""
+            }
           },
           "POS_TOP_CENTER": {
             "type": "string",
-            "doc": "Top-center banner position, passed to `set_banner_position`."
+            "doc": "Top-center banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_TOP_CENTER = \"POS_TOP_CENTER\""
+            }
           },
           "POS_TOP_RIGHT": {
             "type": "string",
-            "doc": "Top-right banner position, passed to `set_banner_position`."
+            "doc": "Top-right banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_TOP_RIGHT = \"POS_TOP_RIGHT\""
+            }
           },
           "POS_CENTER": {
             "type": "string",
-            "doc": "Centered banner position, passed to `set_banner_position`."
+            "doc": "Centered banner position, passed to `set_banner_position`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.POS_CENTER = \"POS_CENTER\""
+            }
           },
           "SIZE_BANNER": {
             "type": "string",
-            "doc": "Standard banner size, passed to `set_banner_size`; the default."
+            "doc": "Standard banner size, passed to `set_banner_size`; the default.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.SIZE_BANNER = \"SIZE_BANNER\""
+            }
           },
           "SIZE_LEADER": {
             "type": "string",
-            "doc": "Leaderboard banner size, passed to `set_banner_size`."
+            "doc": "Leaderboard banner size, passed to `set_banner_size`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.SIZE_LEADER = \"SIZE_LEADER\""
+            }
           },
           "SIZE_MREC": {
             "type": "string",
-            "doc": "Medium-rectangle banner size, passed to `set_banner_size`."
+            "doc": "Medium-rectangle banner size, passed to `set_banner_size`.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/applovin_max.lua",
+              "contains": "M.SIZE_MREC = \"SIZE_MREC\""
+            }
           }
         }
       }
@@ -403,35 +599,67 @@
         "moduleConstants": {
           "LISTENER": {
             "type": "hash",
-            "doc": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message."
+            "doc": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.LISTENER = hash(\"listener\")"
+            }
           },
           "SIZE_NONE": {
             "type": "integer",
-            "doc": "Banner `size` option that sets no fixed size."
+            "doc": "Banner `size` option that sets no fixed size.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_NONE = 0"
+            }
           },
           "SIZE_336x280": {
             "type": "integer",
-            "doc": "Banner `size` option for a 336x280 banner; the default."
+            "doc": "Banner `size` option for a 336x280 banner; the default.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_336x280 = 1"
+            }
           },
           "SIZE_300x250": {
             "type": "integer",
-            "doc": "Banner `size` option for a 300x250 banner."
+            "doc": "Banner `size` option for a 300x250 banner.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_300x250 = 2"
+            }
           },
           "SIZE_970x250": {
             "type": "integer",
-            "doc": "Banner `size` option for a 970x250 banner."
+            "doc": "Banner `size` option for a 970x250 banner.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_970x250 = 3"
+            }
           },
           "SIZE_728x90": {
             "type": "integer",
-            "doc": "Banner `size` option for a 728x90 banner."
+            "doc": "Banner `size` option for a 728x90 banner.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_728x90 = 4"
+            }
           },
           "SIZE_120x600": {
             "type": "integer",
-            "doc": "Banner `size` option for a 120x600 banner."
+            "doc": "Banner `size` option for a 120x600 banner.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_120x600 = 5"
+            }
           },
           "SIZE_160x600": {
             "type": "integer",
-            "doc": "Banner `size` option for a 160x600 banner."
+            "doc": "Banner `size` option for a 160x600 banner.",
+            "evidence": {
+              "file": "ads_wrapper/ads_networks/game_distribution.lua",
+              "contains": "M.SIZE_160x600 = 6"
+            }
           }
         }
       }

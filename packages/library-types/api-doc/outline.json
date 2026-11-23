@@ -132,7 +132,7 @@
           "name": "clear_buffer",
           "doc": "",
           "types": [
-            "LuaMap<render.ClearBufferKey, number | Vector4>"
+            "unknown"
           ],
           "is_optional": "True",
           "is_vararg": "False"

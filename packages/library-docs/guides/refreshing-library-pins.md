@@ -289,6 +289,11 @@ skip it.
   `bun run --cwd packages/library-types parity`, review the coverage change, and
   commit the reports **in the same commit**. An upstream change that moves no
   number leaves the reports as they are.
+- **The annotation overrides' evidence.** Each LuaLS `annotationOverrides` entry
+  names a snippet of its target's vendored `source/<namespace>/` files, and
+  `library check` refuses one whose snippet the new copy no longer holds. Re-check
+  each refused override against the new source: delete it when upstream fixed the
+  annotation, otherwise point its `evidence` at the new text.
 - **The provenance assertions.** The toolchain's `api-surface-loader.test.ts` reads the
   pin back out of the emitted API-doc metadata and asserts it exactly — for
   druid, `meta.commit` is the `ref` in `druid/reviewed.json` and

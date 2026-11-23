@@ -11,7 +11,11 @@
         "interfaces": {
           "log": {
             "callSignature": {
-              "drop": true
+              "drop": true,
+              "evidence": {
+                "file": "log/log.lua",
+                "contains": "---@overload fun(name: string?, force_logger_level_in_debug: string?): logger"
+              }
             }
           }
         }

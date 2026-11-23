@@ -15,46 +15,86 @@
           "Flow.InitConfig": {
             "fields": {
               "screens": {
-                "type": "flow_screen_registry"
+                "type": "flow_screen_registry",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@class Flow.InitConfig ---@field screens? Flow.ScreenRegistry"
+                }
               },
               "initial_params": {
-                "type": "flow_params"
+                "type": "flow_params",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field initial_params? table ---@field debug? boolean"
+                }
               }
             }
           },
           "Flow.RuntimeConfig": {
             "fields": {
               "screens": {
-                "type": "flow_screen_registry"
+                "type": "flow_screen_registry",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@class Flow.RuntimeConfig ---@field screens? Flow.ScreenRegistry"
+                }
               },
               "initial_params": {
-                "type": "flow_params"
+                "type": "flow_params",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field initial_params? table ---@field initial_options? Flow.PushOptions|string"
+                }
               }
             }
           },
           "Flow.Navigation": {
             "fields": {
               "push": {
-                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil"
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field push fun(id: string, params?: table, options?: Flow.PushOptions): Flow.StackEntry|nil"
+                }
               },
               "replace": {
-                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil"
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field replace fun(id: string, params?: table, options?: Flow.PushOptions): Flow.StackEntry|nil"
+                }
               },
               "reset": {
-                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions|string): Flow.StackEntry|nil"
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions|string): Flow.StackEntry|nil",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field reset fun(id: string, params?: table, options?: Flow.PushOptions|string): Flow.StackEntry|nil"
+                }
               }
             }
           },
           "Flow.RendererDeps": {
             "fields": {
               "set_node_color": {
-                "type": "fun(node: node, r: number, g: number, b: number, a: number)"
+                "type": "fun(node: node, r: number, g: number, b: number, a: number)",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field set_node_color fun(node: userdata, r: number, g: number, b: number, a: number)"
+                }
               },
               "set_node_position": {
-                "type": "fun(node: node, x: number, y: number)"
+                "type": "fun(node: node, x: number, y: number)",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field set_node_position fun(node: userdata, x: number, y: number)"
+                }
               },
               "set_node_size": {
-                "type": "fun(node: node, w: number, h: number)"
+                "type": "fun(node: node, w: number, h: number)",
+                "evidence": {
+                  "file": "flow/types.lua",
+                  "contains": "---@field set_node_size fun(node: userdata, w: number, h: number)"
+                }
               }
             }
           }
@@ -82,76 +122,124 @@
           "mount": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table to mount onto"
+                }
               }
             }
           },
           "set_debug": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param enabled boolean"
+                }
               }
             }
           },
           "_set_layout_space_unsafe": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param space string"
+                }
               }
             }
           },
           "request_redraw": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer function M.request_redraw(self)"
+                }
               }
             }
           },
           "update": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param tree Flow.Element|nil The element tree to render; may be nil"
+                }
               }
             }
           },
           "hit_test": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param x number"
+                }
               }
             }
           },
           "on_input": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param action_id hash"
+                }
               },
               "action_id": {
-                "type": "hash|nil"
+                "type": "hash|nil",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param action_id hash The Defold action id hash"
+                }
               },
               "action": {
-                "type": "{x?: number, y?: number, pressed?: boolean, released?: boolean}"
+                "type": "{x?: number, y?: number, pressed?: boolean, released?: boolean}",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param action table The Defold action table with x, y, pressed, released fields"
+                }
               }
             }
           },
           "update_animations": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param dt number"
+                }
               }
             }
           },
           "render": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param tree Flow.Element The element tree to render"
+                }
               }
             }
           },
           "render_if_size_changed": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/ui.lua",
+                  "contains": "---@param self table The gui_script self table with a mounted renderer ---@param tree Flow.Element|nil The element tree to render; falls back"
+                }
               }
             }
           }
@@ -207,7 +295,11 @@
           "on_message": {
             "params": {
               "message": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/messages.lua",
+                  "contains": "---@param message? table The incoming Defold message payload"
+                }
               }
             }
           }
@@ -233,24 +325,40 @@
           "init": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/runtime.lua",
+                  "contains": "---@param self table The .script self table ---@param config? Flow.RuntimeConfig"
+                }
               }
             }
           },
           "final": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/runtime.lua",
+                  "contains": "---@param self table The .script self table initialized by M.init()"
+                }
               }
             }
           },
           "on_message": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/runtime.lua",
+                  "contains": "---@param self table The .script self table ---@param message_id hash|string"
+                }
               },
               "message": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/runtime.lua",
+                  "contains": "---@param message? table The incoming message payload"
+                }
               }
             }
           }
@@ -278,7 +386,11 @@
           "detach": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "flow/navigation/proxy.lua",
+                  "contains": "---@param self table The runtime instance created by M.attach()"
+                }
               }
             }
           }

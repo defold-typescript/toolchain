@@ -35,6 +35,17 @@ export const FIXTURE_DATA_DIR = fileURLToPath(
   new URL("../test/fixtures/library-data/0.61.0", import.meta.url),
 );
 
+// A committed recipe without its LuaLS annotation overrides, for a copy of library
+// data that leaves out the vendored `source/` files the overrides' evidence names.
+export function recipeWithoutOverrides(file: string): RecipeJson {
+  const recipe = JSON.parse(readFileSync(file, "utf8")) as RecipeJson;
+  if (recipe.luals === undefined) return recipe;
+  return {
+    ...recipe,
+    luals: recipe.luals.map(({ annotationOverrides: _overrides, ...entry }) => entry),
+  };
+}
+
 // A lane target as one flat record: its library's pin beside its lane entry.
 export type Flat<Entry> = Pin & Partial<Entry>;
 

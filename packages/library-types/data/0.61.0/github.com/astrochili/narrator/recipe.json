@@ -11,7 +11,11 @@
           "parse_content": {
             "params": {
               "inclusions": {
-                "optional": true
+                "optional": true,
+                "evidence": {
+                  "file": "narrator/narrator.lua",
+                  "contains": "local inclusions = inclusions or { }"
+                }
               }
             }
           }
@@ -20,12 +24,20 @@
           "Narrator.Story": {
             "methods": {
               "continue": {
-                "return": "Narrator.Paragraph[]|Narrator.Paragraph"
+                "return": "Narrator.Paragraph[]|Narrator.Paragraph",
+                "evidence": {
+                  "file": "narrator/story.lua",
+                  "contains": "return single_mode and lines[1] or lines"
+                }
               },
               "observe": {
                 "params": {
                   "observer": {
-                    "type": "fun(value: any)"
+                    "type": "fun(value: any)",
+                    "evidence": {
+                      "file": "narrator/story.lua",
+                      "contains": "---@param observer fun(variable)"
+                    }
                   }
                 }
               }

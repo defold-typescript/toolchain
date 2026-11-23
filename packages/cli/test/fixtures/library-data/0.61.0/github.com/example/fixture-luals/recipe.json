@@ -14,14 +14,22 @@
             "params": {
               "self": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "glow-kit/glow.lua",
+                  "contains": "self.predicates[predicate] = render.predicate({ predicate })"
+                }
               }
             }
           }
         },
         "moduleConstants": {
           "mode": {
-            "type": "{ GLOW_SOFT: integer, GLOW_HARD: integer }"
+            "type": "{ GLOW_SOFT: integer, GLOW_HARD: integer }",
+            "evidence": {
+              "file": "glow-kit/glow.lua",
+              "contains": "glow.mode = { GLOW_SOFT = 1, GLOW_HARD = 2 }"
+            }
           }
         }
       }
