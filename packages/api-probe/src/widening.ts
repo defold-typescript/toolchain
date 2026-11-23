@@ -497,7 +497,7 @@ function judge(
   checker: ts.TypeChecker,
 ): WideningFinding | undefined {
   const widened = results.get(form.label);
-  if (widened === undefined || form.members.length < 2) return undefined;
+  if (widened === undefined) return undefined;
   const members = form.members.flatMap((label) => {
     const result = results.get(label);
     return result === undefined ? [] : [[label, result] as const];
