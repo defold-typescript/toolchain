@@ -1,5 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import * as apiDoc from "../src/api-doc";
+import * as docCorrections from "../src/doc-corrections";
+import * as emitDts from "../src/emit-dts";
 import {
   CALLBACK_SIGNATURE_CURATIONS,
   ENGINE_SLOT_RULES,
@@ -17,7 +20,12 @@ import {
   TYPEDEF_ALIAS_CORRECTIONS,
   VARIABLE_TYPE_OVERRIDES,
 } from "../src/emit-dts";
-import { MESSAGE_ENGINE_CORRECTIONS, MESSAGE_FIELD_CORRECTIONS } from "../src/emit-messages";
+import * as emitMessages from "../src/emit-messages";
+import {
+  MESSAGE_ENGINE_CORRECTIONS,
+  MESSAGE_FIELD_CONSTANT_GROUPS,
+  MESSAGE_FIELD_CORRECTIONS,
+} from "../src/emit-messages";
 
 export const REPLACEMENT_PIN_BASELINE_FILE = join(
   import.meta.dirname,
@@ -67,6 +75,12 @@ function enginePinned<Entry extends { readonly engine?: unknown }>(
   };
 }
 
+export function messageFieldEntries<
+  Entry extends { readonly origin: string; readonly name: string; readonly field: string },
+>(entries: readonly Entry[]): (readonly [string, Entry])[] {
+  return entries.map((entry) => [`${entry.origin}.${entry.name}:${entry.field}`, entry] as const);
+}
+
 // `optional` and `required` change a field's optionality, not its type.
 const MESSAGE_TYPE_KINDS: ReadonlySet<string> = new Set(["retype", "add-field", "add-message"]);
 
@@ -90,12 +104,8 @@ export const REPLACEMENT_TABLES: readonly ReplacementTable[] = [
   unpinned("TABLE_SLOT_FIELD_ADDITIONS", TABLE_SLOT_FIELD_ADDITIONS),
   unpinned("NESTED_FIELD_CURATIONS", NESTED_FIELD_CURATIONS),
   unpinned("CALLBACK_SIGNATURE_CURATIONS", CALLBACK_SIGNATURE_CURATIONS),
-  unpinned(
-    "MESSAGE_FIELD_CORRECTIONS",
-    MESSAGE_FIELD_CORRECTIONS.map(
-      (entry) => [`${entry.origin}.${entry.name}:${entry.field}`, entry] as const,
-    ),
-  ),
+  unpinned("MESSAGE_FIELD_CORRECTIONS", messageFieldEntries(MESSAGE_FIELD_CORRECTIONS)),
+  unpinned("MESSAGE_FIELD_CONSTANT_GROUPS", messageFieldEntries(MESSAGE_FIELD_CONSTANT_GROUPS)),
   unpinned(
     "MESSAGE_ENGINE_CORRECTIONS",
     MESSAGE_ENGINE_CORRECTIONS.filter((entry) => MESSAGE_TYPE_KINDS.has(entry.kind)).map(
@@ -126,6 +136,47 @@ export const UNPINNED_TABLES: ReadonlyMap<string, string> = new Map([
   ["CONSTANT_UNION_ALIASES", "names a constant union the reference declares"],
   ["OVERLOAD_SLOT_ALIASES", "names the type each target's own reference gives the slot"],
 ]);
+
+export const CORRECTION_TABLE_NAME =
+  /_(CORRECTIONS|OVERRIDES|ADDITIONS|RANGES|CURATIONS|SLOTS|SLOT_KEYS|RESOLUTIONS|RULES|ALTERNATIVES|ALIASES|CLASSIFICATIONS|GROUPS)$/;
+
+export const CORRECTION_TABLE_MODULES: readonly Record<string, unknown>[] = [
+  emitDts,
+  emitMessages,
+  apiDoc,
+  docCorrections,
+];
+
+// One finding per exported correction table that is registered and excluded
+// other than exactly once, and per classification naming no exported table.
+export function tableClassificationFindings(
+  tables: readonly ReplacementTable[] = REPLACEMENT_TABLES,
+  unpinned: ReadonlyMap<string, string> = UNPINNED_TABLES,
+  modules: readonly Record<string, unknown>[] = CORRECTION_TABLE_MODULES,
+): string[] {
+  const exported = new Set(
+    modules.flatMap((exports) =>
+      Object.entries(exports)
+        .filter(
+          ([name, value]) =>
+            CORRECTION_TABLE_NAME.test(name) &&
+            (value instanceof Map || value instanceof Set || Array.isArray(value)),
+        )
+        .map(([name]) => name),
+    ),
+  );
+  const named = [...tables.map((table) => table.name), ...unpinned.keys()];
+  const findings: string[] = [];
+  for (const name of exported) {
+    const count = named.filter((candidate) => candidate === name).length;
+    if (count === 0) findings.push(`${name}: neither registered nor excluded`);
+    if (count > 1) findings.push(`${name}: classified ${count} times`);
+  }
+  for (const name of new Set(named)) {
+    if (!exported.has(name)) findings.push(`${name}: not an exported table`);
+  }
+  return findings;
+}
 
 function acceptedPins(accepts: readonly PinKind[]): string {
   if (accepts.length === 0) return "the table has no pin field yet";

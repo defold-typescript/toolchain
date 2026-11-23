@@ -1,16 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import * as apiDoc from "../src/api-doc";
-import * as docCorrections from "../src/doc-corrections";
 import type { ParamTypeCorrection } from "../src/emit-dts";
-import * as emitDts from "../src/emit-dts";
-import * as emitMessages from "../src/emit-messages";
+import { MESSAGE_FIELD_CONSTANT_GROUPS } from "../src/emit-messages";
 import { bindingEvidenceFor } from "./binding-pin";
 import {
+  messageFieldEntries,
   parseReplacementPinBaseline,
   REPLACEMENT_TABLES,
   type ReplacementTable,
   readReplacementPinBaseline,
   replacementPinFindings,
+  tableClassificationFindings,
   UNPINNED_TABLES,
 } from "./replacement-pins";
 import { vendoredTargets } from "./sync-engine-bindings";
@@ -156,47 +155,51 @@ describe("the committed correction tables", () => {
       replacementPinFindings(REPLACEMENT_TABLES, readReplacementPinBaseline(), evidenceKeys),
     ).toEqual([]);
   }, 120_000);
+
+  test("a message constant-group entry added without a pin is a finding", () => {
+    const timeStep = MESSAGE_FIELD_CONSTANT_GROUPS.find((entry) => entry.name === "set_time_step");
+    if (!timeStep) throw new Error("no set_time_step constant group");
+    const record = {
+      ...registered("MESSAGE_FIELD_CONSTANT_GROUPS"),
+      entries: messageFieldEntries([
+        ...MESSAGE_FIELD_CONSTANT_GROUPS,
+        { ...timeStep, field: "factor" },
+      ]),
+    };
+    const baseline = readReplacementPinBaseline().filter((line) =>
+      line.startsWith("MESSAGE_FIELD_CONSTANT_GROUPS:"),
+    );
+    expect(replacementPinFindings([record], baseline, new Set())).toEqual([
+      "MESSAGE_FIELD_CONSTANT_GROUPS:collectionproxy.set_time_step:factor: no binding or engine pin (the table has no pin field yet)",
+    ]);
+  });
 });
 
-const TABLE_NAME =
-  /_(CORRECTIONS|OVERRIDES|ADDITIONS|RANGES|CURATIONS|SLOTS|SLOT_KEYS|RESOLUTIONS|RULES|ALTERNATIVES|ALIASES|CLASSIFICATIONS)$/;
-
-const MODULE_EXPORTS: readonly Record<string, unknown>[] = [
-  emitDts,
-  emitMessages,
-  apiDoc,
-  docCorrections,
-];
-
-function exportedTables(): string[] {
-  return MODULE_EXPORTS.flatMap((exports) =>
-    Object.entries(exports)
-      .filter(
-        ([name, value]) =>
-          TABLE_NAME.test(name) &&
-          (value instanceof Map || value instanceof Set || Array.isArray(value)),
-      )
-      .map(([name]) => name),
-  );
-}
-
-describe("correction table classification", () => {
-  test("every exported correction table is registered or excluded exactly once", () => {
-    const registered = REPLACEMENT_TABLES.map((table) => table.name);
-    const problems: string[] = [];
-    for (const name of exportedTables()) {
-      const count =
-        registered.filter((candidate) => candidate === name).length +
-        (UNPINNED_TABLES.has(name) ? 1 : 0);
-      if (count === 0) problems.push(`${name}: neither registered nor excluded`);
-      if (count > 1) problems.push(`${name}: classified ${count} times`);
-    }
-    expect(problems).toEqual([]);
+describe("tableClassificationFindings", () => {
+  test("every exported correction table is classified exactly once", () => {
+    expect(tableClassificationFindings()).toEqual([]);
   });
 
-  test("every registered or excluded name is still an exported table", () => {
-    const exported = new Set(exportedTables());
-    const named = [...REPLACEMENT_TABLES.map((table) => table.name), ...UNPINNED_TABLES.keys()];
-    expect(named.filter((name) => !exported.has(name))).toEqual([]);
+  test("an exported _GROUPS table left out of both lists is a finding", () => {
+    const tables = REPLACEMENT_TABLES.filter(
+      (table) => table.name !== "MESSAGE_FIELD_CONSTANT_GROUPS",
+    );
+    expect(tableClassificationFindings(tables)).toEqual([
+      "MESSAGE_FIELD_CONSTANT_GROUPS: neither registered nor excluded",
+    ]);
+  });
+
+  test("a table both registered and excluded is a finding", () => {
+    const unpinned = new Map([...UNPINNED_TABLES, ["MESSAGE_FIELD_CONSTANT_GROUPS", "reason"]]);
+    expect(tableClassificationFindings(REPLACEMENT_TABLES, unpinned)).toEqual([
+      "MESSAGE_FIELD_CONSTANT_GROUPS: classified 2 times",
+    ]);
+  });
+
+  test("an exclusion naming no exported table is a finding", () => {
+    const unpinned = new Map([...UNPINNED_TABLES, ["GONE_CORRECTIONS", "reason"]]);
+    expect(tableClassificationFindings(REPLACEMENT_TABLES, unpinned)).toEqual([
+      "GONE_CORRECTIONS: not an exported table",
+    ]);
   });
 });
