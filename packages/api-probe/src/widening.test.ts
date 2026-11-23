@@ -232,28 +232,42 @@ describe("widening findings on ECS predicate filters", () => {
   });
 });
 
-// The ECS exports that build a filter or a system factory, named as the gate names them.
-function ecsBuilders(program: ts.Program): string[] {
+// The ECS exports that build a filter and those that build a system factory,
+// named as the gate names them.
+function ecsBuilders(program: ts.Program): { constructors: string[]; factories: string[] } {
   const checker = program.getTypeChecker();
   const fixture = checker.getSymbolAtLocation(
     program.getSourceFile(ECS_FIXTURE) as ts.SourceFile,
   ) as ts.Symbol;
   const ecs = checker.getExportsOfModule(fixture).find((symbol) => symbol.name === "ecs");
   if (ecs === undefined) throw new Error("the ECS fixture exports no ecs namespace");
-  return checker.getExportsOfModule(checker.getAliasedSymbol(ecs)).flatMap((symbol) => {
+  const constructors: string[] = [];
+  const factories: string[] = [];
+  for (const symbol of checker.getExportsOfModule(checker.getAliasedSymbol(ecs))) {
     const [signature] = checker.getTypeOfSymbol(symbol).getCallSignatures();
-    if (signature === undefined) return [];
+    if (signature === undefined) continue;
     const returned = signature.getReturnType();
     const name = returned.aliasSymbol?.name ?? returned.getSymbol()?.name ?? "";
-    return name === "Filter" || name.endsWith("SystemFactory")
-      ? [`${ECS_PREFIX}${symbol.name}`]
-      : [];
-  });
+    if (name === "Filter") constructors.push(`${ECS_PREFIX}${symbol.name}`);
+    else if (name.endsWith("SystemFactory")) factories.push(`${ECS_PREFIX}${symbol.name}`);
+  }
+  return { constructors, factories };
+}
+
+// The ECS declarations file the program reads.
+function ecsDeclarations(program: ts.Program): ts.SourceFile {
+  const file = program
+    .getSourceFiles()
+    .find((candidate) =>
+      candidate.fileName.replaceAll("\\", "/").endsWith("/types/ecs/index.d.ts"),
+    );
+  if (file === undefined) throw new Error("the ECS program reads no ECS declarations");
+  return file;
 }
 
 describe("widening findings on the shipped ECS API", () => {
   test(
-    "every finding has a verdict, every verdict a finding, and every builder a checked slot",
+    "every finding has a verdict, every verdict a finding, and every filter constructor checked slots through every system factory",
     () => {
       const programs = [ecsProgram(gateCompilerOptions()), ecsProgram(userOptions())];
       for (const program of programs) {
@@ -277,17 +291,70 @@ describe("widening findings on the shipped ECS API", () => {
         wideningFindings(program, ecsSurface(program)),
       ) as [Widening, Widening];
       expect(verdictProblems(keyed(repo, user), (key) => key.startsWith(ECS_PREFIX))).toEqual([]);
-      const builders = ecsBuilders(programs[0] as ts.Program);
-      expect(builders).toContain("ecs.requireAll");
-      expect(builders).toContain("ecs.processingSystem");
-      const uncovered = builders.filter((fn) =>
-        [repo, user].some(
-          (widening) =>
-            !widening.checked.some((entry) => entry.fn === fn) &&
-            !widening.unchecked.some((entry) => entry.fn === fn),
-        ),
+      const { constructors, factories } = ecsBuilders(programs[0] as ts.Program);
+      expect(constructors).toContain("ecs.requireAll");
+      expect(factories).toContain("ecs.sortedProcessingSystem");
+      const missing = (
+        [
+          ["repo", repo],
+          ["user", user],
+        ] as const
+      ).flatMap(([label, widening]) =>
+        constructors
+          .filter((fn) => !widening.unchecked.some((entry) => entry.fn === fn))
+          .flatMap((fn) =>
+            factories.flatMap((factory) => {
+              const forms = widening.checked
+                .filter((entry) => entry.fn === fn && entry.variant === factory)
+                .flatMap((entry) => entry.forms);
+              const needed = [
+                ...(forms.some((form) => form.startsWith('"')) ? [] : ["a member"]),
+                ...["union", "base"].filter((form) => !forms.includes(form)),
+              ];
+              return needed.map((form) => `${label}: ${fn} through ${factory} lacks ${form}`);
+            }),
+          ),
       );
-      expect(uncovered).toEqual([]);
+      expect(missing).toEqual([]);
+    },
+    { timeout: 60_000 },
+  );
+
+  test(
+    "a factory whose callbacks require every component a union names is unsound through it",
+    () => {
+      const program = ecsProgram(gateCompilerOptions());
+      const declarations = ecsDeclarations(program);
+      const shipped = "SortedProcessingSystemCallbacks<E, Narrowed<E, F>>";
+      const requiresAll = 'SortedProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>';
+      expect(declarations.text.split(shipped).length - 1).toBe(1);
+      const mutated = overlayProgram(
+        program,
+        new Map([[declarations.fileName, declarations.text.replace(shipped, requiresAll)]]),
+      );
+      const widening = wideningFindings(mutated, ecsSurface(mutated));
+      expect(
+        widening.findings
+          .filter(
+            (finding) => finding.variant !== "ecs.sortedProcessingSystem" || finding.verdictable,
+          )
+          .map(findingKey),
+      ).toEqual([]);
+      const expected = [
+        "ecs.requireAll ecs.sortedProcessingSystem tokens union sound",
+        "ecs.filter ecs.sortedProcessingSystem pattern union sound",
+      ];
+      expect(widening.findings.map(findingKey)).toEqual(expect.arrayContaining(expected));
+      for (const key of expected) {
+        const finding = widening.findings.find((entry) => findingKey(entry) === key);
+        expect(finding?.detail).toContain("captures");
+      }
+      // The shipped `Narrowed` keeps one alternative per branch, so it stays accepted.
+      expect(
+        wideningFindings(program, ecsSurface(program))
+          .findings.filter((finding) => finding.variant === "ecs.sortedProcessingSystem")
+          .map(findingKey),
+      ).toEqual([]);
     },
     { timeout: 60_000 },
   );
