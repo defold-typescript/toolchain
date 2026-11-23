@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Equal } from "../../types/test-d/type-assert";
 import { buildMachine } from "./builder";
 
 type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
@@ -12,9 +13,6 @@ type HitEvent = { type: "HIT"; damage: number };
 interface Log {
   log: string[];
 }
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 function thrownMessage(run: () => unknown): string {
   try {

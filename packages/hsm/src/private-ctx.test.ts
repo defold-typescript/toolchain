@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Equal } from "../../types/test-d/type-assert";
 import { sequence } from "./async";
 import { defineMachine } from "./index";
 
@@ -13,9 +14,6 @@ interface Internals {
 }
 
 type Ev = { type: "HIT" };
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 const make = (key?: string) =>
   defineMachine<Options, Ev>(key)({

@@ -1,8 +1,7 @@
 /// <reference path="../index.d.ts" />
-import type { Hash, Vector3 } from "../src/core-types";
 
-type Identical<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Hash, Vector3 } from "../src/core-types";
+import type { Equal } from "./type-assert";
 
 declare const a: Vector3;
 declare const b: Vector3;
@@ -19,11 +18,11 @@ void single?.[0];
 for (const options of [{ all: true }, { all: false }, {}]) {
   const hits = physics.raycast(a, b, g, options);
   const position = hits?.[0]?.position;
-  const _position: Identical<typeof position, Vector3 | undefined> = true;
+  const _position: Equal<typeof position, Vector3 | undefined> = true;
   void _position;
 }
 const listed = physics.raycast(a, b, g, { all: true });
-const _listed: Identical<NonNullable<typeof listed>[number]["position"], Vector3> = true;
+const _listed: Equal<NonNullable<typeof listed>[number]["position"], Vector3> = true;
 void _listed;
 
 // script_http.cpp:PostProgress posts bytes_sent, bytes_received, bytes_total
@@ -33,7 +32,7 @@ http.request(
   "GET",
   (_self, _id, response) => {
     const status = response.status;
-    const _status: Identical<typeof status, number | undefined> = true;
+    const _status: Equal<typeof status, number | undefined> = true;
     void _status;
     const total: number | undefined = response.bytes_total;
     void total;
@@ -80,7 +79,7 @@ http.request(
   "GET",
   (_self, _id, response) => {
     const status = response.status;
-    const _status: Identical<typeof status, number | undefined> = true;
+    const _status: Equal<typeof status, number | undefined> = true;
     void _status;
   },
   undefined,

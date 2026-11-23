@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Equal } from "../../types/test-d/type-assert";
 import { defineMachine, type MachineInstance } from "./index";
 
 interface Ctx {
@@ -8,9 +9,6 @@ interface Ctx {
 }
 
 type Ev = { type: "GO" } | { type: "BACK" };
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 function logged(name: string) {
   return {

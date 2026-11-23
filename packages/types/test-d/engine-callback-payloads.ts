@@ -2,9 +2,7 @@
 
 import type { Hash } from "../src/core-types";
 import { defineRenderScript, defineScript } from "../src/lifecycle";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "./type-assert";
 
 // render_script.cpp looks up only init, update, on_message and on_reload.
 defineRenderScript({

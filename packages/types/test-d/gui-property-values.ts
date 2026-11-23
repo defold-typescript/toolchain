@@ -1,8 +1,7 @@
 /// <reference path="../index.d.ts" />
-import type { Hash, Opaque, Quaternion, Vector3, Vector4 } from "../src/core-types";
 
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Hash, Opaque, Quaternion, Vector3, Vector4 } from "../src/core-types";
+import type { Equal } from "./type-assert";
 
 declare const node: Opaque<"node">;
 declare const v3: Vector3;

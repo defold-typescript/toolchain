@@ -1,7 +1,6 @@
 /// <reference path="../index.d.ts" />
 
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "./type-assert";
 
 // `window.set_listener` delivers `event` and `data` as two separate params, so
 // TS can't auto-correlate an `event === WINDOW_EVENT_RESIZED` check with `data`.

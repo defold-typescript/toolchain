@@ -1,10 +1,8 @@
 /// <reference path="../index.d.ts" />
+
 import type { Hash, Matrix4, Url, Vector3, Vector4 } from "../src/core-types";
 import { defineScript } from "../src/lifecycle";
-
-// Stricter than mutual assignability, which accepts an extra optional field.
-type Identical<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "./type-assert";
 
 const _url = null as unknown as Url;
 const _hash = null as unknown as Hash;
@@ -127,10 +125,9 @@ msg.post(_url, "pause_sound", { pause: true });
 msg.post(_url, "set_pan", { pan: 0 });
 msg.post(_url, "set_pan", { pan: -0.5, play_id: 1 });
 
-const _pauseSoundPayload: Identical<BuiltinMessages["pause_sound"], { pause?: boolean }> = true;
+const _pauseSoundPayload: Equal<BuiltinMessages["pause_sound"], { pause?: boolean }> = true;
 void _pauseSoundPayload;
-const _setPanPayload: Identical<BuiltinMessages["set_pan"], { pan?: number; play_id?: number }> =
-  true;
+const _setPanPayload: Equal<BuiltinMessages["set_pan"], { pan?: number; play_id?: number }> = true;
 void _setPanPayload;
 
 msg.post(_url, "set_camera", { aspect_ratio: 16 / 9, fov: 1, near_z: 0.1, far_z: 500 });
@@ -154,7 +151,7 @@ const _modelAnimationDone: BuiltinMessages["model_animation_done"] = {
 };
 const _modelAnimationDoneShape: { animation_id: Hash; playback: go.Playback } = _modelAnimationDone;
 void _modelAnimationDoneShape;
-const _modelAnimationDonePlayback: Identical<
+const _modelAnimationDonePlayback: Equal<
   BuiltinMessages["model_animation_done"]["playback"],
   go.Playback
 > = true;
@@ -196,7 +193,7 @@ msg.post(_url, "draw_debug_text", { position: _v3, text: "hp: 100", color: _v4 }
 // @ts-expect-error draw_debug_text text must be string, not number
 msg.post(_url, "draw_debug_text", { position: _v3, text: 0, color: _v4 });
 
-const _setViewProjectionPayload: Identical<
+const _setViewProjectionPayload: Equal<
   BuiltinMessages["set_view_projection"],
   { id: Hash; view: Matrix4; projection: Matrix4 }
 > = true;
@@ -239,7 +236,7 @@ msg.post(_wave, "ping");
 // @ts-expect-error 7 is no collectionproxy.TimeStepMode
 msg.post("#proxy", "set_time_step", { factor: 1, mode: 7 });
 msg.post("#proxy", "set_time_step", { factor: 1, mode: 1 });
-const _setTimeStepMode: Identical<
+const _setTimeStepMode: Equal<
   BuiltinMessages["set_time_step"]["mode"],
   collectionproxy.TimeStepMode
 > = true;

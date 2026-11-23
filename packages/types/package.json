@@ -146,7 +146,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && bun run build:cli-runtime",
     "build:cli-runtime": "bun build scripts/cli-runtime.ts scripts/library-runtime.ts --target=node --format=esm --packages=external --outdir=dist",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && bun ../../scripts/scaffold-typecheck.ts",
     "regen": "bun scripts/regen.ts",
     "generate-api-availability": "bun scripts/generate-api-availability.ts",
     "generate-api-signatures": "bun scripts/generate-api-signatures.ts --write",

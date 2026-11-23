@@ -1,8 +1,7 @@
 /// <reference path="../index.d.ts" />
-import type { Opaque, Vector3 } from "../src/core-types";
 
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Opaque, Vector3 } from "../src/core-types";
+import type { Equal } from "./type-assert";
 
 declare const world: Opaque<"b2World">;
 declare const bounds: b2d.Aabb;
