@@ -584,6 +584,11 @@
     "verdict": "accepted",
     "reason": "the binding reads complete_function only when lua_isfunction(L, 8) and ignores any other kind"
   },
+  "go.cancel_animations:member optional url=undefined": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "script_msg.cpp ResolveURL resolves a nil url to the calling script component, and gameobject_script.cpp Script_CancelAnimations raises for a key that script does not declare; the declaration leaves the calling script's catalog open, as for \"#\", and the probe script declares no position property"
+  },
   "gui.animate:negative-7": {
     "outcome": "ok",
     "verdict": "accepted",

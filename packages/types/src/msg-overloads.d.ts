@@ -141,7 +141,8 @@ declare global {
      * - `msg.url(urlstring)` — one argument: a `"[socket:][path][#fragment]"`
      *   string, a `Hash`, or a `Url`.
      * - `msg.url(socket, path, fragment)` — three positions, each of which may
-     *   be `undefined` (Lua `nil`).
+     *   be `undefined` (Lua `nil`), except `path` beside a `socket` and a
+     *   `fragment`.
      *
      * The two-arg form `msg.url(socket, path)` is a runtime error.
      *
@@ -154,8 +155,8 @@ declare global {
      * `path` with an `undefined` socket is the current path. An `undefined`
      * `fragment` is no fragment, unless `socket` and `path` are both
      * `undefined`, which keeps the current fragment. A `socket` and `fragment`
-     * with an `undefined` `path` raise "Can't resolve id with specified socket
-     * and fragment."
+     * with an `undefined` `path` do not type-check: script_msg.cpp `URL_new`
+     * raises "Can't resolve id with specified socket and fragment." for them.
      *
      * In the same world, address a sibling **relatively** — by bare id
      * (`msg.url("camera")`), absolute path (`msg.url("/camera")`), or
@@ -198,8 +199,18 @@ declare global {
     function url(urlstring: SceneAddress | Hash | Url | undefined): Url;
     function url(
       socket: string | Hash | undefined,
+      path: string | Hash,
+      fragment: string | Hash | undefined,
+    ): Url;
+    function url(
+      socket: undefined,
       path: string | Hash | undefined,
       fragment: string | Hash | undefined,
+    ): Url;
+    function url(
+      socket: string | Hash | undefined,
+      path: string | Hash | undefined,
+      fragment: undefined,
     ): Url;
     function url<M extends object>(): ReceiverUrl<M>;
     function url<M extends object>(
@@ -207,8 +218,18 @@ declare global {
     ): ReceiverUrl<M>;
     function url<M extends object>(
       socket: string | Hash | undefined,
+      path: string | Hash,
+      fragment: string | Hash | undefined,
+    ): ReceiverUrl<M>;
+    function url<M extends object>(
+      socket: undefined,
       path: string | Hash | undefined,
       fragment: string | Hash | undefined,
+    ): ReceiverUrl<M>;
+    function url<M extends object>(
+      socket: string | Hash | undefined,
+      path: string | Hash | undefined,
+      fragment: undefined,
     ): ReceiverUrl<M>;
   }
 }

@@ -7,14 +7,18 @@ import { overlayProgram } from "./call-check";
 import { BOX2D_BACKENDS } from "./contexts";
 import { describeDiagnostic } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
+import { memberCalls } from "./widening";
 import { generateProbes, PROBE_FILES, type ProbeGeneration, probeTarget } from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const OPTION_FIXTURE = resolve(import.meta.dir, "option-form-fixture.d.ts");
+const program = surfaceProgram(probeTarget());
+const members = memberCalls(program);
 const generations: ProbeGeneration[] = BOX2D_BACKENDS.map((backend) =>
-  generateProbes(undefined, backend),
+  generateProbes(undefined, backend, program, members),
 );
 const [v2] = generations as [ProbeGeneration, ProbeGeneration];
+const MEMBER = "member ";
 
 describe("witness generation", () => {
   test("sprite.play_flipbook gets a required-slot call and a full call per arm", () => {
@@ -101,6 +105,53 @@ describe("witness generation", () => {
       }
     }
     expect(problems).toEqual([]);
+  });
+});
+
+describe("member calls", () => {
+  const memberCallsOf = (generation: ProbeGeneration) =>
+    generation.calls.filter((call) => call.variant.startsWith(MEMBER));
+
+  test("a gui.get property member runs in the gui script beside its base call", () => {
+    const leading = v2.calls.filter(
+      (call) =>
+        call.name === "gui.get" && call.variant === 'member overload1-required property="leading"',
+    );
+    expect(leading.map((call) => [call.kind, call.returns?.kinds])).toEqual([
+      ["gui", [["number"]]],
+    ]);
+  });
+
+  test("msg.post members are left to the go script's message queue", () => {
+    expect(members.some((call) => call.name === "msg.post")).toBe(true);
+    for (const generation of generations) {
+      expect(memberCallsOf(generation).filter((call) => call.name === "msg.post")).toEqual([]);
+    }
+  });
+
+  test("no member call repeats the text of another call in its pass", () => {
+    for (const generation of generations) {
+      const counts = new Map<string, number>();
+      for (const call of generation.calls) counts.set(call.call, (counts.get(call.call) ?? 0) + 1);
+      const repeated = memberCallsOf(generation)
+        .filter((call) => (counts.get(call.call) ?? 0) > 1)
+        .map((call) => `${generation.backend} ${call.name} ${call.variant}: ${call.call}`);
+      expect(repeated).toEqual([]);
+    }
+  });
+
+  test("every member call joins a pass that runs its base call", () => {
+    for (const generation of generations) {
+      const base = new Set(
+        generation.calls
+          .filter((call) => !call.variant.startsWith(MEMBER))
+          .map((call) => `${call.name} ${call.variant}`),
+      );
+      const orphans = memberCallsOf(generation)
+        .filter((call) => !base.has(`${call.name} ${call.variant.split(" ")[1]}`))
+        .map((call) => `${generation.backend} ${call.name} ${call.variant}`);
+      expect(orphans).toEqual([]);
+    }
   });
 });
 

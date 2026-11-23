@@ -256,7 +256,7 @@ describe("canonical pages render every authored overload arm", () => {
   it("collapses a multi-identity FQN to one arm set per page", async () => {
     const msg = renderedCallForms(await renderedFor(namespaceByName("msg")));
     const msgUrlArms = storeFor("msg")?.["msg.url"]?.signatures ?? [];
-    expect(msgUrlArms.length).toBe(6);
+    expect(msgUrlArms.length).toBe(10);
     expect(armsOf(msg, "msg.url")).toEqual(msgUrlArms.map(callForm));
 
     const vmath = renderedCallForms(await renderedFor(namespaceByName("vmath")));

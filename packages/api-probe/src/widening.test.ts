@@ -6,7 +6,14 @@ import { scaffoldStrictness } from "../../cli/src/scaffold-strictness";
 import { gateCompilerOptions } from "../../types/scripts/example-typecheck";
 import { surfaceEntry, surfaceProgram } from "../../types/scripts/lua-kind";
 import { checkCalls, overlayProgram } from "./call-check";
-import { ecsSurface, engineSurface, findingKey, type Widening, wideningFindings } from "./widening";
+import {
+  ecsSurface,
+  engineSurface,
+  findingKey,
+  memberCalls,
+  type Widening,
+  wideningFindings,
+} from "./widening";
 import { probeTarget } from "./witness";
 
 const FIXTURE = resolve(import.meta.dir, "widening-fixture.d.ts");
@@ -180,6 +187,49 @@ describe("widening findings on the shipped surface", () => {
       expect(verdictProblems(keyed(repo, user), owns)).toEqual([]);
     },
     { timeout: 120_000 },
+  );
+});
+
+describe("member calls on the shipped surface", () => {
+  const program = surfaceProgram(probeTarget());
+  const members = memberCalls(program);
+  const returnsOf = (name: string, member: string) =>
+    members
+      .filter((call) => call.name === name && call.member === member)
+      .map((call) => call.returns.kinds);
+
+  test("each gui.get property member carries the returns of the overload it resolves to", () => {
+    const leading = returnsOf("gui.get", '"leading"');
+    expect(leading.length).toBeGreaterThan(0);
+    for (const kinds of leading) expect(kinds).toEqual([["number"]]);
+    const color = returnsOf("gui.get", '"color"');
+    expect(color.length).toBeGreaterThan(0);
+    for (const kinds of color) {
+      expect(kinds).toHaveLength(1);
+      expect(kinds[0]).toHaveLength(1);
+      expect(kinds[0]).not.toEqual(["number"]);
+    }
+  });
+
+  test("no member is a widened form", () => {
+    const widened = new Set(["string", "number", "boolean", "union", "mixed", "base"]);
+    expect(members.filter((call) => widened.has(call.member))).toEqual([]);
+  });
+
+  test(
+    "every member call compiles",
+    () => {
+      const checked = checkCalls(
+        program,
+        members.map((call) => call.call),
+      );
+      expect(
+        checked.calls.flatMap((call, i) =>
+          call.errors.map((error) => `${members[i]?.call}: ${error}`),
+        ),
+      ).toEqual([]);
+    },
+    { timeout: 60_000 },
   );
 });
 
