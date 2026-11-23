@@ -1,14 +1,16 @@
 // `library check` checks a library data folder the way the running CLI reads it:
 // the reader's own checks, the print of every module the folder serves, one
 // compile of every printed declaration, native declaration and usage example
-// against the engine types this CLI ships, then each module's coverage against its
-// floor. A declared file TypeScript cannot load is a problem of its library. The
-// engine types and the language extensions come from this CLI's install, never from
-// beside the data folder.
+// against the engine types this CLI ships and a second compile of the usage
+// examples under a scaffolded project's options, then each module's coverage
+// against its floor. A declared file TypeScript cannot load is a problem of its
+// library. The engine types and the language extensions come from this CLI's
+// install, never from beside the data folder.
 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
+import { scaffoldStrictness } from "../scaffold-strictness";
 import {
   type LibraryData,
   LibraryDataError,
@@ -28,7 +30,8 @@ export interface LibraryProblem {
 }
 
 // Stricter than a scaffolded project, so a declaration that compiles here compiles
-// there; usage examples assert the types these flags produce.
+// there. Usage examples compile under these and again under
+// `SCAFFOLD_CHECK_OPTIONS`, so an assertion holds for both kinds of project.
 const CHECK_OPTIONS: ts.CompilerOptions = {
   strict: true,
   exactOptionalPropertyTypes: true,
@@ -42,6 +45,10 @@ const CHECK_OPTIONS: ts.CompilerOptions = {
   moduleResolution: ts.ModuleResolutionKind.Bundler,
 };
 
+// A declaration is never compiled under these: a scaffolded project sets
+// `skipLibCheck`, so it never reports an error in one.
+const SCAFFOLD_CHECK_OPTIONS: ts.CompilerOptions = { ...CHECK_OPTIONS, ...scaffoldStrictness() };
+
 const TYPES_PACKAGE = "@defold-typescript/types";
 const LANGUAGE_EXTENSIONS = "@typescript-to-lua/language-extensions";
 
@@ -54,6 +61,7 @@ interface CheckInput {
   // The path a problem names, relative to the library folder.
   shown: string;
   contents?: string;
+  usage: boolean;
 }
 
 // Each package a usage example references resolves from the file that depends on
@@ -125,8 +133,12 @@ function checkInputs(
     inputs.set(path.resolve(fileName), input);
   };
   for (const library of libraries) {
-    const onDisk = (file: string): void =>
-      add(path.join(dataDir, file), { library: library.dir, shown: underFolder(library, file) });
+    const onDisk = (file: string, usage: boolean): void =>
+      add(path.join(dataDir, file), {
+        library: library.dir,
+        shown: underFolder(library, file),
+        usage,
+      });
     for (const { moduleId } of [...library.luals, ...library.scriptApi]) {
       const contents = corpus.get(moduleId);
       if (contents === undefined) continue;
@@ -134,6 +146,7 @@ function checkInputs(
         library: library.dir,
         shown: `printed/${moduleId}.d.ts`,
         contents,
+        usage: false,
       });
     }
     // A fork prints as itself, so a problem in it names the fork file.
@@ -144,10 +157,11 @@ function checkInputs(
         library: library.dir,
         shown: underFolder(library, authored),
         contents,
+        usage: false,
       });
     }
-    for (const { declaration } of library.native) onDisk(declaration);
-    for (const usage of library.usage) onDisk(usage);
+    for (const { declaration } of library.native) onDisk(declaration, false);
+    for (const usage of library.usage) onDisk(usage, true);
   }
   return inputs;
 }
@@ -164,11 +178,18 @@ function compileHost(inputs: Map<string, CheckInput>, dataDir: string): ts.Compi
   const fileExists = host.fileExists.bind(host);
   const readFile = host.readFile.bind(host);
   const directoryExists = host.directoryExists?.bind(host) ?? ts.sys.directoryExists;
+  // Both compiles read through this host, so the second reuses every parse.
+  const parsed = new Map<string, ts.SourceFile | undefined>();
   host.getSourceFile = (fileName, languageVersion, onError, shouldCreate) => {
+    const key = path.resolve(fileName);
+    if (!shouldCreate && parsed.has(key)) return parsed.get(key);
     const contents = inputAt(fileName)?.contents;
-    return contents === undefined
-      ? getSourceFile(fileName, languageVersion, onError, shouldCreate)
-      : ts.createSourceFile(fileName, contents, languageVersion, true);
+    const sourceFile =
+      contents === undefined
+        ? getSourceFile(fileName, languageVersion, onError, shouldCreate)
+        : ts.createSourceFile(fileName, contents, languageVersion, true);
+    parsed.set(key, sourceFile);
+    return sourceFile;
   };
   host.fileExists = (fileName) => inputAt(fileName)?.contents !== undefined || fileExists(fileName);
   host.readFile = (fileName) => inputAt(fileName)?.contents ?? readFile(fileName);
@@ -233,36 +254,53 @@ function engineTypesFile(): string {
   return resolved;
 }
 
+interface CompileError {
+  line: number;
+  text: string;
+}
+
+function compileErrors(program: ts.Program, fileName: string): CompileError[] {
+  const sourceFile = program.getSourceFile(fileName);
+  if (sourceFile === undefined) return [];
+  return [
+    ...program.getSyntacticDiagnostics(sourceFile),
+    ...program.getSemanticDiagnostics(sourceFile),
+  ]
+    .filter(({ category }) => category === ts.DiagnosticCategory.Error)
+    .map((diagnostic) => ({
+      line: sourceFile.getLineAndCharacterOfPosition(diagnostic.start ?? 0).line + 1,
+      text: ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
+    }));
+}
+
+// A usage line the scaffold's options fail is reported only when the strict
+// options pass it. The two compiles word one failure differently, so a line is
+// matched by number, not by message.
 function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): LibraryProblem[] {
-  const program = ts.createProgram({
-    rootNames: [engineTypesFile(), ...inputs.keys()],
-    options: CHECK_OPTIONS,
-    host: compileHost(inputs, dataDir),
+  const rootNames = [engineTypesFile(), ...inputs.keys()];
+  const host = compileHost(inputs, dataDir);
+  const strict = ts.createProgram({ rootNames, options: CHECK_OPTIONS, host });
+  const scaffold = ts.createProgram({
+    rootNames,
+    options: SCAFFOLD_CHECK_OPTIONS,
+    host,
+    oldProgram: strict,
   });
   const problems: LibraryProblem[] = [];
   for (const [fileName, input] of inputs) {
-    const sourceFile = program.getSourceFile(fileName);
-    if (sourceFile === undefined) {
-      problems.push({
-        library: input.library,
-        check: "compile",
-        message: `${input.shown} cannot be loaded: it is missing or is not a TypeScript file`,
-      });
+    const problem = (message: string): void => {
+      problems.push({ library: input.library, check: "compile", message });
+    };
+    if (strict.getSourceFile(fileName) === undefined) {
+      problem(`${input.shown} cannot be loaded: it is missing or is not a TypeScript file`);
       continue;
     }
-    const diagnostics = [
-      ...program.getSyntacticDiagnostics(sourceFile),
-      ...program.getSemanticDiagnostics(sourceFile),
-    ];
-    for (const diagnostic of diagnostics) {
-      if (diagnostic.category !== ts.DiagnosticCategory.Error) continue;
-      const { line } = sourceFile.getLineAndCharacterOfPosition(diagnostic.start ?? 0);
-      const text = ts.flattenDiagnosticMessageText(diagnostic.messageText, " ");
-      problems.push({
-        library: input.library,
-        check: "compile",
-        message: `${input.shown}:${line + 1} ${text}`,
-      });
+    const strictErrors = compileErrors(strict, fileName);
+    for (const { line, text } of strictErrors) problem(`${input.shown}:${line} ${text}`);
+    if (!input.usage) continue;
+    const strictLines = new Set(strictErrors.map(({ line }) => line));
+    for (const { line, text } of compileErrors(scaffold, fileName)) {
+      if (!strictLines.has(line)) problem(`${input.shown}:${line} (scaffold options) ${text}`);
     }
   }
   return problems;
@@ -272,8 +310,10 @@ function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): Libr
  * Every problem in the data folder at `dataDir`, in library order: one `data`
  * problem when the reader refuses it, else a `print` problem per module that does
  * not print, else every compile error in the printed declarations, the native
- * declarations and the usage examples, and one compile problem per such file
- * TypeScript cannot load, else a floor problem per module below its coverage floor,
+ * declarations and the usage examples, every error a second compile of the usage
+ * examples under a scaffolded project's options finds on a line the first passes,
+ * tagged `(scaffold options)`, and one compile problem per such file TypeScript
+ * cannot load, else a floor problem per module below its coverage floor,
  * with no floor, or that cannot be measured. Empty when the folder is clean. A
  * library whose `minCli` is above `read.cliVersion` is not checked.
  */

@@ -2,6 +2,7 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as lang from "lang.lang";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof (mirroring event-usage.test-d.ts) that the lang LuaLS golden
 // accepts faithful upstream calls: `init` with only the required `available_langs`
@@ -22,8 +23,6 @@ lang.set_lang("en", () => {});
 
 // A string-keyed table the library hands back stays a `LuaTable`: only the
 // caller-supplied side widens to accept an object literal.
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 const _langTableReturn: Equal<
   ReturnType<typeof lang.get_lang_table>,
   LuaTable<string, string>

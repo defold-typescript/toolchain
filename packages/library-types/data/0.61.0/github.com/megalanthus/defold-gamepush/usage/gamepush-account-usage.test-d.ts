@@ -6,14 +6,12 @@ import * as ads from "gamepush.core.ads";
 import * as payments from "gamepush.core.payments";
 import * as player from "gamepush.core.player";
 import * as uniques from "gamepush.core.uniques";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the hand-authored GamePush account and commerce modules. No
 // assertions execute; the `dts-declaration-validity` compile is the gate. Upstream
 // ships plain Lua whose annotations say only `table` and `function`, so this is where the
 // declared shapes are held to being callable as the README documents them.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // `check_table` and `check_callback` both let nil through.
 player.sync();

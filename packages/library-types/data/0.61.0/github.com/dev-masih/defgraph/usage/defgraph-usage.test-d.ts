@@ -2,12 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as defgraph from "defgraph.defgraph";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the defgraph fork, written as upstream's examples drive it. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // Every module setting is optional, and a `nil` keeps the current value.
 defgraph.map_set_properties();

@@ -2,9 +2,7 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as flow from "flow.flow";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "../../../../type-assert";
 
 type MessageId = Hash | string;
 

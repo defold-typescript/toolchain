@@ -3,13 +3,11 @@
 
 import * as bezier from "operator.bezier";
 import * as operator from "operator.operator";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the operator forks, written as the calls upstream's README makes
 // from a script. No assertions execute; the `dts-declaration-validity` compile is the
 // gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 export function init(): void {
   // No operator is active until one activates, so the url can be nil.

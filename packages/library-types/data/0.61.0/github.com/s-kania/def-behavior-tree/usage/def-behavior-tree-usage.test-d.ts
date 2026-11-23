@@ -2,13 +2,11 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as BehaviorTree from "def_behavior_tree.behavior_tree";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the def_behavior_tree fork, written as upstream's README builds
 // and runs a tree. No assertions execute; the `dts-declaration-validity` compile is
 // the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 interface Ship {
   health: number;

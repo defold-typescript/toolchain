@@ -11,12 +11,10 @@ import type {
   RpcError,
   WorldAck,
 } from "asobi.realtime";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the asobi forks, written as upstream's README drives them. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 const client = asobi.create("localhost");
 asobi.create("localhost", 8084, false);

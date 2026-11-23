@@ -9,9 +9,7 @@
  */
 declare module 'wrap.node' {
   /** The table `gui.clone_tree` and `gui.get_tree` return: each node of a tree, by id. */
-  export type NodeTree = LuaTable<Hash, Opaque<'node'>> & {
-    get: LuaTableGetMethod<string, Opaque<'node'>>;
-  };
+  export type NodeTree = ReturnType<typeof gui.clone_tree>;
 
   /**
    * One hex digit, in either case.

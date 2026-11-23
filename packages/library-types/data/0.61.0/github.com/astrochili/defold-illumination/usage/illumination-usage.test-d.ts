@@ -2,12 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as illumination from "illumination.illumination";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the illumination fork, written as upstream's README drives it. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 illumination.set_debug(true);
 const debug = illumination.is_debug();
