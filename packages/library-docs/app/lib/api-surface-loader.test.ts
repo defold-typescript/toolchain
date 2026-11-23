@@ -387,7 +387,7 @@ describe("loadApiSurface — druid library page", () => {
     if (!druid) throw new Error("druid page missing");
     const byName = new Map(apiModuleSymbols(druid).map((s) => [s.name, s.signature]));
     expect(byName.get("new")).toBe(
-      "new(context: LuaTable, style?: LuaTable | undefined): druid_instance",
+      "new(context: LuaTable | PlainTable, style?: LuaTable | PlainTable | undefined): druid_instance",
     );
     expect(byName.get("get_widget")).toBe(
       "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined, template?: string | undefined): T",
