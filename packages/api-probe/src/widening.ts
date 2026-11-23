@@ -761,12 +761,13 @@ function capturingDefinition(factory: ts.Type, checker: ts.TypeChecker): string 
   return `{ ${CAPTURING_DEF}${required.join("")} }`;
 }
 
-// The filter constructors and system factories of the `ecs` namespace that the
-// program's root, the ECS fixture, exports beside its entity type `Ent`. Each
-// constructor builds the filter of a processing system over `Ent`, and each
-// factory builds a system over a `requireAll` filter; the system captures the
-// entity its callback receives. A name slot is checked with `Ent`'s keys, a
-// pattern slot with `ECS_PATTERNS`.
+// The filter constructors of the `ecs` namespace that the program's root, the
+// ECS fixture, exports beside its entity type `Ent`. Each constructor builds
+// the filter of a system over `Ent` once per system factory of the namespace,
+// so each factory's callbacks are judged on the entity each filter form lets
+// through; the system captures the entity its callback receives. A factory's
+// only argument picks a cached system, so it is no slot. A name slot is
+// checked with `Ent`'s keys, a pattern slot with `ECS_PATTERNS`.
 export function ecsSurface(program: ts.Program): WideningSurface {
   const checker = program.getTypeChecker();
   const [root] = program.getRootFileNames();
@@ -788,45 +789,51 @@ export function ecsSurface(program: ts.Program): WideningSurface {
   const calls: BaseCall[] = [];
   const unwitnessed: Unwitnessed[] = [];
   const literals = new Map<string, readonly string[]>();
-  const system = (filterText: string) =>
-    `${ECS_NAMESPACE}.processingSystem<Ent>()(${filterText}, { ${CAPTURING_DEF} })`;
-  for (const symbol of checker.getExportsOfModule(checker.getAliasedSymbol(namespace))) {
+  const exports = checker.getExportsOfModule(checker.getAliasedSymbol(namespace));
+  const factories: { readonly name: string; readonly definition: string }[] = [];
+  for (const symbol of exports) {
+    const [signature] = checker.getTypeOfSymbol(symbol).getCallSignatures();
+    const returned = signature?.getReturnType();
+    if (returned === undefined || !isSystemFactory(returned)) continue;
+    factories.push({
+      name: `${ECS_NAMESPACE}.${symbol.name}`,
+      definition: capturingDefinition(returned, checker),
+    });
+  }
+  for (const symbol of exports) {
     const fn = `${ECS_NAMESPACE}.${symbol.name}`;
     const [signature] = checker.getTypeOfSymbol(symbol).getCallSignatures();
     if (signature === undefined) continue;
-    const returned = signature.getReturnType();
-    const built = filterReturn(returned, checker);
-    if (built !== undefined) {
-      functions.set(fn, symbol);
-      const params = signature.getParameters();
-      const [param] = params;
-      const argument = argumentType(signature, 0, checker);
-      const rest = restIndex(signature) === 0;
-      const pattern =
-        !rest &&
-        argument !== undefined &&
-        (constrained(argument).flags & ts.TypeFlags.String) !== 0;
-      if (param === undefined || params.length !== 1 || !(rest || pattern)) {
-        unwitnessed.push({
-          name: fn,
-          reason: "a filter constructor the gate calls takes a rest of names or one pattern",
-        });
-        continue;
-      }
-      literals.set(`${fn} ${param.name}`, rest ? names : ECS_PATTERNS);
-      const args = rest
-        ? ECS_NAMES.map((name) => JSON.stringify(name)).join(", ")
-        : JSON.stringify(ECS_PATTERNS[0]);
-      const filterText = built === "direct" ? `${fn}(${args})` : `${UNWRAP_FILTER}(${fn}(${args}))`;
-      calls.push({ name: fn, variant: "required", call: system(filterText) });
-    } else if (isSystemFactory(returned)) {
-      functions.set(fn, symbol);
-      const key = signature.getParameters().length > 0 ? '"widened"' : "";
-      const filterText = `${ECS_NAMESPACE}.requireAll(${JSON.stringify(ECS_NAMES[1])})`;
+    const built = filterReturn(signature.getReturnType(), checker);
+    if (built === undefined) continue;
+    functions.set(fn, symbol);
+    const params = signature.getParameters();
+    const [param] = params;
+    const argument = argumentType(signature, 0, checker);
+    const rest = restIndex(signature) === 0;
+    const pattern =
+      !rest && argument !== undefined && (constrained(argument).flags & ts.TypeFlags.String) !== 0;
+    if (param === undefined || params.length !== 1 || !(rest || pattern)) {
+      unwitnessed.push({
+        name: fn,
+        reason: "a filter constructor the gate calls takes a rest of names or one pattern",
+      });
+      continue;
+    }
+    if (factories.length === 0) {
+      unwitnessed.push({ name: fn, reason: "no system factory to build a system with" });
+      continue;
+    }
+    literals.set(`${fn} ${param.name}`, rest ? names : ECS_PATTERNS);
+    const args = rest
+      ? ECS_NAMES.map((name) => JSON.stringify(name)).join(", ")
+      : JSON.stringify(ECS_PATTERNS[0]);
+    const filterText = built === "direct" ? `${fn}(${args})` : `${UNWRAP_FILTER}(${fn}(${args}))`;
+    for (const factory of factories) {
       calls.push({
         name: fn,
-        variant: "required",
-        call: `${fn}<Ent>(${key})(${filterText}, ${capturingDefinition(returned, checker)})`,
+        variant: factory.name,
+        call: `${factory.name}<Ent>()(${filterText}, ${factory.definition})`,
       });
     }
   }
