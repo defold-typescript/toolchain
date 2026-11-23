@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Equal } from "../../types/test-d/type-assert";
 import {
   type AlwaysConfig,
   defineMachine,
@@ -39,9 +40,6 @@ function logged(name: string) {
 function newCtx(): Ctx {
   return { log: [] };
 }
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 function thrownMessage(run: () => unknown): string {
   try {

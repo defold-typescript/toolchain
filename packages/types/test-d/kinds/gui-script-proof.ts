@@ -1,8 +1,6 @@
 import { defineGuiScript } from "../../generated/kinds/gui-script";
 import type { Hash, Vector4 } from "../../src/core-types";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "../type-assert";
 
 declare global {
   interface SceneComponentAddresses {

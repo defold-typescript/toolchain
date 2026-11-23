@@ -1,10 +1,9 @@
 /// <reference path="../index.d.ts" />
+
 import type { Hash, Matrix4, Url, Vector3 } from "../src/core-types";
 import type { ScriptPropertiesOf } from "../src/lifecycle";
 import type enemy from "./script-properties/enemy";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "./type-assert";
 
 // What `scene-types` writes for a `/props` object hosting one linked script and
 // one component of each other shape: a registered kind, a kind whose catalog its

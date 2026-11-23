@@ -1,6 +1,7 @@
 /// <reference path="../index.d.ts" />
 
 import type { Hash, Opaque, Vector3 } from "../src/core-types";
+import type { Equal } from "./type-assert";
 
 // The three gui mapping-table returns key by a branded `Hash`, which a TS index
 // signature cannot hold, so each emits a Lua table type (curated in
@@ -26,15 +27,13 @@ const _badSize: number = gui.get_layouts().get(nodeId);
 
 // A lookup of an id the table does not hold reads `nil`, so every id table's
 // `get` includes `undefined`, whichever key form it takes.
-type Identical<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Squad = { "/leader": { speed: number } };
 
 const spawned = collectionfactory.create("#f");
-const _byHash: Identical<ReturnType<typeof spawned.get>, Hash | undefined> = true;
+const _byHash: Equal<ReturnType<typeof spawned.get>, Hash | undefined> = true;
 void _byHash;
 const curried = collectionfactory.create<Squad>()("#f");
-const _byPath: Identical<ReturnType<typeof curried.get>, Hash | undefined> = true;
+const _byPath: Equal<ReturnType<typeof curried.get>, Hash | undefined> = true;
 void _byPath;
 // @ts-expect-error a missing id reads nil
 const _spawnedHash: Hash = spawned.get(hash("/x"));
@@ -45,13 +44,13 @@ void _curriedHash;
 
 declare const n: Opaque<"node">;
 const cloned = gui.clone_tree(n).get("a");
-const _cloned: Identical<typeof cloned, Opaque<"node"> | undefined> = true;
+const _cloned: Equal<typeof cloned, Opaque<"node"> | undefined> = true;
 void _cloned;
 const inTree = gui.get_tree(n).get(hash("a"));
-const _inTree: Identical<typeof inTree, Opaque<"node"> | undefined> = true;
+const _inTree: Equal<typeof inTree, Opaque<"node"> | undefined> = true;
 void _inTree;
 const layout = gui.get_layouts().get(hash("l"));
-const _layout: Identical<typeof layout, Vector3 | undefined> = true;
+const _layout: Equal<typeof layout, Vector3 | undefined> = true;
 void _layout;
 const meshAabb = model.get_mesh_aabb("#m").get(hash("m"));
 const _meshAabb: undefined extends typeof meshAabb ? true : false = true;

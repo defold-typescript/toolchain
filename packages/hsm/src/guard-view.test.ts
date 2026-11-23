@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Equal } from "../../types/test-d/type-assert";
 import { defineMachine, type MachineView } from "./index";
 
 type Ev =
@@ -9,9 +10,6 @@ type Ev =
   | { type: "SWAP" }
   | { type: "BOTH" }
   | { type: "GO" };
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 const knight = () =>
   defineMachine<object, Ev>()({

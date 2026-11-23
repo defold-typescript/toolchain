@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.scaffold.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && bun ../../scripts/scaffold-typecheck.ts",
     "test": "bun test"
   },
   "devDependencies": {

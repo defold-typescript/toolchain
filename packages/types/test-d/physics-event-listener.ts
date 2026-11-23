@@ -1,9 +1,7 @@
 /// <reference path="../index.d.ts" />
 
 import type { Hash, Vector3 } from "../src/core-types";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+import type { Equal } from "./type-assert";
 
 type ContactPointEvent = BuiltinMessages["contact_point_event"] & {
   type: Hash<"contact_point_event">;

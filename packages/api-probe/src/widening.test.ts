@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
+import { scaffoldStrictness } from "../../cli/src/scaffold-strictness";
 import { gateCompilerOptions } from "../../types/scripts/example-typecheck";
 import { surfaceEntry, surfaceProgram } from "../../types/scripts/lua-kind";
 import { checkCalls, overlayProgram } from "./call-check";
@@ -11,18 +12,12 @@ import { probeTarget } from "./witness";
 const FIXTURE = resolve(import.meta.dir, "widening-fixture.d.ts");
 const ECS_FIXTURE = resolve(import.meta.dir, "widening-ecs-fixture.ts");
 const VERDICTS = resolve(import.meta.dir, "..", "widening-verdicts.json");
-const SCAFFOLD_TSCONFIG = resolve(import.meta.dir, "../../cli/src/scaffold-tsconfig.json");
 // Verdicts on the ECS API, which the ECS block owns.
 const ECS_PREFIX = "ecs.";
 
 // The repo's gate options with the strictness flags a scaffolded project sets.
 function userOptions(): ts.CompilerOptions {
-  const scaffold = JSON.parse(readFileSync(SCAFFOLD_TSCONFIG, "utf8")) as Record<string, unknown>;
-  return {
-    ...gateCompilerOptions(),
-    exactOptionalPropertyTypes: scaffold.exactOptionalPropertyTypes === true,
-    noUncheckedIndexedAccess: scaffold.noUncheckedIndexedAccess === true,
-  };
+  return { ...gateCompilerOptions(), ...scaffoldStrictness() };
 }
 
 // The ECS fixture's program, without the gate options' `rootDir`, the types package.
