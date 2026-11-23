@@ -54,6 +54,28 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "NodeData",
+      "properties": [
+        {
+          "name": "pos",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "Easing",
       "properties": [
         {
@@ -91,7 +113,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => Transition"
           ]
         },
         {
@@ -99,7 +121,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => Transition"
           ]
         },
         {
@@ -107,7 +129,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => Transition"
           ]
         },
         {
@@ -115,7 +137,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => Transition"
           ]
         }
       ]
@@ -137,7 +159,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => TransitionNodeless"
           ]
         },
         {
@@ -145,7 +167,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => TransitionNodeless"
           ]
         },
         {
@@ -153,7 +175,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => TransitionNodeless"
           ]
         },
         {
@@ -161,7 +183,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => void"
+            "(node: Opaque<\"node\">, fn: TransitionInFn | TransitionOutFn, easing: GuiEasing, duration: number, delay: number) => TransitionNodeless"
           ]
         }
       ]
@@ -170,14 +192,14 @@
       "type": "TYPEDEF",
       "name": "TransitionInFn",
       "types": [
-        "(node: Opaque<\"node\">, to: Vector3, easing: GuiEasing, duration: number, delay?: number, complete_function?: (this: any, node: Opaque<\"node\">) => void) => void"
+        "(node: Opaque<\"node\">, to: NodeData, easing: GuiEasing, duration: number, delay?: number, complete_function?: (this: any, node: Opaque<\"node\">) => void) => void"
       ]
     },
     {
       "type": "TYPEDEF",
       "name": "TransitionOutFn",
       "types": [
-        "(node: Opaque<\"node\">, from: Vector3, easing: GuiEasing, duration: number, delay?: number, complete_function?: (this: any, node: Opaque<\"node\">) => void) => void"
+        "(node: Opaque<\"node\">, from: NodeData, easing: GuiEasing, duration: number, delay?: number, complete_function?: (this: any, node: Opaque<\"node\">) => void) => void"
       ]
     },
     {
@@ -198,7 +220,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -255,7 +277,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -312,7 +334,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -369,7 +391,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -426,7 +448,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -483,7 +505,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -540,7 +562,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -597,7 +619,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -654,7 +676,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -711,7 +733,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -768,7 +790,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -825,7 +847,7 @@
           "name": "from",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },
@@ -904,7 +926,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Transition instance",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -945,7 +975,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -986,7 +1024,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1027,7 +1073,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1068,7 +1122,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Transition"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1113,7 +1175,7 @@
           "name": "to",
           "doc": "",
           "types": [
-            "Vector3"
+            "NodeData"
           ],
           "is_optional": "False"
         },

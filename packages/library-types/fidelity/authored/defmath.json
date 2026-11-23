@@ -21,12 +21,7 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
-    {
-      "name": "round_decimal",
-      "slot": "decimal"
-    }
-  ],
+  "nilTolerantRequired": [],
   "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []

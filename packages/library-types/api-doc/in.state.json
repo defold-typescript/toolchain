@@ -30,7 +30,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(action_id: Hash | string) => boolean"
+            "(action_id: Hash | string) => boolean | undefined"
           ]
         },
         {
@@ -38,7 +38,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(action_id: Hash | string, action: {}) => void"
+            "(action_id: Hash | string | undefined, action: Partial<go.on_input.Action>) => void"
           ]
         },
         {
@@ -149,7 +149,7 @@
           "name": "",
           "doc": "true if pressed/active",
           "types": [
-            "boolean"
+            "boolean | undefined"
           ]
         }
       ]
@@ -165,7 +165,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash | string"
+            "Hash | string | undefined"
           ],
           "is_optional": "False"
         },
@@ -173,7 +173,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{}"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -198,7 +198,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash | string"
+            "Hash | string | undefined"
           ],
           "is_optional": "False"
         },
@@ -206,7 +206,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{}"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },

@@ -117,7 +117,7 @@
       "type": "FUNCTION",
       "name": "load",
       "brief": "Loads data from a file, including data that has not yet been saved.",
-      "description": "Loads data from a file, including data that has not yet been saved.\nReturns an `object`, or `undefined` if the file does not exist.",
+      "description": "Loads data from a file, including data that has not yet been saved.\nReturns the file's fields by key, or `undefined` if the file does not exist.",
       "parameters": [
         {
           "name": "file_name",
@@ -133,7 +133,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "{} | undefined"
+            "Record<string, unknown> | undefined"
           ]
         }
       ]

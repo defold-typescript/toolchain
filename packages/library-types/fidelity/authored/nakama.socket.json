@@ -21,189 +21,279 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
     {
+      "list": "nilTolerantRequired",
       "name": "channel_join",
-      "slot": "target"
+      "slot": "hidden",
+      "reason": "socket.lua:131 asserts `hidden == nil or _G.type(hidden) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `hidden`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_join",
-      "slot": "type"
+      "slot": "persistence",
+      "reason": "socket.lua:130 asserts `persistence == nil or _G.type(persistence) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `persistence`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_join",
-      "slot": "persistence"
+      "slot": "target",
+      "reason": "socket.lua:128 asserts `target == nil or _G.type(target) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `target`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_join",
-      "slot": "hidden"
+      "slot": "type",
+      "reason": "socket.lua:129 asserts `type == nil or _G.type(type) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `type`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_leave",
-      "slot": "channel_id"
+      "slot": "channel_id",
+      "reason": "socket.lua:151 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_remove",
-      "slot": "channel_id"
+      "slot": "channel_id",
+      "reason": "socket.lua:187 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_remove",
-      "slot": "message_id"
+      "slot": "message_id",
+      "reason": "socket.lua:188 asserts `message_id == nil or _G.type(message_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `message_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_send",
-      "slot": "channel_id"
+      "slot": "channel_id",
+      "reason": "socket.lua:167 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_send",
-      "slot": "content"
+      "slot": "content",
+      "reason": "socket.lua:168 asserts `content == nil or _G.type(content) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `content`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_update",
-      "slot": "channel_id"
+      "slot": "channel_id",
+      "reason": "socket.lua:208 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_update",
-      "slot": "message_id"
+      "slot": "content",
+      "reason": "socket.lua:210 asserts `content == nil or _G.type(content) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `content`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "channel_message_update",
-      "slot": "content"
+      "slot": "message_id",
+      "reason": "socket.lua:209 asserts `message_id == nil or _G.type(message_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `message_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "match_data_send",
-      "slot": "match_id"
+      "slot": "data",
+      "reason": "socket.lua:235 asserts `data == nil or _G.type(data) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `data`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "match_data_send",
-      "slot": "op_code"
+      "slot": "match_id",
+      "reason": "socket.lua:233 asserts `match_id == nil or _G.type(match_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `match_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "match_data_send",
-      "slot": "data"
+      "slot": "op_code",
+      "reason": "socket.lua:234 asserts `op_code == nil or _G.type(op_code) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `op_code`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "match_data_send",
-      "slot": "reliable"
+      "slot": "reliable",
+      "reason": "socket.lua:237 asserts `reliable == nil or _G.type(reliable) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `reliable`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "match_leave",
-      "slot": "match_id"
+      "slot": "match_id",
+      "reason": "socket.lua:296 asserts `match_id == nil or _G.type(match_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `match_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "matchmaker_add",
-      "slot": "min_count"
+      "slot": "count_multiple",
+      "reason": "socket.lua:321 asserts `count_multiple == nil or _G.type(count_multiple) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `count_multiple`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "matchmaker_add",
-      "slot": "max_count"
+      "slot": "max_count",
+      "reason": "socket.lua:317 asserts `max_count == nil or _G.type(max_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_count`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "matchmaker_add",
-      "slot": "query"
+      "slot": "min_count",
+      "reason": "socket.lua:316 asserts `min_count == nil or _G.type(min_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `min_count`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "matchmaker_add",
-      "slot": "count_multiple"
+      "slot": "query",
+      "reason": "socket.lua:318 asserts `query == nil or _G.type(query) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `query`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "matchmaker_remove",
-      "slot": "ticket"
+      "slot": "ticket",
+      "reason": "socket.lua:343 asserts `ticket == nil or _G.type(ticket) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `ticket`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_accept",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:427 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_close",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:462 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_create",
-      "slot": "open"
+      "slot": "max_size",
+      "reason": "socket.lua:360 asserts `max_size == nil or _G.type(max_size) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_size`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_create",
-      "slot": "max_size"
+      "slot": "open",
+      "reason": "socket.lua:359 asserts `open == nil or _G.type(open) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `open`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_data_send",
-      "slot": "party_id"
+      "slot": "data",
+      "reason": "socket.lua:551 asserts `data == nil or _G.type(data) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `data`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_data_send",
-      "slot": "op_code"
+      "slot": "op_code",
+      "reason": "socket.lua:550 asserts `op_code == nil or _G.type(op_code) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `op_code`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_data_send",
-      "slot": "data"
+      "slot": "party_id",
+      "reason": "socket.lua:549 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_join",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:378 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_join_request_list",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:477 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_leave",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:393 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_add",
-      "slot": "party_id"
+      "slot": "count_multiple",
+      "reason": "socket.lua:506 asserts `count_multiple == nil or _G.type(count_multiple) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `count_multiple`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_add",
-      "slot": "min_count"
+      "slot": "max_count",
+      "reason": "socket.lua:502 asserts `max_count == nil or _G.type(max_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_count`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_add",
-      "slot": "max_count"
+      "slot": "min_count",
+      "reason": "socket.lua:501 asserts `min_count == nil or _G.type(min_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `min_count`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_add",
-      "slot": "query"
+      "slot": "party_id",
+      "reason": "socket.lua:500 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_add",
-      "slot": "count_multiple"
+      "slot": "query",
+      "reason": "socket.lua:503 asserts `query == nil or _G.type(query) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `query`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_remove",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:530 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_matchmaker_remove",
-      "slot": "ticket"
+      "slot": "ticket",
+      "reason": "socket.lua:531 asserts `ticket == nil or _G.type(ticket) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `ticket`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_promote",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:409 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "party_remove",
-      "slot": "party_id"
+      "slot": "party_id",
+      "reason": "socket.lua:445 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "status_follow",
-      "slot": "user_ids"
+      "slot": "user_ids",
+      "reason": "socket.lua:569 asserts `user_ids == nil or _G.type(user_ids) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `user_ids`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "status_follow",
-      "slot": "usernames"
+      "slot": "usernames",
+      "reason": "socket.lua:570 asserts `usernames == nil or _G.type(usernames) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `usernames`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "status_unfollow",
-      "slot": "user_ids"
+      "slot": "user_ids",
+      "reason": "socket.lua:588 asserts `user_ids == nil or _G.type(user_ids) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `user_ids`"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "status_update",
-      "slot": "status"
+      "slot": "status",
+      "reason": "socket.lua:603 asserts `status == nil or _G.type(status) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `status`"
     }
   ],
-  "emptyObjectSlots": [],
-  "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

@@ -59,5 +59,2335 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "nakama": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_apple",
+        "slot": "token",
+        "reason": "nakama.lua:1550 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_custom",
+        "slot": "id",
+        "reason": "nakama.lua:1591 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_device",
+        "slot": "id",
+        "reason": "nakama.lua:1632 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_email",
+        "slot": "email",
+        "reason": "nakama.lua:1676 asserts `not email or type(email) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `email`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_email",
+        "slot": "password",
+        "reason": "nakama.lua:1677 asserts `not password or type(password) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `password`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_facebook",
+        "slot": "token",
+        "reason": "nakama.lua:1720 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_facebook_instant_game",
+        "slot": "signedPlayerInfo",
+        "reason": "nakama.lua:1762 asserts `not signedPlayerInfo or type(signedPlayerInfo) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signedPlayerInfo`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "bundleId",
+        "reason": "nakama.lua:1808 asserts `not bundleId or type(bundleId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `bundleId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "playerId",
+        "reason": "nakama.lua:1809 asserts `not playerId or type(playerId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `playerId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "publicKeyUrl",
+        "reason": "nakama.lua:1810 asserts `not publicKeyUrl or type(publicKeyUrl) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `publicKeyUrl`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "salt",
+        "reason": "nakama.lua:1811 asserts `not salt or type(salt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `salt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "signature",
+        "reason": "nakama.lua:1812 asserts `not signature or type(signature) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_game_center",
+        "slot": "timestampSeconds",
+        "reason": "nakama.lua:1813 asserts `not timestampSeconds or type(timestampSeconds) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestampSeconds`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_google",
+        "slot": "token",
+        "reason": "nakama.lua:1859 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "authenticate_steam",
+        "slot": "token",
+        "reason": "nakama.lua:1901 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "custom_id_str",
+        "reason": "nakama.lua:210 asserts `not custom_id_str or type(custom_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `custom_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "devices_arr",
+        "reason": "nakama.lua:211 asserts `not devices_arr or type(devices_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `devices_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "disable_time_str",
+        "reason": "nakama.lua:212 asserts `not disable_time_str or type(disable_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `disable_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "email_str",
+        "reason": "nakama.lua:213 asserts `not email_str or type(email_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `email_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "verify_time_str",
+        "reason": "nakama.lua:215 asserts `not verify_time_str or type(verify_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `verify_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account",
+        "slot": "wallet_str",
+        "reason": "nakama.lua:216 asserts `not wallet_str or type(wallet_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `wallet_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_apple",
+        "slot": "token_str",
+        "reason": "nakama.lua:233 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_custom",
+        "slot": "id_str",
+        "reason": "nakama.lua:246 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_device",
+        "slot": "id_str",
+        "reason": "nakama.lua:259 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_email",
+        "slot": "email_str",
+        "reason": "nakama.lua:275 asserts `not email_str or type(email_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `email_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_email",
+        "slot": "password_str",
+        "reason": "nakama.lua:276 asserts `not password_str or type(password_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `password_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_facebook",
+        "slot": "token_str",
+        "reason": "nakama.lua:290 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_facebook_instant_game",
+        "slot": "signed_player_info_str",
+        "reason": "nakama.lua:303 asserts `not signed_player_info_str or type(signed_player_info_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signed_player_info_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "bundle_id_str",
+        "reason": "nakama.lua:323 asserts `not bundle_id_str or type(bundle_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `bundle_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "player_id_str",
+        "reason": "nakama.lua:324 asserts `not player_id_str or type(player_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `player_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "public_key_url_str",
+        "reason": "nakama.lua:325 asserts `not public_key_url_str or type(public_key_url_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `public_key_url_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "salt_str",
+        "reason": "nakama.lua:326 asserts `not salt_str or type(salt_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `salt_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "signature_str",
+        "reason": "nakama.lua:327 asserts `not signature_str or type(signature_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_game_center",
+        "slot": "timestamp_seconds_str",
+        "reason": "nakama.lua:328 asserts `not timestamp_seconds_str or type(timestamp_seconds_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestamp_seconds_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_google",
+        "slot": "token_str",
+        "reason": "nakama.lua:346 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_account_steam",
+        "slot": "token_str",
+        "reason": "nakama.lua:359 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "channel_id_str",
+        "reason": "nakama.lua:383 asserts `not channel_id_str or type(channel_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `channel_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "code_int",
+        "reason": "nakama.lua:384 asserts `not code_int or type(code_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `code_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "content_str",
+        "reason": "nakama.lua:385 asserts `not content_str or type(content_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `content_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:386 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "group_id_str",
+        "reason": "nakama.lua:387 asserts `not group_id_str or type(group_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `group_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "message_id_str",
+        "reason": "nakama.lua:388 asserts `not message_id_str or type(message_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `message_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "persistent_bool",
+        "reason": "nakama.lua:389 asserts `not persistent_bool or type(persistent_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persistent_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "room_name_str",
+        "reason": "nakama.lua:390 asserts `not room_name_str or type(room_name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `room_name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "sender_id_str",
+        "reason": "nakama.lua:391 asserts `not sender_id_str or type(sender_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `sender_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:392 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "user_id_one_str",
+        "reason": "nakama.lua:393 asserts `not user_id_one_str or type(user_id_one_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_one_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "user_id_two_str",
+        "reason": "nakama.lua:394 asserts `not user_id_two_str or type(user_id_two_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_two_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message",
+        "slot": "username_str",
+        "reason": "nakama.lua:395 asserts `not username_str or type(username_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `username_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message_list",
+        "slot": "cacheable_cursor_str",
+        "reason": "nakama.lua:420 asserts `not cacheable_cursor_str or type(cacheable_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cacheable_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message_list",
+        "slot": "messages_arr",
+        "reason": "nakama.lua:421 asserts `not messages_arr or type(messages_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `messages_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message_list",
+        "slot": "next_cursor_str",
+        "reason": "nakama.lua:422 asserts `not next_cursor_str or type(next_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `next_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_channel_message_list",
+        "slot": "prev_cursor_str",
+        "reason": "nakama.lua:423 asserts `not prev_cursor_str or type(prev_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `prev_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "avatar_url_str",
+        "reason": "nakama.lua:441 asserts `not avatar_url_str or type(avatar_url_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatar_url_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "description_str",
+        "reason": "nakama.lua:442 asserts `not description_str or type(description_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `description_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "lang_tag_str",
+        "reason": "nakama.lua:443 asserts `not lang_tag_str or type(lang_tag_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `lang_tag_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "max_count_int",
+        "reason": "nakama.lua:444 asserts `not max_count_int or type(max_count_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `max_count_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "name_str",
+        "reason": "nakama.lua:445 asserts `not name_str or type(name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_create_group_request",
+        "slot": "open_bool",
+        "reason": "nakama.lua:446 asserts `not open_bool or type(open_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `open_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_delete_storage_object_id",
+        "slot": "collection_str",
+        "reason": "nakama.lua:463 asserts `not collection_str or type(collection_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `collection_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_delete_storage_object_id",
+        "slot": "key_str",
+        "reason": "nakama.lua:464 asserts `not key_str or type(key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_delete_storage_object_id",
+        "slot": "version_str",
+        "reason": "nakama.lua:465 asserts `not version_str or type(version_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `version_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_delete_storage_objects_request",
+        "slot": "object_ids_arr",
+        "reason": "nakama.lua:477 asserts `not object_ids_arr or type(object_ids_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `object_ids_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_event",
+        "slot": "external_bool",
+        "reason": "nakama.lua:490 asserts `not external_bool or type(external_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `external_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_event",
+        "slot": "name_str",
+        "reason": "nakama.lua:491 asserts `not name_str or type(name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_event",
+        "slot": "timestamp_str",
+        "reason": "nakama.lua:493 asserts `not timestamp_str or type(timestamp_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestamp_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_friend",
+        "slot": "state_int",
+        "reason": "nakama.lua:510 asserts `not state_int or type(state_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `state_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_friend",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:511 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_friend_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:525 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_friend_list",
+        "slot": "friends_arr",
+        "reason": "nakama.lua:526 asserts `not friends_arr or type(friends_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `friends_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "avatar_url_str",
+        "reason": "nakama.lua:548 asserts `not avatar_url_str or type(avatar_url_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatar_url_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:549 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "creator_id_str",
+        "reason": "nakama.lua:550 asserts `not creator_id_str or type(creator_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `creator_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "description_str",
+        "reason": "nakama.lua:551 asserts `not description_str or type(description_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `description_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "edge_count_int",
+        "reason": "nakama.lua:552 asserts `not edge_count_int or type(edge_count_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `edge_count_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "id_str",
+        "reason": "nakama.lua:553 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "lang_tag_str",
+        "reason": "nakama.lua:554 asserts `not lang_tag_str or type(lang_tag_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `lang_tag_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "max_count_int",
+        "reason": "nakama.lua:555 asserts `not max_count_int or type(max_count_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `max_count_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:556 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "name_str",
+        "reason": "nakama.lua:557 asserts `not name_str or type(name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "open_bool",
+        "reason": "nakama.lua:558 asserts `not open_bool or type(open_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `open_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:559 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:581 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group_list",
+        "slot": "groups_arr",
+        "reason": "nakama.lua:582 asserts `not groups_arr or type(groups_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `groups_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group_user_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:594 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_group_user_list",
+        "slot": "group_users_arr",
+        "reason": "nakama.lua:595 asserts `not group_users_arr or type(group_users_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `group_users_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:617 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "expiry_time_str",
+        "reason": "nakama.lua:618 asserts `not expiry_time_str or type(expiry_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `expiry_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "leaderboard_id_str",
+        "reason": "nakama.lua:619 asserts `not leaderboard_id_str or type(leaderboard_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `leaderboard_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "max_num_score_int",
+        "reason": "nakama.lua:620 asserts `not max_num_score_int or type(max_num_score_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `max_num_score_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:621 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "num_score_int",
+        "reason": "nakama.lua:622 asserts `not num_score_int or type(num_score_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `num_score_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "owner_id_str",
+        "reason": "nakama.lua:623 asserts `not owner_id_str or type(owner_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `owner_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "rank_str",
+        "reason": "nakama.lua:624 asserts `not rank_str or type(rank_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `rank_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "score_str",
+        "reason": "nakama.lua:625 asserts `not score_str or type(score_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "subscore_str",
+        "reason": "nakama.lua:626 asserts `not subscore_str or type(subscore_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:627 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record",
+        "slot": "username_str",
+        "reason": "nakama.lua:628 asserts `not username_str or type(username_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `username_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record_list",
+        "slot": "next_cursor_str",
+        "reason": "nakama.lua:653 asserts `not next_cursor_str or type(next_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `next_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record_list",
+        "slot": "owner_records_arr",
+        "reason": "nakama.lua:654 asserts `not owner_records_arr or type(owner_records_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `owner_records_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record_list",
+        "slot": "prev_cursor_str",
+        "reason": "nakama.lua:655 asserts `not prev_cursor_str or type(prev_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `prev_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record_list",
+        "slot": "rank_count_str",
+        "reason": "nakama.lua:656 asserts `not rank_count_str or type(rank_count_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `rank_count_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_leaderboard_record_list",
+        "slot": "records_arr",
+        "reason": "nakama.lua:657 asserts `not records_arr or type(records_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `records_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_link_steam_request",
+        "slot": "sync_bool",
+        "reason": "nakama.lua:673 asserts `not sync_bool or type(sync_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `sync_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_list_subscriptions_request",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:685 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_list_subscriptions_request",
+        "slot": "limit_int",
+        "reason": "nakama.lua:686 asserts `not limit_int or type(limit_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `limit_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "authoritative_bool",
+        "reason": "nakama.lua:702 asserts `not authoritative_bool or type(authoritative_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `authoritative_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "handler_name_str",
+        "reason": "nakama.lua:703 asserts `not handler_name_str or type(handler_name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `handler_name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "label_str",
+        "reason": "nakama.lua:704 asserts `not label_str or type(label_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `label_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "match_id_str",
+        "reason": "nakama.lua:705 asserts `not match_id_str or type(match_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `match_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "size_int",
+        "reason": "nakama.lua:706 asserts `not size_int or type(size_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `size_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match",
+        "slot": "tick_rate_int",
+        "reason": "nakama.lua:707 asserts `not tick_rate_int or type(tick_rate_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `tick_rate_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_match_list",
+        "slot": "matches_arr",
+        "reason": "nakama.lua:722 asserts `not matches_arr or type(matches_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `matches_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "code_int",
+        "reason": "nakama.lua:738 asserts `not code_int or type(code_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `code_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "content_str",
+        "reason": "nakama.lua:739 asserts `not content_str or type(content_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `content_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:740 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "id_str",
+        "reason": "nakama.lua:741 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "persistent_bool",
+        "reason": "nakama.lua:742 asserts `not persistent_bool or type(persistent_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persistent_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "sender_id_str",
+        "reason": "nakama.lua:743 asserts `not sender_id_str or type(sender_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `sender_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification",
+        "slot": "subject_str",
+        "reason": "nakama.lua:744 asserts `not subject_str or type(subject_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subject_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification_list",
+        "slot": "cacheable_cursor_str",
+        "reason": "nakama.lua:761 asserts `not cacheable_cursor_str or type(cacheable_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cacheable_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_notification_list",
+        "slot": "notifications_arr",
+        "reason": "nakama.lua:762 asserts `not notifications_arr or type(notifications_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `notifications_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_read_storage_object_id",
+        "slot": "collection_str",
+        "reason": "nakama.lua:775 asserts `not collection_str or type(collection_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `collection_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_read_storage_object_id",
+        "slot": "key_str",
+        "reason": "nakama.lua:776 asserts `not key_str or type(key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_read_storage_object_id",
+        "slot": "user_id_str",
+        "reason": "nakama.lua:777 asserts `not user_id_str or type(user_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_read_storage_objects_request",
+        "slot": "object_ids_arr",
+        "reason": "nakama.lua:789 asserts `not object_ids_arr or type(object_ids_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `object_ids_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_rpc",
+        "slot": "http_key_str",
+        "reason": "nakama.lua:801 asserts `not http_key_str or type(http_key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `http_key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_rpc",
+        "slot": "id_str",
+        "reason": "nakama.lua:802 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_rpc",
+        "slot": "payload_str",
+        "reason": "nakama.lua:803 asserts `not payload_str or type(payload_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `payload_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session",
+        "slot": "created_bool",
+        "reason": "nakama.lua:817 asserts `not created_bool or type(created_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `created_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session",
+        "slot": "refresh_token_str",
+        "reason": "nakama.lua:818 asserts `not refresh_token_str or type(refresh_token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `refresh_token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session",
+        "slot": "token_str",
+        "reason": "nakama.lua:819 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session_logout_request",
+        "slot": "refresh_token_str",
+        "reason": "nakama.lua:832 asserts `not refresh_token_str or type(refresh_token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `refresh_token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session_logout_request",
+        "slot": "token_str",
+        "reason": "nakama.lua:833 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_session_refresh_request",
+        "slot": "token_str",
+        "reason": "nakama.lua:845 asserts `not token_str or type(token_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "collection_str",
+        "reason": "nakama.lua:865 asserts `not collection_str or type(collection_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `collection_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:866 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "key_str",
+        "reason": "nakama.lua:867 asserts `not key_str or type(key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "permission_read_int",
+        "reason": "nakama.lua:868 asserts `not permission_read_int or type(permission_read_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `permission_read_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "permission_write_int",
+        "reason": "nakama.lua:869 asserts `not permission_write_int or type(permission_write_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `permission_write_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:870 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "user_id_str",
+        "reason": "nakama.lua:871 asserts `not user_id_str or type(user_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "value_str",
+        "reason": "nakama.lua:872 asserts `not value_str or type(value_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `value_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object",
+        "slot": "version_str",
+        "reason": "nakama.lua:873 asserts `not version_str or type(version_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `version_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "collection_str",
+        "reason": "nakama.lua:896 asserts `not collection_str or type(collection_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `collection_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:897 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "key_str",
+        "reason": "nakama.lua:898 asserts `not key_str or type(key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:899 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "user_id_str",
+        "reason": "nakama.lua:900 asserts `not user_id_str or type(user_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_ack",
+        "slot": "version_str",
+        "reason": "nakama.lua:901 asserts `not version_str or type(version_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `version_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_acks",
+        "slot": "acks_arr",
+        "reason": "nakama.lua:916 asserts `not acks_arr or type(acks_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `acks_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:927 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_object_list",
+        "slot": "objects_arr",
+        "reason": "nakama.lua:928 asserts `not objects_arr or type(objects_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objects_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_storage_objects",
+        "slot": "objects_arr",
+        "reason": "nakama.lua:939 asserts `not objects_arr or type(objects_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objects_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_subscription_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:951 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_subscription_list",
+        "slot": "prev_cursor_str",
+        "reason": "nakama.lua:952 asserts `not prev_cursor_str or type(prev_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `prev_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_subscription_list",
+        "slot": "validated_subscriptions_arr",
+        "reason": "nakama.lua:953 asserts `not validated_subscriptions_arr or type(validated_subscriptions_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `validated_subscriptions_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "authoritative_bool",
+        "reason": "nakama.lua:984 asserts `not authoritative_bool or type(authoritative_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `authoritative_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "can_enter_bool",
+        "reason": "nakama.lua:985 asserts `not can_enter_bool or type(can_enter_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `can_enter_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "category_int",
+        "reason": "nakama.lua:986 asserts `not category_int or type(category_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `category_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:987 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "description_str",
+        "reason": "nakama.lua:988 asserts `not description_str or type(description_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `description_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "duration_int",
+        "reason": "nakama.lua:989 asserts `not duration_int or type(duration_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `duration_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "end_active_int",
+        "reason": "nakama.lua:990 asserts `not end_active_int or type(end_active_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `end_active_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "end_time_str",
+        "reason": "nakama.lua:991 asserts `not end_time_str or type(end_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `end_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "id_str",
+        "reason": "nakama.lua:992 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "max_num_score_int",
+        "reason": "nakama.lua:993 asserts `not max_num_score_int or type(max_num_score_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `max_num_score_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "max_size_int",
+        "reason": "nakama.lua:994 asserts `not max_size_int or type(max_size_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `max_size_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:995 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "next_reset_int",
+        "reason": "nakama.lua:996 asserts `not next_reset_int or type(next_reset_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `next_reset_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "prev_reset_int",
+        "reason": "nakama.lua:998 asserts `not prev_reset_int or type(prev_reset_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `prev_reset_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "size_int",
+        "reason": "nakama.lua:999 asserts `not size_int or type(size_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `size_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "sort_order_int",
+        "reason": "nakama.lua:1000 asserts `not sort_order_int or type(sort_order_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `sort_order_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "start_active_int",
+        "reason": "nakama.lua:1001 asserts `not start_active_int or type(start_active_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `start_active_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "start_time_str",
+        "reason": "nakama.lua:1002 asserts `not start_time_str or type(start_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `start_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament",
+        "slot": "title_str",
+        "reason": "nakama.lua:1003 asserts `not title_str or type(title_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `title_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:1033 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_list",
+        "slot": "tournaments_arr",
+        "reason": "nakama.lua:1034 asserts `not tournaments_arr or type(tournaments_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `tournaments_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_record_list",
+        "slot": "next_cursor_str",
+        "reason": "nakama.lua:1049 asserts `not next_cursor_str or type(next_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `next_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_record_list",
+        "slot": "owner_records_arr",
+        "reason": "nakama.lua:1050 asserts `not owner_records_arr or type(owner_records_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `owner_records_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_record_list",
+        "slot": "prev_cursor_str",
+        "reason": "nakama.lua:1051 asserts `not prev_cursor_str or type(prev_cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `prev_cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_record_list",
+        "slot": "rank_count_str",
+        "reason": "nakama.lua:1052 asserts `not rank_count_str or type(rank_count_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `rank_count_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_tournament_record_list",
+        "slot": "records_arr",
+        "reason": "nakama.lua:1053 asserts `not records_arr or type(records_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `records_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "avatar_url_str",
+        "reason": "nakama.lua:1072 asserts `not avatar_url_str or type(avatar_url_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatar_url_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "display_name_str",
+        "reason": "nakama.lua:1073 asserts `not display_name_str or type(display_name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `display_name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "lang_tag_str",
+        "reason": "nakama.lua:1074 asserts `not lang_tag_str or type(lang_tag_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `lang_tag_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "location_str",
+        "reason": "nakama.lua:1075 asserts `not location_str or type(location_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `location_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "timezone_str",
+        "reason": "nakama.lua:1076 asserts `not timezone_str or type(timezone_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timezone_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_update_account_request",
+        "slot": "username_str",
+        "reason": "nakama.lua:1077 asserts `not username_str or type(username_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `username_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "apple_id_str",
+        "reason": "nakama.lua:1109 asserts `not apple_id_str or type(apple_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `apple_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "avatar_url_str",
+        "reason": "nakama.lua:1110 asserts `not avatar_url_str or type(avatar_url_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatar_url_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:1111 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "display_name_str",
+        "reason": "nakama.lua:1112 asserts `not display_name_str or type(display_name_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `display_name_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "edge_count_int",
+        "reason": "nakama.lua:1113 asserts `not edge_count_int or type(edge_count_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `edge_count_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "facebook_id_str",
+        "reason": "nakama.lua:1114 asserts `not facebook_id_str or type(facebook_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `facebook_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "facebook_instant_game_id_str",
+        "reason": "nakama.lua:1115 asserts `not facebook_instant_game_id_str or type(facebook_instant_game_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `facebook_instant_game_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "gamecenter_id_str",
+        "reason": "nakama.lua:1116 asserts `not gamecenter_id_str or type(gamecenter_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `gamecenter_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "google_id_str",
+        "reason": "nakama.lua:1117 asserts `not google_id_str or type(google_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `google_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "id_str",
+        "reason": "nakama.lua:1118 asserts `not id_str or type(id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "lang_tag_str",
+        "reason": "nakama.lua:1119 asserts `not lang_tag_str or type(lang_tag_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `lang_tag_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "location_str",
+        "reason": "nakama.lua:1120 asserts `not location_str or type(location_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `location_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:1121 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "online_bool",
+        "reason": "nakama.lua:1122 asserts `not online_bool or type(online_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `online_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "steam_id_str",
+        "reason": "nakama.lua:1123 asserts `not steam_id_str or type(steam_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `steam_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "timezone_str",
+        "reason": "nakama.lua:1124 asserts `not timezone_str or type(timezone_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timezone_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:1125 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user",
+        "slot": "username_str",
+        "reason": "nakama.lua:1126 asserts `not username_str or type(username_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `username_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user_group_list",
+        "slot": "cursor_str",
+        "reason": "nakama.lua:1154 asserts `not cursor_str or type(cursor_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_user_group_list",
+        "slot": "user_groups_arr",
+        "reason": "nakama.lua:1155 asserts `not user_groups_arr or type(user_groups_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_groups_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_users",
+        "slot": "users_arr",
+        "reason": "nakama.lua:1166 asserts `not users_arr or type(users_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `users_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_apple_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1177 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_apple_request",
+        "slot": "receipt_str",
+        "reason": "nakama.lua:1178 asserts `not receipt_str or type(receipt_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_facebook_instant_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1190 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_facebook_instant_request",
+        "slot": "signed_request_str",
+        "reason": "nakama.lua:1191 asserts `not signed_request_str or type(signed_request_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signed_request_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_google_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1203 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_google_request",
+        "slot": "purchase_str",
+        "reason": "nakama.lua:1204 asserts `not purchase_str or type(purchase_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_huawei_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1217 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_huawei_request",
+        "slot": "purchase_str",
+        "reason": "nakama.lua:1218 asserts `not purchase_str or type(purchase_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_huawei_request",
+        "slot": "signature_str",
+        "reason": "nakama.lua:1219 asserts `not signature_str or type(signature_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_purchase_response",
+        "slot": "validated_purchases_arr",
+        "reason": "nakama.lua:1231 asserts `not validated_purchases_arr or type(validated_purchases_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `validated_purchases_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_subscription_apple_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1242 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_subscription_apple_request",
+        "slot": "receipt_str",
+        "reason": "nakama.lua:1243 asserts `not receipt_str or type(receipt_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_subscription_google_request",
+        "slot": "persist_bool",
+        "reason": "nakama.lua:1255 asserts `not persist_bool or type(persist_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validate_subscription_google_request",
+        "slot": "receipt_str",
+        "reason": "nakama.lua:1256 asserts `not receipt_str or type(receipt_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:1287 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "product_id_str",
+        "reason": "nakama.lua:1289 asserts `not product_id_str or type(product_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `product_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "provider_response_str",
+        "reason": "nakama.lua:1290 asserts `not provider_response_str or type(provider_response_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `provider_response_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "purchase_time_str",
+        "reason": "nakama.lua:1291 asserts `not purchase_time_str or type(purchase_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "refund_time_str",
+        "reason": "nakama.lua:1292 asserts `not refund_time_str or type(refund_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `refund_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "seen_before_bool",
+        "reason": "nakama.lua:1293 asserts `not seen_before_bool or type(seen_before_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `seen_before_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "transaction_id_str",
+        "reason": "nakama.lua:1295 asserts `not transaction_id_str or type(transaction_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `transaction_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:1296 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_purchase",
+        "slot": "user_id_str",
+        "reason": "nakama.lua:1297 asserts `not user_id_str or type(user_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "active_bool",
+        "reason": "nakama.lua:1329 asserts `not active_bool or type(active_bool) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `active_bool`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "create_time_str",
+        "reason": "nakama.lua:1330 asserts `not create_time_str or type(create_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `create_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "expiry_time_str",
+        "reason": "nakama.lua:1332 asserts `not expiry_time_str or type(expiry_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `expiry_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "original_transaction_id_str",
+        "reason": "nakama.lua:1333 asserts `not original_transaction_id_str or type(original_transaction_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `original_transaction_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "product_id_str",
+        "reason": "nakama.lua:1334 asserts `not product_id_str or type(product_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `product_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "provider_notification_str",
+        "reason": "nakama.lua:1335 asserts `not provider_notification_str or type(provider_notification_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `provider_notification_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "provider_response_str",
+        "reason": "nakama.lua:1336 asserts `not provider_response_str or type(provider_response_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `provider_response_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "purchase_time_str",
+        "reason": "nakama.lua:1337 asserts `not purchase_time_str or type(purchase_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "refund_time_str",
+        "reason": "nakama.lua:1338 asserts `not refund_time_str or type(refund_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `refund_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "update_time_str",
+        "reason": "nakama.lua:1340 asserts `not update_time_str or type(update_time_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `update_time_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_validated_subscription",
+        "slot": "user_id_str",
+        "reason": "nakama.lua:1341 asserts `not user_id_str or type(user_id_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `user_id_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "collection_str",
+        "reason": "nakama.lua:1370 asserts `not collection_str or type(collection_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `collection_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "key_str",
+        "reason": "nakama.lua:1371 asserts `not key_str or type(key_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `key_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "permission_read_int",
+        "reason": "nakama.lua:1372 asserts `not permission_read_int or type(permission_read_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `permission_read_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "permission_write_int",
+        "reason": "nakama.lua:1373 asserts `not permission_write_int or type(permission_write_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `permission_write_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "value_str",
+        "reason": "nakama.lua:1374 asserts `not value_str or type(value_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `value_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_object",
+        "slot": "version_str",
+        "reason": "nakama.lua:1375 asserts `not version_str or type(version_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `version_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_api_write_storage_objects_request",
+        "slot": "objects_arr",
+        "reason": "nakama.lua:1390 asserts `not objects_arr or type(objects_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objects_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "avatarUrl",
+        "reason": "nakama.lua:2883 asserts `not avatarUrl or type(avatarUrl) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatarUrl`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "description",
+        "reason": "nakama.lua:2884 asserts `not description or type(description) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `description`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "langTag",
+        "reason": "nakama.lua:2885 asserts `not langTag or type(langTag) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `langTag`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "maxCount",
+        "reason": "nakama.lua:2886 asserts `not maxCount or type(maxCount) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `maxCount`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "name",
+        "reason": "nakama.lua:2887 asserts `not name or type(name) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `name`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group",
+        "slot": "open",
+        "reason": "nakama.lua:2888 asserts `not open or type(open) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `open`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_group_user_list_group_user",
+        "slot": "state_int",
+        "reason": "nakama.lua:141 asserts `not state_int or type(state_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `state_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_protobuf_any",
+        "slot": "type_str",
+        "reason": "nakama.lua:1400 asserts `not type_str or type(type_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `type_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_rpc_status",
+        "slot": "code_int",
+        "reason": "nakama.lua:1412 asserts `not code_int or type(code_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `code_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_rpc_status",
+        "slot": "details_arr",
+        "reason": "nakama.lua:1413 asserts `not details_arr or type(details_arr) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `details_arr`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_rpc_status",
+        "slot": "message_str",
+        "reason": "nakama.lua:1414 asserts `not message_str or type(message_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `message_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_user_group_list_user_group",
+        "slot": "state_int",
+        "reason": "nakama.lua:155 asserts `not state_int or type(state_int) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `state_int`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:169 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+        "slot": "score_str",
+        "reason": "nakama.lua:171 asserts `not score_str or type(score_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_leaderboard_record_request_leaderboard_record_write",
+        "slot": "subscore_str",
+        "reason": "nakama.lua:172 asserts `not subscore_str or type(subscore_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_tournament_record_request_tournament_record_write",
+        "slot": "metadata_str",
+        "reason": "nakama.lua:188 asserts `not metadata_str or type(metadata_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_tournament_record_request_tournament_record_write",
+        "slot": "score_str",
+        "reason": "nakama.lua:190 asserts `not score_str or type(score_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "create_write_tournament_record_request_tournament_record_write",
+        "slot": "subscore_str",
+        "reason": "nakama.lua:191 asserts `not subscore_str or type(subscore_str) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore_str`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "delete_storage_objects",
+        "slot": "objectIds",
+        "reason": "nakama.lua:3852 asserts `not objectIds or type(objectIds) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objectIds`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "event",
+        "slot": "external",
+        "reason": "nakama.lua:2629 asserts `not external or type(external) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `external`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "event",
+        "slot": "name",
+        "reason": "nakama.lua:2630 asserts `not name or type(name) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `name`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "event",
+        "slot": "timestamp",
+        "reason": "nakama.lua:2632 asserts `not timestamp or type(timestamp) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestamp`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "import_facebook_friends",
+        "slot": "token",
+        "reason": "nakama.lua:2775 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "import_steam_friends",
+        "slot": "token",
+        "reason": "nakama.lua:2809 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_apple",
+        "slot": "token",
+        "reason": "nakama.lua:1941 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_custom",
+        "slot": "id",
+        "reason": "nakama.lua:1973 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_device",
+        "slot": "id",
+        "reason": "nakama.lua:2005 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_email",
+        "slot": "email",
+        "reason": "nakama.lua:2040 asserts `not email or type(email) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `email`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_email",
+        "slot": "password",
+        "reason": "nakama.lua:2041 asserts `not password or type(password) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `password`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_facebook",
+        "slot": "token",
+        "reason": "nakama.lua:2075 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_facebook_instant_game",
+        "slot": "signedPlayerInfo",
+        "reason": "nakama.lua:2108 asserts `not signedPlayerInfo or type(signedPlayerInfo) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signedPlayerInfo`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "bundleId",
+        "reason": "nakama.lua:2145 asserts `not bundleId or type(bundleId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `bundleId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "playerId",
+        "reason": "nakama.lua:2146 asserts `not playerId or type(playerId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `playerId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "publicKeyUrl",
+        "reason": "nakama.lua:2147 asserts `not publicKeyUrl or type(publicKeyUrl) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `publicKeyUrl`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "salt",
+        "reason": "nakama.lua:2148 asserts `not salt or type(salt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `salt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "signature",
+        "reason": "nakama.lua:2149 asserts `not signature or type(signature) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_game_center",
+        "slot": "timestampSeconds",
+        "reason": "nakama.lua:2150 asserts `not timestampSeconds or type(timestampSeconds) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestampSeconds`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_google",
+        "slot": "token",
+        "reason": "nakama.lua:2187 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "link_steam",
+        "slot": "sync",
+        "reason": "nakama.lua:2220 asserts `not sync or type(sync) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `sync`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "list_subscriptions",
+        "slot": "cursor",
+        "reason": "nakama.lua:3332 asserts `not cursor or type(cursor) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `cursor`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "list_subscriptions",
+        "slot": "limit",
+        "reason": "nakama.lua:3333 asserts `not limit or type(limit) == \"number\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `limit`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "read_storage_objects",
+        "slot": "objectIds",
+        "reason": "nakama.lua:3788 asserts `not objectIds or type(objectIds) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objectIds`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "rpc_func",
+        "slot": "payload",
+        "reason": "upstream tests `payload` only inside an assert that it is a string (nakama.lua:3725)"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "session_logout",
+        "slot": "refreshToken",
+        "reason": "nakama.lua:3757 asserts `not refreshToken or type(refreshToken) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `refreshToken`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "session_logout",
+        "slot": "token",
+        "reason": "nakama.lua:3758 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "session_refresh",
+        "slot": "token",
+        "reason": "nakama.lua:2251 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_apple",
+        "slot": "token",
+        "reason": "nakama.lua:2286 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_custom",
+        "slot": "id",
+        "reason": "nakama.lua:2318 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_device",
+        "slot": "id",
+        "reason": "nakama.lua:2350 asserts `not id or type(id) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_email",
+        "slot": "email",
+        "reason": "nakama.lua:2385 asserts `not email or type(email) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `email`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_email",
+        "slot": "password",
+        "reason": "nakama.lua:2386 asserts `not password or type(password) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `password`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_facebook",
+        "slot": "token",
+        "reason": "nakama.lua:2419 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_facebook_instant_game",
+        "slot": "signedPlayerInfo",
+        "reason": "nakama.lua:2451 asserts `not signedPlayerInfo or type(signedPlayerInfo) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signedPlayerInfo`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "bundleId",
+        "reason": "nakama.lua:2488 asserts `not bundleId or type(bundleId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `bundleId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "playerId",
+        "reason": "nakama.lua:2489 asserts `not playerId or type(playerId) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `playerId`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "publicKeyUrl",
+        "reason": "nakama.lua:2490 asserts `not publicKeyUrl or type(publicKeyUrl) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `publicKeyUrl`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "salt",
+        "reason": "nakama.lua:2491 asserts `not salt or type(salt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `salt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "signature",
+        "reason": "nakama.lua:2492 asserts `not signature or type(signature) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_game_center",
+        "slot": "timestampSeconds",
+        "reason": "nakama.lua:2493 asserts `not timestampSeconds or type(timestampSeconds) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timestampSeconds`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_google",
+        "slot": "token",
+        "reason": "nakama.lua:2530 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "unlink_steam",
+        "slot": "token",
+        "reason": "nakama.lua:2562 asserts `not token or type(token) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `token`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "avatarUrl",
+        "reason": "nakama.lua:1508 asserts `not avatarUrl or type(avatarUrl) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `avatarUrl`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "displayName",
+        "reason": "nakama.lua:1509 asserts `not displayName or type(displayName) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `displayName`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "langTag",
+        "reason": "nakama.lua:1510 asserts `not langTag or type(langTag) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `langTag`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "location",
+        "reason": "nakama.lua:1511 asserts `not location or type(location) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `location`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "timezone",
+        "reason": "nakama.lua:1512 asserts `not timezone or type(timezone) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `timezone`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update_account",
+        "slot": "username",
+        "reason": "nakama.lua:1513 asserts `not username or type(username) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `username`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_apple",
+        "slot": "persist",
+        "reason": "nakama.lua:3189 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_apple",
+        "slot": "receipt",
+        "reason": "nakama.lua:3190 asserts `not receipt or type(receipt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_facebook_instant",
+        "slot": "persist",
+        "reason": "nakama.lua:3224 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_facebook_instant",
+        "slot": "signedRequest",
+        "reason": "nakama.lua:3225 asserts `not signedRequest or type(signedRequest) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signedRequest`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_google",
+        "slot": "persist",
+        "reason": "nakama.lua:3259 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_google",
+        "slot": "purchase",
+        "reason": "nakama.lua:3260 asserts `not purchase or type(purchase) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_huawei",
+        "slot": "persist",
+        "reason": "nakama.lua:3295 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_huawei",
+        "slot": "purchase",
+        "reason": "nakama.lua:3296 asserts `not purchase or type(purchase) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `purchase`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_purchase_huawei",
+        "slot": "signature",
+        "reason": "nakama.lua:3297 asserts `not signature or type(signature) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `signature`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_subscription_apple",
+        "slot": "persist",
+        "reason": "nakama.lua:3367 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_subscription_apple",
+        "slot": "receipt",
+        "reason": "nakama.lua:3368 asserts `not receipt or type(receipt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_subscription_google",
+        "slot": "persist",
+        "reason": "nakama.lua:3402 asserts `not persist or type(persist) == \"boolean\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `persist`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "validate_subscription_google",
+        "slot": "receipt",
+        "reason": "nakama.lua:3403 asserts `not receipt or type(receipt) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `receipt`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_leaderboard_record",
+        "slot": "metadata",
+        "reason": "nakama.lua:3526 asserts `not metadata or type(metadata) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_leaderboard_record",
+        "slot": "score",
+        "reason": "nakama.lua:3528 asserts `not score or type(score) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_leaderboard_record",
+        "slot": "subscore",
+        "reason": "nakama.lua:3529 asserts `not subscore or type(subscore) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_storage_objects",
+        "slot": "objects",
+        "reason": "nakama.lua:3820 asserts `not objects or type(objects) == \"table\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `objects`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record",
+        "slot": "metadata",
+        "reason": "nakama.lua:4094 asserts `not metadata or type(metadata) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record",
+        "slot": "score",
+        "reason": "nakama.lua:4096 asserts `not score or type(score) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record",
+        "slot": "subscore",
+        "reason": "nakama.lua:4097 asserts `not subscore or type(subscore) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record2",
+        "slot": "metadata",
+        "reason": "nakama.lua:4051 asserts `not metadata or type(metadata) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `metadata`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record2",
+        "slot": "score",
+        "reason": "nakama.lua:4053 asserts `not score or type(score) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `score`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "write_tournament_record2",
+        "slot": "subscore",
+        "reason": "nakama.lua:4054 asserts `not subscore or type(subscore) == \"string\"`, the check the generated client (nakama.lua:1) makes on every body field it builds, so it is no evidence the server accepts a nil `subscore`"
+      }
+    ],
+    "nakama.engine.defold": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "socket_send",
+        "slot": "socket",
+        "reason": "upstream tests `socket` only inside an assert that it and `socket.connection` are set (engine/defold.lua:200)"
+      }
+    ],
+    "nakama.socket": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_join",
+        "slot": "target",
+        "reason": "socket.lua:128 asserts `target == nil or _G.type(target) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `target`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_join",
+        "slot": "type",
+        "reason": "socket.lua:129 asserts `type == nil or _G.type(type) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `type`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_join",
+        "slot": "persistence",
+        "reason": "socket.lua:130 asserts `persistence == nil or _G.type(persistence) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `persistence`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_join",
+        "slot": "hidden",
+        "reason": "socket.lua:131 asserts `hidden == nil or _G.type(hidden) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `hidden`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_leave",
+        "slot": "channel_id",
+        "reason": "socket.lua:151 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_remove",
+        "slot": "channel_id",
+        "reason": "socket.lua:187 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_remove",
+        "slot": "message_id",
+        "reason": "socket.lua:188 asserts `message_id == nil or _G.type(message_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `message_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_send",
+        "slot": "channel_id",
+        "reason": "socket.lua:167 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_send",
+        "slot": "content",
+        "reason": "socket.lua:168 asserts `content == nil or _G.type(content) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `content`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_update",
+        "slot": "channel_id",
+        "reason": "socket.lua:208 asserts `channel_id == nil or _G.type(channel_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `channel_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_update",
+        "slot": "message_id",
+        "reason": "socket.lua:209 asserts `message_id == nil or _G.type(message_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `message_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "channel_message_update",
+        "slot": "content",
+        "reason": "socket.lua:210 asserts `content == nil or _G.type(content) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `content`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "match_data_send",
+        "slot": "match_id",
+        "reason": "socket.lua:233 asserts `match_id == nil or _G.type(match_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `match_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "match_data_send",
+        "slot": "op_code",
+        "reason": "socket.lua:234 asserts `op_code == nil or _G.type(op_code) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `op_code`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "match_data_send",
+        "slot": "data",
+        "reason": "socket.lua:235 asserts `data == nil or _G.type(data) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `data`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "match_data_send",
+        "slot": "reliable",
+        "reason": "socket.lua:237 asserts `reliable == nil or _G.type(reliable) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `reliable`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "match_leave",
+        "slot": "match_id",
+        "reason": "socket.lua:296 asserts `match_id == nil or _G.type(match_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `match_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "matchmaker_add",
+        "slot": "min_count",
+        "reason": "socket.lua:316 asserts `min_count == nil or _G.type(min_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `min_count`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "matchmaker_add",
+        "slot": "max_count",
+        "reason": "socket.lua:317 asserts `max_count == nil or _G.type(max_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_count`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "matchmaker_add",
+        "slot": "query",
+        "reason": "socket.lua:318 asserts `query == nil or _G.type(query) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `query`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "matchmaker_add",
+        "slot": "count_multiple",
+        "reason": "socket.lua:321 asserts `count_multiple == nil or _G.type(count_multiple) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `count_multiple`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "matchmaker_remove",
+        "slot": "ticket",
+        "reason": "socket.lua:343 asserts `ticket == nil or _G.type(ticket) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `ticket`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_accept",
+        "slot": "party_id",
+        "reason": "socket.lua:427 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_close",
+        "slot": "party_id",
+        "reason": "socket.lua:462 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_create",
+        "slot": "open",
+        "reason": "socket.lua:359 asserts `open == nil or _G.type(open) == 'boolean'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `open`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_create",
+        "slot": "max_size",
+        "reason": "socket.lua:360 asserts `max_size == nil or _G.type(max_size) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_size`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_data_send",
+        "slot": "party_id",
+        "reason": "socket.lua:549 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_data_send",
+        "slot": "op_code",
+        "reason": "socket.lua:550 asserts `op_code == nil or _G.type(op_code) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `op_code`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_data_send",
+        "slot": "data",
+        "reason": "socket.lua:551 asserts `data == nil or _G.type(data) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `data`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_join",
+        "slot": "party_id",
+        "reason": "socket.lua:378 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_join_request_list",
+        "slot": "party_id",
+        "reason": "socket.lua:477 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_leave",
+        "slot": "party_id",
+        "reason": "socket.lua:393 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_add",
+        "slot": "party_id",
+        "reason": "socket.lua:500 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_add",
+        "slot": "min_count",
+        "reason": "socket.lua:501 asserts `min_count == nil or _G.type(min_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `min_count`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_add",
+        "slot": "max_count",
+        "reason": "socket.lua:502 asserts `max_count == nil or _G.type(max_count) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `max_count`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_add",
+        "slot": "query",
+        "reason": "socket.lua:503 asserts `query == nil or _G.type(query) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `query`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_add",
+        "slot": "count_multiple",
+        "reason": "socket.lua:506 asserts `count_multiple == nil or _G.type(count_multiple) == 'number'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `count_multiple`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_remove",
+        "slot": "party_id",
+        "reason": "socket.lua:530 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_matchmaker_remove",
+        "slot": "ticket",
+        "reason": "socket.lua:531 asserts `ticket == nil or _G.type(ticket) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `ticket`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_promote",
+        "slot": "party_id",
+        "reason": "socket.lua:409 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "party_remove",
+        "slot": "party_id",
+        "reason": "socket.lua:445 asserts `party_id == nil or _G.type(party_id) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `party_id`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "status_follow",
+        "slot": "user_ids",
+        "reason": "socket.lua:569 asserts `user_ids == nil or _G.type(user_ids) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `user_ids`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "status_follow",
+        "slot": "usernames",
+        "reason": "socket.lua:570 asserts `usernames == nil or _G.type(usernames) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `usernames`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "status_unfollow",
+        "slot": "user_ids",
+        "reason": "socket.lua:588 asserts `user_ids == nil or _G.type(user_ids) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `user_ids`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "status_update",
+        "slot": "status",
+        "reason": "socket.lua:603 asserts `status == nil or _G.type(status) == 'string'`, the check socket.lua makes on every message field it sends, so it is no evidence the server accepts a nil `status`"
+      }
+    ]
   }
 }

@@ -14,9 +14,47 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "SessionToken",
+      "name": "Vars",
       "types": [
-        "symbol"
+        "{ [key: string]: string; }",
+        "LuaMap<string, string>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiEmpty",
+      "types": [
+        "Record<string, never>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiOperator",
+      "types": [
+        "\"NO_OVERRIDE\"",
+        "\"BEST\"",
+        "\"SET\"",
+        "\"INCREMENT\"",
+        "\"DECREMENT\""
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStoreEnvironment",
+      "types": [
+        "\"UNKNOWN\"",
+        "\"SANDBOX\"",
+        "\"PRODUCTION\""
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStoreProvider",
+      "types": [
+        "\"APPLE_APP_STORE\"",
+        "\"GOOGLE_PLAY_STORE\"",
+        "\"HUAWEI_APP_GALLERY\"",
+        "\"FACEBOOK_INSTANT_STORE\""
       ]
     },
     {
@@ -211,12 +249,20 @@
           "name": "user_api_user",
           "doc": "User.",
           "types": [
-            "unknown"
+            "ApiUser | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GroupUserListGroupUser"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -229,7 +275,7 @@
           "name": "group_api_group",
           "doc": "Group.",
           "types": [
-            "unknown"
+            "ApiGroup | undefined"
           ],
           "is_optional": "False"
         },
@@ -242,7 +288,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "UserGroupListUserGroup"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -263,7 +317,7 @@
           "name": "operator_api_operator",
           "doc": "Operator override.",
           "types": [
-            "unknown"
+            "ApiOperator | undefined"
           ],
           "is_optional": "False"
         },
@@ -284,7 +338,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "WriteLeaderboardRecordRequestLeaderboardRecordWrite"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -305,7 +367,7 @@
           "name": "operator_api_operator",
           "doc": "Operator override.",
           "types": [
-            "unknown"
+            "ApiOperator | undefined"
           ],
           "is_optional": "False"
         },
@@ -326,7 +388,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "WriteTournamentRecordRequestTournamentRecordWrite"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -371,7 +441,7 @@
           "name": "user_api_user",
           "doc": "The user object.",
           "types": [
-            "unknown"
+            "ApiUser | undefined"
           ],
           "is_optional": "False"
         },
@@ -392,7 +462,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccount"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -413,12 +491,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountApple"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -439,7 +525,7 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
@@ -449,25 +535,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "{ id: string; vars: unknown; }"
-          ],
-          "fields": [
-            {
-              "name": "id",
-              "doc": "",
-              "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            },
-            {
-              "name": "vars",
-              "doc": "",
-              "types": [
-                "unknown"
-              ],
-              "is_optional": "False"
-            }
+            "ApiAccountCustom"
           ]
         }
       ]
@@ -491,12 +559,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountDevice"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -525,12 +601,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountEmail"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -551,12 +635,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountFacebook"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -577,12 +669,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountFacebookInstantGame"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -643,12 +743,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountGameCenter"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -669,12 +777,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountGoogle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -695,12 +811,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiAccountSteam"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -814,7 +938,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiChannelMessage"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -856,7 +988,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiChannelMessageList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -914,7 +1054,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiCreateGroupRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -948,7 +1096,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiDeleteStorageObjectId"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -966,7 +1122,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiDeleteStorageObjectsRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1008,7 +1172,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiEvent"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1037,12 +1209,20 @@
           "name": "user_api_user",
           "doc": "The user object.",
           "types": [
-            "unknown"
+            "ApiUser | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiFriend"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1068,7 +1248,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiFriendList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1174,7 +1362,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiGroup"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1200,7 +1396,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiGroupList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1226,7 +1430,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiGroupUserList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1332,7 +1544,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiLeaderboardRecord"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1382,7 +1602,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiLeaderboardRecordList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1395,7 +1623,7 @@
           "name": "account_api_account_steam",
           "doc": "The Facebook account details.",
           "types": [
-            "unknown"
+            "ApiAccountSteam | undefined"
           ],
           "is_optional": "False"
         },
@@ -1408,7 +1636,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiLinkSteamRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1434,7 +1670,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiListSubscriptionsRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1492,7 +1736,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiMatch"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1510,7 +1762,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiMatchList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1576,7 +1836,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiNotification"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1602,7 +1870,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiNotificationList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1636,7 +1912,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiReadStorageObjectId"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1654,7 +1938,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiReadStorageObjectsRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1688,7 +1980,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiRpc"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1722,7 +2022,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiSession"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1748,7 +2056,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiSessionLogoutRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1769,12 +2085,20 @@
           "name": "vars_obj",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiSessionRefreshRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1856,7 +2180,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiStorageObject"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1914,7 +2246,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiStorageObjectAck"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1932,7 +2272,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiStorageObjectAcks"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1958,7 +2306,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiStorageObjectList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1976,7 +2332,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiStorageObjects"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2010,7 +2374,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiSubscriptionList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2127,7 +2499,7 @@
           "name": "operator_api_operator",
           "doc": "Operator.",
           "types": [
-            "unknown"
+            "ApiOperator | undefined"
           ],
           "is_optional": "False"
         },
@@ -2180,7 +2552,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiTournament"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2206,7 +2586,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiTournamentList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2256,7 +2644,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiTournamentRecordList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2314,7 +2710,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiUpdateAccountRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2468,7 +2872,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiUser"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2494,7 +2906,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiUserGroupList"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2512,7 +2932,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiUsers"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2538,7 +2966,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatePurchaseAppleRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2564,7 +3000,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatePurchaseFacebookInstantRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2590,7 +3034,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatePurchaseGoogleRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2624,7 +3076,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatePurchaseHuaweiRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2642,7 +3102,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatePurchaseResponse"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2668,7 +3136,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidateSubscriptionAppleRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2694,7 +3170,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidateSubscriptionGoogleRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2707,12 +3191,20 @@
           "name": "validated_subscription_api_validated_subscription",
           "doc": "",
           "types": [
-            "unknown"
+            "ApiValidatedSubscription | undefined"
           ],
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidateSubscriptionResponse"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2733,7 +3225,7 @@
           "name": "environment_api_store_environment",
           "doc": "Whether the purchase was done in production or sandbox environment.",
           "types": [
-            "unknown"
+            "ApiStoreEnvironment | undefined"
           ],
           "is_optional": "False"
         },
@@ -2781,7 +3273,7 @@
           "name": "store_api_store_provider",
           "doc": "",
           "types": [
-            "unknown"
+            "ApiStoreProvider | undefined"
           ],
           "is_optional": "False"
         },
@@ -2810,7 +3302,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatedPurchase"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2839,7 +3339,7 @@
           "name": "environment_api_store_environment",
           "doc": "Whether the purchase was done in production or sandbox environment.",
           "types": [
-            "unknown"
+            "ApiStoreEnvironment | undefined"
           ],
           "is_optional": "False"
         },
@@ -2903,7 +3403,7 @@
           "name": "store_api_store_provider",
           "doc": "",
           "types": [
-            "unknown"
+            "ApiStoreProvider | undefined"
           ],
           "is_optional": "False"
         },
@@ -2924,7 +3424,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiValidatedSubscription"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -2982,7 +3490,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiWriteStorageObject"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3000,7 +3516,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ApiWriteStorageObjectsRequest"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3017,7 +3541,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ProtobufAny"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3050,7 +3582,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "RpcStatus"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3071,7 +3611,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3092,7 +3632,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3113,7 +3661,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3134,7 +3682,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3155,7 +3711,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiAccount | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3176,7 +3732,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiAccount | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3245,7 +3809,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3266,7 +3830,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3295,7 +3867,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3319,7 +3891,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3340,7 +3912,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3369,7 +3949,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3393,7 +3973,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3419,7 +3999,7 @@
           "name": "",
           "doc": "The result.",
           "types": [
-            "Session"
+            "import(\"nakama.session\").Session | ApiError | undefined"
           ]
         }
       ]
@@ -3451,7 +4031,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3475,7 +4055,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3496,7 +4076,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3533,7 +4121,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3557,7 +4145,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3578,7 +4166,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3607,7 +4203,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3639,7 +4235,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3660,7 +4256,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3689,7 +4293,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3713,7 +4317,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3734,7 +4338,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3803,7 +4415,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3827,7 +4439,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3848,7 +4460,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3877,7 +4497,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3901,7 +4521,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -3922,7 +4542,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -3951,7 +4579,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -3983,7 +4611,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4004,7 +4632,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4033,7 +4669,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4041,7 +4677,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4062,7 +4698,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4091,7 +4735,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4099,7 +4743,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4120,7 +4764,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4149,7 +4801,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4157,7 +4809,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4178,7 +4830,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4215,7 +4875,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4223,7 +4883,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4244,7 +4904,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4273,7 +4941,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -4289,7 +4957,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4310,7 +4978,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4339,7 +5015,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4347,7 +5023,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4368,7 +5044,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4437,7 +5121,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4445,7 +5129,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4466,7 +5150,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4495,7 +5187,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4503,7 +5195,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4524,7 +5216,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4561,7 +5261,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4582,7 +5282,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4611,7 +5319,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4619,7 +5327,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: import(\"nakama.session\").Session | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4640,7 +5348,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "import(\"nakama.session\").Session | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4669,7 +5385,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4677,7 +5393,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4698,7 +5414,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4727,7 +5451,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4735,7 +5459,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4756,7 +5480,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4785,7 +5517,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4793,7 +5525,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4814,7 +5546,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4851,7 +5591,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4859,7 +5599,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4880,7 +5620,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4909,7 +5657,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4917,7 +5665,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4938,7 +5686,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -4967,7 +5723,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -4975,7 +5731,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -4996,7 +5752,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5065,7 +5829,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -5073,7 +5837,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5094,7 +5858,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5123,7 +5895,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -5131,7 +5903,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5152,7 +5924,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5181,7 +5961,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars"
           ],
           "is_optional": "True"
         },
@@ -5189,7 +5969,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5210,7 +5990,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5263,7 +6051,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiChannelMessageList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5284,7 +6072,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiChannelMessageList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5337,7 +6133,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5358,7 +6154,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5395,7 +6199,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5416,7 +6220,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5461,7 +6273,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiFriendList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5482,7 +6294,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiFriendList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5519,7 +6339,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5540,7 +6360,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5577,7 +6405,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5598,7 +6426,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5627,7 +6463,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -5643,7 +6479,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5664,7 +6500,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5693,7 +6537,7 @@
           "name": "vars",
           "doc": "Extra information that will be bundled in the session token.",
           "types": [
-            "unknown"
+            "Vars | undefined"
           ],
           "is_optional": "False"
         },
@@ -5709,7 +6553,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5730,7 +6574,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5799,7 +6651,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiGroupList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5820,7 +6672,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiGroupList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5889,7 +6749,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiGroup | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5910,7 +6770,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiGroup | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5939,7 +6807,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -5960,7 +6828,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -5997,7 +6873,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6018,7 +6894,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6055,7 +6939,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6076,7 +6960,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6113,7 +7005,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6134,7 +7026,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6171,7 +7071,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6192,7 +7092,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6221,7 +7129,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6242,7 +7150,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6279,7 +7195,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6300,7 +7216,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6329,7 +7253,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6350,7 +7274,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6387,7 +7319,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6408,7 +7340,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6461,7 +7401,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiGroupUserList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6482,7 +7422,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiGroupUserList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6519,7 +7467,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidatePurchaseResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6540,7 +7488,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidatePurchaseResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6577,7 +7533,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidatePurchaseResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6598,7 +7554,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidatePurchaseResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6635,7 +7599,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidatePurchaseResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6656,7 +7620,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidatePurchaseResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6701,7 +7673,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidatePurchaseResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6722,7 +7694,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidatePurchaseResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6759,7 +7739,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiSubscriptionList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6780,7 +7760,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiSubscriptionList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6817,7 +7805,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidateSubscriptionResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6838,7 +7826,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidateSubscriptionResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6875,7 +7871,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidateSubscriptionResponse | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6896,7 +7892,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidateSubscriptionResponse | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6925,7 +7929,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiValidatedSubscription | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6946,7 +7950,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiValidatedSubscription | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -6975,7 +7987,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -6996,7 +8008,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7057,7 +8077,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiLeaderboardRecordList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7078,7 +8098,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiLeaderboardRecordList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7139,7 +8167,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiLeaderboardRecord | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7160,7 +8188,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiLeaderboardRecord | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7221,7 +8257,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiLeaderboardRecordList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7242,7 +8278,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiLeaderboardRecordList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7311,7 +8355,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiMatchList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7332,7 +8376,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiMatchList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7361,7 +8413,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7382,7 +8434,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7419,7 +8479,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiNotificationList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7440,7 +8500,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiNotificationList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7485,7 +8553,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiRpc | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7506,7 +8574,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiRpc | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7551,7 +8627,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiRpc | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7572,7 +8648,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiRpc | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7609,7 +8693,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7630,7 +8714,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7659,7 +8751,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiStorageObjects | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7680,7 +8772,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiStorageObjects | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7709,7 +8809,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiStorageObjectAcks | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7730,7 +8830,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiStorageObjectAcks | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7759,7 +8867,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7780,7 +8888,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7833,7 +8949,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiStorageObjectList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7854,7 +8970,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiStorageObjectList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7907,7 +9031,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiStorageObjectList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -7928,7 +9052,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiStorageObjectList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -7997,7 +9129,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiTournamentList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8018,7 +9150,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiTournamentList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8047,7 +9187,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8068,7 +9208,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8129,7 +9277,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiTournamentRecordList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8150,7 +9298,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiTournamentRecordList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8211,7 +9367,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiLeaderboardRecord | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8232,7 +9388,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiLeaderboardRecord | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8293,7 +9457,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiLeaderboardRecord | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8314,7 +9478,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiLeaderboardRecord | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8343,7 +9515,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiEmpty | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8364,7 +9536,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiEmpty | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8425,7 +9605,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiTournamentRecordList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8446,7 +9626,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiTournamentRecordList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8491,7 +9679,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiUsers | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8512,7 +9700,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiUsers | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8565,7 +9761,7 @@
           "name": "callback",
           "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
-            "(result: unknown) => void"
+            "(result: ApiUserGroupList | ApiError) => void"
           ],
           "is_optional": "True"
         },
@@ -8586,7 +9782,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result.",
+          "types": [
+            "ApiUserGroupList | ApiError | undefined"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -8635,7 +9839,7 @@
           "name": "",
           "doc": "Socket instance.",
           "types": [
-            "unknown"
+            "import(\"nakama.socket\").Socket"
           ]
         }
       ]
@@ -8659,7 +9863,7 @@
           "name": "token",
           "doc": "",
           "types": [
-            "SessionToken"
+            "string"
           ],
           "is_optional": "False"
         }
@@ -8701,31 +9905,2877 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Session",
+      "name": "ApiUser",
+      "properties": [
+        {
+          "name": "apple_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatar_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "display_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "edge_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "facebook_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "facebook_instant_game_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gamecenter_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "google_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lang_tag",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "location",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "online",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "steam_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timezone",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GroupUserListGroupUser",
+      "properties": [
+        {
+          "name": "state",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiUser"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiGroup",
+      "properties": [
+        {
+          "name": "avatar_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "creator_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "edge_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lang_tag",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "UserGroupListUserGroup",
+      "properties": [
+        {
+          "name": "group",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiGroup"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "state",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WriteLeaderboardRecordRequestLeaderboardRecordWrite",
+      "properties": [
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiOperator"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WriteTournamentRecordRequestTournamentRecordWrite",
+      "properties": [
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiOperator"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccount",
+      "properties": [
+        {
+          "name": "custom_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "devices",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "disable_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "email",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiUser"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "verify_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "wallet",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountApple",
       "properties": [
         {
           "name": "token",
           "brief": "",
           "description": "",
           "types": [
-            "SessionToken"
-          ]
+            "string"
+          ],
+          "is_optional": "True"
         },
         {
-          "name": "refresh_token",
+          "name": "vars",
           "brief": "",
           "description": "",
           "types": [
-            "SessionToken"
-          ]
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountCustom",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
         },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountDevice",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountEmail",
+      "properties": [
+        {
+          "name": "email",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "password",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountFacebook",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountFacebookInstantGame",
+      "properties": [
+        {
+          "name": "signed_player_info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountGameCenter",
+      "properties": [
+        {
+          "name": "bundle_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "public_key_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "salt",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "signature",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestamp_seconds",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountGoogle",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiAccountSteam",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiChannelMessage",
+      "properties": [
+        {
+          "name": "channel_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "code",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "content",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "group_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistent",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "room_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sender_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id_one",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id_two",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiChannelMessageList",
+      "properties": [
+        {
+          "name": "cacheable_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "messages",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "next_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prev_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiCreateGroupRequest",
+      "properties": [
+        {
+          "name": "avatar_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lang_tag",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiDeleteStorageObjectId",
+      "properties": [
+        {
+          "name": "collection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiDeleteStorageObjectsRequest",
+      "properties": [
+        {
+          "name": "object_ids",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiEvent",
+      "properties": [
+        {
+          "name": "external",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestamp",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiFriend",
+      "properties": [
+        {
+          "name": "state",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiUser"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiFriendList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "friends",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiGroupList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "groups",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiGroupUserList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "group_users",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiLeaderboardRecord",
+      "properties": [
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "leaderboard_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_num_score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "num_score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "owner_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rank",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscore",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiLeaderboardRecordList",
+      "properties": [
+        {
+          "name": "next_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "owner_records",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prev_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rank_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "records",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiLinkSteamRequest",
+      "properties": [
+        {
+          "name": "account",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiAccountSteam"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sync",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiListSubscriptionsRequest",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiMatch",
+      "properties": [
+        {
+          "name": "authoritative",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "handler_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "label",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "match_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tick_rate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiMatchList",
+      "properties": [
+        {
+          "name": "matches",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiNotification",
+      "properties": [
+        {
+          "name": "code",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "content",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistent",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sender_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subject",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiNotificationList",
+      "properties": [
+        {
+          "name": "cacheable_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "notifications",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiReadStorageObjectId",
+      "properties": [
+        {
+          "name": "collection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiReadStorageObjectsRequest",
+      "properties": [
+        {
+          "name": "object_ids",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiRpc",
+      "properties": [
+        {
+          "name": "http_key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "payload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiSession",
+      "properties": [
         {
           "name": "created",
           "brief": "",
           "description": "",
           "types": [
             "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiSessionLogoutRequest",
+      "properties": [
+        {
+          "name": "refresh_token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiSessionRefreshRequest",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vars"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStorageObject",
+      "properties": [
+        {
+          "name": "collection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permission_read",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permission_write",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStorageObjectAck",
+      "properties": [
+        {
+          "name": "collection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStorageObjectAcks",
+      "properties": [
+        {
+          "name": "acks",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStorageObjectList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "objects",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiStorageObjects",
+      "properties": [
+        {
+          "name": "objects",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiSubscriptionList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prev_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "validated_subscriptions",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiTournament",
+      "properties": [
+        {
+          "name": "authoritative",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "can_enter",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "category",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "end_active",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "end_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_num_score",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "next_reset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "operator",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiOperator"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prev_reset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sort_order",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "start_active",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "start_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "title",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiTournamentList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tournaments",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiTournamentRecordList",
+      "properties": [
+        {
+          "name": "next_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "owner_records",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "prev_cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rank_count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "records",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiUpdateAccountRequest",
+      "properties": [
+        {
+          "name": "avatar_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "display_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lang_tag",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "location",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timezone",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiUserGroupList",
+      "properties": [
+        {
+          "name": "cursor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_groups",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiUsers",
+      "properties": [
+        {
+          "name": "users",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatePurchaseAppleRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "receipt",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatePurchaseFacebookInstantRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "signed_request",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatePurchaseGoogleRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchase",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatePurchaseHuaweiRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchase",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "signature",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatePurchaseResponse",
+      "properties": [
+        {
+          "name": "validated_purchases",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidateSubscriptionAppleRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "receipt",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidateSubscriptionGoogleRequest",
+      "properties": [
+        {
+          "name": "persist",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "receipt",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatedSubscription",
+      "properties": [
+        {
+          "name": "active",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "environment",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiStoreEnvironment"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "expiry_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "original_transaction_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "product_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "provider_notification",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "provider_response",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchase_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refund_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "store",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiStoreProvider"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidateSubscriptionResponse",
+      "properties": [
+        {
+          "name": "validated_subscription",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiValidatedSubscription"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiValidatedPurchase",
+      "properties": [
+        {
+          "name": "create_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "environment",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiStoreEnvironment"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "product_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "provider_response",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "purchase_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refund_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "seen_before",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "store",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ApiStoreProvider"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "transaction_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiWriteStorageObject",
+      "properties": [
+        {
+          "name": "collection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permission_read",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "permission_write",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiWriteStorageObjectsRequest",
+      "properties": [
+        {
+          "name": "objects",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ProtobufAny",
+      "properties": [
+        {
+          "name": "@type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RpcStatus",
+      "properties": [
+        {
+          "name": "code",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "details",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApiError",
+      "properties": [
+        {
+          "name": "error",
+          "brief": "The server's error text, or `true` when the response could not be decoded.",
+          "description": "The server's error text, or `true` when the response could not be decoded.",
+          "types": [
+            "string | true"
           ]
+        },
+        {
+          "name": "message",
+          "brief": "The server's error message, or `Unable to decode response`.",
+          "description": "The server's error message, or `Unable to decode response`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "code",
+          "brief": "The status code the server sent with the error, if any.",
+          "description": "The status code the server sent with the error, if any.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
         }
       ]
     },

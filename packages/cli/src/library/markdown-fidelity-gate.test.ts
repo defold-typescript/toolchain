@@ -2354,13 +2354,15 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     expect(opaqueTsDefoldSurface).toBe(false);
   });
 
-  test("type precision alone drives the no-go — three downgrades and one optionality loss", async () => {
+  // The fork leaves out the counts, sides and modifier the Lua defaults; the README
+  // documents every one of them as a plain `(number)`, so the markdown emit requires them.
+  test("three downgrades and three optionality losses make the no-go", async () => {
     const { downgradedMembers, optionalityLossMembers, decision } = await comparisonFor(
       DICEBAG,
       "dicebag",
     );
     expect(downgradedMembers).toEqual(DOWNGRADED);
-    expect(optionalityLossMembers).toEqual(["set_up_rng"]);
+    expect(optionalityLossMembers).toEqual(["roll_dice", "roll_special_dice", "set_up_rng"]);
     expect(decision).toBe("no-go");
   });
 
@@ -2377,7 +2379,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     const { doc, decision, downgradedMembers, optionalityLossMembers } =
       await comparisonForMarkdown(generous(), "dicebag.dicebag", severed);
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
-    expect(optionalityLossMembers).toEqual([]);
+    expect(optionalityLossMembers).toEqual(["roll_dice", "roll_special_dice"]);
     expect(downgradedMembers).toEqual(["roll_custom_dice", "table_create", "table_roll"]);
     expect(decision).toBe("no-go");
   });

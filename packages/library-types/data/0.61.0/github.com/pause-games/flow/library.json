@@ -59,5 +59,25 @@
     "flow.navigation.runtime": 1,
     "flow.types": 1,
     "flow.ui": 1
+  },
+  "behaviorVerdicts": {
+    "flow.flow": [
+      {
+        "list": "valueReturns",
+        "name": "final",
+        "reason": "upstream returns `bottom_sheet_host.final(self)` (flow.lua:235), whose body returns nothing (bottom_sheet/host.lua:283)"
+      },
+      {
+        "list": "valueReturns",
+        "name": "invalidate",
+        "reason": "upstream returns `bottom_sheet_host.invalidate(self)` (flow.lua:278) only for a bottom-sheet instance, an undocumented `true` (bottom_sheet/host.lua:338, :170); every other path returns nothing (flow.lua:281)"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "set_tree",
+        "slot": "tree",
+        "reason": "upstream tests `tree` only to format a log line (flow.lua:263); its doc types `tree` as a `Flow.Element` (flow.lua:253)"
+      }
+    ]
   }
 }

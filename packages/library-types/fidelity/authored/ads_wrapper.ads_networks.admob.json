@@ -21,17 +21,21 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
     {
+      "list": "nilTolerantRequired",
       "name": "set_banner_position",
-      "slot": "position"
+      "slot": "position",
+      "reason": "upstream answers a nil `position` with the `banner position is required` error response (ads_networks/admob.lua:737)"
     },
     {
+      "list": "nilTolerantRequired",
       "name": "set_banner_size",
-      "slot": "size"
+      "slot": "size",
+      "reason": "upstream answers a nil `size` with the `banner size is required` error response (ads_networks/admob.lua:745)"
     }
   ],
-  "emptyObjectSlots": [],
-  "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

@@ -6,6 +6,181 @@
   },
   "elements": [
     {
+      "type": "TYPEDEF",
+      "name": "WordSettings",
+      "properties": [
+        {
+          "name": "color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "shadow",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "outline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "font",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "bold",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "italic",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "anchor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "linebreak",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nobr",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ texture?: string; anim?: string; width?: number; height?: number; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "texture",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "anim",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        },
+        {
+          "name": "spine",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ scene?: string; anim?: string; }"
+          ],
+          "is_optional": "True",
+          "fields": [
+            {
+              "name": "scene",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "anim",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        },
+        {
+          "name": "paragraph",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | true"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "register",
       "brief": "",
@@ -23,7 +198,7 @@
           "name": "fn",
           "doc": "",
           "types": [
-            "(params?: string, settings?: {}) => void"
+            "(params: string | undefined, settings: WordSettings) => void"
           ],
           "is_optional": "False"
         }
@@ -33,8 +208,8 @@
     {
       "type": "FUNCTION",
       "name": "apply",
-      "brief": "",
-      "description": "",
+      "brief": "Runs the tag function registered for `tag` on `settings`.",
+      "description": "Runs the tag function registered for `tag` on `settings`.",
       "parameters": [
         {
           "name": "tag",
@@ -48,20 +223,28 @@
           "name": "params",
           "doc": "",
           "types": [
-            "string"
+            "string | undefined"
           ],
-          "is_optional": "True"
+          "is_optional": "False"
         },
         {
           "name": "settings",
           "doc": "",
           "types": [
-            "{}"
+            "WordSettings"
           ],
-          "is_optional": "True"
+          "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`false` when no function is registered for `tag`, else `true`.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -29,9 +29,9 @@ declare module 'persist.persist' {
 
 	/**
 	 * Loads data from a file, including data that has not yet been saved.
-	 * Returns an `object`, or `undefined` if the file does not exist.
+	 * Returns the file's fields by key, or `undefined` if the file does not exist.
 	 */
-	export function load(file_name: string): {} | undefined;
+	export function load(file_name: string): Record<string, unknown> | undefined;
 
 	/** Checks if a file exists. */
 	export function exists(file_name: string): boolean;

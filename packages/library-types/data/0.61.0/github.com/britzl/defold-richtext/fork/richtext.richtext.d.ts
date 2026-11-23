@@ -79,7 +79,7 @@ declare module 'richtext.richtext' {
 	 * Get all words with a specific tag.
 	 * @upstreamDoc 18f94b81f288
 	 */
-	export function tagged(words: Word[], tag: string): Word[];
+	export function tagged(words: Word[], tag?: string): Word[];
 
 	/**
 	 * Truncate a text down to a specific length. This function has two modes of operation:

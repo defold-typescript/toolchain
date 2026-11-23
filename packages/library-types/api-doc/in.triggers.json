@@ -1178,8 +1178,8 @@
     {
       "type": "VARIABLE",
       "name": "MOUSE_BUTTON_1",
-      "brief": "",
-      "description": "",
+      "brief": "`hash(\"touch\")`, not `hash(\"mouse_button_1\")`: `triggers.lua:143` rebinds it, matching the",
+      "description": "`hash(\"touch\")`, not `hash(\"mouse_button_1\")`: `triggers.lua:143` rebinds it, matching the\naction id Defold's input bindings give the first mouse button.",
       "types": [
         "Hash"
       ]
@@ -1527,7 +1527,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         }
@@ -1552,7 +1552,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         }
@@ -1577,7 +1577,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         }

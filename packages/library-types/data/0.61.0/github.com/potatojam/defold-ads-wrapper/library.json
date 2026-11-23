@@ -31,5 +31,21 @@
     "ads_wrapper.events": 1,
     "ads_wrapper.platform": 1,
     "ads_wrapper.queue": 1
+  },
+  "behaviorVerdicts": {
+    "ads_wrapper.ads_networks.admob": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "set_banner_position",
+        "slot": "position",
+        "reason": "upstream answers a nil `position` with the `banner position is required` error response (ads_networks/admob.lua:737)"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "set_banner_size",
+        "slot": "size",
+        "reason": "upstream answers a nil `size` with the `banner size is required` error response (ads_networks/admob.lua:745)"
+      }
+    ]
   }
 }

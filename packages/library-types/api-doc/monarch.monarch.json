@@ -177,7 +177,7 @@
       "name": "PreloadOptions",
       "properties": [
         {
-          "name": "auto_preload",
+          "name": "keep_loaded",
           "brief": "",
           "description": "",
           "types": [
@@ -189,11 +189,60 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Data"
+      "name": "TransitionMessage",
+      "properties": [
+        {
+          "name": "next_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "previous_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "previous_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "Message"
+      "name": "FocusMessage",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        }
+      ]
     },
     {
       "type": "TYPEDEF",
@@ -554,7 +603,7 @@
           "types": [
             "RegisterProxyOptions"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -596,7 +645,7 @@
           "types": [
             "RegisterProxyOptions"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -625,6 +674,7 @@
       "brief": "Get data associated with a screen",
       "description": "Get data associated with a screen",
       "docSource": "upstream",
+      "generics": "<T = unknown>",
       "parameters": [
         {
           "name": "screen_id",
@@ -638,9 +688,9 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "Data associated with the screen",
+          "doc": "The data `show`, `replace` or `back` passed for the screen, as given, or\n`undefined` when none was passed (`monarch.lua:717`). `T` is not checked.",
           "types": [
-            "Data"
+            "T | undefined"
           ]
         }
       ]
@@ -712,7 +762,7 @@
           "name": "data",
           "doc": "Optional data to set on the screen. Can be retrieved by the `data()` function",
           "types": [
-            "Data"
+            "unknown"
           ],
           "is_optional": "True"
         },
@@ -725,7 +775,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -753,7 +811,7 @@
           "name": "data",
           "doc": "Optional data to set on the screen. Can be retrieved by the data() function.",
           "types": [
-            "Data"
+            "unknown"
           ],
           "is_optional": "True"
         },
@@ -766,7 +824,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -836,7 +902,7 @@
           "name": "data",
           "doc": "Optional data to set for the previous screen.",
           "types": [
-            "Data"
+            "unknown"
           ],
           "is_optional": "True"
         },
@@ -849,7 +915,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -958,7 +1032,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1008,7 +1090,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1036,7 +1126,7 @@
           "name": "message",
           "doc": "Optional message data to send.",
           "types": [
-            "Message"
+            "object"
           ],
           "is_optional": "True"
         }
@@ -1069,7 +1159,7 @@
           "name": "message",
           "doc": "",
           "types": [
-            "Message"
+            "unknown"
           ],
           "is_optional": "False"
         },
@@ -1095,7 +1185,7 @@
           "name": "",
           "doc": "Table with screen IDs. The first entry is at the bottom of the\nstack, and the last value is at the top (and currently visible).",
           "types": [
-            "ScreenId[]"
+            "Hash[]"
           ]
         }
       ]
@@ -1120,7 +1210,7 @@
           "name": "",
           "doc": "Id of the requested screen.",
           "types": [
-            "ScreenId"
+            "Hash | undefined"
           ]
         }
       ]
@@ -1145,7 +1235,7 @@
           "name": "",
           "doc": "Id of the requested screen.",
           "types": [
-            "ScreenId"
+            "Hash | undefined"
           ]
         }
       ]
@@ -1193,7 +1283,7 @@
           "name": "fn",
           "doc": "Transition handler function.",
           "types": [
-            "(message_id: string, message: Message, sender: Url) => void"
+            "((message_id: Hash, message: TransitionMessage, sender: Url) => void) | undefined"
           ],
           "is_optional": "False"
         }
@@ -1218,7 +1308,7 @@
           "name": "fn",
           "doc": "Focus listener function.",
           "types": [
-            "(message_id: string, message: Message, sender: Url) => void"
+            "(message_id: Hash, message: FocusMessage, sender: Url) => void"
           ],
           "is_optional": "False"
         }

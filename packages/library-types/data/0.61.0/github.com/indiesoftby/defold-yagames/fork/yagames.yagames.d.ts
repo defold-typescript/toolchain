@@ -63,7 +63,7 @@ declare module 'yagames.yagames' {
     signed?: boolean;
     scopes?: boolean;
   }
-  export function player_init(options: PlayerInitOptions, callback: ApiCallback): void;
+  export function player_init(options: PlayerInitOptions | undefined, callback: ApiCallback): void;
 
   export function player_set_data(data: Record<string, unknown>, flush: boolean, callback: ApiCallback): void;
 
@@ -226,7 +226,7 @@ declare module 'yagames.yagames' {
   }
   export function leaderboards_get_entries(leaderboard_name: string, options: LeaderboardsGetEntriesOptions | undefined, callback: LeaderboardsGetPlayerEntriesCallback): void;
 
-  export function leaderboards_set_score(leaderboard_name: string, score: number, extra_data: string, callback: ApiCallback): void;
+  export function leaderboards_set_score(leaderboard_name: string, score: number, extra_data?: string, callback?: ApiCallback): void;
 
   //* Features
 

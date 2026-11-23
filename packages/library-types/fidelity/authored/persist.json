@@ -22,12 +22,7 @@
   "callableCoverage": 1,
   "valueReturns": [],
   "nilTolerantRequired": [],
-  "emptyObjectSlots": [
-    {
-      "name": "load",
-      "slot": "return"
-    }
-  ],
+  "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }
