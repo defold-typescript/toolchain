@@ -446,7 +446,7 @@
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         }
       ],
       "returnvalues": [

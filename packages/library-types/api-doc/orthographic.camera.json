@@ -212,37 +212,11 @@
         },
         {
           "name": "direction",
-          "doc": "Direction of the shake. Possible values: `both`, `horizontal`, `vertical`. Defaults to `both`.",
+          "doc": "Direction of the shake: `SHAKE_BOTH`, `SHAKE_HORIZONTAL` or `SHAKE_VERTICAL`. Defaults to `SHAKE_BOTH`.",
           "types": [
-            "{ both?: boolean; horizontal?: boolean; vertical?: boolean; }"
+            "Hash"
           ],
-          "is_optional": "True",
-          "fields": [
-            {
-              "name": "both",
-              "doc": "",
-              "types": [
-                "boolean"
-              ],
-              "is_optional": "True"
-            },
-            {
-              "name": "horizontal",
-              "doc": "",
-              "types": [
-                "boolean"
-              ],
-              "is_optional": "True"
-            },
-            {
-              "name": "vertical",
-              "doc": "",
-              "types": [
-                "boolean"
-              ],
-              "is_optional": "True"
-            }
-          ]
+          "is_optional": "True"
         },
         {
           "name": "cb",
@@ -289,39 +263,6 @@
         {
           "name": "screen",
           "doc": "Screen coordinates to convert",
-          "types": [
-            "Vector3"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "Vector3"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "FUNCTION",
-      "name": "window_to_world",
-      "brief": "Translate window coordinates to world coordinates, based on the view and projection of the camera.",
-      "description": "Translate window coordinates to world coordinates, based on the view and projection of the camera.",
-      "parameters": [
-        {
-          "name": "camera_id",
-          "doc": "(hash | url), undefined for the first camera",
-          "types": [
-            "Hash | Url | undefined"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "window",
-          "doc": "Window coordinates to convert",
           "types": [
             "Vector3"
           ],
@@ -431,7 +372,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "LuaMultiReturn<[ number, number, number, number ]>"
+            "Vector4"
           ]
         }
       ]
@@ -471,7 +412,7 @@
           "name": "camera_id",
           "doc": "",
           "types": [
-            "Hash | Url"
+            "Hash | Url | undefined"
           ],
           "is_optional": "False"
         },
@@ -612,6 +553,23 @@
     },
     {
       "type": "FUNCTION",
+      "name": "deadzone",
+      "brief": "Removes the deadzone: upstream posts it without edges when any edge is nil (`camera.lua:546`).",
+      "description": "Removes the deadzone: upstream posts it without edges when any edge is nil (`camera.lua:546`).",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "",
+          "types": [
+            "Hash | Url | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
       "name": "bounds",
       "brief": "Limits the camera position to within the specified rectangle.",
       "description": "Limits the camera position to within the specified rectangle.",
@@ -653,6 +611,23 @@
           "doc": "Bottom edge of camera bounds",
           "types": [
             "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bounds",
+      "brief": "Removes the bounds: upstream posts it without edges when any edge is nil (`camera.lua:566`).",
+      "description": "Removes the bounds: upstream posts it without edges when any edge is nil (`camera.lua:566`).",
+      "parameters": [
+        {
+          "name": "camera_id",
+          "doc": "",
+          "types": [
+            "Hash | Url | undefined"
           ],
           "is_optional": "False"
         }
@@ -718,123 +693,16 @@
       ]
     },
     {
-      "type": "FUNCTION",
-      "name": "unproject",
-      "brief": "Translate screen coordinates to world coordinates using the specified view and projection.",
-      "description": "Translate screen coordinates to world coordinates using the specified view and projection.",
-      "parameters": [
-        {
-          "name": "view",
-          "doc": "",
-          "types": [
-            "Matrix4"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "projection",
-          "doc": "",
-          "types": [
-            "Matrix4"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "screen",
-          "doc": "Screen coordinates to convert",
-          "types": [
-            "Vector3"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "Vector3"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "FUNCTION",
-      "name": "project",
-      "brief": "Translate world coordinates to screen coordinates using the specified view and projection.",
-      "description": "Translate world coordinates to screen coordinates using the specified view and projection.",
-      "parameters": [
-        {
-          "name": "view",
-          "doc": "",
-          "types": [
-            "Matrix4"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "projection",
-          "doc": "",
-          "types": [
-            "Matrix4"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "world",
-          "doc": "World coordinates to convert",
-          "types": [
-            "Vector3"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "Vector3"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "FUNCTION",
-      "name": "set_window_scaling_factor",
-      "brief": "Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.",
-      "description": "Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.",
-      "parameters": [
-        {
-          "name": "scaling_factor",
-          "doc": "Current window scaling factor",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        }
-      ],
-      "returnvalues": []
-    },
-    {
       "type": "VARIABLE",
       "name": "PROJECTOR",
       "brief": "",
       "description": "",
       "types": [
-        "{ FIXED_ZOOM: Hash; DEFAULT: Hash; FIXED_AUTO: Hash; }"
+        "{ FIXED_ZOOM: Hash; FIXED_AUTO: Hash; }"
       ],
       "fields": [
         {
           "name": "FIXED_ZOOM",
-          "doc": "",
-          "types": [
-            "Hash"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "DEFAULT",
           "doc": "",
           "types": [
             "Hash"

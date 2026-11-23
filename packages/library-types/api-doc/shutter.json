@@ -258,7 +258,7 @@
           "name": "parent",
           "doc": "Shake the camera object's parent instead of the camera itself.",
           "types": [
-            "boolean"
+            "boolean | undefined"
           ],
           "is_optional": "False"
         },

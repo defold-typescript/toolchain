@@ -15,5 +15,27 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "defsave": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "get_file_path",
+        "slot": "file",
+        "reason": "upstream prints a warning for a nil `file` and returns nil (defsave.lua:104), guarding a mistake rather than offering a default"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "load",
+        "slot": "file",
+        "reason": "upstream prints a warning for a nil `file` and returns nil (defsave.lua:122), guarding a mistake rather than offering a default"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "update",
+        "slot": "dt",
+        "reason": "upstream prints a warning for a nil `dt` (defsave.lua:320), then adds it to the timer (defsave.lua:323), which raises on nil"
+      }
+    ]
   }
 }

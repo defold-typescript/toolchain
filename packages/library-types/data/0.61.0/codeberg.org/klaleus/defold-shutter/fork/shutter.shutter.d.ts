@@ -136,7 +136,7 @@ declare module 'shutter.shutter' {
 	 */
 	function shake(
 		object: Hash,
-		parent: boolean,
+		parent: boolean | undefined,
 		count: number,
 		duration: number,
 		radius: number,

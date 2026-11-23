@@ -21,12 +21,7 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
-    {
-      "name": "start",
-      "slot": "port"
-    }
-  ],
+  "nilTolerantRequired": [],
   "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []

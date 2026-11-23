@@ -23,7 +23,7 @@ declare module "defmath.defmath" {
   /**
    * Round to decimal point
    */
-  export function round_decimal(number: number, decimal: number): number;
+  export function round_decimal(number: number, decimal?: number): number;
   
   /**
    * Clamp

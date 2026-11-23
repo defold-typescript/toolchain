@@ -128,7 +128,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -136,7 +136,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{}"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         }

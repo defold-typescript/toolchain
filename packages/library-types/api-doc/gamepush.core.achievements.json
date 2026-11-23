@@ -244,7 +244,15 @@
           "is_optional": "True"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The achievements when called without `callback`, else nil.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
     },
     {
       "type": "VARIABLE",

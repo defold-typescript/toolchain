@@ -35,12 +35,17 @@ richtext.create("hi", "default", {
   valign: richtext.ALIGN_CENTER,
 });
 
-// richtext.tags — `register` takes a tag name and a callback over the optional
-// params/settings pair.
-richtextTags.register("em", () => {});
+// richtext.tags — a tag function gets the tag's params, nil for a bare tag, and the
+// word settings it writes to; `apply` says whether the tag has a function.
+richtextTags.register("em", (params, settings) => {
+  settings.italic = params === undefined;
+});
+const _applied: boolean = richtextTags.apply("em", undefined, { size: 12 });
+// @ts-expect-error every built-in tag function writes into the settings it is given
 richtextTags.apply("em");
 
 void _richRed;
+void _applied;
 void _richNode;
 void _richWordColor;
 void _richWidth;

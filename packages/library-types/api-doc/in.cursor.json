@@ -126,14 +126,14 @@
       "type": "TYPEDEF",
       "name": "ListenerFunction",
       "types": [
-        "(message_id: Hash | string, message: {}) => boolean"
+        "(message_id: Hash | string, message: unknown) => boolean"
       ]
     },
     {
       "type": "FUNCTION",
       "name": "trigger",
-      "brief": "",
-      "description": "",
+      "brief": "Hands `message` to every listener of `message_id` unread (`cursor.lua:33`).",
+      "description": "Hands `message` to every listener of `message_id` unread (`cursor.lua:33`).",
       "parameters": [
         {
           "name": "message_id",
@@ -147,7 +147,7 @@
           "name": "message",
           "doc": "",
           "types": [
-            "{}"
+            "unknown"
           ],
           "is_optional": "False"
         }

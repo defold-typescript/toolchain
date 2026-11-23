@@ -106,6 +106,60 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "ControlData",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "released",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ControlCallback",
+      "types": [
+        "(action: Hash, node: Opaque<\"node\">, data: ControlData) => void"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "OnscreenInstance",
       "properties": [
         {
@@ -121,7 +175,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, settings: {} | undefined, fn: (action: Hash, node: Opaque<\"node\">, touch: {}) => void) => void"
+            "(node: Opaque<\"node\">, settings: object | undefined, fn: ControlCallback) => void"
           ]
         },
         {
@@ -129,7 +183,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(node: Opaque<\"node\">, settings: { radius?: number; threshold?: number; } | undefined, fn: (action: Hash, node: Opaque<\"node\">, touch: {}) => void) => void"
+            "(node: Opaque<\"node\">, settings: { radius?: number; threshold?: number; } | undefined, fn: ControlCallback) => void"
           ]
         },
         {
@@ -137,7 +191,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(action_id: Hash, action: {}) => boolean"
+            "(action_id: Hash | undefined, action: Partial<go.on_input.Action>) => boolean"
           ]
         }
       ]
@@ -212,7 +266,7 @@
           "name": "settings",
           "doc": "",
           "types": [
-            "{} | undefined"
+            "object | undefined"
           ],
           "is_optional": "False"
         },
@@ -220,7 +274,7 @@
           "name": "fn",
           "doc": "",
           "types": [
-            "(action: Hash, node: Opaque<\"node\">, touch: {}) => void"
+            "ControlCallback"
           ],
           "is_optional": "False"
         },
@@ -261,7 +315,7 @@
           "name": "fn",
           "doc": "",
           "types": [
-            "(action: Hash, node: Opaque<\"node\">, touch: {}) => void"
+            "ControlCallback"
           ],
           "is_optional": "False"
         },
@@ -286,7 +340,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -294,7 +348,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{}"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },

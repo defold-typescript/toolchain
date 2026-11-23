@@ -206,7 +206,7 @@
           "name": "options",
           "doc": "",
           "types": [
-            "PlayerInitOptions"
+            "PlayerInitOptions | undefined"
           ],
           "is_optional": "False"
         },
@@ -854,7 +854,7 @@
           "types": [
             "string"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "callback",
@@ -862,7 +862,7 @@
           "types": [
             "ApiCallback"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         }
       ],
       "returnvalues": []

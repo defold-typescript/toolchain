@@ -19,7 +19,7 @@
               "name": "action_id",
               "doc": "",
               "types": [
-                "Hash"
+                "Hash | undefined"
               ],
               "is_optional": "False"
             },
@@ -27,7 +27,7 @@
               "name": "action",
               "doc": "",
               "types": [
-                "{}"
+                "Partial<go.on_input.Action>"
               ],
               "is_optional": "False"
             }
@@ -37,7 +37,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "DetectedGestures"
+                "DetectedGestures | undefined"
               ]
             }
           ]
@@ -482,7 +482,7 @@
           "name": "settings",
           "doc": "",
           "types": [
-            "{ action_id?: string; tap_threshold?: number; double_tap_interval?: number; swipe_threshold?: number; swipe_time?: number; long_press_time?: number; multi_touch?: boolean; }"
+            "{ action_id?: Hash; tap_threshold?: number; double_tap_interval?: number; swipe_threshold?: number; swipe_time?: number; long_press_time?: number; multi_touch?: boolean; }"
           ],
           "is_optional": "True",
           "fields": [
@@ -490,7 +490,7 @@
               "name": "action_id",
               "doc": "",
               "types": [
-                "string"
+                "Hash"
               ],
               "is_optional": "True"
             },
@@ -574,7 +574,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -582,7 +582,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "{}"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         }
@@ -592,7 +592,7 @@
           "name": "",
           "doc": "A table containing detected gestures. Can contain the following\nvalues:\n* tap [table] Values: position\n* double_tap [table] Values: position\n* long_press [table] Values: position, time\n* repeated [boolean]\n* swipe_left [boolean]\n* swipe_right [boolean]\n* swipe_up [boolean]\n* swipe_down [boolean]\n* swipe [table] Values: from, to and time\n* two_finger [table] Two-finger geatures (tap, double_tap, long_press, repeated, swipe_* and pinch)",
           "types": [
-            "DetectedGestures"
+            "DetectedGestures | undefined"
           ]
         }
       ]

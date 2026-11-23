@@ -21,13 +21,15 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
     {
+      "list": "nilTolerantRequired",
       "name": "quick_start",
-      "slot": "opts"
+      "slot": "opts",
+      "reason": "upstream tests `opts` only inside an assert that it and `opts.host` are set (client.lua:131)"
     }
   ],
-  "emptyObjectSlots": [],
-  "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

@@ -29,7 +29,7 @@ declare module 'defcon.console' {
    */
   export const server: unknown;
 
-  export function start(port: number): void;
+  export function start(port?: number): void;
 
   export function stop(): void;
 

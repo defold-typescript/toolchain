@@ -120,7 +120,15 @@
           "is_optional": "False"
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A socket table.",
+          "types": [
+            "symbol"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

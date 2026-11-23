@@ -21,21 +21,15 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
     {
-      "name": "leaderboards_set_score",
-      "slot": "callback"
-    },
-    {
+      "list": "nilTolerantRequired",
       "name": "payments_get_catalog",
-      "slot": "callback"
-    },
-    {
-      "name": "player_init",
-      "slot": "options"
+      "slot": "callback",
+      "reason": "upstream tests `not callback` only to move a function passed as `options` into `callback` (yagames.lua:466), then asserts `callback` is a function (yagames.lua:471)"
     }
   ],
-  "emptyObjectSlots": [],
-  "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

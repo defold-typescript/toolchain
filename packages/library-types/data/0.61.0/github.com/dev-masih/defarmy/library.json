@@ -15,5 +15,21 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "defarmy": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "army_create",
+        "slot": "is_sticky",
+        "reason": "upstream compares `is_sticky` with nil only to assert it (defarmy.lua:210): a nil stickiness raises `You must provide a stickiness`"
+      },
+      {
+        "list": "nilTolerantRequired",
+        "name": "army_update_stickiness",
+        "slot": "is_sticky",
+        "reason": "upstream compares `is_sticky` with nil only to assert it (defarmy.lua:473): a nil stickiness raises `You must provide a stickiness`"
+      }
+    ]
   }
 }

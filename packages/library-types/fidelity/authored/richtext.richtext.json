@@ -21,12 +21,7 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
-    {
-      "name": "tagged",
-      "slot": "tag"
-    }
-  ],
+  "nilTolerantRequired": [],
   "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []

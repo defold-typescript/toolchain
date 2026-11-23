@@ -21,13 +21,15 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
+  "nilTolerantRequired": [],
+  "emptyObjectSlots": [],
+  "behaviorVerdicts": [
     {
+      "list": "nilTolerantRequired",
       "name": "socket_send",
-      "slot": "socket"
+      "slot": "socket",
+      "reason": "upstream tests `socket` only inside an assert that it and `socket.connection` are set (engine/defold.lua:200)"
     }
   ],
-  "emptyObjectSlots": [],
-  "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

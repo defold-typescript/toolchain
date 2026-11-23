@@ -214,5 +214,15 @@
       "callable": 1,
       "field": 1
     }
+  },
+  "behaviorVerdicts": {
+    "asobi.client": [
+      {
+        "list": "nilTolerantRequired",
+        "name": "quick_start",
+        "slot": "opts",
+        "reason": "upstream tests `opts` only inside an assert that it and `opts.host` are set (client.lua:131)"
+      }
+    ]
   }
 }

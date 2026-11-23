@@ -3421,42 +3421,20 @@ describe("the behavior lists compare what the fork's signatures promise with wha
 });
 
 describe("the measured corpus answers every behavior-list entry", () => {
-  const CORRECTED = new Set([
-    "https://github.com/britzl/gooey",
-    "https://github.com/britzl/defold-input",
-    "https://github.com/britzl/monarch",
-    "https://github.com/britzl/defold-orthographic",
-  ]);
   const reports = authoredParityTargets(DATA_DIR).map((entry) => ({
     entry,
     report: buildAuthoredParity(DATA_DIR, entry),
   }));
 
-  test("the Gooey, defold-input, Monarch and Orthographic forks list nothing a verdict leaves open", () => {
-    const open = reports
-      .filter(({ entry }) => CORRECTED.has(entry.repo))
-      .flatMap(({ entry, report }) => [
-        ...report.valueReturns.map((name) => `${entry.namespace}.${name}: value return`),
-        ...report.nilTolerantRequired.map(
-          ({ name, slot }) => `${entry.namespace}.${name}(${slot}): nil-tolerant`,
-        ),
-        ...report.emptyObjectSlots.map(
-          ({ name, slot }) => `${entry.namespace}.${name}(${slot}): {}`,
-        ),
-      ]);
-    expect(reports.filter(({ entry }) => CORRECTED.has(entry.repo)).length).toBe(15);
-    expect(open).toEqual([]);
-  });
-
-  test("the Nakama forks return a value wherever nakama-defold's Lua does, and type no slot {}", () => {
-    const nakama = reports.filter(
-      ({ entry }) => entry.repo === "https://github.com/heroiclabs/nakama-defold",
-    );
-    const open = nakama.flatMap(({ entry, report }) => [
+  test("every measured fork lists nothing a verdict leaves open", () => {
+    const open = reports.flatMap(({ entry, report }) => [
       ...report.valueReturns.map((name) => `${entry.namespace}.${name}: value return`),
+      ...report.nilTolerantRequired.map(
+        ({ name, slot }) => `${entry.namespace}.${name}(${slot}): nil-tolerant`,
+      ),
       ...report.emptyObjectSlots.map(({ name, slot }) => `${entry.namespace}.${name}(${slot}): {}`),
     ]);
-    expect(nakama.length).toBe(5);
+    expect(reports.length).toBeGreaterThan(100);
     expect(open).toEqual([]);
   });
 

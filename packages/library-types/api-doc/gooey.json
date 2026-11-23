@@ -7,10 +7,6 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "table"
-    },
-    {
-      "type": "TYPEDEF",
       "name": "ButtonState",
       "properties": [
         {
@@ -853,6 +849,74 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "ComponentState",
+      "types": [
+        "ButtonState",
+        "CheckboxState",
+        "RadioState",
+        "ListState",
+        "ScrollbarState",
+        "InputState"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GroupState",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "consumed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "components",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ComponentState[]"
+          ]
+        },
+        {
+          "name": "focus",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ component: ComponentState | undefined; index: number | undefined; }"
+          ],
+          "fields": [
+            {
+              "name": "component",
+              "doc": "",
+              "types": [
+                "ComponentState | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "index",
+              "doc": "",
+              "types": [
+                "number | undefined"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "Theme",
       "properties": [
         {
@@ -892,7 +956,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(group_id: Hash | string, action_id: Hash, action: table, group_fn: () => void) => table"
+            "(group_id: Hash | string, action_id: Hash | undefined, action: Partial<go.on_input.Action>, group_fn: () => void) => GroupState"
           ]
         }
       ]
@@ -1008,7 +1072,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1016,7 +1080,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1026,7 +1090,7 @@
           "types": [
             "(button: ButtonState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1065,7 +1129,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1073,7 +1137,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1083,7 +1147,7 @@
           "types": [
             "(checkbox: CheckboxState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1122,7 +1186,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1130,7 +1194,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1138,9 +1202,9 @@
           "name": "fn",
           "doc": "",
           "types": [
-            "(group_id: Hash | string, action_id: Hash, action: table) => void"
+            "(group_id: Hash, action_id: Hash | undefined, action: Partial<go.on_input.Action>) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1148,7 +1212,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "table"
+            "RadioState[]"
           ]
         }
       ]
@@ -1171,7 +1235,7 @@
           "name": "group",
           "doc": "",
           "types": [
-            "string"
+            "Hash | string"
           ],
           "is_optional": "False"
         },
@@ -1179,7 +1243,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1187,7 +1251,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1197,7 +1261,7 @@
           "types": [
             "(radio: RadioState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1252,7 +1316,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1260,7 +1324,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1278,7 +1342,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1333,7 +1397,7 @@
           "name": "data",
           "doc": "",
           "types": [
-            "table"
+            "unknown[]"
           ],
           "is_optional": "False"
         },
@@ -1341,7 +1405,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1349,7 +1413,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1367,7 +1431,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1422,7 +1486,7 @@
           "name": "data",
           "doc": "",
           "types": [
-            "table"
+            "unknown[]"
           ],
           "is_optional": "False"
         },
@@ -1430,7 +1494,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1438,7 +1502,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1456,7 +1520,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1511,7 +1575,7 @@
           "name": "data",
           "doc": "",
           "types": [
-            "table"
+            "unknown[]"
           ],
           "is_optional": "False"
         },
@@ -1519,7 +1583,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1527,7 +1591,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1545,7 +1609,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1600,7 +1664,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1608,7 +1672,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1626,7 +1690,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1681,7 +1745,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1689,7 +1753,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1707,7 +1771,7 @@
           "types": [
             "(list: ListState) => void"
           ],
-          "is_optional": "False"
+          "is_optional": "True"
         },
         {
           "name": "refresh_fn",
@@ -1731,8 +1795,8 @@
     {
       "type": "FUNCTION",
       "name": "vertical_scrollbar",
-      "brief": "",
-      "description": "",
+      "brief": "`gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.vertical` as the",
+      "description": "`gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.vertical` as the\nscroll callback and its sixth as the refresh callback, so the README's\n`(handle_id, bounds_id, action_id, action, fn, refresh_fn)` is the call that works;\nthe seventh parameter `gooey.lua` names reaches nothing.",
       "parameters": [
         {
           "name": "handle_id",
@@ -1754,7 +1818,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1762,15 +1826,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "config",
-          "doc": "",
-          "types": [
-            "table | undefined"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1789,6 +1845,14 @@
             "(scrollbar: ScrollbarState) => void"
           ],
           "is_optional": "True"
+        },
+        {
+          "name": "unused",
+          "doc": "",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1804,8 +1868,8 @@
     {
       "type": "FUNCTION",
       "name": "horizontal_scrollbar",
-      "brief": "",
-      "description": "",
+      "brief": "`gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.horizontal` as the",
+      "description": "`gooey.lua` hands its fifth argument to `gooey/internal/scrollbar.lua`'s `M.horizontal` as the\nscroll callback and its sixth as the refresh callback, so the README's\n`(handle_id, bounds_id, action_id, action, fn, refresh_fn)` is the call that works;\nthe seventh parameter `gooey.lua` names reaches nothing.",
       "parameters": [
         {
           "name": "handle_id",
@@ -1827,7 +1891,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1835,15 +1899,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "config",
-          "doc": "",
-          "types": [
-            "table | undefined"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1860,6 +1916,14 @@
           "doc": "",
           "types": [
             "(scrollbar: ScrollbarState) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unused",
+          "doc": "",
+          "types": [
+            "undefined"
           ],
           "is_optional": "True"
         }
@@ -1901,7 +1965,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -1909,7 +1973,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -1993,7 +2057,7 @@
           "name": "action_id",
           "doc": "",
           "types": [
-            "Hash"
+            "Hash | undefined"
           ],
           "is_optional": "False"
         },
@@ -2001,7 +2065,7 @@
           "name": "action",
           "doc": "",
           "types": [
-            "table"
+            "Partial<go.on_input.Action>"
           ],
           "is_optional": "False"
         },
@@ -2019,7 +2083,7 @@
           "name": "",
           "doc": "Group state",
           "types": [
-            "table"
+            "GroupState"
           ]
         }
       ]
@@ -2034,7 +2098,7 @@
           "name": "group",
           "doc": "",
           "types": [
-            "table"
+            "GroupState"
           ],
           "is_optional": "False"
         },

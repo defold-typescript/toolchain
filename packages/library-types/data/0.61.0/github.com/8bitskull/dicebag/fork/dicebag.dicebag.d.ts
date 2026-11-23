@@ -54,7 +54,7 @@ declare module "dicebag.dicebag" {
    * @returns Sum of rolled dice plus modifier.
     * @upstreamDoc 41429812017d
    */
-  export function roll_dice(num_dice: number, num_sides: number, modifier: number): number;
+  export function roll_dice(num_dice?: number, num_sides?: number, modifier?: number): number;
 
   /**
    * Roll a number of dice and choose one (or more) of the highest (advantage) or lowest (disadvantage) results. Returns the sum of the relevant dice rolls.
@@ -65,7 +65,7 @@ declare module "dicebag.dicebag" {
    * @returns Sum of the highest (advantage) or lowest (disadvantage) dice rolls
     * @upstreamDoc 963b41777aa7
    */
-  export function roll_special_dice(num_sides: number, advantage: number, num_dice: number, num_results: number): number;
+  export function roll_special_dice(num_sides: number | undefined, advantage: number, num_dice?: number, num_results?: number): number;
 
  /**
    * Roll custom dice. The dice can have sides with different weights and different values.
@@ -74,7 +74,7 @@ declare module "dicebag.dicebag" {
    * @returns The sum of the values as specified in the table `sides`.
     * @upstreamDoc bbf2775fe284
    */
- export function roll_custom_dice(num_dice: number, sides: Array<[number, number]>): number;
+ export function roll_custom_dice(num_dice: number | undefined, sides: Array<[number, number]>): number;
 
   /**
    * Create a marble bag of green (success) and red (fails) 'marbles'. This allows you to, for example, make an unlikely event more and more likely the more fails are accumulated.

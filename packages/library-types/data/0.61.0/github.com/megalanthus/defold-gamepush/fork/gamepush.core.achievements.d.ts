@@ -104,9 +104,10 @@ declare module 'gamepush.core.achievements' {
   /**
    * Fetches the achievements.
    * @param callback Receives the achievements.
+   * @returns The achievements when called without `callback`, else nil.
     * @upstreamDoc 983af89f113d
    */
-  export function fetch(callback?: (achievements: unknown) => void): void;
+  export function fetch(callback?: (achievements: unknown) => void): unknown;
 
   /** The achievement event handlers. */
   export const callbacks: AchievementsCallbacks;

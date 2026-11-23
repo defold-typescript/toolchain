@@ -20,20 +20,9 @@
   "overloadedMembers": 0,
   "placeholderMembers": 0,
   "callableCoverage": 1,
-  "valueReturns": [
-    "apply"
-  ],
+  "valueReturns": [],
   "nilTolerantRequired": [],
-  "emptyObjectSlots": [
-    {
-      "name": "apply",
-      "slot": "settings"
-    },
-    {
-      "name": "register",
-      "slot": "fn"
-    }
-  ],
+  "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []
 }

@@ -21,36 +21,7 @@
   "placeholderMembers": 0,
   "callableCoverage": 1,
   "valueReturns": [],
-  "nilTolerantRequired": [
-    {
-      "name": "roll_custom_dice",
-      "slot": "num_dice"
-    },
-    {
-      "name": "roll_dice",
-      "slot": "num_dice"
-    },
-    {
-      "name": "roll_dice",
-      "slot": "num_sides"
-    },
-    {
-      "name": "roll_dice",
-      "slot": "modifier"
-    },
-    {
-      "name": "roll_special_dice",
-      "slot": "num_sides"
-    },
-    {
-      "name": "roll_special_dice",
-      "slot": "num_dice"
-    },
-    {
-      "name": "roll_special_dice",
-      "slot": "num_results"
-    }
-  ],
+  "nilTolerantRequired": [],
   "emptyObjectSlots": [],
   "behaviorVerdicts": [],
   "staleBehaviorVerdicts": []

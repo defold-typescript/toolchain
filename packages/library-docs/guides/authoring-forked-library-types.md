@@ -447,7 +447,12 @@ therefore one-sided: an empty list is not proof the fork is right.
 
 A false entry is answered by a verdict, not by widening a pattern. The usual one is a
 tail call: `return instance.reset()` reads as a value return, though
-`instance.reset` returns nothing. `behaviorVerdicts` in the library's `library.json`
+`instance.reset` returns nothing. Another is a check a generated client makes on every
+argument whether the server needs it or not: Nakama's `nakama.lua` asserts
+`not id or type(id) == "string"` on each field it sends, so a nil-tolerant entry it
+produces says nothing about the field. A check that guards an error (`if x == nil then
+error(…)`, `assert(x and x.host)`) is likewise no reason to make the slot optional.
+`behaviorVerdicts` in the library's `library.json`
 maps each fork's `namespace` to `{ list, name, slot?, reason }` entries; `slot`
 names the parameter, or `return`, for the two lists whose entries carry one, and is
 absent for `valueReturns`. As with a parity exception, `reason` cites upstream's file
@@ -465,8 +470,11 @@ and line:
 }
 ```
 
-A verdict whose entry is gone moves to `staleBehaviorVerdicts` rather than throwing,
-and `authored-parity.test.ts` reds while any report carries one.
+`authored-parity.test.ts` reds while any measured fork lists an entry no verdict
+answers: fix the fork where the Lua tolerates nil, returns a usable value or reads the
+`{}` slot's fields, and record a verdict otherwise. A verdict whose entry is gone moves
+to `staleBehaviorVerdicts` rather than throwing, and the same test reds while any
+report carries one.
 
 ### Upstream LuaDoc import
 
