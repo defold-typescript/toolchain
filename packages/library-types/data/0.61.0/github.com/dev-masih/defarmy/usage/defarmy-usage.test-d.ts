@@ -2,12 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as defarmy from "defarmy.defarmy";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the defarmy fork, written as upstream's examples drive it. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 const army = defarmy.army_create(vmath.vector3(), vmath.quat(), 32, true, defarmy.PATTERN.TRIANGLE);
 const _army: Equal<typeof army, number> = true;

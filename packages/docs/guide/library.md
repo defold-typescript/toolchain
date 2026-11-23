@@ -181,9 +181,11 @@ It runs four checks in order, and a check that fails stops the ones after it:
    every native-extension declaration and every `usage/` example together,
    against the engine types this CLI ships. It runs with `skipLibCheck: false`,
    `strict`, `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, so a
-   declaration that passes also compiles in a scaffolded project. A declared
-   file TypeScript cannot load, because it is missing or is not a TypeScript
-   file, is a problem of its library.
+   declaration that passes also compiles in a scaffolded project. The `usage/`
+   examples then compile a second time with `exactOptionalPropertyTypes` and
+   `noUncheckedIndexedAccess` off, as in a scaffolded project, so an assertion
+   holds in both. A declared file TypeScript cannot load, because it is missing
+   or is not a TypeScript file, is a problem of its library.
 4. **Floor** — every module's coverage, measured from the library's own files,
    meets its floor in the library's `library.json`. See
    [Coverage floors](#coverage-floors).
@@ -192,7 +194,8 @@ The engine types (`@defold-typescript/types`) and the language extensions
 (`@typescript-to-lua/language-extensions`) that a usage example references come
 from this CLI's own install. `library check` never reads a `node_modules` beside
 the data, and any other bare import in the data resolves only to a module the
-printed declarations declare.
+printed declarations declare. A relative import resolves inside the data folder:
+the usage examples import `Equal` from the data folder's `type-assert.ts`.
 
 ## Coverage floors
 
@@ -270,7 +273,9 @@ defold-typescript library check: error: 1 problem in /path/to/library-data/data/
 A `compile` message starts with the file and line, relative to the library
 folder: a fork or a native declaration names its own file, a usage example its
 `usage/` path, and a module printed from upstream sources
-`printed/<module>.d.ts`. A `print` message starts with the module that did not
+`printed/<module>.d.ts`. A usage line that fails only in the second compile
+carries `(scaffold options)` after its line number; a line both compiles fail
+is reported once, without it. A `print` message starts with the module that did not
 print, and a `floor` message with the module it measured.
 
 ## Doc notices

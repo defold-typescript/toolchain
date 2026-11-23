@@ -246,6 +246,73 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
   });
 });
 
+describe("checkLibraryData compiles usage examples under the scaffold's options too", () => {
+  const FLOW = "github.com/pause-games/flow";
+
+  test("a usage line failing only under the scaffold's options is one problem, tagged", async () => {
+    const usage = [
+      ...USAGE_LINES,
+      "// @ts-expect-error a missing field is not undefined",
+      "const _o: { a?: number } = { a: undefined };",
+    ];
+
+    expect(await checkLibraryData(writeFixture({ usage }))).toEqual([
+      {
+        library: FLOW,
+        check: "compile",
+        message:
+          "usage/flow-usage.test-d.ts:13 (scaffold options) Unused '@ts-expect-error' directive.",
+      },
+    ]);
+  });
+
+  test("a usage line failing only under the strict options is one problem, untagged", async () => {
+    const usage = [
+      ...USAGE_LINES,
+      "declare const names: string[];",
+      "const _first: string = names[0];",
+    ];
+
+    expect(await checkLibraryData(writeFixture({ usage }))).toEqual([
+      {
+        library: FLOW,
+        check: "compile",
+        message: expect.stringMatching(
+          /^usage\/flow-usage\.test-d\.ts:14 (?!\(scaffold options\))/,
+        ),
+      },
+    ]);
+  });
+
+  test("a usage line both option sets fail is reported once, untagged", async () => {
+    const usage = [...USAGE_LINES, 'const _n: number = "x";'];
+
+    expect(await checkLibraryData(writeFixture({ usage }))).toEqual([
+      {
+        library: FLOW,
+        check: "compile",
+        message: expect.stringMatching(
+          /^usage\/flow-usage\.test-d\.ts:13 (?!\(scaffold options\))/,
+        ),
+      },
+    ]);
+  });
+
+  test("a native declaration compiles under the strict options only", async () => {
+    const native = [
+      "declare module 'box2d' {",
+      "  export function step(dt: number): void;",
+      "  interface A { a?: number }",
+      "  // @ts-expect-error an explicit undefined widens an exact optional field",
+      "  interface B extends A { a?: number | undefined }",
+      "}",
+      "",
+    ].join("\n");
+
+    expect(await checkLibraryData(writeFixture({ native }))).toEqual([]);
+  });
+});
+
 describe("checkLibraryData measures each module against the floor in its library", () => {
   const ANNOTATED = [
     "local M = {}",
@@ -542,9 +609,10 @@ describe("checkLibraryData measures each module against the floor in its library
     const walk = (file: string): void => {
       if (seen.has(file)) return;
       seen.add(file);
+      if (file.endsWith(".json")) return;
       for (const { path, kind } of transpiler.scanImports(readFileSync(file, "utf8"))) {
         if (kind !== "import-statement" || !path.startsWith(".")) continue;
-        walk(resolve(dirname(file), path.endsWith(".ts") ? path : `${path}.ts`));
+        walk(resolve(dirname(file), /\.(ts|json)$/.test(path) ? path : `${path}.ts`));
       }
     };
     walk(join(import.meta.dir, "library-check.ts"));

@@ -9,7 +9,7 @@
       "type": "TYPEDEF",
       "name": "NodeTree",
       "types": [
-        "LuaTable<Hash, Opaque<'node'>> & { get: LuaTableGetMethod<string, Opaque<'node'>>; }"
+        "ReturnType<typeof gui.clone_tree>"
       ]
     },
     {

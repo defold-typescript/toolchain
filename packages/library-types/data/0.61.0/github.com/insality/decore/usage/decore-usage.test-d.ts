@@ -2,6 +2,7 @@
 /// <reference types="@defold-typescript/types" />
 
 import { create, type entity, type tiny_ecs, type world } from "decore.decore";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof (mirroring log-usage.test-d.ts) for decore's `ecs.world`.
 // Two halves: an exact pin on the whole return type, which is what actually
@@ -12,9 +13,6 @@ import { create, type entity, type tiny_ecs, type world } from "decore.decore";
 // element; that makes the tail `unknown[]` under a fixed-arity shape too.
 // No assertions execute; the `dts-declaration-validity` compile
 // (skipLibCheck: false) is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 declare const ecs: tiny_ecs;
 declare const someEntity: entity;

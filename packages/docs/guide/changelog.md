@@ -39,6 +39,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **`physics.raycast` returns what the engine pushes for each call form:** one hit or `undefined` without an options table, and a list of hits or `undefined` with one, so neither needs an `Array.isArray` check.
 - **`gui.get` and `go.property` accept an argument typed as a union of the kinds they take**, such as a `gui.get` property typed `"position" | Hash` or a `go.property` value typed `number | Vector3`.
 - **A built-in message field that holds an engine constant takes its type:** `set_time_step`'s `mode` is a `collectionproxy.TimeStepMode`, `set_camera`'s `orthographic_mode` a `camera.OrthoMode`, and `model_animation_done`'s `playback` a `go.Playback`, on every Defold target that declares the type ([Typed messages](./messages.md#sending-msgpost-payload-narrowing)).
+- **`library check` compiles each `usage/` example a second time under a scaffolded project's options**, with `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess` off, and tags a line that fails only there with `(scaffold options)` ([What `library check` runs](./library.md#what-library-check-runs)).
 
 ### Fixed
 

@@ -2,12 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as minit from "minit.minit";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the minit fork, written as upstream's README drives it. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 minit.loading_done();
 

@@ -4,15 +4,13 @@
 import * as nakama from "nakama.nakama";
 import type { Session } from "nakama.session";
 import type { Socket } from "nakama.socket";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the severed nakama core surface, replacing the nakama
 // block retired from library-types.test-d.ts — the last block that file held,
 // which is why it went away with this severance rather than losing a section.
 // No assertions execute; the `dts-declaration-validity` compile is the
 // gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // The five assertions the retired block carried.
 const _nakamaClient = nakama.create_client({

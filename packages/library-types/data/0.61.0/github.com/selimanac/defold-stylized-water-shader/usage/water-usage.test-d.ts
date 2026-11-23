@@ -3,13 +3,11 @@
 
 import { defineRenderScript } from "@defold-typescript/types";
 import * as water from "water.water";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the water fork, written as upstream's example script and bundled
 // render script drive it. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 export function init(): void {
   water.set_wave1(1.5, 0.5, 20, 3.5);

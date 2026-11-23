@@ -9,13 +9,11 @@ import * as gui_scene from "wrap.gui_scene";
 import * as wrap_node from "wrap.node";
 import * as wrap_node_list from "wrap.node_list";
 import * as wrap from "wrap.wrap";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the defold-wrap forks, written as upstream's README wraps and
 // chains nodes and game objects, and as its example builds scenes and objects. No
 // assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 // Every setter returns the node it was called on, so calls chain.
 const chained = wrap_node.new("box").set_alpha(0.5).set_enabled(true);
@@ -166,8 +164,9 @@ const open_tree = wrap_node_list.new(names).tree;
 const _open_tree: Equal<typeof open_tree, wrap_node.Node | wrap_node.NodeTree | undefined> = true;
 void _open_tree;
 
+// A project with `noUncheckedIndexedAccess` also sees `undefined` here.
 const open_title = wrap_node_list.new(names).title;
-const _open_title: Equal<typeof open_title, wrap_node.Node | undefined> = true;
+const _open_title: Equal<NonNullable<typeof open_title>, wrap_node.Node> = true;
 void _open_title;
 
 declare const named: Record<string, string | Opaque<"node">>;

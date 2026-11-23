@@ -3,13 +3,11 @@
 
 import type { InputAction } from "@defold-typescript/types";
 import * as pointer from "pointer_lock.pointer";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the pointer_lock fork, written as the `on_input` upstream's
 // README drives it. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 export function onInput(action_id: Hash | undefined, action: InputAction): void {
   const [id, act] = pointer.transform_input(action_id, action);

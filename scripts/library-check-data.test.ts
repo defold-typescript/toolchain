@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { Writable } from "node:stream";
@@ -101,4 +101,13 @@ describe("runLibraryDataCheck", () => {
     },
     CHECK_TIMEOUT,
   );
+});
+
+describe("the newest data folder's usage examples", () => {
+  test("import the Equal the type tests prove, byte for byte", () => {
+    const shared = join(LIBRARY_DATA_DIR, "type-assert.ts");
+    const proven = join(import.meta.dir, "../packages/types/test-d/type-assert.ts");
+
+    expect(readFileSync(shared, "utf8")).toBe(readFileSync(proven, "utf8"));
+  });
 });

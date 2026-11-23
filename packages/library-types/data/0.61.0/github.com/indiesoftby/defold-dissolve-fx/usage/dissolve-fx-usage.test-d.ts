@@ -2,12 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import * as dissolve_fx from "dissolve_fx.dissolve_fx";
+import type { Equal } from "../../../../type-assert";
 
 // Compile-only proof for the dissolve_fx fork, written as upstream's Quick Start drives it.
 // No assertions execute; the `dts-declaration-validity` compile is the gate.
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 dissolve_fx.init("#sprite", "noise", "ramp");
 dissolve_fx.init(msg.url("#sprite"), "noise", "ramp", "cover");
