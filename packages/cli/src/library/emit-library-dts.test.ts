@@ -903,6 +903,10 @@ test("the printed declaration carries an overridden drag callback's full six-par
                   params: {
                     on_drag_callback: {
                       type: "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)",
+                      evidence: {
+                        file: "swipe/drag.lua",
+                        contains: "---@param on_drag_callback fun(self, touch)",
+                      },
                     },
                   },
                 },

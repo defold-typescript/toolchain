@@ -13,119 +13,187 @@
           "draw_trail": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.draw_trail(self)"
+                }
               }
             }
           },
           "encode_data_to_buffers": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.encode_data_to_buffers(self)"
+                }
               }
             }
           },
           "fade_tail": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param dt number Delta time ---@param data_arr table Array of trail point data ---@param data_from number Starting index for fading function M.fade_tail(self, dt, data_arr, data_from)"
+                }
               }
             }
           },
           "follow_position": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param dt number Delta time function M.follow_position(self, dt)"
+                }
               }
             }
           },
           "get_head_data_points": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@return table Previous head point ---@return table Current head point function M.get_head_data_points(self)"
+                }
               }
             }
           },
           "get_position": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@return vector3 Current position function M.get_position(self)"
+                }
               }
             }
           },
           "init_data_points": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.init_data_points(self)"
+                }
               }
             }
           },
           "init_buffers": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.init_buffers(self)"
+                }
               }
             }
           },
           "final": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.final(self)"
+                }
               }
             }
           },
           "init_props": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.init_props(self)"
+                }
               }
             }
           },
           "init_vars": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.init_vars(self)"
+                }
               }
             }
           },
           "make_vectors_from_angle": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param row table Trail point data row function M.make_vectors_from_angle(self, row)"
+                }
               }
             }
           },
           "pull_not_used_points": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param data_arr table Array of trail point data ---@param data_from number Starting index for unused points function M.pull_not_used_points(self, data_arr, data_from)"
+                }
               }
             }
           },
           "shrink_length": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param dt number Delta time ---@param data_arr table Array of trail point data ---@param data_from number Starting index for shrinking function M.shrink_length(self, dt, data_arr, data_from)"
+                }
               }
             }
           },
           "shrink_width": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance ---@param dt number Delta time ---@param data_from number Starting index ---@param data_arr table Array of trail point data ---@param data_limit number Maximum points to process function M.shrink_width(self, dt, data_from, data_arr, data_limit)"
+                }
               }
             }
           },
           "split_segments_by_length": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.split_segments_by_length(self)"
+                }
               }
             }
           },
           "update_uv_opts": {
             "params": {
               "self": {
-                "type": "table<string, any>"
+                "type": "table<string, any>",
+                "evidence": {
+                  "file": "hyper_trails/trail_maker.lua",
+                  "contains": "---@param self table Script instance function M.update_uv_opts(self)"
+                }
               }
             }
           }

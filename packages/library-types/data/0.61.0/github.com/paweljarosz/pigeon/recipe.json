@@ -15,7 +15,11 @@
           "BaseLetterDefinition": {
             "fields": {
               "data": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "pigeon/letters.lua",
+                  "contains": "---@field data MessageDefinition @Optional message data definition table"
+                }
               }
             }
           }

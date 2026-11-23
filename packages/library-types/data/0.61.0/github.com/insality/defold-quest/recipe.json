@@ -21,37 +21,65 @@
           "quest.queue.quest_event": {
             "fields": {
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@field subscribe fun(_, callback: (fun(event_data: quest.event_data):boolean?), context: any): boolean?, _)"
+                }
               }
             }
           },
           "quest.event.is_can_start": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@class quest.event.is_can_start: event ---@field trigger fun(_, quest_id: string, quest_config: quest.config): boolean"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@field subscribe fun(_, callback: (fun(quest_id: string, quest_config: quest.config): boolean), _) M.is_can_start = event.create()"
+                }
               }
             }
           },
           "quest.event.is_can_complete": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@class quest.event.is_can_complete: event ---@field trigger fun(_, quest_id: string, quest_config: quest.config): boolean"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@field subscribe fun(_, callback: (fun(quest_id: string, quest_config: quest.config): boolean), _) M.is_can_complete = event.create()"
+                }
               }
             }
           },
           "quest.event.is_can_event": {
             "fields": {
               "trigger": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@class quest.event.is_can_event: event ---@field trigger fun(_, quest_id: string, quest_config: quest.config): boolean"
+                }
               },
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "quest/internal/quest_events.lua",
+                  "contains": "---@field subscribe fun(_, callback: (fun(quest_id: string, quest_config: quest.config): boolean), _) M.is_can_event = event.create()"
+                }
               }
             }
           }
@@ -60,17 +88,37 @@
           "interface": "quest",
           "fields": {
             "on_quest_event": {
-              "type": "quest.queue.quest_event"
+              "type": "quest.queue.quest_event",
+              "evidence": {
+                "file": "quest/quest.lua",
+                "contains": "M.on_quest_event = quest_events.on_quest_event"
+              }
             },
             "is_can_start": {
-              "type": "quest.event.is_can_start"
+              "type": "quest.event.is_can_start",
+              "evidence": {
+                "file": "quest/quest.lua",
+                "contains": "M.is_can_start = quest_events.is_can_start"
+              }
             },
             "is_can_complete": {
-              "type": "quest.event.is_can_complete"
+              "type": "quest.event.is_can_complete",
+              "evidence": {
+                "file": "quest/quest.lua",
+                "contains": "M.is_can_complete = quest_events.is_can_complete"
+              }
             },
             "is_can_event": {
-              "type": "quest.event.is_can_event"
+              "type": "quest.event.is_can_event",
+              "evidence": {
+                "file": "quest/quest.lua",
+                "contains": "M.is_can_event = quest_events.is_can_event"
+              }
             }
+          },
+          "evidence": {
+            "file": "quest/quest.lua",
+            "contains": "---@class quest local M = {}"
           }
         }
       }

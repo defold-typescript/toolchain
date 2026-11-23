@@ -188,7 +188,13 @@ with its class:
 "annotationOverrides": {
   "moduleObject": {
     "interface": "token",
-    "fields": { "on_token_change": { "type": "token.event.on_token_change" } }
+    "fields": {
+      "on_token_change": {
+        "type": "token.event.on_token_change",
+        "evidence": { "file": "token/token.lua", "contains": "M.on_token_change = event.create()" }
+      }
+    },
+    "evidence": { "file": "token/token.lua", "contains": "---@class token local M = {}" }
   }
 }
 ```
@@ -219,8 +225,19 @@ LuaLS token and an optional doc line, and retypes a literal the lane already exp
 ```json
 "annotationOverrides": {
   "moduleConstants": {
-    "MSG_ALL_LOADED": { "type": "hash", "doc": "Sent when every requested module has loaded." },
-    "RES_BOTH": { "type": "liveupdater.res_mode", "doc": "Download both resolutions." }
+    "MSG_ALL_LOADED": {
+      "type": "hash",
+      "doc": "Sent when every requested module has loaded.",
+      "evidence": {
+        "file": "live_unbundler/live_unbundler.lua",
+        "contains": "M.MSG_ALL_LOADED = hash(\"liveupdater_all_loaded\")"
+      }
+    },
+    "RES_BOTH": {
+      "type": "liveupdater.res_mode",
+      "doc": "Download both resolutions.",
+      "evidence": { "file": "live_unbundler/live_unbundler.lua", "contains": "M.RES_BOTH = RES_BOTH" }
+    }
   }
 }
 ```
@@ -265,7 +282,10 @@ retypes it:
   "moduleFunctions": {
     "add": {
       "params": {
-        "fn": { "type": "fun(network: ads_network, callback: ads_callback, params?: table)" }
+        "fn": {
+          "type": "fun(network: ads_network, callback: ads_callback, params?: table)",
+          "evidence": { "file": "ads_wrapper/queue.lua", "contains": "---@param fn ads_callback" }
+        }
       }
     }
   }
@@ -281,6 +301,19 @@ for a method the library checks for before it calls it. ads-wrapper's `wrapper.l
 the call with `if network.request_idfa then`, so the `ads_wrapper` targets mark
 `ads_network.request_idfa` optional, and a network without it still passes
 `ads_wrapper.ads_wrapper.register_network`.
+
+Every override names its `evidence`, as the examples above do: `file`, a path inside
+the target's `source/<namespace>/` folder, and `contains`, a snippet of that file that
+shows the fact. Pick the shortest one that does: the `---@param` or `---@field` line
+whose token is wrong, the `x = x or ...` or `if x then` that makes a slot optional, the
+`return` that adds an arm, the column-0 `M.NAME = ...` a constant override types, the
+`---@overload` a `callSignature` drop answers. Whitespace runs compare as one space, so a
+snippet may span lines. An object that only nests others, such as a method carrying
+only `params`, needs none of its own. `library check` refuses an override with no
+evidence, with a file outside its source folder, or with a snippet the file does not
+hold, so a re-pin that moves or rewrites the snippet fails until the override is
+re-checked against the new source: delete it if upstream fixed the annotation, or
+point it at the new text.
 
 ## 2. Generate the artifacts
 

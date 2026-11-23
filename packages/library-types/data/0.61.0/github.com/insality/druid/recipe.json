@@ -21,36 +21,33 @@
           "event.on_size_changed": {
             "fields": {
               "subscribe": {
-                "drop": true
+                "drop": true,
+                "evidence": {
+                  "file": "druid/extended/layout.lua",
+                  "contains": "---@field subscribe fun(_, callback: fun(new_size: vector3), context: any|nil)"
+                }
               }
             }
           },
           "druid.layout.rows_data": {
             "fields": {
               "rows": {
-                "type": "druid.layout.row_data[]"
+                "type": "druid.layout.row_data[]",
+                "evidence": {
+                  "file": "druid/extended/layout.lua",
+                  "contains": "---@field rows druid.layout.row_data[]>"
+                }
               }
             }
           },
           "druid.button.style": {
             "fields": {
-              "on_init": {
-                "type": "fun(self: druid.button)|nil"
-              },
-              "on_click": {
-                "type": "fun(self: druid.button, node: node)|nil"
-              },
-              "on_click_disabled": {
-                "type": "fun(self: druid.button, node: node)|nil"
-              },
-              "on_hover": {
-                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
-              },
-              "on_mouse_hover": {
-                "type": "fun(self: druid.button, node: node, hover_state: boolean)|nil"
-              },
               "on_set_enabled": {
-                "type": "fun(self: druid.button, node: node, enabled_state: boolean|nil)|nil"
+                "type": "fun(self: druid.button, node: node, enabled_state: boolean|nil)|nil",
+                "evidence": {
+                  "file": "druid/base/button.lua",
+                  "contains": "---@field on_set_enabled fun(self: druid.button, node: node, enabled_state: boolean)|nil"
+                }
               }
             }
           },
@@ -59,13 +56,23 @@
               "init": {
                 "params": {
                   "on_drag_callback": {
-                    "type": "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)"
+                    "type": "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)",
+                    "evidence": {
+                      "file": "druid/base/drag.lua",
+                      "contains": "---@param on_drag_callback fun(self, touch)"
+                    }
                   }
                 }
               },
               "_start_touch": {
                 "params": {
-                  "touch": { "type": "touch" }
+                  "touch": {
+                    "type": "touch",
+                    "evidence": {
+                      "file": "druid/base/drag.lua",
+                      "contains": "function M:_start_touch(touch)"
+                    }
+                  }
                 }
               }
             }
@@ -74,32 +81,92 @@
             "methods": {
               "_on_scroll_drag": {
                 "params": {
-                  "dx": { "type": "number" },
-                  "dy": { "type": "number" }
+                  "dx": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_on_scroll_drag(dx, dy)"
+                    }
+                  },
+                  "dy": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_on_scroll_drag(dx, dy)"
+                    }
+                  }
                 }
               },
               "_set_scroll_position": {
                 "params": {
-                  "position_x": { "type": "number" },
-                  "position_y": { "type": "number" }
+                  "position_x": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_set_scroll_position(position_x, position_y)"
+                    }
+                  },
+                  "position_y": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_set_scroll_position(position_x, position_y)"
+                    }
+                  }
                 }
               },
               "_update_free_scroll": {
                 "params": {
-                  "dt": { "type": "number" }
+                  "dt": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_update_free_scroll(dt)"
+                    }
+                  }
                 }
               },
               "_process_scroll_wheel": {
                 "params": {
-                  "action_id": { "type": "hash" },
-                  "action": { "type": "action" }
+                  "action_id": {
+                    "type": "hash",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_process_scroll_wheel(action_id, action)"
+                    }
+                  },
+                  "action": {
+                    "type": "action",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_process_scroll_wheel(action_id, action)"
+                    }
+                  }
                 }
               },
               "_inverse_lerp": {
                 "params": {
-                  "min": { "type": "number" },
-                  "max": { "type": "number" },
-                  "current": { "type": "number" }
+                  "min": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_inverse_lerp(min, max, current)"
+                    }
+                  },
+                  "max": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_inverse_lerp(min, max, current)"
+                    }
+                  },
+                  "current": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/base/scroll.lua",
+                      "contains": "function M:_inverse_lerp(min, max, current)"
+                    }
+                  }
                 }
               }
             }
@@ -108,14 +175,38 @@
             "methods": {
               "remove_container_by_node": {
                 "params": {
-                  "node": { "type": "node" }
+                  "node": {
+                    "type": "node",
+                    "evidence": {
+                      "file": "druid/extended/container.lua",
+                      "contains": "function M:remove_container_by_node(node)"
+                    }
+                  }
                 }
               },
               "_on_corner_drag": {
                 "params": {
-                  "x": { "type": "number" },
-                  "y": { "type": "number" },
-                  "corner_offset": { "type": "vector3" }
+                  "x": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/extended/container.lua",
+                      "contains": "function M:_on_corner_drag(x, y, corner_offset)"
+                    }
+                  },
+                  "y": {
+                    "type": "number",
+                    "evidence": {
+                      "file": "druid/extended/container.lua",
+                      "contains": "function M:_on_corner_drag(x, y, corner_offset)"
+                    }
+                  },
+                  "corner_offset": {
+                    "type": "vector3",
+                    "evidence": {
+                      "file": "druid/extended/container.lua",
+                      "contains": "function M:_on_corner_drag(x, y, corner_offset)"
+                    }
+                  }
                 }
               }
             }
@@ -124,7 +215,13 @@
             "methods": {
               "set_node_position": {
                 "params": {
-                  "is_instant": { "type": "boolean|nil" }
+                  "is_instant": {
+                    "type": "boolean|nil",
+                    "evidence": {
+                      "file": "druid/extended/layout.lua",
+                      "contains": "function M:set_node_position(node, x, y, is_instant)"
+                    }
+                  }
                 }
               }
             }

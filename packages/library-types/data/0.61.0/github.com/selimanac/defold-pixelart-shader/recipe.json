@@ -24,7 +24,11 @@
             "params": {
               "self": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "self.light_constant_buffer = render.constant_buffer()"
+                }
               }
             }
           },
@@ -32,31 +36,59 @@
             "params": {
               "self": {
                 "type": "table<string, any>",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "self.light_constant_buffer.light = pixelart.light"
+                }
               },
               "camera_frustum": {
                 "type": "matrix4",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.draw(self.pixelart_predicates.pixelart_billboard_sprite, { frustum = camera_frustum })"
+                }
               },
               "view": {
                 "type": "matrix4",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.set_view(view)"
+                }
               },
               "proj": {
                 "type": "matrix4",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.set_projection(proj)"
+                }
               },
               "window_width": {
                 "type": "number",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.set_viewport(0, 0, window_width, window_height)"
+                }
               },
               "window_height": {
                 "type": "number",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.set_viewport(0, 0, window_width, window_height)"
+                }
               },
               "clear_buffers": {
                 "type": "render_clear_buffers",
-                "optional": false
+                "optional": false,
+                "evidence": {
+                  "file": "pixelart/scripts/pixelart_render.lua",
+                  "contains": "render.set_render_target(self.pixelart_pixelate_render_target) render.clear(clear_buffers)"
+                }
               }
             }
           }

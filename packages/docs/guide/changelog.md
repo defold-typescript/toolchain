@@ -41,6 +41,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **GamePush** — `gamepush.core.achievements.fetch` returns the achievements when called without a callback.
   - **[persist](https://defold-typescript.github.io/library-data/api/github.com/whiteboxdev/library-defold-persist/persist)** — `persist.load` returns the file's fields by key.
 - **Entity system filters narrow in more forms, and in `entities` too:** `requireAny` narrows to one member per alternative, told apart by an `in` check such as `!("frozen" in e)`; a string filter of names joined by `&` narrows like `requireAll`; a type-predicate function filter narrows to the type it asserts; and `this.entities` and a system's `entities` hold the entity `process` gets. Clearing a narrowed component, as in `e.velocity = undefined`, goes through the plain type first (`const plain: Ent = e`) ([Filters](./entity-systems.md#filters)).
+- **A LuaLS annotation override in library data names its evidence:** `library check` and `resolve --library-data` refuse an `annotationOverrides` entry without an `evidence` naming a file in its target's source folder and a snippet that file holds, so a re-pin that moves the snippet fails until the override is re-checked ([What `library check` runs](./library.md#what-library-check-runs)).
 
 ### Improved
 
@@ -58,6 +59,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Every interface and type alias is exported**, so `import type` names the types of a module that also exports a function named `new`, such as Druid's, Pigeon's and Squid's.
   - **Module constants are declared without a recipe entry:** a literal or literal table the module table holds, such as `panthera.SPEED` and `panthera.OPTIONS_LOOP`, and an `---@enum` table such as `saver.FORMAT`, whose values keep their own types.
   - **A module constant named by a reserved word**, such as `default` or `delete`, compiles and is read under its own name, as in `lib.default`.
+  - **[outline](https://defold-typescript.github.io/library-data/api/github.com/selimanac/defold-3d-outline-shader/outline)** — `outline.update` takes any value for `clear_buffer`, which its Lua never reads.
 
 ## v0.68.0
 
