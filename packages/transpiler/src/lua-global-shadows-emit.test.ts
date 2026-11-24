@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { PROBE } from "./lua-global-shadows.test-support";
+import { HERITAGE, PROBE, REST_ERASED, REST_KEPT } from "./lua-global-shadows.test-support";
 import { transpileProject } from "./transpile";
 
 // Which names TypeScript-to-Lua renames at which position, and the inline
@@ -7,5 +7,17 @@ import { transpileProject } from "./transpile";
 // TypeScript gotchas guide cites for hidden globals.
 test("the shadow probe's emit", () => {
   const result = transpileProject({ files: { "probe.ts": PROBE } });
+  expect(result.lua["probe.ts"]).toMatchSnapshot();
+});
+
+// Which rest parameters get a named local and which pass on as Lua's `...`,
+// and that a type wrapper's runtime expression emits: the evidence the
+// every-scope shadow scan mirrors.
+test.each([
+  ["heritage", HERITAGE],
+  ["rest kept", REST_KEPT],
+  ["rest erased", REST_ERASED],
+])("the %s fixture's emit", (_name, source) => {
+  const result = transpileProject({ files: { "probe.ts": source } });
   expect(result.lua["probe.ts"]).toMatchSnapshot();
 });

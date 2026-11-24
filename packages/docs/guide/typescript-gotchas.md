@@ -767,13 +767,14 @@ Every other global keeps its name at every position, such as `next`, `select`, `
 - a parameter of a signature with no body: an overload, an interface method, a function type or a `declare function`;
 - an object or class property, or a method name;
 - a named function expression that never calls itself, which compiles to an anonymous function;
+- a rest parameter the function never reads, or only spreads into a call or an array literal, which TypeScriptToLua passes on as Lua's `...` without naming it; a spread inside a nested function, a `try` or `catch` or an `async` function, or one after a call to a function declared further down, still names it, and a constructor always does;
 - a `const enum` or a `declare`, which emit nothing;
 - an import the build drops: one the file never reads as a value, or a `defineScript`-style factory import, which the build erases;
 - a top-level name in a file with no `import` or `export`, which is a global rather than a local.
 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.
 
-**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form at every scope and each exempt case, and checks the rename list above against TypeScriptToLua's own list; `packages/transpiler/src/lua-global-shadows-emit.test.ts` snapshots which names TypeScriptToLua renames and the `select(2, ...)` call; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failures under `"global-shadows": "error"`.
+**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form at every scope and each exempt case, and checks the rename list above against TypeScriptToLua's own list; `packages/transpiler/src/lua-global-shadows-emit.test.ts` snapshots which names TypeScriptToLua renames, the `select(2, ...)` call, and which rest parameters get a named local; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failures under `"global-shadows": "error"`.
 
 ## JavaScript globals Defold's Lua lacks fail the build
 

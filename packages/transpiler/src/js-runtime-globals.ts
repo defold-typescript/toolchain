@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import { isErasedTypeNode } from "./erased-type-nodes";
 
 const URI_REPLACEMENT = "Defold has no equivalent, so encode by hand with `string.gsub`";
 
@@ -71,21 +72,11 @@ function isDefaultLibraryOnly(program: ts.Program, symbol: ts.Symbol): boolean {
   );
 }
 
-// A type erases, but two type-node forms are values the emitted Lua reads: an
-// instantiation expression (`WeakRef<object>`), which lowers to the bare name,
-// and a class `extends` clause. An interface `extends` or a class `implements`
-// clause erases like any other type.
-function isValueTypeNode(node: ts.Node): boolean {
-  if (!ts.isExpressionWithTypeArguments(node)) {
-    return false;
-  }
-  if (!ts.isHeritageClause(node.parent)) {
-    return true;
-  }
-  return node.parent.token === ts.SyntaxKind.ExtendsKeyword && ts.isClassLike(node.parent.parent);
-}
-
-function referencedSymbol(
+/**
+ * The symbol whose value `identifier` reads: for a shorthand property such as
+ * `{ JSON }`, the variable rather than the new property.
+ */
+export function referencedSymbol(
   checker: ts.TypeChecker,
   identifier: ts.Identifier,
 ): ts.Symbol | undefined {
@@ -112,7 +103,7 @@ export function findMissingJsGlobals(
   const checker = program.getTypeChecker();
   const diagnostics: ts.Diagnostic[] = [];
   const visit = (node: ts.Node): void => {
-    if (ts.isTypeNode(node) && !isValueTypeNode(node)) {
+    if (isErasedTypeNode(node)) {
       return;
     }
     if (ts.isIdentifier(node)) {

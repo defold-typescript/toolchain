@@ -10,7 +10,13 @@ import {
   luaLocalShadowMessage,
   readGlobalShadowsSetting,
 } from "./lua-global-shadows";
-import { PROBE, positionOf } from "./lua-global-shadows.test-support";
+import {
+  HERITAGE,
+  PROBE,
+  positionOf,
+  REST_ERASED,
+  REST_KEPT,
+} from "./lua-global-shadows.test-support";
 import type { TranspileDiagnostic } from "./project-output";
 import { createTranspileSession } from "./session";
 import { transpileProject } from "./transpile";
@@ -369,9 +375,46 @@ describe('"global-shadows": "error" at every scope', () => {
     );
   });
 
+  test("reports a name inside a class `extends` expression or an instantiation expression, and none read only from a type", () => {
+    const result = transpileProject({ files: { "heritage.ts": HERITAGE }, globalShadows: "error" });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("heritage.ts", HERITAGE, [
+        ["f(", "select", "local"],
+        ["(<T>(", "next", "local"],
+        ["function ", "sound", "local"],
+      ]),
+    );
+  });
+
+  test("reports each rest parameter TypeScript-to-Lua declares a local for", () => {
+    const result = transpileProject({ files: { "kept.ts": REST_KEPT }, globalShadows: "error" });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("kept.ts", REST_KEPT, [
+        ["...", "select", "local"],
+        ["...", "msg", "local"],
+        ["...", "next", "local"],
+        ["...", "sound", "local"],
+        ["...", "go", "local"],
+        ["...", "timer", "local"],
+        ["...", "label", "local"],
+        ["...[", "vmath", "local"],
+      ]),
+    );
+  });
+
+  test("reports no rest parameter TypeScript-to-Lua passes on as Lua's `...`", () => {
+    const result = transpileProject({
+      files: { "erased.ts": REST_ERASED },
+      globalShadows: "error",
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
   test.each([
     ["scopes.ts", SCOPES],
     ["exported.ts", EXPORTED],
+    ["heritage.ts", HERITAGE],
+    ["kept.ts", REST_KEPT],
   ])('reports nothing in %s under "warn"', (file, source) => {
     const result = transpileProject({ files: { [file]: source } });
     expect(result.diagnostics).toEqual([]);

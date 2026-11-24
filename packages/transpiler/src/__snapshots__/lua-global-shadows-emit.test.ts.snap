@@ -36,3 +36,166 @@ end
 return ____exports
 "
 `;
+
+exports[`the heritage fixture's emit 1`] = `
+"local ____lualib = require("lualib_bundle")
+local __TS__Class = ____lualib.__TS__Class
+local __TS__ClassExtends = ____lualib.__TS__ClassExtends
+local ____exports = {}
+local ____class_0 = __TS__Class()
+____class_0.name = ""
+function ____class_0.prototype.____constructor(self)
+end
+function ____class_0.prototype.f(self, select)
+    return select(
+        2,
+        string.find("hi", "i")
+    )
+end
+____exports.C = __TS__Class()
+local C = ____exports.C
+C.name = "C"
+__TS__ClassExtends(C, ____class_0)
+____exports.instantiated = function(next) return next end
+local function sound()
+    local ____class_1 = __TS__Class()
+    ____class_1.name = ____class_1.name
+    __TS__ClassExtends(____class_1, sound)
+    return ____class_1
+end
+____exports.selfExtending = sound
+____exports.typeOnlySelf = function(n)
+    local again = nil
+    print(again)
+    return n
+end
+return ____exports
+"
+`;
+
+exports[`the rest kept fixture's emit 1`] = `
+"local ____lualib = require("lualib_bundle")
+local __TS__AsyncAwaiter = ____lualib.__TS__AsyncAwaiter
+local __TS__Await = ____lualib.__TS__Await
+local __TS__Class = ____lualib.__TS__Class
+local ____exports = {}
+function ____exports.keptRead(...)
+    local select = {...}
+    return #select
+end
+function ____exports.keptClosure(...)
+    local msg = {...}
+    return function() return print(unpack(msg)) end
+end
+function ____exports.keptTry(...)
+    local next = {...}
+    do
+        local function ____catch()
+            print("failed")
+        end
+        local ____try = pcall(function()
+            print(unpack(next))
+        end)
+        if not ____try then
+            ____catch()
+        end
+    end
+end
+function ____exports.keptAsync(...)
+    local sound = {...}
+    return __TS__AsyncAwaiter(function(____awaiter_resolve)
+        print(unpack(sound))
+    end)
+end
+function ____exports.keptSpreadThenRead(...)
+    local go = {...}
+    print(...)
+    return #go
+end
+function ____exports.keptHoisted(...)
+    local timer = {...}
+    local later
+    function later()
+    end
+    later()
+    print(unpack(timer))
+end
+____exports.Made = __TS__Class()
+local Made = ____exports.Made
+Made.name = "Made"
+function Made.prototype.____constructor(self, ...)
+    local label = {...}
+end
+function ____exports.picked(...)
+    local ____bindingPattern0 = {...}
+    local vmath = ____bindingPattern0[1]
+    return 1
+end
+return ____exports
+"
+`;
+
+exports[`the rest erased fixture's emit 1`] = `
+"local ____lualib = require("lualib_bundle")
+local __TS__Generator = ____lualib.__TS__Generator
+local __TS__AsyncAwaiter = ____lualib.__TS__AsyncAwaiter
+local __TS__Await = ____lualib.__TS__Await
+local ____exports = {}
+function ____exports.unused(...)
+    return 1
+end
+function ____exports.forwarded(...)
+    print(...)
+end
+function ____exports.cast(...)
+    print(...)
+end
+function ____exports.copied(...)
+    return {...}
+end
+____exports.arrow = function(...) return print(...) end
+function ____exports.looped(...)
+    do
+        local i = 0
+        while i < 2 do
+            print(...)
+            i = i + 1
+        end
+    end
+    do
+        local ____try, ____error = pcall(function()
+            print("x")
+        end)
+        do
+            print(...)
+        end
+        if not ____try then
+            error(____error, 0)
+        end
+    end
+end
+function ____exports.declaredAbove(...)
+    local function before()
+    end
+    before()
+    print(...)
+end
+function ____exports.declaredBelow(...)
+    local after
+    function after()
+    end
+    print(...)
+    after()
+end
+____exports.generated = __TS__Generator(function(...)
+    print(...)
+    coroutine.yield(1)
+end)
+function ____exports.unusedAsync(...)
+    return __TS__AsyncAwaiter(function(____awaiter_resolve)
+        return ____awaiter_resolve(nil, 1)
+    end)
+end
+return ____exports
+"
+`;

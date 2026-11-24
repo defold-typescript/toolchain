@@ -3,6 +3,8 @@ import type { EmitResolver, TypeCheckerWithEmitResolver } from "typescript-to-lu
 import * as tstl from "typescript-to-lua";
 import { isUnsafeName } from "typescript-to-lua/dist/transformation/utils/safe-names.js";
 import { isEditorFactoryOnlyImport } from "./editor-script-erasure";
+import { isErasedTypeNode } from "./erased-type-nodes";
+import { referencedSymbol } from "./js-runtime-globals";
 import { isFactoryOnlyImport } from "./lifecycle-erasure";
 import { DISPATCH_NAME } from "./message-dispatch-lowering";
 import { GUARD_NAME as MESSAGE_GUARD_NAME } from "./message-guard-lowering";
@@ -242,7 +244,7 @@ function referencesItself(
     return false;
   }
   const visit = (node: ts.Node): boolean => {
-    if (ts.isTypeNode(node)) {
+    if (isErasedTypeNode(node)) {
       return false;
     }
     if (
@@ -267,6 +269,149 @@ function isExportedVariable(declaration: ts.VariableDeclaration): boolean {
   return ts.isVariableStatement(statement) && hasModifier(statement, ts.SyntaxKind.ExportKeyword);
 }
 
+// The identifiers in `body` TypeScript-to-Lua transforms as values, in source
+// order: no type, property name after `.`, or object key.
+function valueIdentifiers(body: ts.Node): ts.Identifier[] {
+  const found: ts.Identifier[] = [];
+  const visit = (node: ts.Node): void => {
+    if (isErasedTypeNode(node)) {
+      return;
+    }
+    if (ts.isIdentifier(node)) {
+      const parent = node.parent;
+      const isKey =
+        ((ts.isPropertyAccessExpression(parent) || ts.isPropertyAssignment(parent)) &&
+          parent.name === node) ||
+        (ts.isBindingElement(parent) && parent.propertyName === node);
+      if (!isKey) {
+        found.push(node);
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(body);
+  return found;
+}
+
+// TypeScript's own `isOuterExpression`, which its typings leave out.
+function isOuterExpression(node: ts.Node): boolean {
+  return (
+    ts.isParenthesizedExpression(node) ||
+    ts.isTypeAssertionExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isSatisfiesExpression(node) ||
+    ts.isExpressionWithTypeArguments(node) ||
+    ts.isNonNullExpression(node) ||
+    ts.isPartiallyEmittedExpression(node)
+  );
+}
+
+// Whether `reference` is spread, and TypeScript-to-Lua transforms the spread
+// in `fn`'s own Lua function: no nested function, class field, static block,
+// `try` block or `catch` clause lies between them.
+function isSpreadInOwnFunction(reference: ts.Identifier, fn: ts.Node): boolean {
+  let parent = reference.parent;
+  while (isOuterExpression(parent)) {
+    parent = parent.parent;
+  }
+  if (!ts.isSpreadElement(parent)) {
+    return false;
+  }
+  for (let node: ts.Node = parent; node !== fn; node = node.parent) {
+    if (
+      ts.isFunctionLike(node) ||
+      ts.isPropertyDeclaration(node) ||
+      ts.isClassStaticBlockDeclaration(node) ||
+      ts.isCatchClause(node) ||
+      (ts.isTryStatement(node.parent) && node.parent.tryBlock === node)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isWithin(node: ts.Node, ancestor: ts.Node): boolean {
+  for (let current = node.parent; current !== undefined; current = current.parent) {
+    if (current === ancestor) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// TypeScript-to-Lua's `hasReferencedUndefinedLocalFunction`: a value read
+// before the spread whose type is a function declared in `fn` makes it keep
+// the rest as a table, since that function may run hoisted and change it,
+// unless the value is a function `fn`'s body declares above the spread.
+function readsHoistedFunctionBefore(
+  checker: ts.TypeChecker,
+  fn: ts.Node,
+  body: ts.Node,
+  identifiers: readonly ts.Identifier[],
+  spreadStart: number,
+): boolean {
+  for (const identifier of identifiers) {
+    if (identifier.getStart() >= spreadStart) {
+      return false;
+    }
+    const type = checker.getTypeAtLocation(identifier);
+    const isLocalFunction =
+      type.getCallSignatures().length > 0 &&
+      (type.symbol?.declarations?.some((d) => ts.isFunctionDeclaration(d) && isWithin(d, fn)) ??
+        false);
+    if (!isLocalFunction) {
+      continue;
+    }
+    const isDeclaredAbove =
+      referencedSymbol(checker, identifier)?.declarations?.some(
+        (d) =>
+          ts.isFunctionDeclaration(d) &&
+          d.body !== undefined &&
+          d.parent === body &&
+          d.getStart() < spreadStart,
+      ) ?? false;
+    if (!isDeclaredAbove) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Mirrors TypeScript-to-Lua 1.37.2, which passes a rest parameter on as Lua's
+// `...` and declares `local <name> = {...}` only when the body reads it some
+// other way (`transformFunctionBodyHeader` in `visitors/function.js`,
+// `isOptimizedVarArgSpread` in `visitors/spread.js`). A destructured rest and
+// a constructor's rest always get a local, and an `async` function never
+// passes a spread on. A form this does not recognize counts as declared: a
+// spurious error is fixed by a rename, while a missed shadow fails only at
+// runtime.
+function restParameterEmitsLocal(checker: ts.TypeChecker, param: ts.ParameterDeclaration): boolean {
+  const fn = param.parent;
+  const body = (fn as ts.FunctionLikeDeclaration).body;
+  if (!ts.isIdentifier(param.name) || ts.isConstructorDeclaration(fn) || body === undefined) {
+    return true;
+  }
+  const symbol = checker.getSymbolAtLocation(param.name);
+  if (symbol === undefined) {
+    return true;
+  }
+  const identifiers = valueIdentifiers(body);
+  const references = identifiers.filter((id) => referencedSymbol(checker, id) === symbol);
+  if (references.length === 0) {
+    return false;
+  }
+  if (hasModifier(fn, ts.SyntaxKind.AsyncKeyword)) {
+    return true;
+  }
+  return references.some(
+    (reference) =>
+      !isSpreadInOwnFunction(reference, fn) ||
+      readsHoistedFunctionBefore(checker, fn, body, identifiers, reference.getStart()),
+  );
+}
+
 // The names below a top-level statement that emit as a Lua `local` in a
 // function, block or namespace. A namespace member with an `export` modifier
 // goes on the namespace table instead, except a class or namespace, which keeps
@@ -278,11 +423,14 @@ function innerLocals(
 ): ts.Identifier[] {
   const names: ts.Identifier[] = [];
   const visit = (node: ts.Node): void => {
-    if (hasModifier(node, ts.SyntaxKind.DeclareKeyword) || ts.isTypeNode(node)) {
+    if (hasModifier(node, ts.SyntaxKind.DeclareKeyword) || isErasedTypeNode(node)) {
       return;
     }
     if (ts.isParameter(node)) {
-      if (hasBody(node.parent)) {
+      if (
+        hasBody(node.parent) &&
+        (node.dotDotDotToken === undefined || restParameterEmitsLocal(checker, node))
+      ) {
         bindingIdentifiers(node.name, names);
       }
     } else if (ts.isVariableDeclaration(node)) {
