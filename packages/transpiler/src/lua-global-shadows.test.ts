@@ -1,7 +1,29 @@
 import { describe, expect, test } from "bun:test";
-import { luaGlobalShadowMessage, readGlobalShadowsSetting } from "./lua-global-shadows";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import * as ts from "typescript";
+import * as tstl from "typescript-to-lua";
+import { isUnsafeName } from "typescript-to-lua/dist/transformation/utils/safe-names.js";
+import {
+  isLuaGlobal,
+  luaGlobalShadowMessage,
+  luaLocalShadowMessage,
+  readGlobalShadowsSetting,
+} from "./lua-global-shadows";
+import { PROBE, positionOf } from "./lua-global-shadows.test-support";
 import type { TranspileDiagnostic } from "./project-output";
+import { createTranspileSession } from "./session";
 import { transpileProject } from "./transpile";
+
+const GOTCHAS_GUIDE = resolve(
+  import.meta.dir,
+  "..",
+  "..",
+  "docs",
+  "guide",
+  "typescript-gotchas.md",
+);
+const RENAME_LEAD = "TypeScriptToLua renames these globals wherever you declare them:";
 
 function warningsIn(
   diagnostics: readonly TranspileDiagnostic[],
@@ -10,19 +32,10 @@ function warningsIn(
   return diagnostics.filter((d) => d.category === "warning" && d.file === file);
 }
 
-// The 1-based line and column of `name` where it follows `before` in `source`.
-function positionOf(
-  source: string,
-  before: string,
-  name: string,
-): { line: number; column: number } {
-  const index = source.indexOf(`${before}${name}`);
-  if (index < 0) {
-    throw new Error(`\`${before}${name}\` is not in the source`);
-  }
-  const offset = index + before.length;
-  const lines = source.slice(0, offset).split("\n");
-  return { line: lines.length, column: (lines.at(-1)?.length ?? 0) + 1 };
+function byPosition(diagnostics: readonly TranspileDiagnostic[]): TranspileDiagnostic[] {
+  return [...diagnostics].sort(
+    (a, b) => (a.line ?? 0) - (b.line ?? 0) || (a.column ?? 0) - (b.column ?? 0),
+  );
 }
 
 const SHADOWING_MAIN = [
@@ -176,22 +189,6 @@ describe("file-level Lua global shadow warning", () => {
   });
 });
 
-// One file-level shadow (`next`, line 1 column 10) beside names that hide a
-// global only inside a function or sit on the module table.
-const PROBE = [
-  "function next(n: number): number { return n + 1; }",
-  "export function select(n: number): number { return n + 2; }",
-  "export function withParam(rawget: number): number { return rawget + next(1); }",
-  "export function withLocal(): number { const unpack = 3; return unpack; }",
-  "export function paramNext(next: number): number { return next + 1; }",
-  "export function innerSelect(): number {",
-  "  const select = 4;",
-  "  function pairs(n: number): number { return n; }",
-  "  return select + pairs(1);",
-  "}",
-  "",
-].join("\n");
-
 describe("readGlobalShadowsSetting", () => {
   test.each([
     ["no package.json", undefined],
@@ -220,19 +217,240 @@ describe("readGlobalShadowsSetting", () => {
   );
 });
 
-describe("global-shadows mode", () => {
-  const shadow = { file: "probe.ts", line: 1, column: 10, message: luaGlobalShadowMessage("next") };
+type Expected = [before: string, name: string, scope: "file" | "local"];
 
-  test('"error" reports the file-level shadow as a failure', () => {
+// The error each expected name produces in `file`, located from `source`.
+function errorsAt(
+  file: string,
+  source: string,
+  expected: readonly Expected[],
+): TranspileDiagnostic[] {
+  return byPosition(
+    expected.map(([before, name, scope]) => ({
+      file,
+      ...positionOf(source, before, name),
+      message: scope === "file" ? luaGlobalShadowMessage(name) : luaLocalShadowMessage(name),
+    })),
+  );
+}
+
+describe("global-shadows mode", () => {
+  test('"error" reports the file-level shadow and every inner name that hides a global', () => {
     const result = transpileProject({ files: { "probe.ts": PROBE }, globalShadows: "error" });
-    expect(result.diagnostics).toEqual([shadow]);
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("probe.ts", PROBE, [
+        ["function ", "next", "file"],
+        ["paramNext(", "next", "local"],
+        ["  const ", "select", "local"],
+        ["paramSelectFind(", "select", "local"],
+      ]),
+    );
   });
 
   test.each([
     ["no setting", {}],
     ['"warn"', { globalShadows: "warn" as const }],
-  ])("%s reports the file-level shadow as a warning", (_case, mode) => {
+  ])("%s reports only the file-level shadow, as a warning", (_case, mode) => {
     const result = transpileProject({ files: { "probe.ts": PROBE }, ...mode });
-    expect(result.diagnostics).toEqual([{ ...shadow, category: "warning" }]);
+    expect(result.diagnostics).toEqual([
+      {
+        file: "probe.ts",
+        line: 1,
+        column: 10,
+        message: luaGlobalShadowMessage("next"),
+        category: "warning",
+      },
+    ]);
+  });
+});
+
+const SCOPES = [
+  "export function guarded(xs: number[]): number {",
+  "  let total = 0;",
+  "  try {",
+  "    total = xs[0];",
+  "  } catch (tonumber) {",
+  "    total = -1;",
+  "  }",
+  "  for (const next of xs) {",
+  "    total += next;",
+  "  }",
+  "  if (total > 0) {",
+  "    let setmetatable = total;",
+  "    total = setmetatable;",
+  "  }",
+  "  class go {",
+  "    n = 1;",
+  "  }",
+  "  enum vmath {",
+  "    A,",
+  "  }",
+  "  return total + new go().n + vmath.A;",
+  "}",
+  "export function unpacked({ select }: { select: number }): number {",
+  "  return select;",
+  "}",
+  "export const labelled = (label: string): string => label;",
+  "export class Holder {",
+  "  constructor(public timer: number) {}",
+  "  play(sound: number): number {",
+  "    return sound + this.timer;",
+  "  }",
+  "}",
+  "namespace msg {",
+  "  const select = 1;",
+  "  export const posted = select;",
+  "}",
+  "export const posted = msg.posted;",
+  "",
+].join("\n");
+
+// TypeScript-to-Lua keeps a local by the name of each exported class and of an
+// exported namespace that holds a value, but puts an exported function, enum or
+// const on the export table alone. A named function expression keeps its name
+// only when its body calls it; a named class expression always does.
+const EXPORTED = [
+  "export class go {}",
+  "export default class sys {}",
+  "export namespace sound {",
+  "  export const gain = 1;",
+  "  export function select(): number {",
+  "    return gain;",
+  "  }",
+  "  export class timer {}",
+  "}",
+  "export namespace window {",
+  "  export type Size = number;",
+  "}",
+  "export enum vmath {",
+  "  A,",
+  "}",
+  "export const countdown = function next(n: number): number {",
+  "  return n > 0 ? next(n - 1) : 0;",
+  "};",
+  "export const once = function select(n: number): number {",
+  "  return n;",
+  "};",
+  "export const Made = class physics {};",
+  "",
+].join("\n");
+
+describe('"global-shadows": "error" at every scope', () => {
+  test("reports each inner declaration form once, at its name", () => {
+    const result = transpileProject({ files: { "scopes.ts": SCOPES }, globalShadows: "error" });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("scopes.ts", SCOPES, [
+        ["catch (", "tonumber", "local"],
+        ["for (const ", "next", "local"],
+        ["  let ", "setmetatable", "local"],
+        ["  class ", "go", "local"],
+        ["  enum ", "vmath", "local"],
+        ["unpacked({ ", "select", "local"],
+        ["= (", "label", "local"],
+        ["public ", "timer", "local"],
+        ["play(", "sound", "local"],
+        ["namespace ", "msg", "file"],
+        ["  const ", "select", "local"],
+      ]),
+    );
+  });
+
+  test("reports the exported forms that still emit a local, and no others", () => {
+    const result = transpileProject({ files: { "exported.ts": EXPORTED }, globalShadows: "error" });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("exported.ts", EXPORTED, [
+        ["export class ", "go", "file"],
+        ["default class ", "sys", "file"],
+        ["namespace ", "sound", "file"],
+        ["  export class ", "timer", "local"],
+        ["function ", "next", "local"],
+        ["class ", "physics", "local"],
+      ]),
+    );
+  });
+
+  test.each([
+    ["scopes.ts", SCOPES],
+    ["exported.ts", EXPORTED],
+  ])('reports nothing in %s under "warn"', (file, source) => {
+    const result = transpileProject({ files: { [file]: source } });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  test("reports a script file's parameter but none of its top-level names", () => {
+    const source = "function select(next: number): number {\n  return next;\n}\nselect(1);\n";
+    const result = transpileProject({ files: { "main.ts": source }, globalShadows: "error" });
+    expect(result.diagnostics).toEqual(errorsAt("main.ts", source, [["select(", "next", "local"]]));
+  });
+
+  test.each([
+    [
+      "an overload signature's parameter",
+      "export function f(next: number): number;\nexport function f(n: string): number;\nexport function f(n: number | string): number {\n  return Number(n);\n}\n",
+    ],
+    ["an interface method's parameter", "export interface I {\n  m(next: number): void;\n}\n"],
+    ["a function type's parameter", "export type F = (select: number) => void;\n"],
+    [
+      "a declared function's parameter",
+      "declare function g(next: number): void;\nexport const r = 1;\n",
+    ],
+    ["an object property", "export const o = { next: 1 };\n"],
+    [
+      "a class property and a method name",
+      "export class K {\n  next = 1;\n  select(): number {\n    return this.next;\n  }\n}\n",
+    ],
+    [
+      "an exported const in a namespace",
+      "namespace ns {\n  export const select = 1;\n}\nexport const s = ns.select;\n",
+    ],
+    [
+      "an inner `const print`, which TypeScript-to-Lua renames",
+      "export function f(): number {\n  const print = 1;\n  return print;\n}\n",
+    ],
+    [
+      "an inner name only TypeScript's default library declares",
+      "export function f(): number {\n  const Math = 1;\n  return Math;\n}\n",
+    ],
+    [
+      "an inner name no global has",
+      "export function f(): number {\n  const speed = 1;\n  return speed;\n}\n",
+    ],
+  ])("reports nothing for %s", (_case, source) => {
+    const result = transpileProject({ files: { "main.ts": source }, globalShadows: "error" });
+    expect(result.diagnostics).toEqual([]);
+  });
+});
+
+describe("the TypeScript gotchas guide", () => {
+  test("lists exactly the declared globals TypeScript-to-Lua renames", () => {
+    const session = createTranspileSession();
+    session.update({ "main.ts": "export const x = 1;\n" });
+    const program = session.getProgram();
+    const sourceFile = program?.getSourceFile("main.ts");
+    if (program === undefined || sourceFile === undefined) {
+      throw new Error("session produced no program for main.ts");
+    }
+    const checker = program.getTypeChecker();
+    const renamed = new Set(
+      checker
+        .getSymbolsInScope(sourceFile, ts.SymbolFlags.Value)
+        .map((symbol) => symbol.name)
+        // A `declare module "..."` is in scope under its quoted specifier,
+        // which no declaration can take as a name.
+        .filter(
+          (name) =>
+            ts.isIdentifierStart(name.charCodeAt(0), ts.ScriptTarget.Latest) &&
+            isUnsafeName(name, { luaTarget: tstl.LuaTarget.Lua51 }) &&
+            isLuaGlobal(program, checker, name),
+        ),
+    );
+
+    const paragraph = readFileSync(GOTCHAS_GUIDE, "utf8")
+      .split(/\r?\n\r?\n/)
+      .find((p) => p.startsWith(RENAME_LEAD));
+    expect(paragraph).toBeDefined();
+    const listed = new Set([...(paragraph ?? "").matchAll(/`([^`]+)`/g)].map((m) => m[1]));
+
+    expect([...listed].sort()).toEqual([...renamed].sort());
   });
 });

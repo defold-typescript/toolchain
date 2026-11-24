@@ -1,0 +1,38 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the shadow probe's emit 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local function next(n)
+    return n + 1
+end
+function ____exports.select(n)
+    return n + 2
+end
+function ____exports.withParam(____rawget)
+    return ____rawget + next(1)
+end
+function ____exports.withLocal()
+    local ____unpack = 3
+    return ____unpack
+end
+function ____exports.paramNext(next)
+    return next + 1
+end
+function ____exports.innerSelect()
+    local select = 4
+    local function ____pairs(n)
+        return n
+    end
+    return select + ____pairs(1)
+end
+function ____exports.paramSelectFind(select)
+    local at = select(
+        2,
+        string.find("hello", "l")
+    )
+    return select + (at or 0)
+end
+return ____exports
+"
+`;

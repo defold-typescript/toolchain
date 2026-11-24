@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Hidden globals can fail the build** ([Build](./build.md#make-a-hidden-global-fail-the-build)).
+> - **Hidden globals can fail the build at any scope** ([Build](./build.md#make-a-hidden-global-fail-the-build)).
 
 ### Improved
 
-- **`"global-shadows": "error"` in `package.json` makes a top-level name that hides a Lua or Defold global fail the build:** `build` and `watch` report it at its file, line and column and leave that file unwritten, and the editor marks it as an error rather than a hint. Any other value fails `build` and `watch` before they write anything ([Make a hidden global fail the build](./build.md#make-a-hidden-global-fail-the-build)).
+- **`"global-shadows": "error"` in `package.json` makes a name at any scope that hides a Lua or Defold global fail the build,** such as a parameter named `select`: `build` and `watch` report it at its file, line and column and leave that file unwritten, and the editor marks it as an error, while the default still warns on top-level names only. Any other value fails `build` and `watch` before they write anything ([Make a hidden global fail the build](./build.md#make-a-hidden-global-fail-the-build)).
 - **A failed `build --json` lists each located transpile failure in an `errors` array** with its `file`, `line`, `column` and `message`, as `watch --json` does ([Fix the Lua output](./agent-runbooks.md#fix-the-lua-output)).
 
 ## v0.69.0

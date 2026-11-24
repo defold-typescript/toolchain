@@ -57,6 +57,10 @@ export function luaGlobalShadowMessage(name: string): string {
   return `\`${name}\` is a file-level Lua local that hides the global \`${name}\` throughout this file, including Lua the build generates here; rename it.`;
 }
 
+export function luaLocalShadowMessage(name: string): string {
+  return `\`${name}\` is a Lua local that hides the global \`${name}\` in its scope, including Lua the build generates there; rename it.`;
+}
+
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   return (
     ts.canHaveModifiers(node) && (ts.getModifiers(node)?.some((m) => m.kind === kind) ?? false)
@@ -131,10 +135,12 @@ function fileLevelLocals(statement: ts.Statement, resolver: EmitResolver): ts.Id
   return names;
 }
 
-// A global the Lua runtime provides: a value the program's global scope declares
-// outside TypeScript's default library and the TypeScript-to-Lua language
-// extensions, which describe nothing at runtime.
-function isLuaGlobal(program: ts.Program, checker: ts.TypeChecker, name: string): boolean {
+/**
+ * Whether `name` is a global the Lua runtime provides: a value the program's
+ * global scope declares outside TypeScript's default library and the
+ * TypeScript-to-Lua language extensions, which describe nothing at runtime.
+ */
+export function isLuaGlobal(program: ts.Program, checker: ts.TypeChecker, name: string): boolean {
   const symbol = checker.resolveName(name, undefined, ts.SymbolFlags.Value, false);
   return (
     symbol?.declarations?.some((declaration) => {
@@ -147,43 +153,237 @@ function isLuaGlobal(program: ts.Program, checker: ts.TypeChecker, name: string)
   );
 }
 
+function hasBody(node: ts.Node): boolean {
+  return (
+    (ts.isFunctionDeclaration(node) ||
+      ts.isMethodDeclaration(node) ||
+      ts.isConstructorDeclaration(node) ||
+      ts.isGetAccessorDeclaration(node) ||
+      ts.isSetAccessorDeclaration(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isArrowFunction(node)) &&
+    node.body !== undefined
+  );
+}
+
+function namespaceHasEmittedBody(node: ts.ModuleDeclaration): boolean {
+  const body = node.body;
+  if (body === undefined) {
+    return false;
+  }
+  if (ts.isModuleBlock(body)) {
+    return body.statements.some(
+      (s) => !ts.isInterfaceDeclaration(s) && !ts.isTypeAliasDeclaration(s),
+    );
+  }
+  return ts.isModuleDeclaration(body);
+}
+
+// Mirrors TypeScript-to-Lua's namespace transform. A namespace that is not
+// exported declares `local NS = {}` on its first declaration; an exported one,
+// or the inner part of a dotted name, keeps `local NS = <exports>.NS` only when
+// it exports something and emits a body. A top-level namespace in a script file
+// is a global, which the caller excludes.
+function namespaceEmitsLocal(
+  checker: ts.TypeChecker,
+  node: ts.ModuleDeclaration,
+  isModule: boolean,
+): boolean {
+  if (!ts.isIdentifier(node.name)) {
+    return false;
+  }
+  const symbol = checker.getSymbolAtLocation(node.name);
+  const declarations = symbol?.declarations ?? [];
+  const isFirstDeclaration =
+    symbol === undefined ||
+    (!declarations.some((d) => ts.isClassLike(d) || ts.isFunctionDeclaration(d)) &&
+      declarations.find(ts.isModuleDeclaration) === node);
+  const isExported =
+    hasModifier(node, ts.SyntaxKind.ExportKeyword) || ts.isModuleDeclaration(node.parent);
+  if (!isExported) {
+    return isFirstDeclaration;
+  }
+  return (
+    (!isModule || isFirstDeclaration) &&
+    symbol !== undefined &&
+    checker.getExportsOfModule(symbol).length > 0 &&
+    namespaceHasEmittedBody(node)
+  );
+}
+
+// The names a top-level statement turns into a chunk-wide Lua `local` beyond
+// `fileLevelLocals`: an exported class keeps a local alias of its export, and so
+// does a namespace, exported or not.
+function errorOnlyFileLevelLocals(
+  checker: ts.TypeChecker,
+  statement: ts.Statement,
+): ts.Identifier[] {
+  if (hasModifier(statement, ts.SyntaxKind.DeclareKeyword)) {
+    return [];
+  }
+  if (ts.isClassDeclaration(statement) && statement.name !== undefined) {
+    return [statement.name];
+  }
+  if (ts.isModuleDeclaration(statement) && namespaceEmitsLocal(checker, statement, true)) {
+    return [statement.name as ts.Identifier];
+  }
+  return [];
+}
+
+// TypeScript-to-Lua gives a named function expression a local by its name only
+// when the function refers to itself.
+function referencesItself(
+  checker: ts.TypeChecker,
+  fn: ts.FunctionExpression,
+  name: ts.Identifier,
+): boolean {
+  const own = checker.getSymbolAtLocation(name)?.valueDeclaration;
+  if (own === undefined) {
+    return false;
+  }
+  const visit = (node: ts.Node): boolean => {
+    if (ts.isTypeNode(node)) {
+      return false;
+    }
+    if (
+      ts.isIdentifier(node) &&
+      node !== name &&
+      checker.getSymbolAtLocation(node)?.valueDeclaration === own
+    ) {
+      return true;
+    }
+    return ts.forEachChild(node, visit) ?? false;
+  };
+  return ts.forEachChild(fn, visit) ?? false;
+}
+
+function isFileLevelVariable(declaration: ts.VariableDeclaration): boolean {
+  const statement = declaration.parent.parent;
+  return ts.isVariableStatement(statement) && ts.isSourceFile(statement.parent);
+}
+
+function isExportedVariable(declaration: ts.VariableDeclaration): boolean {
+  const statement = declaration.parent.parent;
+  return ts.isVariableStatement(statement) && hasModifier(statement, ts.SyntaxKind.ExportKeyword);
+}
+
+// The names below a top-level statement that emit as a Lua `local` in a
+// function, block or namespace. A namespace member with an `export` modifier
+// goes on the namespace table instead, except a class or namespace, which keeps
+// a local alias.
+function innerLocals(
+  checker: ts.TypeChecker,
+  statement: ts.Statement,
+  isModule: boolean,
+): ts.Identifier[] {
+  const names: ts.Identifier[] = [];
+  const visit = (node: ts.Node): void => {
+    if (hasModifier(node, ts.SyntaxKind.DeclareKeyword) || ts.isTypeNode(node)) {
+      return;
+    }
+    if (ts.isParameter(node)) {
+      if (hasBody(node.parent)) {
+        bindingIdentifiers(node.name, names);
+      }
+    } else if (ts.isVariableDeclaration(node)) {
+      if (!isFileLevelVariable(node) && !isExportedVariable(node)) {
+        bindingIdentifiers(node.name, names);
+      }
+    } else if (ts.isFunctionDeclaration(node)) {
+      if (
+        node.name !== undefined &&
+        node.body !== undefined &&
+        !hasModifier(node, ts.SyntaxKind.ExportKeyword)
+      ) {
+        names.push(node.name);
+      }
+    } else if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
+      if (node.name !== undefined) {
+        names.push(node.name);
+      }
+    } else if (ts.isEnumDeclaration(node)) {
+      if (
+        !hasModifier(node, ts.SyntaxKind.ConstKeyword) &&
+        !hasModifier(node, ts.SyntaxKind.ExportKeyword)
+      ) {
+        names.push(node.name);
+      }
+    } else if (ts.isModuleDeclaration(node)) {
+      if (namespaceEmitsLocal(checker, node, isModule)) {
+        names.push(node.name as ts.Identifier);
+      }
+    } else if (ts.isFunctionExpression(node)) {
+      if (node.name !== undefined && referencesItself(checker, node, node.name)) {
+        names.push(node.name);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  if (!hasModifier(statement, ts.SyntaxKind.DeclareKeyword)) {
+    ts.forEachChild(statement, visit);
+  }
+  return names;
+}
+
 /**
- * Reports each top-level, non-exported name of `sourceFile` that emits as a
- * chunk-wide Lua `local` hiding a global, which TypeScript-to-Lua's own
- * safe-name set leaves unrenamed: a warning, or an error under `"error"`.
+ * Reports each name of `sourceFile` that emits as a Lua `local` hiding a global,
+ * which TypeScript-to-Lua's own safe-name set leaves unrenamed. By default, a
+ * warning for each top-level, non-exported name, a chunk-wide local. Under
+ * `"error"`, an error for every local at any scope.
  */
 export function findLuaGlobalShadows(
   program: ts.Program,
   sourceFile: ts.SourceFile,
   mode: GlobalShadowsMode = "warn",
 ): ts.Diagnostic[] {
+  if (sourceFile.isDeclarationFile) {
+    return [];
+  }
   // A file with no import or export is a script: its top-level names are the
   // globals themselves, and they emit as global assignments, not locals.
-  if (sourceFile.isDeclarationFile || !ts.isExternalModule(sourceFile)) {
+  const isModule = ts.isExternalModule(sourceFile);
+  if (mode === "warn" && !isModule) {
     return [];
   }
   const checker = program.getTypeChecker();
   const resolver = (checker as TypeCheckerWithEmitResolver).getEmitResolver(sourceFile);
-  const diagnostics: ts.Diagnostic[] = [];
+  const found: { identifier: ts.Identifier; fileLevel: boolean }[] = [];
   for (const statement of sourceFile.statements) {
-    for (const identifier of fileLevelLocals(statement, resolver)) {
-      const name = identifier.text;
-      if (isUnsafeName(name, { luaTarget: tstl.LuaTarget.Lua51 }) || LOWERED_GLOBALS.has(name)) {
-        continue;
+    if (isModule) {
+      const fileLevel = new Set(fileLevelLocals(statement, resolver));
+      if (mode === "error") {
+        for (const identifier of errorOnlyFileLevelLocals(checker, statement)) {
+          fileLevel.add(identifier);
+        }
       }
-      if (!isLuaGlobal(program, checker, name)) {
-        continue;
+      for (const identifier of fileLevel) {
+        found.push({ identifier, fileLevel: true });
       }
-      const start = identifier.getStart(sourceFile);
-      diagnostics.push({
-        file: sourceFile,
-        start,
-        length: identifier.getEnd() - start,
-        category: mode === "error" ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
-        code: LUA_GLOBAL_SHADOW_CODE,
-        messageText: luaGlobalShadowMessage(name),
-      });
+    }
+    if (mode === "error") {
+      for (const identifier of innerLocals(checker, statement, isModule)) {
+        found.push({ identifier, fileLevel: false });
+      }
     }
   }
-  return diagnostics;
+  const diagnostics: ts.Diagnostic[] = [];
+  for (const { identifier, fileLevel } of found) {
+    const name = identifier.text;
+    if (isUnsafeName(name, { luaTarget: tstl.LuaTarget.Lua51 }) || LOWERED_GLOBALS.has(name)) {
+      continue;
+    }
+    if (!isLuaGlobal(program, checker, name)) {
+      continue;
+    }
+    const start = identifier.getStart(sourceFile);
+    diagnostics.push({
+      file: sourceFile,
+      start,
+      length: identifier.getEnd() - start,
+      category: mode === "error" ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
+      code: LUA_GLOBAL_SHADOW_CODE,
+      messageText: fileLevel ? luaGlobalShadowMessage(name) : luaLocalShadowMessage(name),
+    });
+  }
+  return diagnostics.sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
 }

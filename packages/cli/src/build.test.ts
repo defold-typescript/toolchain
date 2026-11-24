@@ -23,6 +23,7 @@ import {
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
   HSM_LIBRARY,
   luaGlobalShadowMessage,
+  luaLocalShadowMessage,
   requirePathForRel,
   resolveLibrarySourceDir,
   type SceneComponentIndex,
@@ -2963,8 +2964,25 @@ describe('package.json "global-shadows"', () => {
     "  function pairs(n: number): number { return n; }",
     "  return select + pairs(1);",
     "}",
+    'export function paramSelectFind(select: number): number { const at = string.find("hello", "l")[1]; return select + (at ?? 0); }',
     "",
   ].join("\n");
+
+  // The located error for `name` where it first follows `before` in PROBE.
+  function probeError(
+    before: string,
+    name: string,
+    message: (name: string) => string,
+  ): { file: string; line: number; column: number; message: string } {
+    const offset = PROBE.indexOf(`${before}${name}`) + before.length;
+    const lines = PROBE.slice(0, offset).split("\n");
+    return {
+      file: "src/probe.ts",
+      line: lines.length,
+      column: (lines.at(-1)?.length ?? 0) + 1,
+      message: message(name),
+    };
+  }
 
   function scaffold(setting?: unknown): void {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
@@ -2999,7 +3017,7 @@ describe('package.json "global-shadows"', () => {
     expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(true);
   });
 
-  test('"error" fails at the shadow, lists it in `errors`, and writes nothing', async () => {
+  test('"error" fails at every shadow, lists each in `errors`, and writes nothing', async () => {
     scaffold("error");
 
     const { code, payload } = await buildJson();
@@ -3007,7 +3025,10 @@ describe('package.json "global-shadows"', () => {
     expect(code).toBe(1);
     expect(payload.ok).toBe(false);
     expect(payload.errors).toEqual([
-      { file: "src/probe.ts", line: 1, column: 10, message: luaGlobalShadowMessage("next") },
+      probeError("function ", "next", luaGlobalShadowMessage),
+      probeError("paramNext(", "next", luaLocalShadowMessage),
+      probeError("  const ", "select", luaLocalShadowMessage),
+      probeError("paramSelectFind(", "select", luaLocalShadowMessage),
     ]);
     expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
   });
