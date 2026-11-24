@@ -74,12 +74,14 @@ export const REST_KEPT_BY_ORDER = [
 // Rest parameters TypeScript-to-Lua passes on as Lua's `...` although a
 // function declared further down precedes the spread in the source: a call's
 // arguments transform before the function it calls and its receiver, unless it
-// calls `.hasOwnProperty`.
+// calls `.hasOwnProperty` or, outside an optional chain, a method extension.
 export const REST_ERASED_BY_ORDER = [
   "export function f(...select: number[]) { later(...select); function later(...values: number[]): void { print(...values); } }",
   "export function h(...msg: number[]): void { later?.(...msg); function later(...values: number[]): void { print(...values); } }",
   "export function m(...next: number[]): void { later().check(...next); function later(): { check(...values: number[]): void } { return { check: (...values: number[]) => print(...values) }; } }",
   'export function n(...sound: number[]): void { later()["hasOwnProperty"]([...sound].length); function later(): object { return {}; } }',
+  "export function p(...go: number[]): void { later()?.get([...go].length); function later(): LuaTable<number, number> { return new LuaTable(); } }",
+  "export function q(...vmath: number[]): void { later().get(...vmath); function later(): { get(...values: number[]): void } { return { get: (...values: number[]) => print(...values) }; } }",
   "",
 ].join("\n");
 
@@ -89,6 +91,17 @@ export const REST_KEPT_BY_BUILTIN = [
   'export function f(...select: number[]) { later().hasOwnProperty([...select].length); function later(): object { return {}; } return string.find("hi", "i")[1]; }',
   "export function g(...next: number[]): void { later()?.hasOwnProperty([...next].length); function later(): object | undefined { return {}; } }",
   "export function k(...msg: number[]): void { later().hasOwnProperty([...msg].length); function later(): { hasOwnProperty(n: number): boolean } { return { hasOwnProperty: (n: number) => n > 0 }; } }",
+  "",
+].join("\n");
+
+// Rest parameters TypeScript-to-Lua declares as `local <name> = {...}` because
+// a Lua table or operator method extension call reads its receiver first.
+export const REST_KEPT_BY_EXTENSION = [
+  'export function f(...select: number[]) { later().get([...select].length); function later(): LuaTable<number, number> { return new LuaTable(); } return string.find("hi", "i")[1]; }',
+  "export function g(...next: number[]): void { later().has([...next].length); function later(): LuaMap<number, boolean> { return new LuaMap(); } }",
+  "export function k(...msg: number[]): void { later().add([...msg].length); function later(): LuaSet<number> { return new LuaSet(); } }",
+  "export function p(...sound: number[]): number { return later().add([...sound].length); function later(): { add: LuaAdditionMethod<number, number> } { return undefined as never; } }",
+  'export function q(...timer: number[]): void { later()["get"]([...timer].length); function later(): LuaTable<number, number> { return new LuaTable(); } }',
   "",
 ].join("\n");
 

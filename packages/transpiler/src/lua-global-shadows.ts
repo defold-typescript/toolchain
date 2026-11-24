@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import type { EmitResolver, TypeCheckerWithEmitResolver } from "typescript-to-lua";
 import * as tstl from "typescript-to-lua";
+import { methodExtensionKinds } from "typescript-to-lua/dist/transformation/utils/language-extensions.js";
 import { isUnsafeName } from "typescript-to-lua/dist/transformation/utils/safe-names.js";
 import { isEditorFactoryOnlyImport } from "./editor-script-erasure";
 import { isErasedTypeNode } from "./erased-type-nodes";
@@ -309,10 +310,30 @@ function callsHasOwnProperty(call: ts.CallExpression): boolean {
   return ts.isPropertyAccessExpression(callee) && callee.name.text === "hasOwnProperty";
 }
 
+// Whether `call` is a Lua table or operator method extension call, whose
+// receiver TypeScript-to-Lua transforms before its arguments
+// (`getNaryCallExtensionArgs` in `utils/language-extensions.js`). An optional
+// chain transforms its receiver as a temp, after the arguments.
+function callsMethodExtension(checker: ts.TypeChecker, call: ts.CallExpression): boolean {
+  if (ts.isOptionalChain(call)) {
+    return false;
+  }
+  const callee = call.expression;
+  if (!(ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee))) {
+    return false;
+  }
+  const brand = checker.getTypeAtLocation(callee).getProperty("__tstlExtension");
+  if (brand === undefined) {
+    return false;
+  }
+  const kind = checker.getTypeOfSymbolAtLocation(brand, callee);
+  return kind.isStringLiteral() && (methodExtensionKinds as ReadonlySet<string>).has(kind.value);
+}
+
 // The children of `node` in the order TypeScript-to-Lua transforms them.
-function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
+function childrenInTransformOrder(checker: ts.TypeChecker, node: ts.Node): readonly ts.Node[] {
   if (ts.isCallExpression(node)) {
-    return callsHasOwnProperty(node)
+    return callsHasOwnProperty(node) || callsMethodExtension(checker, node)
       ? [node.expression, ...node.arguments]
       : [...node.arguments, node.expression];
   }
@@ -336,7 +357,8 @@ function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
 // assignments. A call's arguments come before the function it calls
 // (`transformCallAndArguments` and `transformContextualCallExpression` in
 // `visitors/call.js`, `transformOptionalChain`), except a `hasOwnProperty`
-// call's receiver, which comes first, and an assignment's right
+// call's receiver, which comes first, as does a method extension call's
+// receiver outside an optional chain, and an assignment's right
 // side before its left (`transformAssignmentStatement` and
 // `transformAssignmentExpression` in `visitors/binary-expression/assignments.js`),
 // except an assignment to a `length` member inside an expression, which keeps
@@ -344,7 +366,7 @@ function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
 // is an array's. The type is not checked, so a non-array `length` member
 // assigned inside an expression, with a spread on its left and a hoisted read on
 // its right, is ordered wrongly.
-function valueIdentifiers(body: ts.Node): ts.Identifier[] {
+function valueIdentifiers(checker: ts.TypeChecker, body: ts.Node): ts.Identifier[] {
   const found: ts.Identifier[] = [];
   const visit = (node: ts.Node): void => {
     if (isErasedTypeNode(node)) {
@@ -361,7 +383,7 @@ function valueIdentifiers(body: ts.Node): ts.Identifier[] {
       }
       return;
     }
-    for (const child of childrenInTransformOrder(node)) {
+    for (const child of childrenInTransformOrder(checker, node)) {
       visit(child);
     }
   };
@@ -483,7 +505,7 @@ function restParameterEmitsLocal(checker: ts.TypeChecker, param: ts.ParameterDec
   if (symbol === undefined) {
     return true;
   }
-  const identifiers = valueIdentifiers(body);
+  const identifiers = valueIdentifiers(checker, body);
   const references = identifiers.filter((id) => referencedSymbol(checker, id) === symbol);
   if (references.length === 0) {
     return false;
