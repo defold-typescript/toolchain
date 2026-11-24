@@ -97,6 +97,23 @@ declare module 'minit.minit' {
   export function prefers_reduced_motion(): boolean;
 
   /**
+   * Asks for the device motion and orientation sensors on the player's next tap or
+   * click, since a browser that guards them grants access only from a user gesture, and
+   * calls `callback` once with the answer. A browser that asks no permission answers
+   * `"granted"` and one without motion events `"unsupported"`; one that asks, as Safari
+   * on iOS does, answers `"granted"` only when the player allows every sensor it asked
+   * about, else `"denied"`. Lua polls for the answer every 0.25 s on a `timer` that
+   * belongs to the calling script and stops with it, so call it from a script that lives
+   * until the player taps. An error `callback` raises is printed. Outside an HTML5 build
+   * it calls `callback` with `"unsupported"` before returning.
+   * @param callback Gets the player's answer.
+    * @upstreamDoc 873eece04e25
+   */
+  export function request_device_motion_permission(
+    callback: (permission: "granted" | "denied" | "unsupported") => void,
+  ): void;
+
+  /**
    * Returns the player's device tier. `?deviceTier=` set to `low`, `medium`, `high` or
    * `unknown` wins; next comes the host's `window.minit.deviceTier` when it is one of
    * the four; otherwise it returns `"unknown"`, which is also its result outside an
