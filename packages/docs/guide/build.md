@@ -179,7 +179,10 @@ not only at the top of a file, set `global-shadows` to `"error"` in
 `build` and `watch` then report each such name as an error at its file, line and
 column: a top-level name, an exported class or namespace, and a parameter,
 binding or declaration inside a function, block or namespace, such as a
-parameter named `select`. They leave that file's Lua unwritten: its output from
+parameter named `select`. A rest parameter the Lua only forwards as `...` is no
+local and does not count; the
+[TypeScript gotchas](./typescript-gotchas.md#a-file-level-name-can-hide-a-lua-or-defold-global)
+list every form that does not. They leave that file's Lua unwritten: its output from
 an earlier build stays as it was, while the other files are still written.
 `build --json` lists each one in `errors`, and the
 [editor plugin](./transpile-diagnostics.md#which-diagnostics-are-errors) marks
