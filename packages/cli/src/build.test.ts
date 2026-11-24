@@ -3024,18 +3024,6 @@ describe('package.json "global-shadows"', () => {
     expect(err()).toContain(`src/probe.ts:1:10: ${luaGlobalShadowMessage("next")}`);
     expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
   });
-
-  test("an unknown value fails naming the setting and writes nothing", async () => {
-    scaffold("loud");
-
-    const { code, payload } = await buildJson();
-
-    expect(code).toBe(1);
-    expect(payload.error).toContain(
-      'package.json "defold-typescript"."global-shadows" is "loud"; it must be "warn" or "error".',
-    );
-    expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
-  });
 });
 
 describe("runBuild reports transpile advisories", () => {

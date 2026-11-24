@@ -797,6 +797,140 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  describe('an unknown "global-shadows" value', () => {
+    const SETTING_ERROR =
+      'package.json "defold-typescript"."global-shadows" is "loud"; it must be "warn" or "error".';
+    const STALE_SCENE_DECLARATION = "// stale\n";
+    // The default target materializes its surface inside `runWatch` and after
+    // the build; a ref-doc pin materializes it in `dispatch`, ahead of both.
+    const TARGETS = [
+      { target: "the default target", pin: {} },
+      { target: "a ref-doc pin", pin: { "defold-target": "1.9.8" } },
+    ];
+    const idleWatcher: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    function scaffold(globalShadows: string, pin: Record<string, string>): void {
+      scaffoldBuildProject({ "defold-typescript": { ...pin, "global-shadows": globalShadows } });
+      const declaration = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+      mkdirSync(path.dirname(declaration), { recursive: true });
+      writeFileSync(declaration, STALE_SCENE_DECLARATION);
+    }
+
+    // Latin-1 maps each byte to one character, so equal strings are equal bytes.
+    function projectFiles(): Record<string, string> {
+      const files: [string, string][] = [];
+      const walk = (dir: string): void => {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            walk(full);
+          } else {
+            files.push([
+              path.relative(cwd, full).split(path.sep).join("/"),
+              readFileSync(full, "latin1"),
+            ]);
+          }
+        }
+      };
+      walk(cwd);
+      return Object.fromEntries(files.sort(([a], [b]) => a.localeCompare(b)));
+    }
+
+    test.each(TARGETS)(
+      "build --json on $target fails before any project write",
+      async ({ pin }) => {
+        scaffold("loud", pin);
+        const resolveOpts = labelRefDocResolveOpts();
+        const before = projectFiles();
+        const { io, out } = captureStreams();
+
+        const code = await dispatch(["build", cwd, "--json"], io, {
+          resolveOpts,
+          detectEditorVersion: () => null,
+        });
+
+        expect(code).toBe(1);
+        const parsed = JSON.parse(out()) as { ok: boolean; error: string };
+        expect(parsed.ok).toBe(false);
+        expect(parsed.error).toContain(SETTING_ERROR);
+        expect(projectFiles()).toEqual(before);
+
+        rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+      },
+    );
+
+    test.each(TARGETS)("watch on $target fails before any project write", async ({ pin }) => {
+      scaffold("loud", pin);
+      const resolveOpts = labelRefDocResolveOpts();
+      const before = projectFiles();
+      const { io, err } = captureStreams();
+      let started = false;
+
+      const code = await dispatch(["watch", cwd], io, {
+        watcherFactory: idleWatcher,
+        resolveOpts,
+        detectEditorVersion: () => null,
+        onWatchStart: (handle) => {
+          started = true;
+          handle.stop();
+        },
+      });
+
+      expect(code).toBe(1);
+      expect(started).toBe(false);
+      expect(err()).toContain(SETTING_ERROR);
+      expect(projectFiles()).toEqual(before);
+
+      rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+    });
+
+    test.each(TARGETS)(
+      'build --json on $target under "warn" rewrites the scene declaration',
+      async ({ pin }) => {
+        scaffold("warn", pin);
+        const resolveOpts = labelRefDocResolveOpts();
+        const { io } = captureStreams();
+
+        const code = await dispatch(["build", cwd, "--json"], io, {
+          resolveOpts,
+          detectEditorVersion: () => null,
+        });
+
+        expect(code).toBe(0);
+        expect(readFileSync(path.join(cwd, SCENE_ADDRESSES_DECLARATION), "utf8")).not.toBe(
+          STALE_SCENE_DECLARATION,
+        );
+
+        rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+      },
+    );
+
+    test.each(TARGETS)(
+      'watch on $target under "warn" materializes the surface',
+      async ({ pin }) => {
+        scaffold("warn", pin);
+        const resolveOpts = labelRefDocResolveOpts();
+        const { io } = captureStreams();
+        const { onWatchStart, ready } = watchHandle();
+
+        const result = dispatch(["watch", cwd], io, {
+          watcherFactory: idleWatcher,
+          resolveOpts,
+          detectEditorVersion: () => null,
+          onWatchStart,
+        });
+        const handle = await ready;
+        await handle.waitForIdle();
+
+        expect(materializedSurfaceEntries()).not.toEqual([]);
+        handle.stop();
+        expect(await result).toBe(0);
+
+        rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+      },
+    );
+  });
+
   const TEXT_PROPERTY_SCRIPT = [
     'import { defineScript } from "@defold-typescript/types";',
     "",

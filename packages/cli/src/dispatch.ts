@@ -1329,7 +1329,9 @@ function dispatchCommand(
     if (command === "build") {
       return (async (): Promise<number> => {
         const { runBuild } = await import("./build");
-        const { BuildFailureError, formatBuildLine } = await import("./build-output");
+        const { BuildFailureError, formatBuildLine, readGlobalShadows } = await import(
+          "./build-output"
+        );
         const {
           ensureMaterializedReference,
           materializeApiSurface,
@@ -1339,6 +1341,9 @@ function dispatchCommand(
 
         let head: ResolvedTargetHead;
         try {
+          // Ahead of `runSceneTypes` and surface materialization, the build's
+          // first project writes: an unknown value must leave the project as it was.
+          readGlobalShadows(cwd);
           head = syncHead ?? (await resolveHead());
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
@@ -1602,9 +1607,14 @@ function dispatchCommand(
           resolveRegisteredSurfaceGeneratedDir,
         } = await import("./materialize");
         const { runResolve } = await import("./resolve");
+        const { readGlobalShadows } = await import("./build-output");
 
         let head: ResolvedTargetHead;
         try {
+          // Ahead of the pinned surface's materialization below and of
+          // `runWatch`, whose `syncSurface` writes before its build session reads
+          // the setting: an unknown value must leave the project as it was.
+          readGlobalShadows(cwd);
           head = syncHead ?? (await resolveHead());
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
