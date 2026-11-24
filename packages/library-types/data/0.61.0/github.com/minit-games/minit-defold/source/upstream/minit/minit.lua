@@ -181,6 +181,43 @@ function M.prefers_reduced_motion()
     return raw == "true"
 end
 
+local DEVICE_MOTION_PERMISSION_POLL_SECONDS = 0.25
+local DEVICE_MOTION_PERMISSION_JS =
+    "(function(){var w=window,d=document;w.__minitDeviceMotionPermission=null;" ..
+    "var fired=false;var request=function(){if(fired)return;fired=true;" ..
+    "d.removeEventListener('touchend',request,true);d.removeEventListener('click',request,true);" ..
+    "var motion=w.DeviceMotionEvent;if(!motion){w.__minitDeviceMotionPermission='unsupported';return;}" ..
+    "if(typeof motion.requestPermission!=='function'){w.__minitDeviceMotionPermission='granted';return;}" ..
+    "try{var requests=[motion.requestPermission()],orientation=w.DeviceOrientationEvent;" ..
+    "if(orientation&&typeof orientation.requestPermission==='function'){requests.push(orientation.requestPermission());}" ..
+    "Promise.all(requests).then(function(permissions){w.__minitDeviceMotionPermission=" ..
+    "permissions.every(function(permission){return permission==='granted';})?'granted':'denied';}," ..
+    "function(){w.__minitDeviceMotionPermission='denied';});}" ..
+    "catch(e){w.__minitDeviceMotionPermission='denied';}};" ..
+    "d.addEventListener('touchend',request,true);d.addEventListener('click',request,true);})()"
+
+--- Request access to device motion sensors on the player's next tap or click.
+-- @param callback function(permission: "granted"|"denied"|"unsupported")
+function M.request_device_motion_permission(callback)
+    assert(type(callback) == "function", "callback must be a function")
+    if not has_bridge() then
+        callback("unsupported")
+        return
+    end
+
+    html5.run(DEVICE_MOTION_PERMISSION_JS)
+    timer.delay(DEVICE_MOTION_PERMISSION_POLL_SECONDS, true, function(_, handle)
+        local raw = html5.run("JSON.stringify(window.__minitDeviceMotionPermission)")
+        local ok, permission = pcall(json.decode, raw or "")
+        if not ok or (permission ~= "granted" and permission ~= "denied" and permission ~= "unsupported") then
+            return
+        end
+        timer.cancel(handle)
+        local callback_ok, err = pcall(callback, permission)
+        if not callback_ok then print(LOG_PREFIX, "request_device_motion_permission callback error:", err) end
+    end)
+end
+
 --- Return the resolved device tier: "low", "medium", "high", or "unknown".
 -- @return string
 function M.get_device_tier()
