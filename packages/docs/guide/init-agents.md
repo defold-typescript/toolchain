@@ -58,7 +58,12 @@ It also lists the built-in
 libraries with their import paths and guide pages — `@defold-typescript/types/hsm`
 ([State machines](./state-machines.md)) and `@defold-typescript/types/ecs`
 ([Entity systems](./entity-systems.md)) — so an agent imports them instead of
-writing its own state flags and update loops.
+writing its own state flags and update loops. For engine questions it names
+Defold's `https://defold.com/llms.txt` index and single-file
+`https://defold.com/llms-full.txt` (download it once, then grep that copy), sends
+toolchain questions to the toolchain docs and engine behavior such as lifecycle
+order, collection proxies and cameras to Defold's docs before engine source, and
+lets the typed `.d.ts` decide signatures.
 
 ## Re-running is safe
 
