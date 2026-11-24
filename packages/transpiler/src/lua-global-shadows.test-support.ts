@@ -58,6 +58,28 @@ export const REST_ERASED = [
   "",
 ].join("\n");
 
+// Rest parameters TypeScript-to-Lua declares as `local <name> = {...}` because
+// it reads a function declared further down before the spread in its own
+// transform order: an assignment's right side first, unless an array `length`
+// assignment sits inside an expression.
+export const REST_KEPT_BY_ORDER = [
+  'export function f(...select: number[]) { const out: number[] = []; out[[...select].length] = later(); function later(): number { return 1; } return string.find("hi", "i")[1]; }',
+  "export function g(...next: number[]): number { const out: number[] = []; const n = (out[[...next].length] = later()); function later(): number { return 1; } return n; }",
+  "export function k(...msg: number[]): number { return (later().length = [...msg].length); function later(): number[] { return []; } }",
+  "export function p(...sound: number[]): void { const out: number[] = []; out.length = 0, [...sound].length = later(); function later(): number { return 0; } }",
+  "export function q(...timer: number[]): void { for (let i = 0; i < 1; [...timer].length = later()) { i++; } function later(): number { return 0; } }",
+  "",
+].join("\n");
+
+// Rest parameters TypeScript-to-Lua passes on as Lua's `...` although a
+// function declared further down precedes the spread in the source: a call's
+// arguments transform before the function it calls.
+export const REST_ERASED_BY_ORDER = [
+  "export function f(...select: number[]) { later(...select); function later(...values: number[]): void { print(...values); } }",
+  "export function h(...msg: number[]): void { later?.(...msg); function later(...values: number[]): void { print(...values); } }",
+  "",
+].join("\n");
+
 // The 1-based line and column of `name` where it first follows `before` in
 // `source`.
 export function positionOf(

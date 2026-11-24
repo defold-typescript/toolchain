@@ -15,7 +15,9 @@ import {
   PROBE,
   positionOf,
   REST_ERASED,
+  REST_ERASED_BY_ORDER,
   REST_KEPT,
+  REST_KEPT_BY_ORDER,
 } from "./lua-global-shadows.test-support";
 import type { TranspileDiagnostic } from "./project-output";
 import { createTranspileSession } from "./session";
@@ -410,11 +412,36 @@ describe('"global-shadows": "error" at every scope', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  test("reports a rest parameter whose spread TypeScript-to-Lua reaches after reading a function declared further down", () => {
+    const result = transpileProject({
+      files: { "kept-order.ts": REST_KEPT_BY_ORDER },
+      globalShadows: "error",
+    });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("kept-order.ts", REST_KEPT_BY_ORDER, [
+        ["...", "select", "local"],
+        ["...", "next", "local"],
+        ["...", "msg", "local"],
+        ["...", "sound", "local"],
+        ["...", "timer", "local"],
+      ]),
+    );
+  });
+
+  test("reports no rest parameter whose spread TypeScript-to-Lua reaches before reading a function declared further down", () => {
+    const result = transpileProject({
+      files: { "erased-order.ts": REST_ERASED_BY_ORDER },
+      globalShadows: "error",
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
   test.each([
     ["scopes.ts", SCOPES],
     ["exported.ts", EXPORTED],
     ["heritage.ts", HERITAGE],
     ["kept.ts", REST_KEPT],
+    ["kept-order.ts", REST_KEPT_BY_ORDER],
   ])('reports nothing in %s under "warn"', (file, source) => {
     const result = transpileProject({ files: { [file]: source } });
     expect(result.diagnostics).toEqual([]);
