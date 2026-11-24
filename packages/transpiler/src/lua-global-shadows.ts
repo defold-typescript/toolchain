@@ -310,32 +310,42 @@ function callsHasOwnProperty(call: ts.CallExpression): boolean {
   return ts.isPropertyAccessExpression(callee) && callee.name.text === "hasOwnProperty";
 }
 
-// Whether `call` is a Lua table or operator method extension call, whose
-// receiver TypeScript-to-Lua transforms before its arguments
-// (`getNaryCallExtensionArgs` in `utils/language-extensions.js`). An optional
-// chain transforms its receiver as a temp, after the arguments.
-function callsMethodExtension(checker: ts.TypeChecker, call: ts.CallExpression): boolean {
+// The receiver of `call` when it is a Lua table or operator method extension
+// call, which TypeScript-to-Lua transforms before its arguments, never
+// transforming the method's name or key (`getNaryCallExtensionArgs` in
+// `utils/language-extensions.js`). An optional chain transforms its receiver as
+// a temp, after the arguments.
+function methodExtensionReceiver(
+  checker: ts.TypeChecker,
+  call: ts.CallExpression,
+): ts.Expression | undefined {
   if (ts.isOptionalChain(call)) {
-    return false;
+    return undefined;
   }
   const callee = call.expression;
   if (!(ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee))) {
-    return false;
+    return undefined;
   }
   const brand = checker.getTypeAtLocation(callee).getProperty("__tstlExtension");
   if (brand === undefined) {
-    return false;
+    return undefined;
   }
   const kind = checker.getTypeOfSymbolAtLocation(brand, callee);
-  return kind.isStringLiteral() && (methodExtensionKinds as ReadonlySet<string>).has(kind.value);
+  return kind.isStringLiteral() && (methodExtensionKinds as ReadonlySet<string>).has(kind.value)
+    ? callee.expression
+    : undefined;
 }
 
 // The children of `node` in the order TypeScript-to-Lua transforms them.
 function childrenInTransformOrder(checker: ts.TypeChecker, node: ts.Node): readonly ts.Node[] {
   if (ts.isCallExpression(node)) {
-    return callsHasOwnProperty(node) || callsMethodExtension(checker, node)
-      ? [node.expression, ...node.arguments]
-      : [...node.arguments, node.expression];
+    if (callsHasOwnProperty(node)) {
+      return [node.expression, ...node.arguments];
+    }
+    const receiver = methodExtensionReceiver(checker, node);
+    return receiver === undefined
+      ? [...node.arguments, node.expression]
+      : [receiver, ...node.arguments];
   }
   if (
     ts.isBinaryExpression(node) &&
@@ -358,7 +368,8 @@ function childrenInTransformOrder(checker: ts.TypeChecker, node: ts.Node): reado
 // (`transformCallAndArguments` and `transformContextualCallExpression` in
 // `visitors/call.js`, `transformOptionalChain`), except a `hasOwnProperty`
 // call's receiver, which comes first, as does a method extension call's
-// receiver outside an optional chain, and an assignment's right
+// receiver outside an optional chain, whose key it never reads, and an
+// assignment's right
 // side before its left (`transformAssignmentStatement` and
 // `transformAssignmentExpression` in `visitors/binary-expression/assignments.js`),
 // except an assignment to a `length` member inside an expression, which keeps

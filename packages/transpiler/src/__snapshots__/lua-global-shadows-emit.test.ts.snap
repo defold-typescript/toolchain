@@ -196,6 +196,10 @@ function ____exports.unusedAsync(...)
         return ____awaiter_resolve(nil, 1)
     end)
 end
+function ____exports.readInKey(...)
+    local t = {}
+    local ____ = t[1]
+end
 return ____exports
 "
 `;
@@ -326,6 +330,13 @@ function ____exports.q(...)
         return {get = function(____, ...) return print(...) end}
     end
     later():get(...)
+end
+function ____exports.r(...)
+    local t = {}
+    local ____ = t[#({...})]
+    local function key()
+        return "get"
+    end
 end
 return ____exports
 "

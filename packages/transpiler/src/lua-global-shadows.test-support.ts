@@ -43,7 +43,9 @@ export const REST_KEPT = [
   "",
 ].join("\n");
 
-// Rest parameters TypeScript-to-Lua passes on as Lua's `...` without naming.
+// Rest parameters TypeScript-to-Lua passes on as Lua's `...` without naming,
+// including one read only in a method extension call's computed key, which
+// never transforms.
 export const REST_ERASED = [
   "export function unused(...select: number[]): number { return 1; }",
   "export function forwarded(...msg: unknown[]): void { print(...msg); }",
@@ -55,6 +57,7 @@ export const REST_ERASED = [
   "export function declaredBelow(...vmath: unknown[]): void { print(...vmath); after(); function after(): void {} }",
   "export function* generated(...tonumber: unknown[]): Generator<number> { print(...tonumber); yield 1; }",
   "export async function unusedAsync(...setmetatable: number[]): Promise<number> { return 1; }",
+  'export function readInKey(...hash: number[]): void { const t = new LuaTable<number, number>(); t[hash.length > 0 ? "get" : "get"](1); }',
   "",
 ].join("\n");
 
@@ -74,7 +77,8 @@ export const REST_KEPT_BY_ORDER = [
 // Rest parameters TypeScript-to-Lua passes on as Lua's `...` although a
 // function declared further down precedes the spread in the source: a call's
 // arguments transform before the function it calls and its receiver, unless it
-// calls `.hasOwnProperty` or, outside an optional chain, a method extension.
+// calls `.hasOwnProperty` or, outside an optional chain, a method extension,
+// whose computed key never transforms.
 export const REST_ERASED_BY_ORDER = [
   "export function f(...select: number[]) { later(...select); function later(...values: number[]): void { print(...values); } }",
   "export function h(...msg: number[]): void { later?.(...msg); function later(...values: number[]): void { print(...values); } }",
@@ -82,6 +86,7 @@ export const REST_ERASED_BY_ORDER = [
   'export function n(...sound: number[]): void { later()["hasOwnProperty"]([...sound].length); function later(): object { return {}; } }',
   "export function p(...go: number[]): void { later()?.get([...go].length); function later(): LuaTable<number, number> { return new LuaTable(); } }",
   "export function q(...vmath: number[]): void { later().get(...vmath); function later(): { get(...values: number[]): void } { return { get: (...values: number[]) => print(...values) }; } }",
+  'export function r(...select: number[]): void { const t = new LuaTable<number, number>(); t[key()]([...select].length); function key(): "get" { return "get"; } }',
   "",
 ].join("\n");
 
