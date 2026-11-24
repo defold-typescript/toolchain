@@ -8,7 +8,13 @@ import { BOX2D_BACKENDS } from "./contexts";
 import { describeDiagnostic } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { memberCalls } from "./widening";
-import { generateProbes, PROBE_FILES, type ProbeGeneration, probeTarget } from "./witness";
+import {
+  generateProbes,
+  PROBE_FILES,
+  type ProbeCall,
+  type ProbeGeneration,
+  probeTarget,
+} from "./witness";
 
 const RUNTIME = resolve(import.meta.dir, "..", "project", "probe", "runtime.ts");
 const OPTION_FIXTURE = resolve(import.meta.dir, "option-form-fixture.d.ts");
@@ -105,6 +111,60 @@ describe("witness generation", () => {
       }
     }
     expect(problems).toEqual([]);
+  });
+});
+
+describe("witnesses the engine refuses without a real resource or state", () => {
+  // A raise-expecting call at the slot under test replaces it on purpose.
+  const callsKeeping = (name: (fqn: string) => boolean, slots: readonly number[]) =>
+    v2.calls.filter(
+      (call) =>
+        name(call.name) &&
+        call.call.startsWith(`${call.name}(`) &&
+        !(call.witness?.expect === "raise" && slots.includes(call.witness.slot)),
+    );
+  const offenders = (calls: readonly ProbeCall[], ok: (text: string) => boolean) =>
+    calls.filter((call) => !ok(call.call)).map((call) => `${call.variant}: ${call.call}`);
+
+  test("gui.set_size receives a fresh manual-size box node, which LuaSetSize needs to read the size", () => {
+    const calls = callsKeeping((fqn) => fqn === "gui.set_size", [1]);
+    expect(calls.map((call) => call.variant)).toContain("negative-2");
+    const slot1 =
+      /^gui\.set_size\(\(\(\) => \{ const (\w+) = gui\.new_box_node\(.*gui\.set_size_mode\(\1, gui\.SIZE_MODE_MANUAL\); return \1; \}\)\(\)/;
+    expect(offenders(calls, (text) => slot1.test(text))).toEqual([]);
+    expect(offenders(calls, (text) => !text.includes('gui.get_node("box")'))).toEqual([]);
+  });
+
+  test("render.render_target always gets a parameters table with a color attachment", () => {
+    const calls = callsKeeping((fqn) => fqn === "render.render_target", [1, 2]);
+    expect(calls.map((call) => call.variant)).toEqual(
+      expect.arrayContaining(["overload1-required", "overload2-required"]),
+    );
+    const empty = /^render\.render_target\((?:"[^"]*", )?\{\}\)$/;
+    expect(
+      offenders(
+        calls,
+        (text) => text.includes("[graphics.BUFFER_TYPE_COLOR0_BIT]: {") && !empty.test(text),
+      ),
+    ).toEqual([]);
+  });
+
+  test("font.set_style names the default font in slot 1 and passes opening-only markup in slot 3", () => {
+    const calls = callsKeeping((fqn) => fqn === "font.set_style", [1]);
+    expect(calls.length).toBeGreaterThan(0);
+    const slot1 = /^font\.set_style\((?:hash\()?"\/builtins\/fonts\/default\.fontc"/;
+    expect(offenders(calls, (text) => slot1.test(text))).toEqual([]);
+    const slot3 = /, "(?:<[^/>][^>]*>)+"\)$/;
+    const markup = callsKeeping((fqn) => fqn === "font.set_style", [3]);
+    expect(markup.length).toBeGreaterThan(0);
+    expect(offenders(markup, (text) => slot3.test(text))).toEqual([]);
+  });
+
+  test("every material function names the probe material in slot 1", () => {
+    const calls = callsKeeping((fqn) => fqn.startsWith("material."), [1]);
+    expect(new Set(calls.map((call) => call.name)).size).toBeGreaterThan(1);
+    const slot1 = /^material\.\w+\((?:hash\()?"\/main\/probe\.materialc"/;
+    expect(offenders(calls, (text) => slot1.test(text))).toEqual([]);
   });
 });
 

@@ -164,9 +164,7 @@ export const CONDITIONAL_CONSTANTS: Readonly<Record<string, string>> = {
 
 // Documented namespaces whose module the stock engine does not link, keyed by
 // namespace root with the reason: none of their constants is registered.
-export const ABSENT_MODULES: Readonly<Record<string, string>> = {
-  material: "the stock engine does not link the material module, so the `material` global is nil",
-};
+export const ABSENT_MODULES: Readonly<Record<string, string>> = {};
 
 export function isBox2D(namespace: string): boolean {
   return namespace === "b2d" || namespace.startsWith("b2d.");
@@ -326,6 +324,9 @@ const TEXTURE_PARAMS =
 const TEXTURE_BUFFER =
   'buffer.create(16 * 16, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_UINT8, count: 4 }])';
 const CAPSULE = "{ center1: vmath.vector3(0, 0, 0), center2: vmath.vector3(0, 16, 0), radius: 4 }";
+// The engine refuses a render target with no attachment.
+const RENDER_TARGET_PARAMS =
+  "{ [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA!, width: 16, height: 16 } }";
 
 // Slots whose witness must name a real resource: `<ns.fn>:<slot>`,
 // `<ns.fn>:overload<n>:<slot>` (one signature of several, which wins over the
@@ -370,6 +371,10 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "gui.set_particlefx:1": 'gui.get_node("particlefx")',
   "gui.set_perimeter_vertices:1": 'gui.get_node("pie")',
   "gui.set_perimeter_vertices:2": "4",
+  // LuaSetSize returns before reading the size of a node that is not
+  // manual-sized, and the shared box's mode is whatever earlier calls left.
+  "gui.set_size:1":
+    "(() => { const node = gui.new_box_node(vmath.vector3(), vmath.vector3(1, 1, 0)); gui.set_size_mode(node, gui.SIZE_MODE_MANUAL); return node; })()",
   "physics.create_joint:3": 'fresh("joint")',
   "physics.create_joint:5": "PEER_COLLISION",
   "physics.destroy_joint:2": '"doomed"',
@@ -396,7 +401,14 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "font.get_info:1": FONT,
   "font.prewarm_text:1": FONT,
   "font.remove_font:1": FONT,
+  // The binding fails to get a font resource no path names.
+  "font.set_style:1": FONT,
+  // The style is opening-only rich-text markup; any other text is invalid.
+  "font.set_style:3": '"<color=#66b3ff>"',
   "json.decode:1": '"{}"',
+  // CheckResource finds only a loaded resource; the tinted sprite and the probe
+  // gui load this material.
+  "material.*:1": '"/main/probe.materialc"',
   "model.get_mesh_enabled:2": '"Cube"',
   "model.set_mesh_enabled:2": '"Cube"',
   "profiler.view_recorded_frame:1": "{ frame: 0 }",
@@ -404,6 +416,8 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   // render command enables or disables it; every backend applies blending.
   "render.enable_state:1": "graphics.STATE_BLEND",
   "render.disable_state:1": "graphics.STATE_BLEND",
+  "render.render_target:overload1:1": RENDER_TARGET_PARAMS,
+  "render.render_target:overload2:2": RENDER_TARGET_PARAMS,
   "resource.create_atlas:1": 'fresh("/probe_atlas", ".texturesetc")',
   "resource.create_buffer:1": 'fresh("/probe_buffer", ".bufferc")',
   "resource.create_sound_data:1": 'fresh("/probe_sound", ".wavc")',
@@ -446,8 +460,7 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
 const DOOMED_JOINT =
   'physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "doomed", vmath.vector3(), PEER_COLLISION, vmath.vector3())';
 
-const RENDER_TARGET =
-  'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA!, width: 16, height: 16 } })';
+const RENDER_TARGET = `render.render_target("probe", ${RENDER_TARGET_PARAMS})`;
 
 // The value an accepted-witness call passes for each kind a binding reads. A url,
 // a buffer or an engine handle only means something for its slot, so those

@@ -575,12 +575,8 @@ describe("parseExemptions", () => {
     return () => parseExemptions(JSON.stringify({ [key]: entry }));
   }
 
-  test.each([
-    "b2d.shape.SHAPE_TYPE_CAPSULE:constant",
-    "b2d.joint.JOINT_TYPE_GEAR:constant@v3",
-    "material.CONSTANT_TYPE_VIEW:constant",
-  ])(
-    "accepts an engine error for %s, which a Box2D backend or unlinked module leaves absent",
+  test.each(["b2d.shape.SHAPE_TYPE_CAPSULE:constant", "b2d.joint.JOINT_TYPE_GEAR:constant@v3"])(
+    "accepts an engine error for %s, which the other Box2D backend leaves absent",
     (key) => {
       expect(parseExemptions(JSON.stringify({ [key]: valid }))).toEqual({ [key]: valid });
     },
@@ -590,6 +586,7 @@ describe("parseExemptions", () => {
     "gui.PIVOT_N:constant",
     "render.RENDER_TARGET_DEFAULT:constant",
     "graphics.TEXTURE_FORMAT_RGB16F:constant",
+    "material.CONSTANT_TYPE_VIEW:constant",
   ])("rejects an exemption for the ordinary constant %s, naming its key", (key) => {
     expect(parseKey(key)).toThrow(ExemptionValidationError);
     expect(parseKey(key)).toThrow(key);

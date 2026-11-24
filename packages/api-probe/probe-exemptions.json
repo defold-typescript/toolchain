@@ -154,6 +154,16 @@
     "verdict": "accepted",
     "reason": "the witness is a friction joint, and the Box2D v3 binding cannot create one"
   },
+  "b2d.shape.ShapeType:distinct": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "script_box2d_shape_v2.cpp defines SHAPE_TYPE_BOX = b2Shape::e_polygon and registers it beside SHAPE_TYPE_POLYGON (b2Shape::e_polygon), so both read 2: the box is the polygon type with the hx/hy convenience format"
+  },
+  "b2d.shape.ShapeType:distinct@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "script_box2d_shape_v3.cpp registers SHAPE_TYPE_BOX beside SHAPE_TYPE_POLYGON (b2_polygonShape), and the run reads both as 3: the box is the polygon type with the hx/hy convenience format"
+  },
   "b2d.shape.SHAPE_TYPE_CAPSULE:constant": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -589,6 +599,11 @@
     "verdict": "accepted",
     "reason": "script_msg.cpp ResolveURL resolves a nil url to the calling script component, and gameobject_script.cpp Script_CancelAnimations raises for a key that script does not declare; the declaration leaves the calling script's catalog open, as for \"#\", and the probe script declares no position property"
   },
+  "gui.Anchor:distinct": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "gui_script.cpp registers ANCHOR_LEFT and ANCHOR_RIGHT from the x-anchor enum (XANCHOR_LEFT, XANCHOR_RIGHT) and ANCHOR_TOP and ANCHOR_BOTTOM from the y-anchor enum (YANCHOR_TOP, YANCHOR_BOTTOM), so values repeat across the two; gui.set_xanchor and gui.set_yanchor each check only their own enum"
+  },
   "gui.animate:negative-7": {
     "outcome": "ok",
     "verdict": "accepted",
@@ -629,135 +644,15 @@
     "verdict": "accepted",
     "reason": "the witness buffer is not ASTC data, and the probe project ships no .astc file"
   },
-  "label.get_text:accepted-1-hash": {
+  "label.get_layout_objects:accepted-1-hash": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
-  "material.CONSTANT_TYPE_NORMAL:constant": {
+  "label.get_text:accepted-1-hash": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_PROJECTION:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_PROJECTION_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_TEXTURE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_TIME:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_USER:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_USER_MATRIX4:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_VIEW:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_VIEWPROJ:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_VIEW_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLD:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLDVIEW:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLDVIEWPROJ:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.CONSTANT_TYPE_WORLD_INVERSE:constant": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.get_constants:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.get_samplers:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.get_textures:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.get_vertex_attributes:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.set_constants:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.set_samplers:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.set_textures:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
-  },
-  "material.set_vertex_attributes:required": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "model.get_aabb:accepted-1-hash": {
     "outcome": "engine-error",
