@@ -17,6 +17,7 @@ import {
   REST_ERASED,
   REST_ERASED_BY_ORDER,
   REST_KEPT,
+  REST_KEPT_BY_BUILTIN,
   REST_KEPT_BY_ORDER,
 } from "./lua-global-shadows.test-support";
 import type { TranspileDiagnostic } from "./project-output";
@@ -436,12 +437,27 @@ describe('"global-shadows": "error" at every scope', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  test("reports a rest parameter whose spread a `hasOwnProperty` call reaches after its receiver reads a function declared further down", () => {
+    const result = transpileProject({
+      files: { "kept-builtin.ts": REST_KEPT_BY_BUILTIN },
+      globalShadows: "error",
+    });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("kept-builtin.ts", REST_KEPT_BY_BUILTIN, [
+        ["...", "select", "local"],
+        ["...", "next", "local"],
+        ["...", "msg", "local"],
+      ]),
+    );
+  });
+
   test.each([
     ["scopes.ts", SCOPES],
     ["exported.ts", EXPORTED],
     ["heritage.ts", HERITAGE],
     ["kept.ts", REST_KEPT],
     ["kept-order.ts", REST_KEPT_BY_ORDER],
+    ["kept-builtin.ts", REST_KEPT_BY_BUILTIN],
   ])('reports nothing in %s under "warn"', (file, source) => {
     const result = transpileProject({ files: { [file]: source } });
     expect(result.diagnostics).toEqual([]);

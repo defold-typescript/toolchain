@@ -299,10 +299,22 @@ function isLengthMember(node: ts.Expression): boolean {
   );
 }
 
+// Whether TypeScript-to-Lua lowers `call` to `rawget`, by the called member's
+// name alone (`tryTransformObjectPrototypeCall` in `builtins/object.js`).
+function callsHasOwnProperty(call: ts.CallExpression): boolean {
+  let callee: ts.Node = call.expression;
+  while (isOuterExpression(callee)) {
+    callee = callee.expression;
+  }
+  return ts.isPropertyAccessExpression(callee) && callee.name.text === "hasOwnProperty";
+}
+
 // The children of `node` in the order TypeScript-to-Lua transforms them.
 function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
   if (ts.isCallExpression(node)) {
-    return [...node.arguments, node.expression];
+    return callsHasOwnProperty(node)
+      ? [node.expression, ...node.arguments]
+      : [...node.arguments, node.expression];
   }
   if (
     ts.isBinaryExpression(node) &&
@@ -323,7 +335,8 @@ function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
 // `.`, or object key. That order is the source's except for calls and
 // assignments. A call's arguments come before the function it calls
 // (`transformCallAndArguments` and `transformContextualCallExpression` in
-// `visitors/call.js`, `transformOptionalChain`), and an assignment's right
+// `visitors/call.js`, `transformOptionalChain`), except a `hasOwnProperty`
+// call's receiver, which comes first, and an assignment's right
 // side before its left (`transformAssignmentStatement` and
 // `transformAssignmentExpression` in `visitors/binary-expression/assignments.js`),
 // except an assignment to a `length` member inside an expression, which keeps
@@ -356,8 +369,17 @@ function valueIdentifiers(body: ts.Node): ts.Identifier[] {
   return found;
 }
 
+type OuterExpression =
+  | ts.ParenthesizedExpression
+  | ts.TypeAssertion
+  | ts.AsExpression
+  | ts.SatisfiesExpression
+  | ts.ExpressionWithTypeArguments
+  | ts.NonNullExpression
+  | ts.PartiallyEmittedExpression;
+
 // TypeScript's own `isOuterExpression`, which its typings leave out.
-function isOuterExpression(node: ts.Node): boolean {
+function isOuterExpression(node: ts.Node): node is OuterExpression {
   return (
     ts.isParenthesizedExpression(node) ||
     ts.isTypeAssertionExpression(node) ||

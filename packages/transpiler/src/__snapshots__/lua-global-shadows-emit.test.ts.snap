@@ -295,6 +295,68 @@ function ____exports.h(...)
         later(...)
     end
 end
+function ____exports.m(...)
+    local later
+    function later()
+        return {check = function(____, ...) return print(...) end}
+    end
+    later():check(...)
+end
+function ____exports.n(...)
+    local later
+    function later()
+        return {}
+    end
+    local ____self_2 = later()
+    ____self_2.hasOwnProperty(____self_2, #({...}))
+end
+return ____exports
+"
+`;
+
+exports[`the rest kept by builtin fixture's emit 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.f(...)
+    local select = {...}
+    local later
+    function later()
+        return {}
+    end
+    local ____ = rawget(
+        later(),
+        #({unpack(select)})
+    ) ~= nil
+    return select(
+        2,
+        string.find("hi", "i")
+    )
+end
+function ____exports.g(...)
+    local next = {...}
+    local later
+    function later()
+        return {}
+    end
+    local ____opt_0 = later()
+    if ____opt_0 ~= nil then
+        local ____ = rawget(
+            later(),
+            #({unpack(next)})
+        ) ~= nil
+    end
+end
+function ____exports.k(...)
+    local msg = {...}
+    local later
+    function later()
+        return {hasOwnProperty = function(____, n) return n > 0 end}
+    end
+    local ____ = rawget(
+        later(),
+        #({unpack(msg)})
+    ) ~= nil
+end
 return ____exports
 "
 `;
