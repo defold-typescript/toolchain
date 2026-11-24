@@ -28,6 +28,7 @@ import {
   pruneLegacyRuntimeOutputs,
   pruneUnusedRuntimeOutputs,
   readBuildConfig,
+  readGlobalShadows,
   retargetLibrarySourceMap,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
@@ -136,11 +137,13 @@ export interface BuildSession {
 export function createBuildSession(opts: CreateBuildSessionOptions): BuildSession {
   const { cwd } = opts;
   const config: BuildConfig = readBuildConfig(cwd);
+  const globalShadows = readGlobalShadows(cwd);
   // Replaced on every full rebuild, before the session reads it. `applyEvents`
   // never re-reads the resolved declarations, so it keeps the last marks.
   let runtimeOnly: ReadonlySet<string> = new Set();
   const session: TranspileSession = createTranspileSession({
     isRuntimeOnly: (name) => runtimeOnly.has(name),
+    globalShadows,
   });
 
   // The whole program's source text, carried across rebuilds. `applyEvents`

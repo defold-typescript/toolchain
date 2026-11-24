@@ -543,6 +543,34 @@ describe("createBuildSession", () => {
     expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).toContain("2");
   });
 
+  test('under "global-shadows": "error" the first build fails at the shadow and the session stays usable', () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(
+      cwd,
+      "package.json",
+      JSON.stringify({ "defold-typescript": { "global-shadows": "error" } }),
+    );
+    writeIn(cwd, "src/main.ts", SHADOWING_SCRIPT);
+
+    const session = createBuildSession({ cwd });
+    let thrown: unknown;
+    try {
+      session.buildAll();
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    expect((thrown as BuildFailureError).entries).toEqual([
+      { file: "src/main.ts", line: 3, column: 10, message: luaGlobalShadowMessage("next") },
+    ]);
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(false);
+
+    writeIn(cwd, "src/main.ts", SHADOWING_SCRIPT.replaceAll("next", "step"));
+    const result = session.applyEvents(["src/main.ts"], []);
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(result.warnings).toEqual([]);
+  });
+
   test("a type error in a changed file throws the build-shaped error and the session stays usable", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/main.ts", MAIN_NO_IMPORT);

@@ -2,7 +2,7 @@ import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
 import { findMissingJsGlobals } from "./js-runtime-globals";
 import { createLifecycleErasure } from "./lifecycle-erasure";
-import { findLuaGlobalShadows } from "./lua-global-shadows";
+import { findLuaGlobalShadows, type GlobalShadowsMode } from "./lua-global-shadows";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
@@ -36,10 +36,12 @@ function isAmbient(fileName: string): boolean {
 // and its Lua global shadow scan against an already-open `ts.Program` (e.g. the
 // editor's), returning the raw, span-bearing diagnostics so a squiggle can land
 // on the offending source. Restricts to `sourceFile` when given and drops
-// diagnostics on lib/`node_modules` ambients.
+// diagnostics on lib/`node_modules` ambients. `globalShadows` picks the shadow
+// scan's category, as it does for the build.
 export function getProgramDiagnostics(
   program: ts.Program,
   sourceFile?: ts.SourceFile,
+  options: { readonly globalShadows?: GlobalShadowsMode } = {},
 ): ts.Diagnostic[] {
   const { diagnostics } = tstl.getProgramTranspileResult(ts.sys, noopWriteFile, {
     program,
@@ -52,6 +54,6 @@ export function getProgramDiagnostics(
   return [
     ...diagnostics.filter((d) => d.file !== undefined && !isAmbient(d.file.fileName)),
     ...scanned.flatMap((s) => findMissingJsGlobals(program, s)),
-    ...scanned.flatMap((s) => findLuaGlobalShadows(program, s)),
+    ...scanned.flatMap((s) => findLuaGlobalShadows(program, s, options.globalShadows)),
   ];
 }

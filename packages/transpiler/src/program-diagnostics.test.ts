@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
 import { missingJsGlobalMessage } from "./js-runtime-globals";
-import { luaGlobalShadowMessage } from "./lua-global-shadows";
+import { LUA_GLOBAL_SHADOW_CODE, luaGlobalShadowMessage } from "./lua-global-shadows";
 import { getProgramDiagnostics } from "./program-diagnostics";
 import { createTranspileSession } from "./session";
 import { transpileProject } from "./transpile";
@@ -198,6 +198,34 @@ describe("getProgramDiagnostics", () => {
     expect(shadows[0]?.length).toBe("next".length);
     expect(flatten(shadows[0]?.messageText ?? "")).toBe(luaGlobalShadowMessage("next"));
   });
+
+  test.each([
+    ["no options", undefined, ts.DiagnosticCategory.Warning],
+    ['"error"', { globalShadows: "error" as const }, ts.DiagnosticCategory.Error],
+  ])(
+    "reports a file-level shadow under %s with its category and code",
+    (_case, options, category) => {
+      const source =
+        "function next(): void {}\nexport function n(next: number): number { return next; }\n";
+      const program = programFor(source);
+      const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"), options);
+      expect(
+        diagnostics.map((d) => ({
+          start: d.start,
+          category: d.category,
+          code: d.code,
+          message: flatten(d.messageText),
+        })),
+      ).toEqual([
+        {
+          start: source.indexOf("next"),
+          category,
+          code: LUA_GLOBAL_SHADOW_CODE,
+          message: luaGlobalShadowMessage("next"),
+        },
+      ]);
+    },
+  );
 
   test("does not warn on an exported name that matches a Lua global", () => {
     const program = programFor("export function next(): void {}\n");

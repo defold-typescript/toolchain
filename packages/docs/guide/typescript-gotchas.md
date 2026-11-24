@@ -31,7 +31,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
-- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, and the fix is a rename.
+- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, or fails under `"global-shadows": "error"`, and the fix is a rename.
 - [JavaScript globals Defold's Lua lacks fail the build](#javascript-globals-defolds-lua-lacks-fail-the-build) — `JSON`, `Date`, `RegExp` and `encodeURIComponent` type-check but compile to a `nil` Lua global; use `json.encode`, `os.time` or Lua patterns instead.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
 
@@ -755,7 +755,7 @@ The second line compiles to `select(2, string.find("hello", "l"))`, which calls 
 
 **Why.** A top-level name you do not export compiles to a Lua `local` that covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, or an import binding the file reads as a value. TypeScriptToLua renames such a local only when it clashes with a short list of its own (`print`, `type`, `pairs`, `tostring`, `require` and a few more). `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...) keep their names, so the local hides the global for the rest of the file, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
 
-**What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Nothing warns for:
+**What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Set [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build) in `package.json` to make the build fail on it instead. Nothing warns for:
 
 - an exported name, which TypeScriptToLua keeps on the module table;
 - a name inside a function body, which hides the global only inside that function, as it does in TypeScript;
@@ -765,7 +765,7 @@ The second line compiles to `select(2, string.find("hello", "l"))`, which calls 
 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.
 
-**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print.
+**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failure under `"global-shadows": "error"`.
 
 ## JavaScript globals Defold's Lua lacks fail the build
 

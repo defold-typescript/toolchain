@@ -1,3 +1,4 @@
+import type { GlobalShadowsMode } from "./lua-global-shadows";
 import type { TranspileProjectResult } from "./project-output";
 import { createTranspileSession } from "./session";
 
@@ -9,6 +10,7 @@ export interface TranspileResult {
 
 export interface TranspileProjectInput {
   readonly files: Readonly<Record<string, string>>;
+  readonly globalShadows?: GlobalShadowsMode;
 }
 
 /**
@@ -16,7 +18,9 @@ export interface TranspileProjectInput {
  * every entry point checks a source against the same surface.
  */
 export function transpileProject(input: TranspileProjectInput): TranspileProjectResult {
-  return createTranspileSession().update(input.files);
+  return createTranspileSession(
+    input.globalShadows === undefined ? {} : { globalShadows: input.globalShadows },
+  ).update(input.files);
 }
 
 export function transpile(source: string): TranspileResult {

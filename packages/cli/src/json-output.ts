@@ -63,6 +63,9 @@ export interface RenderResultInput {
   readonly written?: readonly string[];
   readonly operations?: readonly InitOperation[];
   readonly error?: string;
+  // `build` only: every located transpile failure behind `error`, the same
+  // entries `watch` reports.
+  readonly errors?: readonly WatchErrorEntry[];
   readonly defoldVersion?: string;
   readonly defoldVersionSource?: string;
   readonly defoldChannel?: string | null;
@@ -187,8 +190,11 @@ export function renderResult(input: RenderResultInput): string {
   const base = ok
     ? { command: input.command, ok, written: input.written ?? [] }
     : { command: input.command, ok, error: input.error };
+  const withErrors = "errors" in input ? { ...base, errors: input.errors } : base;
   const withVersion =
-    input.defoldVersion === undefined ? base : { ...base, defoldVersion: input.defoldVersion };
+    input.defoldVersion === undefined
+      ? withErrors
+      : { ...withErrors, defoldVersion: input.defoldVersion };
   const withVersionSource =
     "defoldVersionSource" in input
       ? { ...withVersion, defoldVersionSource: input.defoldVersionSource }

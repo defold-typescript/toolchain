@@ -61,7 +61,12 @@ export {
   readLibrarySceneDocuments,
   rewriteGameProjectDependency,
 } from "./library-dependencies";
-export { luaGlobalShadowMessage } from "./lua-global-shadows";
+export {
+  type GlobalShadowsMode,
+  LUA_GLOBAL_SHADOW_CODE,
+  luaGlobalShadowMessage,
+  readGlobalShadowsSetting,
+} from "./lua-global-shadows";
 export { scanEmittedRequires } from "./lua-require-scan";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";

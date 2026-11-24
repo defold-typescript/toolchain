@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { luaGlobalShadowMessage, readGlobalShadowsSetting } from "./lua-global-shadows";
 import type { TranspileDiagnostic } from "./project-output";
 import { transpileProject } from "./transpile";
 
@@ -172,5 +173,66 @@ describe("file-level Lua global shadow warning", () => {
     const warnings = warningsIn(result.diagnostics, "helper.ts");
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject(positionOf(helper, "function ", "next"));
+  });
+});
+
+// One file-level shadow (`next`, line 1 column 10) beside names that hide a
+// global only inside a function or sit on the module table.
+const PROBE = [
+  "function next(n: number): number { return n + 1; }",
+  "export function select(n: number): number { return n + 2; }",
+  "export function withParam(rawget: number): number { return rawget + next(1); }",
+  "export function withLocal(): number { const unpack = 3; return unpack; }",
+  "export function paramNext(next: number): number { return next + 1; }",
+  "export function innerSelect(): number {",
+  "  const select = 4;",
+  "  function pairs(n: number): number { return n; }",
+  "  return select + pairs(1);",
+  "}",
+  "",
+].join("\n");
+
+describe("readGlobalShadowsSetting", () => {
+  test.each([
+    ["no package.json", undefined],
+    ["a package with no namespace", { name: "game" }],
+    ["a namespace without the key", { "defold-typescript": { "runtime-dir": "lib/rt" } }],
+    ['"warn"', { "defold-typescript": { "global-shadows": "warn" } }],
+  ])("reads %s as warn", (_case, pkg) => {
+    expect(readGlobalShadowsSetting(pkg)).toBe("warn");
+  });
+
+  test('reads "error" as error', () => {
+    expect(readGlobalShadowsSetting({ "defold-typescript": { "global-shadows": "error" } })).toBe(
+      "error",
+    );
+  });
+
+  test.each([true, "Error", 1])(
+    "rejects %p, naming the setting and both accepted values",
+    (value) => {
+      expect(() =>
+        readGlobalShadowsSetting({ "defold-typescript": { "global-shadows": value } }),
+      ).toThrow(
+        `package.json "defold-typescript"."global-shadows" is ${JSON.stringify(value)}; it must be "warn" or "error".`,
+      );
+    },
+  );
+});
+
+describe("global-shadows mode", () => {
+  const shadow = { file: "probe.ts", line: 1, column: 10, message: luaGlobalShadowMessage("next") };
+
+  test('"error" reports the file-level shadow as a failure', () => {
+    const result = transpileProject({ files: { "probe.ts": PROBE }, globalShadows: "error" });
+    expect(result.diagnostics).toEqual([shadow]);
+  });
+
+  test.each([
+    ["no setting", {}],
+    ['"warn"', { globalShadows: "warn" as const }],
+  ])("%s reports the file-level shadow as a warning", (_case, mode) => {
+    const result = transpileProject({ files: { "probe.ts": PROBE }, ...mode });
+    expect(result.diagnostics).toEqual([{ ...shadow, category: "warning" }]);
   });
 });

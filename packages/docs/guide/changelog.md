@@ -9,6 +9,17 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.70.0
+
+> Summary:
+>
+> - **Hidden globals can fail the build** ([Build](./build.md#make-a-hidden-global-fail-the-build)).
+
+### Improved
+
+- **`"global-shadows": "error"` in `package.json` makes a top-level name that hides a Lua or Defold global fail the build:** `build` and `watch` report it at its file, line and column and write nothing, and the editor marks it as an error rather than a hint ([Make a hidden global fail the build](./build.md#make-a-hidden-global-fail-the-build)).
+- **A failed `build --json` lists each located transpile failure in an `errors` array** with its `file`, `line`, `column` and `message`, as `watch --json` does ([Fix the Lua output](./agent-runbooks.md#fix-the-lua-output)).
+
 ## v0.69.0
 
 > Summary:

@@ -2949,6 +2949,95 @@ describe("runBuild reports addresses naming a foreign world", () => {
   });
 });
 
+describe('package.json "global-shadows"', () => {
+  // One file-level shadow (`next`, line 1 column 10) beside names that hide a
+  // global only inside a function or sit on the module table.
+  const PROBE = [
+    "function next(n: number): number { return n + 1; }",
+    "export function select(n: number): number { return n + 2; }",
+    "export function withParam(rawget: number): number { return rawget + next(1); }",
+    "export function withLocal(): number { const unpack = 3; return unpack; }",
+    "export function paramNext(next: number): number { return next + 1; }",
+    "export function innerSelect(): number {",
+    "  const select = 4;",
+    "  function pairs(n: number): number { return n; }",
+    "  return select + pairs(1);",
+    "}",
+    "",
+  ].join("\n");
+
+  function scaffold(setting?: unknown): void {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/probe.ts", PROBE);
+    if (setting !== undefined) {
+      writeFile(
+        "package.json",
+        JSON.stringify({ "defold-typescript": { "global-shadows": setting } }),
+      );
+    }
+  }
+
+  async function buildJson(): Promise<{ code: number; payload: Record<string, unknown> }> {
+    const { io, out } = captureStreams();
+    const code = await dispatch(["build", "--json", cwd], io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+    return { code, payload: JSON.parse(out()) as Record<string, unknown> };
+  }
+
+  test.each([
+    ["no setting", undefined],
+    ['"warn"', "warn"],
+  ])("%s warns at the shadow and writes the output", async (_case, setting) => {
+    scaffold(setting);
+
+    const { code, payload } = await buildJson();
+
+    expect(code).toBe(0);
+    expect(payload.ok).toBe(true);
+    expect(payload.warnings).toEqual([`src/probe.ts:1:10: ${luaGlobalShadowMessage("next")}`]);
+    expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(true);
+  });
+
+  test('"error" fails at the shadow, lists it in `errors`, and writes nothing', async () => {
+    scaffold("error");
+
+    const { code, payload } = await buildJson();
+
+    expect(code).toBe(1);
+    expect(payload.ok).toBe(false);
+    expect(payload.errors).toEqual([
+      { file: "src/probe.ts", line: 1, column: 10, message: luaGlobalShadowMessage("next") },
+    ]);
+    expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
+  });
+
+  test('"error" without --json prints the located failure and exits 1', async () => {
+    scaffold("error");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain(`src/probe.ts:1:10: ${luaGlobalShadowMessage("next")}`);
+    expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
+  });
+
+  test("an unknown value fails naming the setting and writes nothing", async () => {
+    scaffold("loud");
+
+    const { code, payload } = await buildJson();
+
+    expect(code).toBe(1);
+    expect(payload.error).toContain(
+      'package.json "defold-typescript"."global-shadows" is "loud"; it must be "warn" or "error".',
+    );
+    expect(existsSync(path.join(cwd, "src/probe.lua"))).toBe(false);
+  });
+});
+
 describe("runBuild reports transpile advisories", () => {
   test("a file-level local that hides a Lua global warns at its name and still builds", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
