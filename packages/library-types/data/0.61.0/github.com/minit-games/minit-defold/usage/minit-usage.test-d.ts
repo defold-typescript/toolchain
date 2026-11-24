@@ -44,6 +44,11 @@ const _off: Equal<typeof off, () => void> = true;
 void _off;
 off();
 
+minit.request_device_motion_permission((permission) => {
+  const _permission: Equal<typeof permission, "granted" | "denied" | "unsupported"> = true;
+  void _permission;
+});
+
 // Time-sorted games report seconds, and upstream takes the score as a number or a string.
 minit.report_result(42);
 minit.report_result("42.5", { flavor_text: "gg", delay: 500, user_data: "" });
@@ -54,3 +59,5 @@ minit.report_result(true);
 minit.report_result(1, { delay: "500" });
 // @ts-expect-error the callback gets whether the game is viewable
 minit.on_viewable_change((viewable: string) => print(viewable));
+// @ts-expect-error the callback is required
+minit.request_device_motion_permission();

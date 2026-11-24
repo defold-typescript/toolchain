@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.70.0
+
+> Summary:
+>
+> - **[minit](https://defold-typescript.github.io/library-data/api/github.com/minit-games/minit-defold/minit) asks for the motion sensors.**
+
+### Improved
+
+- **[minit](https://defold-typescript.github.io/library-data/api/github.com/minit-games/minit-defold/minit) moves to `v1.23.0`, adding `minit.request_device_motion_permission`,** which asks for the motion sensors on the player's next tap or click and passes its callback `"granted"`, `"denied"` or `"unsupported"`.
+
 ## v0.69.0
 
 > Summary:
