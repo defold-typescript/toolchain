@@ -65,6 +65,7 @@ export {
   type GlobalShadowsMode,
   LUA_GLOBAL_SHADOW_CODE,
   luaGlobalShadowMessage,
+  luaLocalShadowMessage,
   readGlobalShadowsSetting,
 } from "./lua-global-shadows";
 export { scanEmittedRequires } from "./lua-require-scan";

@@ -31,7 +31,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
-- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, or fails under `"global-shadows": "error"`, and the fix is a rename.
+- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported `select`, `next` or `enum go` is a Lua `local` that also catches the Lua the build generates in its scope; the build warns on file-level names, `"global-shadows": "error"` fails it on names at any scope, and the fix is a rename.
 - [JavaScript globals Defold's Lua lacks fail the build](#javascript-globals-defolds-lua-lacks-fail-the-build) — `JSON`, `Date`, `RegExp` and `encodeURIComponent` type-check but compile to a `nil` Lua global; use `json.encode`, `os.time` or Lua patterns instead.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
 
@@ -753,19 +753,27 @@ export const stop = string.find("hello", "l")[1];
 
 The second line compiles to `select(2, string.find("hello", "l"))`, which calls the helper above instead of Lua's `select`.
 
-**Why.** A top-level name you do not export compiles to a Lua `local` that covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, or an import binding the file reads as a value. TypeScriptToLua renames such a local only when it clashes with a short list of its own (`print`, `type`, `pairs`, `tostring`, `require` and a few more). `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...) keep their names, so the local hides the global for the rest of the file, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
+**Why.** A name you declare and do not export compiles to a Lua `local`. At the top of a file, that local covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, a namespace, or an import binding the file reads as a value. Inside a function, block or namespace, it covers that scope: a parameter, a `catch` or loop binding, an inner function, class or `enum`. TypeScriptToLua renames a declared name only when it is on a short list of its own, and it decides by name alone, at every position.
 
-**What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Set [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build) in `package.json` to make the build fail on it instead. Nothing warns for:
+TypeScriptToLua renames these globals wherever you declare them: `_G`, `assert`, `bit`, `coroutine`, `debug`, `error`, `ipairs`, `math`, `pairs`, `pcall`, `print`, `rawget`, `require`, `string`, `table`, `tostring`, `type`, `unpack`.
 
-- an exported name, which TypeScriptToLua keeps on the module table;
-- a name inside a function body, which hides the global only inside that function, as it does in TypeScript;
+Every other global keeps its name at every position, such as `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...). The local then hides the global in its scope, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
+
+**Why inner names count.** A name inside a function hides the global only inside that function, as it does in TypeScript, but the build writes Lua there too. With a parameter named `select`, `string.find("hello", "l")[1]` in the same function compiles to `select(2, string.find("hello", "l"))`, which calls the parameter. TypeScriptToLua also writes `next(t) == nil` for a `LuaTable` emptiness check and `setmetatable(...)` for a function that has properties, and the toolchain writes bare `hash(...)` calls for message and physics event guards and `go.property(...)` calls for script properties.
+
+**What warns.** By default, [`build`](./build.md) and [`watch`](./watch.md) warn on file-level names only: the warning names the file, line, column and name, the editor marks the name, and the build still succeeds. With [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build) in `package.json`, a name at any scope is an error that fails the build, and so is an exported class or namespace, which keeps a local alias of its export. Neither mode reports:
+
+- an exported function, `const`, `let` or `enum`, which TypeScriptToLua keeps on the module or namespace table;
+- a parameter of a signature with no body: an overload, an interface method, a function type or a `declare function`;
+- an object or class property, or a method name;
+- a named function expression that never calls itself, which compiles to an anonymous function;
 - a `const enum` or a `declare`, which emit nothing;
 - an import the build drops: one the file never reads as a value, or a `defineScript`-style factory import, which the build erases;
-- a file with no `import` or `export`, whose top-level names are globals rather than locals.
+- a top-level name in a file with no `import` or `export`, which is a global rather than a local.
 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.
 
-**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failure under `"global-shadows": "error"`.
+**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form at every scope and each exempt case, and checks the rename list above against TypeScriptToLua's own list; `packages/transpiler/src/lua-global-shadows-emit.test.ts` snapshots which names TypeScriptToLua renames and the `select(2, ...)` call; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failures under `"global-shadows": "error"`.
 
 ## JavaScript globals Defold's Lua lacks fail the build
 

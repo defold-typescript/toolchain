@@ -164,8 +164,9 @@ you ask for it.
 
 ### Make a hidden global fail the build
 
-To make a top-level name that hides a Lua or Defold global fail the build, set
-`global-shadows` to `"error"` in `package.json`:
+To make a name that hides a Lua or Defold global fail the build at any scope,
+not only at the top of a file, set `global-shadows` to `"error"` in
+`package.json`:
 
 ```json
 {
@@ -176,13 +177,15 @@ To make a top-level name that hides a Lua or Defold global fail the build, set
 ```
 
 `build` and `watch` then report each such name as an error at its file, line and
-column, and leave that file's Lua unwritten: its output from an earlier build
-stays as it was, while the other files are still written. `build --json` lists
-each one in `errors`, and the
+column: a top-level name, an exported class or namespace, and a parameter,
+binding or declaration inside a function, block or namespace, such as a
+parameter named `select`. They leave that file's Lua unwritten: its output from
+an earlier build stays as it was, while the other files are still written.
+`build --json` lists each one in `errors`, and the
 [editor plugin](./transpile-diagnostics.md#which-diagnostics-are-errors) marks
-the name as an error rather than a hint. The default, `"warn"`, keeps it a
-warning. Any other value fails `build` and `watch`, naming the setting, before
-they write anything.
+the name as an error rather than a hint. The default, `"warn"`, warns on
+top-level names only. Any other value fails `build` and `watch`, naming the
+setting, before they write anything.
 
 A full build also checks every address literal your code posts to — `msg.post`,
 `go.get`, `go.animate` and every other slot the toolchain classifies as an

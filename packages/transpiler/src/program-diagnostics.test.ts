@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import * as ts from "typescript";
 import { missingJsGlobalMessage } from "./js-runtime-globals";
-import { LUA_GLOBAL_SHADOW_CODE, luaGlobalShadowMessage } from "./lua-global-shadows";
+import {
+  LUA_GLOBAL_SHADOW_CODE,
+  luaGlobalShadowMessage,
+  luaLocalShadowMessage,
+} from "./lua-global-shadows";
 import { getProgramDiagnostics } from "./program-diagnostics";
 import { createTranspileSession } from "./session";
 import { transpileProject } from "./transpile";
@@ -199,15 +203,22 @@ describe("getProgramDiagnostics", () => {
     expect(flatten(shadows[0]?.messageText ?? "")).toBe(luaGlobalShadowMessage("next"));
   });
 
+  const PARAM_SOURCE =
+    "function next(): void {}\nexport function n(next: number): number { return next; }\n";
+  const PARAM_START = PARAM_SOURCE.indexOf("n(next") + "n(".length;
+
   test.each([
-    ["no options", undefined, ts.DiagnosticCategory.Warning],
-    ['"error"', { globalShadows: "error" as const }, ts.DiagnosticCategory.Error],
+    ["no options", undefined, ts.DiagnosticCategory.Warning, []],
+    [
+      '"error"',
+      { globalShadows: "error" as const },
+      ts.DiagnosticCategory.Error,
+      [{ start: PARAM_START, message: luaLocalShadowMessage("next") }],
+    ],
   ])(
-    "reports a file-level shadow under %s with its category and code",
-    (_case, options, category) => {
-      const source =
-        "function next(): void {}\nexport function n(next: number): number { return next; }\n";
-      const program = programFor(source);
+    "reports the shadows under %s with their category and code",
+    (_case, options, category, inner) => {
+      const program = programFor(PARAM_SOURCE);
       const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"), options);
       expect(
         diagnostics.map((d) => ({
@@ -216,14 +227,12 @@ describe("getProgramDiagnostics", () => {
           code: d.code,
           message: flatten(d.messageText),
         })),
-      ).toEqual([
-        {
-          start: source.indexOf("next"),
-          category,
-          code: LUA_GLOBAL_SHADOW_CODE,
-          message: luaGlobalShadowMessage("next"),
-        },
-      ]);
+      ).toEqual(
+        [
+          { start: PARAM_SOURCE.indexOf("next"), message: luaGlobalShadowMessage("next") },
+          ...inner,
+        ].map((d) => ({ ...d, category, code: LUA_GLOBAL_SHADOW_CODE })),
+      );
     },
   );
 
