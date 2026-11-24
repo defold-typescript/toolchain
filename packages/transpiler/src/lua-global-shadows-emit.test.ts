@@ -6,6 +6,7 @@ import {
   REST_ERASED_BY_ORDER,
   REST_KEPT,
   REST_KEPT_BY_BUILTIN,
+  REST_KEPT_BY_EXTENSION,
   REST_KEPT_BY_ORDER,
 } from "./lua-global-shadows.test-support";
 import { transpileProject } from "./transpile";
@@ -28,6 +29,7 @@ test.each([
   ["rest kept by order", REST_KEPT_BY_ORDER],
   ["rest erased by order", REST_ERASED_BY_ORDER],
   ["rest kept by builtin", REST_KEPT_BY_BUILTIN],
+  ["rest kept by extension", REST_KEPT_BY_EXTENSION],
 ])("the %s fixture's emit", (_name, source) => {
   const result = transpileProject({ files: { "probe.ts": source } });
   expect(result.lua["probe.ts"]).toMatchSnapshot();

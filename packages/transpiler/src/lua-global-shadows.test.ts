@@ -18,6 +18,7 @@ import {
   REST_ERASED_BY_ORDER,
   REST_KEPT,
   REST_KEPT_BY_BUILTIN,
+  REST_KEPT_BY_EXTENSION,
   REST_KEPT_BY_ORDER,
 } from "./lua-global-shadows.test-support";
 import type { TranspileDiagnostic } from "./project-output";
@@ -451,6 +452,22 @@ describe('"global-shadows": "error" at every scope', () => {
     );
   });
 
+  test("reports a rest parameter whose spread a method extension call reaches after its receiver reads a function declared further down", () => {
+    const result = transpileProject({
+      files: { "kept-extension.ts": REST_KEPT_BY_EXTENSION },
+      globalShadows: "error",
+    });
+    expect(byPosition(result.diagnostics)).toEqual(
+      errorsAt("kept-extension.ts", REST_KEPT_BY_EXTENSION, [
+        ["...", "select", "local"],
+        ["...", "next", "local"],
+        ["...", "msg", "local"],
+        ["...", "sound", "local"],
+        ["...", "timer", "local"],
+      ]),
+    );
+  });
+
   test.each([
     ["scopes.ts", SCOPES],
     ["exported.ts", EXPORTED],
@@ -458,6 +475,7 @@ describe('"global-shadows": "error" at every scope', () => {
     ["kept.ts", REST_KEPT],
     ["kept-order.ts", REST_KEPT_BY_ORDER],
     ["kept-builtin.ts", REST_KEPT_BY_BUILTIN],
+    ["kept-extension.ts", REST_KEPT_BY_EXTENSION],
   ])('reports nothing in %s under "warn"', (file, source) => {
     const result = transpileProject({ files: { [file]: source } });
     expect(result.diagnostics).toEqual([]);
