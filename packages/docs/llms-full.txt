@@ -845,7 +845,7 @@ The one-line version of every trap on this page. Skim it once; jump to the full 
 - [`async`/`await` work but there is no event loop](#asyncawait-work-but-there-is-no-event-loop) — a `Promise` only advances when something resolves it synchronously; the importable `@defold-typescript/types/timers` polyfills bridge Defold's `timer.delay` so `await wait(s)` resumes on a later frame.
 - [URL addressing: same-world is relative, `socket:` crosses worlds](#url-addressing-same-world-objects-are-relative-socket-crosses-worlds) — a sibling instance is `"camera"` or `"/camera"`, a sibling component is `"#name"`; `socket:` names a target world by its collection `Name` and is reserved for crossing into a collection-proxy-loaded world.
 - [A vector's size is `v.length()`, and `url.path` can be `undefined`](#a-vectors-size-is-vlength-and-urlpath-can-be-undefined) — `v.length` raises at runtime; a socket-only URL has no `path`, so check it before use.
-- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, and the fix is a rename.
+- [A file-level name can hide a Lua or Defold global](#a-file-level-name-can-hide-a-lua-or-defold-global) — a non-exported top-level `select`, `next` or `enum go` is a file-wide Lua `local` that also catches the Lua the build generates; the build warns, or fails under `"global-shadows": "error"`, and the fix is a rename.
 - [JavaScript globals Defold's Lua lacks fail the build](#javascript-globals-defolds-lua-lacks-fail-the-build) — `JSON`, `Date`, `RegExp` and `encodeURIComponent` type-check but compile to a `nil` Lua global; use `json.encode`, `os.time` or Lua patterns instead.
 - [npm packages do not resolve](#npm-packages-do-not-resolve--vendor-the-source-instead) — the build compiles only your `include`-matched files, so `node_modules` is never read; copy the source into `src/`[^src-root] and import it relatively.
 
@@ -1569,7 +1569,7 @@ The second line compiles to `select(2, string.find("hello", "l"))`, which calls 
 
 **Why.** A top-level name you do not export compiles to a Lua `local` that covers the whole file: a function, a `const` or `let` (destructured names included), a class, an `enum`, or an import binding the file reads as a value. TypeScriptToLua renames such a local only when it clashes with a short list of its own (`print`, `type`, `pairs`, `tostring`, `require` and a few more). `next`, `select`, `tonumber`, `setmetatable` and every Defold namespace (`go`, `timer`, `label`, ...) keep their names, so the local hides the global for the rest of the file, including the Lua the build generates there. An `enum go` emits `local go = go or ({})`, which picks up the engine's `go` table and writes the enum's members into it.
 
-**What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Nothing warns for:
+**What warns.** [`build`](./build.md) and [`watch`](./watch.md) print a warning naming the file, line, column and name, and the editor marks the name; the build still succeeds. Set [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build) in `package.json` to make the build fail on it instead. Nothing warns for:
 
 - an exported name, which TypeScriptToLua keeps on the module table;
 - a name inside a function body, which hides the global only inside that function, as it does in TypeScript;
@@ -1579,7 +1579,7 @@ The second line compiles to `select(2, string.find("hello", "l"))`, which calls 
 
 **What to do instead.** Rename the declaration: `pick` instead of `select`, `Mode` instead of `go`.
 
-**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print.
+**How we pin this.** `packages/transpiler/src/lua-global-shadows.test.ts` builds each declaration form and each exempt case; `packages/cli/src/build.test.ts` and `packages/cli/src/build-session.test.ts` check the warning line `build` and `watch` print, and the failure under `"global-shadows": "error"`.
 
 #### JavaScript globals Defold's Lua lacks fail the build
 
@@ -8062,7 +8062,28 @@ transpiler's own warnings, each as `<file>:<line>:<column>: <message>`, or
 `<file>: <message>` when it has no position: a
 [direct `go.property` call](./script-lifecycle.md#why-not-call-goproperty-yourself), and a
 [top-level name that hides a Lua or Defold global](./typescript-gotchas.md#a-file-level-name-can-hide-a-lua-or-defold-global),
-such as a helper named `select` or an `enum go`. Neither fails the build.
+such as a helper named `select` or an `enum go`. Neither fails the build unless
+you ask for it.
+
+##### Make a hidden global fail the build
+
+To make a top-level name that hides a Lua or Defold global fail the build, set
+`global-shadows` to `"error"` in `package.json`:
+
+```json
+{
+  "defold-typescript": {
+    "global-shadows": "error"
+  }
+}
+```
+
+`build` and `watch` then report each such name as an error at its file, line and
+column, and write nothing. `build --json` lists each one in `errors`, and the
+[editor plugin](./transpile-diagnostics.md#which-diagnostics-are-errors) marks
+the name as an error rather than a hint. The
+default, `"warn"`, keeps it a warning. Any other value fails the build, naming
+the setting, before anything is written.
 
 A full build also checks every address literal your code posts to — `msg.post`,
 `go.get`, `go.animate` and every other slot the toolchain classifies as an
@@ -10520,7 +10541,7 @@ The panel is shown only for suggestions the plugin contributed, only when the de
 
 #### Which diagnostics are errors
 
-One kind of diagnostic the plugin appends is an `Error`: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build). Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
+The plugin appends an `Error` only for what the build fails on: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build) — and, when `package.json` sets [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build), a top-level name that hides a Lua or Defold global. The plugin reads that setting on every check, so an edit applies without restarting the editor. Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
 
 The plugin **never blocks `tsc --noEmit`** either way: a language-service plugin runs only in the editor, so a project that type-checks clean stays clean in CI with the plugin active. The build path remains the source of truth for what compiles.
 
@@ -11702,24 +11723,40 @@ and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listene
 bunx @defold-typescript/cli build --json
 ```
 
-On a transpile failure the one-shot `build --json` envelope carries the message:
+On a transpile failure the one-shot `build --json` envelope carries the message
+and an `errors` array with one entry per failing span:
 
 ```json
-{ "command": "build", "ok": false, "error": "<message>" }
+{
+  "command": "build",
+  "ok": false,
+  "error": "<message>",
+  "errors": [{ "file": "src/main.ts", "line": 3, "column": 10, "message": "<message>" }]
+}
 ```
 
 Under a long-lived `watch --json`, the same failure arrives as an NDJSON event on
-stdout (one JSON object per line) keyed `command: "watch"`:
+stdout (one JSON object per line) keyed `command: "watch"`, with the same
+`errors` array:
 
 ```json
-{ "command": "watch", "event": "rebuild", "ok": false, "error": "<message>" }
+{
+  "command": "watch",
+  "event": "rebuild",
+  "ok": false,
+  "error": "<message>",
+  "errors": [{ "file": "src/main.ts", "line": 3, "column": 10, "message": "<message>" }]
+}
 ```
 
 The first build emits `event: "build"`; each later rebuild emits
 `event: "rebuild"`. `build` and the transpile-diagnostics pass share one
-diagnostic run, so the `error` names the offending source span.
+diagnostic run, so each `errors` entry names the offending source span; an entry
+has no `line` and `column` when the failure has no position. A failure that is
+not a transpile failure, such as an invalid `package.json` setting, carries
+`error` alone.
 
-**Reading `ok`:** while `ok` is `false`, read `error` for the failing span,
+**Reading `ok`:** while `ok` is `false`, read `errors` for the failing spans,
 then fix the source and rebuild. Two pages route the fix:
 [TypeScript gotchas](./typescript-gotchas.md) for the runtime-semantics traps
 that compile clean but surprise under Lua, and

@@ -6,9 +6,11 @@ import {
   bundledModuleOfRequire,
   bundledModules,
   computeOutputRel,
+  type GlobalShadowsMode,
   HSM_LIBRARY,
   isBunTestSource,
   parseBuildConfig,
+  readGlobalShadowsSetting,
   requirePathForRel,
   type ScriptKind,
   type SourceOutputKind,
@@ -70,17 +72,21 @@ function isValidRuntimeDir(value: string): boolean {
   return value.split("/").every((segment) => segment !== "" && !segment.includes("."));
 }
 
+// The parsed `package.json`, or undefined when there is none or it does not parse.
+function readPackageJson(cwd: string): unknown {
+  try {
+    return JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * The `package.json` `"defold-typescript"."runtime-dir"` setting, or undefined
  * when there is no `package.json`, it does not parse, or it sets no folder.
  */
 export function readRuntimeDir(cwd: string): string | undefined {
-  let pkg: unknown;
-  try {
-    pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8"));
-  } catch {
-    return undefined;
-  }
+  const pkg = readPackageJson(cwd);
   if (typeof pkg !== "object" || pkg === null) {
     return undefined;
   }
@@ -95,6 +101,15 @@ export function readRuntimeDir(cwd: string): string | undefined {
     );
   }
   return value;
+}
+
+/**
+ * The `package.json` `"defold-typescript"."global-shadows"` setting, `"warn"`
+ * when there is no `package.json` or it does not parse. Throws on a value that
+ * is neither `"warn"` nor `"error"`.
+ */
+export function readGlobalShadows(cwd: string): GlobalShadowsMode {
+  return readGlobalShadowsSetting(readPackageJson(cwd));
 }
 
 // Checked on the first folder only: `src/build` is an ordinary resource folder.

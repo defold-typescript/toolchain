@@ -20,6 +20,39 @@ const LOWERED_GLOBALS: ReadonlySet<string> = new Set([
   WINDOW_EVENT_GUARD_NAME,
 ]);
 
+/**
+ * How the build treats a file-level Lua global shadow: a warning that leaves the
+ * build green, or an error that fails it.
+ */
+export type GlobalShadowsMode = "warn" | "error";
+
+/**
+ * The code every Lua global shadow diagnostic carries, so the editor can find
+ * it; the next one after `MISSING_JS_GLOBAL_CODE`.
+ */
+export const LUA_GLOBAL_SHADOW_CODE = 990_002;
+
+/**
+ * The `package.json` `"defold-typescript"."global-shadows"` setting from a
+ * parsed `package.json`, `"warn"` when it is absent. Throws on any other value.
+ */
+export function readGlobalShadowsSetting(pkg: unknown): GlobalShadowsMode {
+  if (typeof pkg !== "object" || pkg === null) {
+    return "warn";
+  }
+  const namespace = (pkg as Record<string, unknown>)["defold-typescript"];
+  if (typeof namespace !== "object" || namespace === null || !("global-shadows" in namespace)) {
+    return "warn";
+  }
+  const value = (namespace as Record<string, unknown>)["global-shadows"];
+  if (value !== "warn" && value !== "error") {
+    throw new Error(
+      `defold-typescript: package.json "defold-typescript"."global-shadows" is ${JSON.stringify(value)}; it must be "warn" or "error".`,
+    );
+  }
+  return value;
+}
+
 export function luaGlobalShadowMessage(name: string): string {
   return `\`${name}\` is a file-level Lua local that hides the global \`${name}\` throughout this file, including Lua the build generates here; rename it.`;
 }
@@ -115,13 +148,14 @@ function isLuaGlobal(program: ts.Program, checker: ts.TypeChecker, name: string)
 }
 
 /**
- * Warns on each top-level, non-exported name of `sourceFile` that emits as a
+ * Reports each top-level, non-exported name of `sourceFile` that emits as a
  * chunk-wide Lua `local` hiding a global, which TypeScript-to-Lua's own
- * safe-name set leaves unrenamed.
+ * safe-name set leaves unrenamed: a warning, or an error under `"error"`.
  */
 export function findLuaGlobalShadows(
   program: ts.Program,
   sourceFile: ts.SourceFile,
+  mode: GlobalShadowsMode = "warn",
 ): ts.Diagnostic[] {
   // A file with no import or export is a script: its top-level names are the
   // globals themselves, and they emit as global assignments, not locals.
@@ -145,8 +179,8 @@ export function findLuaGlobalShadows(
         file: sourceFile,
         start,
         length: identifier.getEnd() - start,
-        category: ts.DiagnosticCategory.Warning,
-        code: 0,
+        category: mode === "error" ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
+        code: LUA_GLOBAL_SHADOW_CODE,
         messageText: luaGlobalShadowMessage(name),
       });
     }

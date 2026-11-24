@@ -159,7 +159,28 @@ transpiler's own warnings, each as `<file>:<line>:<column>: <message>`, or
 `<file>: <message>` when it has no position: a
 [direct `go.property` call](./script-lifecycle.md#why-not-call-goproperty-yourself), and a
 [top-level name that hides a Lua or Defold global](./typescript-gotchas.md#a-file-level-name-can-hide-a-lua-or-defold-global),
-such as a helper named `select` or an `enum go`. Neither fails the build.
+such as a helper named `select` or an `enum go`. Neither fails the build unless
+you ask for it.
+
+### Make a hidden global fail the build
+
+To make a top-level name that hides a Lua or Defold global fail the build, set
+`global-shadows` to `"error"` in `package.json`:
+
+```json
+{
+  "defold-typescript": {
+    "global-shadows": "error"
+  }
+}
+```
+
+`build` and `watch` then report each such name as an error at its file, line and
+column, and write nothing. `build --json` lists each one in `errors`, and the
+[editor plugin](./transpile-diagnostics.md#which-diagnostics-are-errors) marks
+the name as an error rather than a hint. The
+default, `"warn"`, keeps it a warning. Any other value fails the build, naming
+the setting, before anything is written.
 
 A full build also checks every address literal your code posts to — `msg.post`,
 `go.get`, `go.animate` and every other slot the toolchain classifies as an

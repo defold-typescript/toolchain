@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createTranspileSession } from "@defold-typescript/transpiler";
+import { createTranspileSession, LUA_GLOBAL_SHADOW_CODE } from "@defold-typescript/transpiler";
 import ts from "typescript";
 import {
   type CompletionSetup,
@@ -314,6 +314,61 @@ describe("tstl-plugin", () => {
     expect(categoryOf(/^`next` is a file-level Lua local/)).toEqual([
       ts.DiagnosticCategory.Suggestion,
     ]);
+  });
+
+  describe('package.json "global-shadows"', () => {
+    const SHADOWING = "function next(): void {}\nexport const n = 1;\n";
+
+    function shadowCategories(packageJson?: string): ts.DiagnosticCategory[] {
+      const { service } = completionSetup({
+        source: SHADOWING,
+        base: undefined,
+        documents: packageJson === undefined ? {} : { "package.json": packageJson },
+      });
+      return service
+        .getSemanticDiagnostics("main.ts")
+        .filter((d) =>
+          /^`next` is a file-level Lua local/.test(
+            typeof d.messageText === "string" ? d.messageText : d.messageText.messageText,
+          ),
+        )
+        .map((d) => d.category);
+    }
+
+    test('"error" keeps the shadow an error, as the build fails on it', () => {
+      expect(
+        shadowCategories(JSON.stringify({ "defold-typescript": { "global-shadows": "error" } })),
+      ).toEqual([ts.DiagnosticCategory.Error]);
+    });
+
+    test.each([
+      ["no package.json", undefined],
+      ["no setting", JSON.stringify({ name: "game" })],
+      ['"warn"', JSON.stringify({ "defold-typescript": { "global-shadows": "warn" } })],
+      ["an unknown value", JSON.stringify({ "defold-typescript": { "global-shadows": "loud" } })],
+      ["an unparsable package.json", "{"],
+    ])("%s leaves the shadow advisory", (_case, packageJson) => {
+      expect(shadowCategories(packageJson)).toEqual([ts.DiagnosticCategory.Suggestion]);
+    });
+
+    test("an edit to the setting applies on the next check", () => {
+      const { service, host } = completionSetup({
+        source: SHADOWING,
+        base: undefined,
+        documents: {},
+      });
+      const categories = () =>
+        service
+          .getSemanticDiagnostics("main.ts")
+          .filter((d) => d.code === LUA_GLOBAL_SHADOW_CODE)
+          .map((d) => d.category);
+
+      expect(categories()).toEqual([ts.DiagnosticCategory.Suggestion]);
+      host.documents["package.json"] = JSON.stringify({
+        "defold-typescript": { "global-shadows": "error" },
+      });
+      expect(categories()).toEqual([ts.DiagnosticCategory.Error]);
+    });
   });
 
   test("returns exactly the base diagnostics for a clean file", () => {

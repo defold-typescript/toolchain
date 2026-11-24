@@ -20,12 +20,13 @@ import {
   isBunTestSource,
   isFragmentCaret,
   isMissingJsGlobalDiagnostic,
+  LUA_GLOBAL_SHADOW_CODE,
   PROJECT_EXTENSIONS,
   resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
-import { readBuildConfigFromHost } from "./build-config";
+import { readBuildConfigFromHost, readGlobalShadowsFromHost } from "./build-config";
 import {
   buildAddressPathCompletionEntries,
   buildSceneCompletionEntries,
@@ -360,6 +361,10 @@ export default function init(modules: { typescript: typeof import("typescript") 
         : provenancePanel(entryName, `Declared in ${declaredIn.join(", ")}`);
     };
 
+    const isFailingShadow = (diagnostic: ts.Diagnostic): boolean =>
+      diagnostic.code === LUA_GLOBAL_SHADOW_CODE &&
+      diagnostic.category === ts.DiagnosticCategory.Error;
+
     proxy.getSemanticDiagnostics = (fileName: string): ts.Diagnostic[] => {
       const prior = base.getSemanticDiagnostics(fileName);
       const program = base.getProgram();
@@ -368,14 +373,19 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!program || isBunTestSource(fileName)) {
         return prior;
       }
-      // The build fails on a missing JavaScript global, so the editor shows it as
-      // the error it is; everything else the plugin adds stays advisory, signal
+      // The build fails on a missing JavaScript global, and on a Lua global
+      // shadow under `"global-shadows": "error"`, so the editor shows each as the
+      // error it is; everything else the plugin adds stays advisory, signal
       // rather than a hard error on code the build accepts.
-      const transpiler = getProgramDiagnostics(program, program.getSourceFile(fileName)).map(
-        (diagnostic) =>
-          isMissingJsGlobalDiagnostic(diagnostic)
-            ? diagnostic
-            : { ...diagnostic, category: ts.DiagnosticCategory.Suggestion },
+      const globalShadows = serverHost?.readFile
+        ? readGlobalShadowsFromHost(serverHost, info.project.getCurrentDirectory())
+        : "warn";
+      const transpiler = getProgramDiagnostics(program, program.getSourceFile(fileName), {
+        globalShadows,
+      }).map((diagnostic) =>
+        isMissingJsGlobalDiagnostic(diagnostic) || isFailingShadow(diagnostic)
+          ? diagnostic
+          : { ...diagnostic, category: ts.DiagnosticCategory.Suggestion },
       );
       // The same advisory posture, and the same absent-cache early return the
       // completion path takes: a host that cannot enumerate files has no scene

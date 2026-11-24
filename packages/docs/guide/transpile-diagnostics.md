@@ -113,7 +113,7 @@ The panel is shown only for suggestions the plugin contributed, only when the de
 
 ## Which diagnostics are errors
 
-One kind of diagnostic the plugin appends is an `Error`: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build). Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
+The plugin appends an `Error` only for what the build fails on: a reference to a JavaScript global Defold's Lua lacks, such as `JSON`, `Date` or an instantiation like `WeakRef<object>` — see [JavaScript globals Defold's Lua lacks fail the build](./typescript-gotchas.md#javascript-globals-defolds-lua-lacks-fail-the-build) — and, when `package.json` sets [`"global-shadows": "error"`](./build.md#make-a-hidden-global-fail-the-build), a top-level name that hides a Lua or Defold global. The plugin reads that setting on every check, so an edit applies without restarting the editor. Everything else the plugin appends, including what TypeScript-to-Lua cannot lower, carries the `Suggestion` category, so the plugin never turns code the build accepts red.
 
 The plugin **never blocks `tsc --noEmit`** either way: a language-service plugin runs only in the editor, so a project that type-checks clean stays clean in CI with the plugin active. The build path remains the source of truth for what compiles.
 

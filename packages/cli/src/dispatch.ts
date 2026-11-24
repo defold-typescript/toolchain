@@ -1329,7 +1329,7 @@ function dispatchCommand(
     if (command === "build") {
       return (async (): Promise<number> => {
         const { runBuild } = await import("./build");
-        const { formatBuildLine } = await import("./build-output");
+        const { BuildFailureError, formatBuildLine } = await import("./build-output");
         const {
           ensureMaterializedReference,
           materializeApiSurface,
@@ -1501,7 +1501,13 @@ function dispatchCommand(
         const reportError = (err: unknown): number => {
           const message = err instanceof Error ? err.message : String(err);
           if (json) {
-            io.stdout.write(renderResult({ command: "build", error: message }));
+            io.stdout.write(
+              renderResult({
+                command: "build",
+                error: message,
+                ...(err instanceof BuildFailureError ? { errors: err.entries } : {}),
+              }),
+            );
           } else {
             writeError(message);
           }

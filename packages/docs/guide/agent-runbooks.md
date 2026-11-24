@@ -948,24 +948,40 @@ and the [`window.set_listener` gotcha](./typescript-gotchas.md#windowset_listene
 bunx @defold-typescript/cli build --json
 ```
 
-On a transpile failure the one-shot `build --json` envelope carries the message:
+On a transpile failure the one-shot `build --json` envelope carries the message
+and an `errors` array with one entry per failing span:
 
 ```json
-{ "command": "build", "ok": false, "error": "<message>" }
+{
+  "command": "build",
+  "ok": false,
+  "error": "<message>",
+  "errors": [{ "file": "src/main.ts", "line": 3, "column": 10, "message": "<message>" }]
+}
 ```
 
 Under a long-lived `watch --json`, the same failure arrives as an NDJSON event on
-stdout (one JSON object per line) keyed `command: "watch"`:
+stdout (one JSON object per line) keyed `command: "watch"`, with the same
+`errors` array:
 
 ```json
-{ "command": "watch", "event": "rebuild", "ok": false, "error": "<message>" }
+{
+  "command": "watch",
+  "event": "rebuild",
+  "ok": false,
+  "error": "<message>",
+  "errors": [{ "file": "src/main.ts", "line": 3, "column": 10, "message": "<message>" }]
+}
 ```
 
 The first build emits `event: "build"`; each later rebuild emits
 `event: "rebuild"`. `build` and the transpile-diagnostics pass share one
-diagnostic run, so the `error` names the offending source span.
+diagnostic run, so each `errors` entry names the offending source span; an entry
+has no `line` and `column` when the failure has no position. A failure that is
+not a transpile failure, such as an invalid `package.json` setting, carries
+`error` alone.
 
-**Reading `ok`:** while `ok` is `false`, read `error` for the failing span,
+**Reading `ok`:** while `ok` is `false`, read `errors` for the failing spans,
 then fix the source and rebuild. Two pages route the fix:
 [TypeScript gotchas](./typescript-gotchas.md) for the runtime-semantics traps
 that compile clean but surprise under Lua, and

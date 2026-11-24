@@ -23,6 +23,7 @@ import {
   pruneLegacyRuntimeOutputs,
   pruneUnusedRuntimeOutputs,
   readBuildConfig,
+  readGlobalShadows,
   retargetLibrarySourceMap,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
@@ -125,6 +126,7 @@ export interface RunBuildResult {
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const { cwd, sceneIndex, sceneObjects, scriptWorlds, defoldVersion } = opts;
   const config = readBuildConfig(cwd);
+  const globalShadows = readGlobalShadows(cwd);
 
   const sources = discoverSources(cwd, config.include);
   throwOnLinkedAlongsideSources(cwd, sources, config);
@@ -155,6 +157,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const resolved = collectResolvedDeclarations(cwd);
   const session = createTranspileSession({
     isRuntimeOnly: (name) => resolved.runtimeOnly.has(name),
+    globalShadows,
   });
   const result = session.update({ ...files, ...resolved.files });
   const failures = collectFailures(result.diagnostics);

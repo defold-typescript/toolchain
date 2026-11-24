@@ -10,7 +10,7 @@ import { findMissingJsGlobals } from "./js-runtime-globals";
 import { AMBIENT_FILES, EDITOR_AMBIENT_FILES, isEditorSideSource } from "./kind-surfaces";
 import { createLifecycleErasure, type LifecycleErasure } from "./lifecycle-erasure";
 import { LUA_COMPILE_LIB } from "./lua-compile-lib";
-import { findLuaGlobalShadows } from "./lua-global-shadows";
+import { findLuaGlobalShadows, type GlobalShadowsMode } from "./lua-global-shadows";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { nativeGlobalModulesPlugin } from "./native-global-modules";
@@ -138,6 +138,11 @@ export interface TranspileSessionOptions {
    * Called with the forward-slash form of the name.
    */
   readonly isRuntimeOnly?: (fileName: string) => boolean;
+  /**
+   * Whether a file-level Lua global shadow is a warning (the default) or a
+   * failure.
+   */
+  readonly globalShadows?: GlobalShadowsMode;
 }
 
 // Every module a file names, at any depth: `import` and `export ... from`
@@ -180,6 +185,7 @@ function moduleSpecifiers(sourceFile: ts.SourceFile): string[] {
 
 export function createTranspileSession(options: TranspileSessionOptions = {}): TranspileSession {
   const isRuntimeOnly = options.isRuntimeOnly ?? (() => false);
+  const globalShadows = options.globalShadows ?? "warn";
   const userFiles = new Map<string, string>();
   const libCache = new Map<string, ts.SourceFile>();
 
@@ -288,7 +294,7 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
 
     const userSources = [...userKeys].flatMap((name) => program.getSourceFile(name) ?? []);
     reported.push(...userSources.flatMap((s) => findMissingJsGlobals(program, s)));
-    const shadows = userSources.flatMap((s) => findLuaGlobalShadows(program, s));
+    const shadows = userSources.flatMap((s) => findLuaGlobalShadows(program, s, globalShadows));
 
     return {
       program,
@@ -399,9 +405,6 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
       ({ file }) =>
         file === undefined || !userKeys.has(file.fileName) || editorReached.has(file.fileName),
     );
-    const diagnostics = [
-      ...ts.sortAndDeduplicateDiagnostics([...editorReported, ...(runtimeEmit?.reported ?? [])]),
-    ];
     // The same chunk precedence as `files`: a file both sides emit reports the
     // runtime side's shadows.
     const editorShadows = (editorEmit?.shadows ?? []).filter(
@@ -413,6 +416,14 @@ export function createTranspileSession(options: TranspileSessionOptions = {}): T
     const shadows = [
       ...ts.sortAndDeduplicateDiagnostics([...editorShadows, ...(runtimeEmit?.shadows ?? [])]),
     ];
+    const reported = [...editorReported, ...(runtimeEmit?.reported ?? [])];
+    // Under `"error"` a shadow fails the build like any other diagnostic; else
+    // it rides the advisory channel, which marks it a warning.
+    if (globalShadows === "error") {
+      const diagnostics = [...ts.sortAndDeduplicateDiagnostics([...reported, ...shadows])];
+      return collectOutputs(files, diagnostics, userKeys, companions);
+    }
+    const diagnostics = [...ts.sortAndDeduplicateDiagnostics(reported)];
     return collectOutputs(files, diagnostics, userKeys, companions, shadows);
   }
 
