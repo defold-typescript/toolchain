@@ -269,8 +269,68 @@ function isExportedVariable(declaration: ts.VariableDeclaration): boolean {
   return ts.isVariableStatement(statement) && hasModifier(statement, ts.SyntaxKind.ExportKeyword);
 }
 
-// The identifiers in `body` TypeScript-to-Lua transforms as values, in source
-// order: no type, property name after `.`, or object key.
+// Whether TypeScript-to-Lua lowers `node` as a statement of its own: the
+// expression of an expression statement, a `for` initializer or incrementor,
+// or a side of a comma that is one (`transformExpressionStatement`,
+// `transformBinaryExpressionStatement`, `transformForStatement`).
+function isLoweredAsStatement(node: ts.Expression): boolean {
+  const parent = node.parent;
+  if (ts.isExpressionStatement(parent)) {
+    return true;
+  }
+  if (ts.isForStatement(parent)) {
+    return parent.initializer === node || parent.incrementor === node;
+  }
+  return (
+    ts.isBinaryExpression(parent) &&
+    parent.operatorToken.kind === ts.SyntaxKind.CommaToken &&
+    isLoweredAsStatement(parent)
+  );
+}
+
+function isLengthMember(node: ts.Expression): boolean {
+  if (ts.isPropertyAccessExpression(node)) {
+    return node.name.text === "length";
+  }
+  return (
+    ts.isElementAccessExpression(node) &&
+    ts.isStringLiteral(node.argumentExpression) &&
+    node.argumentExpression.text === "length"
+  );
+}
+
+// The children of `node` in the order TypeScript-to-Lua transforms them.
+function childrenInTransformOrder(node: ts.Node): readonly ts.Node[] {
+  if (ts.isCallExpression(node)) {
+    return [...node.arguments, node.expression];
+  }
+  if (
+    ts.isBinaryExpression(node) &&
+    node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+    (isLoweredAsStatement(node) || !isLengthMember(node.left))
+  ) {
+    return [node.right, node.left];
+  }
+  const children: ts.Node[] = [];
+  ts.forEachChild(node, (child) => {
+    children.push(child);
+  });
+  return children;
+}
+
+// The identifiers in `body` TypeScript-to-Lua transforms as values, in
+// TypeScript-to-Lua 1.37.2's transform order: no type, property name after
+// `.`, or object key. That order is the source's except for calls and
+// assignments. A call's arguments come before the function it calls
+// (`transformCallAndArguments` and `transformContextualCallExpression` in
+// `visitors/call.js`, `transformOptionalChain`), and an assignment's right
+// side before its left (`transformAssignmentStatement` and
+// `transformAssignmentExpression` in `visitors/binary-expression/assignments.js`),
+// except an assignment to a `length` member inside an expression, which keeps
+// source order since `isArrayLength` lowers it left side first when the member
+// is an array's. The type is not checked, so a non-array `length` member
+// assigned inside an expression, with a spread on its left and a hoisted read on
+// its right, is ordered wrongly.
 function valueIdentifiers(body: ts.Node): ts.Identifier[] {
   const found: ts.Identifier[] = [];
   const visit = (node: ts.Node): void => {
@@ -288,7 +348,9 @@ function valueIdentifiers(body: ts.Node): ts.Identifier[] {
       }
       return;
     }
-    ts.forEachChild(node, visit);
+    for (const child of childrenInTransformOrder(node)) {
+      visit(child);
+    }
   };
   visit(body);
   return found;
@@ -342,18 +404,20 @@ function isWithin(node: ts.Node, ancestor: ts.Node): boolean {
 }
 
 // TypeScript-to-Lua's `hasReferencedUndefinedLocalFunction`: a value read
-// before the spread whose type is a function declared in `fn` makes it keep
-// the rest as a table, since that function may run hoisted and change it,
-// unless the value is a function `fn`'s body declares above the spread.
+// before the spread, in transform order, whose type is a function declared in
+// `fn` makes it keep the rest as a table, since that function may run hoisted
+// and change it, unless the value is a function `fn`'s body declares above the
+// spread. Statements transform in source order, so "above" compares positions.
 function readsHoistedFunctionBefore(
   checker: ts.TypeChecker,
   fn: ts.Node,
   body: ts.Node,
   identifiers: readonly ts.Identifier[],
-  spreadStart: number,
+  spread: ts.Identifier,
 ): boolean {
+  const spreadStart = spread.getStart();
   for (const identifier of identifiers) {
-    if (identifier.getStart() >= spreadStart) {
+    if (identifier === spread) {
       return false;
     }
     const type = checker.getTypeAtLocation(identifier);
@@ -408,7 +472,7 @@ function restParameterEmitsLocal(checker: ts.TypeChecker, param: ts.ParameterDec
   return references.some(
     (reference) =>
       !isSpreadInOwnFunction(reference, fn) ||
-      readsHoistedFunctionBefore(checker, fn, body, identifiers, reference.getStart()),
+      readsHoistedFunctionBefore(checker, fn, body, identifiers, reference),
   );
 }
 

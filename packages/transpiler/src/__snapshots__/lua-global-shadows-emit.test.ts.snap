@@ -199,3 +199,102 @@ end
 return ____exports
 "
 `;
+
+exports[`the rest kept by order fixture's emit 1`] = `
+"local ____lualib = require("lualib_bundle")
+local __TS__ArraySetLength = ____lualib.__TS__ArraySetLength
+local ____exports = {}
+function ____exports.f(...)
+    local select = {...}
+    local later
+    function later()
+        return 1
+    end
+    local out = {}
+    out[#({unpack(select)}) + 1] = later()
+    return select(
+        2,
+        string.find("hi", "i")
+    )
+end
+function ____exports.g(...)
+    local next = {...}
+    local later
+    function later()
+        return 1
+    end
+    local out = {}
+    local ____later_result_0 = later()
+    out[#({unpack(next)}) + 1] = ____later_result_0
+    local n = ____later_result_0
+    return n
+end
+function ____exports.k(...)
+    local msg = {...}
+    local later
+    function later()
+        return {}
+    end
+    return __TS__ArraySetLength(
+        later(),
+        #({unpack(msg)})
+    )
+end
+function ____exports.p(...)
+    local sound = {...}
+    local later
+    function later()
+        return 0
+    end
+    local out = {}
+    do
+        __TS__ArraySetLength(out, 0)
+        __TS__ArraySetLength(
+            {unpack(sound)},
+            later()
+        )
+    end
+end
+function ____exports.q(...)
+    local timer = {...}
+    local later
+    function later()
+        return 0
+    end
+    do
+        local i = 0
+        while i < 1 do
+            i = i + 1
+            __TS__ArraySetLength(
+                {unpack(timer)},
+                later()
+            )
+        end
+    end
+end
+return ____exports
+"
+`;
+
+exports[`the rest erased by order fixture's emit 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.f(...)
+    local later
+    function later(...)
+        print(...)
+    end
+    later(...)
+end
+function ____exports.h(...)
+    local later
+    function later(...)
+        print(...)
+    end
+    if later ~= nil then
+        later(...)
+    end
+end
+return ____exports
+"
+`;

@@ -13,12 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Hidden globals can fail the build** ([Build](./build.md#make-a-hidden-global-fail-the-build)).
+> - **A name that hides a Lua global can fail the build** ([Build](./build.md#make-a-hidden-global-fail-the-build)).
 > - **Engine questions go to Defold's docs** ([Init agents](./init-agents.md#what-it-writes)).
 
 ### Improved
 
-- **`"global-shadows": "error"` in `package.json` makes a name at any scope that hides a Lua or Defold global fail the build,** such as a parameter named `select` but not a rest parameter the Lua only forwards as `...`: `build` and `watch` report it at its file, line and column and leave that file unwritten, and the editor marks it as an error, while the default still warns on top-level names only. Any other value fails `build` and `watch` before they write anything ([Make a hidden global fail the build](./build.md#make-a-hidden-global-fail-the-build)).
+- **`"global-shadows": "error"` in `package.json` makes a name at any scope that hides a Lua or Defold global fail the build,** such as a parameter named `select`, though not a rest parameter the Lua only passes on as `...`: `build` and `watch` report it at its file, line and column and leave that file unwritten, and the editor marks it as an error, while the default still warns on top-level names only. Any other value fails `build` and `watch` before they write anything ([Make a hidden global fail the build](./build.md#make-a-hidden-global-fail-the-build)).
 - **A failed `build --json` lists each located transpile failure in an `errors` array** with its `file`, `line`, `column` and `message`, as `watch --json` does ([Fix the Lua output](./agent-runbooks.md#fix-the-lua-output)).
 - **The `AGENTS.md` block names Defold's `llms-full.txt` and says which docs answer what:** toolchain questions go to the toolchain docs, and engine behavior such as lifecycle order, collection proxies and cameras goes to Defold's docs before engine source; `upgrade` refreshes the block ([Init agents](./init-agents.md#what-it-writes)).
 
