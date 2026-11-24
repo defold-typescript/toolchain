@@ -56,13 +56,9 @@ const ONE_SAMPLER =
 const ONE_MESH_TEXTURE = "the probe mesh binds one texture, so only texture0 names a texture";
 
 export const PROPERTY_DENYLIST: Readonly<Record<string, string>> = {
-  "model.texture1": ONE_SAMPLER,
-  "model.texture2": ONE_SAMPLER,
-  "model.texture3": ONE_SAMPLER,
-  "model.texture4": ONE_SAMPLER,
-  "model.texture5": ONE_SAMPLER,
-  "model.texture6": ONE_SAMPLER,
-  "model.texture7": ONE_SAMPLER,
+  ...Object.fromEntries(
+    Array.from({ length: 15 }, (_, i) => [`model.texture${i + 1}`, ONE_SAMPLER]),
+  ),
   ...Object.fromEntries(
     Array.from({ length: 15 }, (_, i) => [`mesh.texture${i + 1}`, ONE_MESH_TEXTURE]),
   ),

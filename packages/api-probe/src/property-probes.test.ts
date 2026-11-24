@@ -56,6 +56,18 @@ describe("property probes", () => {
     for (const key of generation.denied) expect(byKey.has(key)).toBe(false);
   });
 
+  test("model and mesh probe texture0 and deny every later texture slot their catalog declares", () => {
+    const members = [...byKey.keys(), ...generation.denied];
+    for (const catalog of ["model", "mesh"]) {
+      expect(byKey.has(`${catalog}.texture0`)).toBe(true);
+      const later = members.filter((key) =>
+        new RegExp(`^${catalog}\\.texture[1-9]\\d*$`).test(key),
+      );
+      expect(later.length).toBeGreaterThan(0);
+      expect(later.filter((key) => byKey.has(key))).toEqual([]);
+    }
+  });
+
   test("a probed member reads its value and writes the same value back", () => {
     const calls = generation.calls.filter((call) => call.name === "sprite.Properties.cursor");
     expect(calls.map((call) => [call.variant, call.kind, call.call])).toEqual([
