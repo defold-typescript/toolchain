@@ -73,10 +73,22 @@ export const REST_KEPT_BY_ORDER = [
 
 // Rest parameters TypeScript-to-Lua passes on as Lua's `...` although a
 // function declared further down precedes the spread in the source: a call's
-// arguments transform before the function it calls.
+// arguments transform before the function it calls and its receiver, unless it
+// calls `.hasOwnProperty`.
 export const REST_ERASED_BY_ORDER = [
   "export function f(...select: number[]) { later(...select); function later(...values: number[]): void { print(...values); } }",
   "export function h(...msg: number[]): void { later?.(...msg); function later(...values: number[]): void { print(...values); } }",
+  "export function m(...next: number[]): void { later().check(...next); function later(): { check(...values: number[]): void } { return { check: (...values: number[]) => print(...values) }; } }",
+  'export function n(...sound: number[]): void { later()["hasOwnProperty"]([...sound].length); function later(): object { return {}; } }',
+  "",
+].join("\n");
+
+// Rest parameters TypeScript-to-Lua declares as `local <name> = {...}` because
+// it lowers `.hasOwnProperty` to `rawget`, reading the receiver first.
+export const REST_KEPT_BY_BUILTIN = [
+  'export function f(...select: number[]) { later().hasOwnProperty([...select].length); function later(): object { return {}; } return string.find("hi", "i")[1]; }',
+  "export function g(...next: number[]): void { later()?.hasOwnProperty([...next].length); function later(): object | undefined { return {}; } }",
+  "export function k(...msg: number[]): void { later().hasOwnProperty([...msg].length); function later(): { hasOwnProperty(n: number): boolean } { return { hasOwnProperty: (n: number) => n > 0 }; } }",
   "",
 ].join("\n");
 
