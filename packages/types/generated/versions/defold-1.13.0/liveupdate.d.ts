@@ -111,7 +111,7 @@ declare global {
      * // }
      * ```
      */
-    function get_mounts(): { name: string; uri: string; priority: number }[];
+    function get_mounts(): { name: Hash; uri: string; priority: number }[];
     /**
      * Checks if the bundled application was built with one or more resources
      * excluded from the main bundle, through a collection proxy with

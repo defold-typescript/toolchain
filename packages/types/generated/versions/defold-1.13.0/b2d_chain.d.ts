@@ -64,7 +64,7 @@ declare global {
      * @param chain - chain
      * @returns array of shape info tables for the chain segments. Each entry includes `shape_id`.
      */
-    function get_segments(chain: Opaque<"b2Chain">): { shape_id: number }[];
+    function get_segments(chain: Opaque<"b2Chain">): { shape_id: Opaque<"b2Shape"> }[];
     /**
      * Get the world owning a chain.
      *

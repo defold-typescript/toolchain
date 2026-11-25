@@ -114,7 +114,7 @@ declare global {
      * }
      * ```
      */
-    function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;
+    function create_chain(body: Opaque<"b2Body">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: Opaque<"b2Shape"> }[]]>;
     /**
      * Creates a fixture and attach it to this body. Use this function if you need
      * to set some fixture parameters, like friction. Otherwise you can create the
@@ -264,7 +264,7 @@ declare global {
      * @param body - body
      * @returns array of `b2Joint` handles created by `b2d.joint`
      */
-    function get_joints(body: Opaque<"b2Body">): number[];
+    function get_joints(body: Opaque<"b2Body">): Opaque<"b2Joint">[];
     /**
      * Get the linear damping of the body.
      *
@@ -373,7 +373,7 @@ declare global {
      * @param body - body
      * @returns a table of shape info entries. Each entry includes `shape_id` for use with `b2d.shape` functions.
      */
-    function get_shapes(body: Opaque<"b2Body">): { shape_id: number }[];
+    function get_shapes(body: Opaque<"b2Body">): { shape_id: Opaque<"b2Shape"> }[];
     /**
      * Get the sleep velocity threshold.
      *

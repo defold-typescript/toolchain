@@ -7,6 +7,7 @@ import {
   type PropertyKeyRange,
   pinEvidenceKey,
   type ReturnTypeCorrection,
+  type TableSlotCuration,
 } from "../src/emit-dts";
 import {
   bindingEvidenceFor,
@@ -152,15 +153,15 @@ describe("bindingEvidenceFor", () => {
   ];
 
   test("a return correction's pin is evidence where the target's binding shows it", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [], [], [])]).toEqual(
-      ["RETURN_TYPE_CORRECTIONS:bullet3d.shape.get_shape"],
-    );
+    expect([
+      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [], [], [], []),
+    ]).toEqual(["RETURN_TYPE_CORRECTIONS:bullet3d.shape.get_shape"]);
   });
 
   test("a release that does not ship the pinned file shows no evidence", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [], [], [])]).toEqual(
-      [],
-    );
+    expect([
+      ...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [], [], [], []),
+    ]).toEqual([]);
   });
 
   test("a release that predates the pinned function shows no evidence", () => {
@@ -178,10 +179,10 @@ describe("bindingEvidenceFor", () => {
       },
     ];
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.12.4"), [], [], [], [blendCase], []),
+      ...bindingEvidenceFor(apiTarget("defold-1.12.4"), [], [], [], [blendCase], [], []),
     ]).toEqual([]);
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.13.0"), [], [], [], [blendCase], []),
+      ...bindingEvidenceFor(apiTarget("defold-1.13.0"), [], [], [], [blendCase], [], []),
     ]).toEqual(["PARAM_TYPE_CORRECTIONS:render.set_blend_func_separate:param:source_factor_color"]);
   });
 
@@ -229,6 +230,29 @@ describe("bindingEvidenceFor", () => {
     expect(keys.filter((key) => bindingEvidenceFor(refDoc).has(key))).toEqual([]);
   });
 
+  test("a table slot curation is evidence where its binding pin, or every engine pin, holds", () => {
+    const key = "collectionfactory.create:param:properties";
+    const line = pinEvidenceKey("TABLE_SLOT_CURATIONS", key);
+    const evidenceOf = (curation: TableSlotCuration): string[] => [
+      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [], [], [], [[key, curation]]),
+    ];
+    const bound: TableSlotCuration = {
+      kind: "verbatim",
+      ts: "PlainTable",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_collection_factory.cpp",
+        cFunction: "CollectionFactoryComp_Create",
+        contains: "dmhash_t instance_id = dmScript::CheckHash(L, -2);",
+      },
+    };
+    expect(evidenceOf(bound)).toEqual([line]);
+    const engine = MODEL_PINS.slice(0, 2);
+    expect(evidenceOf({ kind: "verbatim", ts: "PlainTable", engine })).toEqual([line]);
+    const oneFails = [...engine, { ...RENDER_H_PIN, contains: RENDER_H_PIN_AT_8 }];
+    expect(evidenceOf({ kind: "verbatim", ts: "PlainTable", engine: oneFails })).toEqual([]);
+    expect(evidenceOf({ kind: "verbatim", ts: "PlainTable" })).toEqual([]);
+  });
+
   test("a key range whose pin does not hold is no evidence", () => {
     const falsified: readonly [string, PropertyKeyRange] = [
       "model.textureN",
@@ -238,7 +262,7 @@ describe("bindingEvidenceFor", () => {
       },
     ];
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified], [], []),
+      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified], [], [], []),
     ]).toEqual([]);
   });
 });

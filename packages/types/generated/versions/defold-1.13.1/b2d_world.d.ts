@@ -240,7 +240,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_aabb(world: Opaque<"b2World">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;
+    function overlap_aabb(world: Opaque<"b2World">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<"b2Shape"> }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * Overlap a shape.
      *
@@ -262,7 +262,7 @@ declare global {
      * @param filter - optional query filter with `category_bits` and `mask_bits`
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;
+    function overlap_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<"b2Shape"> }[], { node_visits: number; leaf_visits: number }]>;
     /**
      * Rebuild the static broad-phase tree.
      *

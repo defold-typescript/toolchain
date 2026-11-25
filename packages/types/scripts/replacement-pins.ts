@@ -37,15 +37,15 @@ export const REPLACEMENT_PIN_BASELINE_FILE = join(
 export type PinKind = "binding" | "engine" | "refDoc";
 
 // A table whose entries put a type in place of, or beside, what upstream
-// declares. `pinOf` names the pin an entry carries. A `binding` or `engine` pin
-// holds where the entry's ledger line is in `bindingEvidenceFor` on some
-// vendored target; a `refDoc` pin, read through `refDocOf`, holds where it is in
-// `refDocEvidenceFor` over the retained ref-docs, which look for it in the
-// element `elementOf` names.
+// declares. `pinsOf` names the pins an entry carries, of which it may carry one.
+// A `binding` or `engine` pin holds where the entry's ledger line is in
+// `bindingEvidenceFor` on some vendored target; a `refDoc` pin, read through
+// `refDocOf`, holds where it is in `refDocEvidenceFor` over the retained
+// ref-docs, which look for it in the element `elementOf` names.
 export interface ReplacementTable<Entry = unknown> {
   readonly name: string;
   readonly entries: Iterable<readonly [string, Entry]>;
-  pinOf(entry: Entry): PinKind | undefined;
+  pinsOf(entry: Entry): readonly PinKind[];
   refDocOf(entry: Entry): RefDocPin | undefined;
   elementOf(key: string): string;
   readonly accepts: readonly PinKind[];
@@ -65,52 +65,28 @@ function unpinned<Entry>(
   return {
     name,
     entries,
-    pinOf: () => undefined,
+    pinsOf: () => [],
     refDocOf: () => undefined,
     elementOf: keyElement,
     accepts: [],
   };
 }
 
-function bindingPinned<Entry extends { readonly binding?: unknown }>(
-  name: string,
-  entries: Iterable<readonly [string, Entry]>,
-): ReplacementTable<Entry> {
-  return {
-    name,
-    entries,
-    pinOf: (entry) => (entry.binding === undefined ? undefined : "binding"),
-    refDocOf: () => undefined,
-    elementOf: keyElement,
-    accepts: ["binding"],
-  };
-}
+// Each pin kind is read from the entry field of the same name.
+type PinFields = { readonly [Kind in PinKind]?: Kind extends "refDoc" ? RefDocPin : unknown };
 
-function enginePinned<Entry extends { readonly engine?: unknown }>(
+function pinned<Entry extends PinFields>(
   name: string,
   entries: Iterable<readonly [string, Entry]>,
+  accepts: readonly PinKind[],
 ): ReplacementTable<Entry> {
   return {
     name,
     entries,
-    pinOf: (entry) => (entry.engine === undefined ? undefined : "engine"),
-    refDocOf: () => undefined,
+    pinsOf: (entry) => accepts.filter((kind) => entry[kind] !== undefined),
+    refDocOf: (entry) => (accepts.includes("refDoc") ? entry.refDoc : undefined),
     elementOf: keyElement,
-    accepts: ["engine"],
-  };
-}
-
-function refDocPinned<Entry extends { readonly refDoc?: RefDocPin }>(
-  name: string,
-  entries: Iterable<readonly [string, Entry]>,
-): ReplacementTable<Entry> {
-  return {
-    name,
-    entries,
-    pinOf: (entry) => (entry.refDoc === undefined ? undefined : "refDoc"),
-    refDocOf: (entry) => entry.refDoc,
-    elementOf: keyElement,
-    accepts: ["refDoc"],
+    accepts,
   };
 }
 
@@ -128,18 +104,18 @@ const MESSAGE_TYPE_KINDS: ReadonlySet<string> = new Set(["retype", "add-field", 
 // read from the reference itself. Every other exported correction table is in
 // UNPINNED_TABLES with the reason it is not.
 export const REPLACEMENT_TABLES: readonly ReplacementTable[] = [
-  bindingPinned("PARAM_TYPE_CORRECTIONS", PARAM_TYPE_CORRECTIONS),
-  bindingPinned("RETURN_TYPE_CORRECTIONS", RETURN_TYPE_CORRECTIONS),
-  bindingPinned("TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES),
-  bindingPinned("STRUCT_MEMBER_ADDITIONS", STRUCT_MEMBER_ADDITIONS),
-  enginePinned("PROPERTY_KEY_RANGES", PROPERTY_KEY_RANGES),
+  pinned("PARAM_TYPE_CORRECTIONS", PARAM_TYPE_CORRECTIONS, ["binding"]),
+  pinned("RETURN_TYPE_CORRECTIONS", RETURN_TYPE_CORRECTIONS, ["binding"]),
+  pinned("TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES, ["binding"]),
+  pinned("STRUCT_MEMBER_ADDITIONS", STRUCT_MEMBER_ADDITIONS, ["binding"]),
+  pinned("PROPERTY_KEY_RANGES", PROPERTY_KEY_RANGES, ["engine"]),
   unpinned("PROPERTY_TYPE_CORRECTIONS", PROPERTY_TYPE_CORRECTIONS),
   unpinned("RETURN_TYPE_OVERRIDES", RETURN_TYPE_OVERRIDES),
   unpinned("VARIABLE_TYPE_OVERRIDES", VARIABLE_TYPE_OVERRIDES),
   unpinned("TYPEDEF_ALIAS_CORRECTIONS", TYPEDEF_ALIAS_CORRECTIONS),
   unpinned("ENGINE_SLOT_RULES", ENGINE_SLOT_RULES),
   unpinned("LIST_FIELD_CORRECTIONS", LIST_FIELD_CORRECTIONS),
-  refDocPinned("TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS),
+  pinned("TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS, ["refDoc", "binding", "engine"]),
   unpinned("TABLE_SLOT_FIELD_ADDITIONS", TABLE_SLOT_FIELD_ADDITIONS),
   unpinned("NESTED_FIELD_CURATIONS", NESTED_FIELD_CURATIONS),
   unpinned("CALLBACK_SIGNATURE_CURATIONS", CALLBACK_SIGNATURE_CURATIONS),
@@ -244,11 +220,13 @@ export function replacementPinFindings(
       const line = pinEvidenceKey(table.name, key);
       if (lines.has(line)) throw new Error(`${line}: two entries share this ledger key`);
       lines.add(line);
-      const kind = table.pinOf(entry);
-      if (kind !== undefined) {
-        pinned.add(line);
+      const kinds = table.pinsOf(entry);
+      if (kinds.length > 0) pinned.add(line);
+      if (kinds.length > 1) {
+        findings.push(`${line}: carries more than one pin`);
+      } else if (kinds.length === 1) {
         if (!evidenceKeys.has(line)) {
-          const where = kind === "refDoc" ? "retained ref-doc" : "vendored target";
+          const where = kinds[0] === "refDoc" ? "retained ref-doc" : "vendored target";
           findings.push(`${line}: its pin holds on no ${where}`);
         }
       } else if (!baselined.has(line)) {

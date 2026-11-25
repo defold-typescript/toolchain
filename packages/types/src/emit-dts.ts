@@ -95,7 +95,8 @@ export interface EmitOptions {
   registeredConstants?: ReadonlySet<string>;
   // The ledger lines (`pinEvidenceKey`) of the binding-pinned entries whose pin
   // holds in the target's vendored engine source, and of the
-  // `PROPERTY_KEY_RANGES` entries whose `engine` pins all hold there. A pinned
+  // `PROPERTY_KEY_RANGES` and `TABLE_SLOT_CURATIONS` entries whose `engine` pins
+  // all hold there. A pinned
   // entry applies only when its own table's line is here, so a surface with no
   // vendored bindings (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
@@ -2833,6 +2834,11 @@ export interface RefDocPin {
 // spelling a newer release retypes the same slot to without fixing it
 // (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
 // for `collectionfactory.create`'s properties.
+//
+// An entry carries one pin. A `refDoc` pin only classifies it. A `binding` pin,
+// or `engine` pins that must all hold, rest it on the engine source: it then
+// applies only on a target whose vendored source shows the pin (the
+// `EmitOptions.bindingEvidence` keys), see `evidencedTableSlotCuration`.
 export type TableSlotCuration =
   // `pairs` emits a `ReadonlyLuaMap`, for a binding that walks the map with
   // lua_next and only reads it: dropping `set` makes the map covariant in its
@@ -2859,7 +2865,12 @@ export type TableSlotCuration =
     // A slot whose faithful shape no field list can carry, such as a union
     // discriminated on `type`. `ts` is emitted verbatim, already mapped.
     | { kind: "verbatim"; ts: string }
-  ) & { readonly retypedUpstream?: readonly string[]; readonly refDoc?: RefDocPin };
+  ) & {
+    readonly retypedUpstream?: readonly string[];
+    readonly refDoc?: RefDocPin;
+    readonly binding?: BindingPin;
+    readonly engine?: readonly EngineSourcePin[];
+  };
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
@@ -2977,7 +2988,26 @@ const B2D_V3_SHAPE_TS = [
   B2D_CAPSULE_ARM,
   B2D_V3_SEGMENT_ARM,
 ].join(" | ");
-const B2D_SHAPE_DEFINITION: TableSlotCuration = { kind: "verbatim", ts: B2D_SHAPE_DEFINITION_TS };
+const B2D_SCRIPTS = "gamesys/src/gamesys/scripts/box2d";
+// The v2 CheckShapeDef's edge arm, which reads the ghost vertices.
+const B2D_V2_SHAPE_BINDING: BindingPin = {
+  file: `${B2D_SCRIPTS}/v2/script_box2d_shape_v2.cpp`,
+  cFunction: "CheckShapeDef",
+  contains:
+    'out_shape->m_Edge.Set(v1, v2); out_shape->m_Edge.m_hasVertex0 = TryGetVec2Field(L, index, "v0", &out_shape->m_Edge.m_vertex0); out_shape->m_Edge.m_hasVertex3 = TryGetVec2Field(L, index, "v3", &out_shape->m_Edge.m_vertex3);',
+};
+// The v3 CheckShapeDef's capsule arm, which the full union shares.
+const B2D_V3_SHAPE_BINDING: BindingPin = {
+  file: `${B2D_SCRIPTS}/v3/script_box2d_shape_v3.cpp`,
+  cFunction: "CheckShapeDef",
+  contains:
+    'lua_getfield(L, index, "center1"); shape_def.m_Capsule.center1 = CheckVec2(L, -1, GetPhysicsScale()); lua_pop(L, 1); lua_getfield(L, index, "center2"); shape_def.m_Capsule.center2 = CheckVec2(L, -1, GetPhysicsScale());',
+};
+const B2D_SHAPE_DEFINITION: TableSlotCuration = {
+  kind: "verbatim",
+  ts: B2D_SHAPE_DEFINITION_TS,
+  binding: B2D_V3_SHAPE_BINDING,
+};
 // A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
 const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
   { name: "index", types: ["number"] },
@@ -2988,9 +3018,22 @@ const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
   { name: "restitution", types: ["number"] },
   { name: "child_count", types: ["number"] },
 ];
+// The world v2 PushFixtureInfo an overlap query pushes per hit.
+const B2D_WORLD_FIXTURE_INFO_BINDING: BindingPin = {
+  file: `${B2D_SCRIPTS}/v2/script_box2d_world_v2.cpp`,
+  cFunction: "PushFixtureInfo",
+  contains:
+    'lua_pushinteger(L, fixture->GetType()); lua_setfield(L, -2, "type"); lua_pushboolean(L, fixture->IsSensor()); lua_setfield(L, -2, "sensor"); lua_pushnumber(L, fixture->GetDensity()); lua_setfield(L, -2, "density"); lua_pushnumber(L, fixture->GetFriction()); lua_setfield(L, -2, "friction"); lua_pushnumber(L, fixture->GetRestitution()); lua_setfield(L, -2, "restitution"); lua_pushinteger(L, fixture->GetShape()->GetChildCount()); lua_setfield(L, -2, "child_count");',
+};
 // A shape info entry: only `shape_id` is documented ("Each entry includes
-// shape_id"); other members are engine-internal and left untyped.
-const B2D_SHAPE_INFO_FIELDS: readonly TableField[] = [{ name: "shape_id", types: ["number"] }];
+// shape_id"); other members are engine-internal and left untyped. The v3
+// PushShapeInfo sets it with PushShapeId, which pushes a b2Shape handle.
+const B2D_SHAPE_INFO_FIELDS: readonly TableField[] = [{ name: "shape_id", types: ["b2Shape"] }];
+const B2D_SHAPE_INFO_BINDING: BindingPin = {
+  file: `${B2D_SCRIPTS}/v3/script_box2d_body_v3.cpp`,
+  cFunction: "PushShapeInfo",
+  contains: 'PushShapeId(L, shape); lua_setfield(L, -2, "shape_id");',
+};
 // mass properties: mass/inertia scalars plus the local-space center point.
 const B2D_MASS_DATA_FIELDS: readonly TableField[] = [
   { name: "mass", types: ["number"] },
@@ -3061,6 +3104,12 @@ const PHYSICS_SHAPE_DEFINITION_TS = [
   "{ type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 }",
   "{ type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
 ].join(" | ");
+const PHYSICS_SHAPE_DEFINITION_BINDING: BindingPin = {
+  file: "gamesys/src/gamesys/scripts/script_physics.cpp",
+  cFunction: "Physics_SetShape",
+  contains:
+    'lua_getfield(L, -1, "type"); shape_info.m_Type = (dmPhysicsDDF::CollisionShape::Type) luaL_checkinteger(L, -1); lua_pop(L, 1); if (shape_info.m_Type == dmPhysicsDDF::CollisionShape::TYPE_SPHERE) { lua_getfield(L, -1, "diameter"); shape_info.m_SphereDiameter = luaL_checknumber(L, -1);',
+};
 
 // The object arm of a table slot that also takes a keyed map: any plain table
 // except TSTL's `LuaMap`/`LuaTable`/`LuaSet` wrappers, which all carry
@@ -3078,11 +3127,30 @@ const PLAIN_OBJECT_TS = "(PlainTable & { readonly __tstlIterable?: never })";
 // table, so the map arm is `LuaPairsIterable`, covariant in key and value: a
 // `ReadonlyLuaMap` is contravariant in its key through `get`.
 const SPAWN_PROPERTIES_TS = `LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | ${PLAIN_OBJECT_TS}`;
+// GetPropertyType's string arm. Before 1.13.2 it has none, so a string value
+// falls to PROPERTY_TYPE_COUNT and the object spawns with no properties; the
+// curation applies only where the arm exists.
+const SPAWN_PROPERTIES_BINDING: BindingPin = {
+  file: "gameobject/src/gameobject/gameobject_props_lua.cpp",
+  cFunction: "GetPropertyType",
+  contains:
+    "case LUA_TNUMBER: return PROPERTY_TYPE_NUMBER; case LUA_TBOOLEAN: return PROPERTY_TYPE_BOOLEAN; case LUA_TSTRING: return PROPERTY_TYPE_TEXT;",
+};
 
 // The table sys.save and sys.serialize take: script_table.cpp raises "keys in
 // table must be of type number, string or hash" for any other key, and stores
 // any Lua value.
 const SERIALIZED_TABLE_TS = `LuaPairsIterable<string | number | Hash, unknown> | ${PLAIN_OBJECT_TS}`;
+// The transaction table the iap.set_listener callback receives, named from inside
+// the module, which an extension declares as `declare module "iap"`.
+const IAP_LISTENER_TRANSACTION_TS = "Parameters<Parameters<typeof set_listener>[0]>[1]";
+
+const SERIALIZED_TABLE_BINDING: BindingPin = {
+  file: "script/src/script_table.cpp",
+  cFunction: "DoCheckTable",
+  contains:
+    'if (key_type != LUA_TSTRING && key_type != LUA_TNUMBER && !key_hash) { table_stack.SetCapacity(0); luaL_error(L, "keys in table must be of type number, string or hash (found %s)", lua_typename(L, key_type)); }',
+};
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map<
   string,
@@ -3108,13 +3176,14 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // `dmScript::CheckHash`, which raises on a string, so the instance layer takes
   // a `hash("/go")` key only. It only reads the map, so `ReadonlyLuaMap` keeps it
   // covariant in its value. Each instance table goes through the same property
-  // parser as factory.create's `properties`.
+  // parser as factory.create's `properties`, so both rest on its string arm.
   [
     "collectionfactory.create:param:properties",
     {
       kind: "verbatim",
       ts: `ReadonlyLuaMap<Hash, ${SPAWN_PROPERTIES_TS}>`,
       retypedUpstream: ["table<hash, table<string|hash, any>>"],
+      binding: SPAWN_PROPERTIES_BINDING,
     },
   ],
   [
@@ -3135,6 +3204,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       kind: "verbatim",
       ts: SPAWN_PROPERTIES_TS,
       retypedUpstream: ["table<string|hash, any>"],
+      binding: SPAWN_PROPERTIES_BINDING,
     },
   ],
   // go.delete's "table of id's": gameobject_script.cpp:DeleteGOTable walks any
@@ -3148,6 +3218,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       element: ["string", "hash", "url"],
       pairs: true,
       retypedUpstream: ["(string|hash|url)[]"],
+      binding: {
+        file: "gameobject/src/gameobject/gameobject_script.cpp",
+        cFunction: "DeleteGOTable",
+        contains:
+          "lua_pushnil(L); while (lua_next(L, 1)) { dmMessage::URL receiver; dmScript::ResolveURL(L, -1, &receiver, 0x0);",
+      },
     },
   ],
   // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
@@ -3178,67 +3254,41 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  // iap.finish and iap.acknowledge take the same Defold IAP transaction object —
-  // the table handed to the iap.set_listener callback. The ref-doc fixture
-  // describes it in prose only (no field list), so the shape is curated from the
-  // Defold iap reference. As a param-side object curation every field emits `?`,
-  // which is faithful: original_trans/signature/user_id are platform-specific.
+  // iap.finish and iap.acknowledge take "the transaction table parameter as
+  // supplied in listener callback", so each is typed as the transaction the
+  // iap.set_listener callback receives, and accepts it as it is.
   [
     "iap.finish:param:transaction",
     {
-      kind: "object",
-      fields: [
-        { name: "ident", types: ["string"] },
-        { name: "state", types: ["number"] },
-        { name: "trans_ident", types: ["string"] },
-        { name: "date", types: ["string"] },
-        { name: "original_trans", types: ["string"] },
-        { name: "receipt", types: ["string"] },
-        { name: "signature", types: ["string"] },
-        { name: "user_id", types: ["string"] },
-      ],
+      refDoc: { contains: "transaction table parameter as supplied in listener callback" },
+      kind: "verbatim",
+      ts: IAP_LISTENER_TRANSACTION_TS,
     },
   ],
   [
     "iap.acknowledge:param:transaction",
     {
-      kind: "object",
-      fields: [
-        { name: "ident", types: ["string"] },
-        { name: "state", types: ["number"] },
-        { name: "trans_ident", types: ["string"] },
-        { name: "date", types: ["string"] },
-        { name: "original_trans", types: ["string"] },
-        { name: "receipt", types: ["string"] },
-        { name: "signature", types: ["string"] },
-        { name: "user_id", types: ["string"] },
-      ],
+      refDoc: { contains: "transaction table parameter as supplied in listener callback" },
+      kind: "verbatim",
+      ts: IAP_LISTENER_TRANSACTION_TS,
     },
   ],
-  // iap.buy's `options` is documented in the fixture as prose only ("optional
-  // parameters as properties"), so the field set is curated from the Defold iap
-  // reference: a Facebook-only custom `request_id` and a Google-Play-only
-  // subscription-offer `token`. Both are platform-specific, hence param-side
-  // optional fields.
-  [
-    "iap.buy:param:options",
-    {
-      kind: "object",
-      fields: [
-        { name: "request_id", types: ["string"] },
-        { name: "token", types: ["string"] },
-      ],
-    },
-  ],
+  // script_liveupdate.cpp:Resource_GetMounts pushes each mount's name as a hash
+  // from 1.13.0; 1.12.4 pushes the string, so it keeps upstream's table.
   [
     "liveupdate.get_mounts:return:mounts",
     {
       kind: "array-object",
       fields: [
-        { name: "name", types: ["string"] },
+        { name: "name", types: ["hash"] },
         { name: "uri", types: ["string"] },
         { name: "priority", types: ["number"] },
       ],
+      binding: {
+        file: "liveupdate/src/script_liveupdate.cpp",
+        cFunction: "Resource_GetMounts",
+        contains: 'dmScript::PushHash(L, info.m_NameHash); lua_setfield(L, -2, "name");',
+      },
     },
   ],
   [
@@ -3275,22 +3325,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       },
       kind: "array",
       element: "hash",
-    },
-  ],
-  // push.schedule's `notification_settings` is documented in the fixture as prose
-  // only ("Table with notification and platform specific fields"), so the field
-  // set is curated from the Defold push reference: an iOS `action`, an iOS
-  // `badge_count`, and an Android `priority`. Each is platform-specific, hence
-  // param-side optional fields.
-  [
-    "push.schedule:param:notification_settings",
-    {
-      kind: "object",
-      fields: [
-        { name: "action", types: ["string"] },
-        { name: "badge_count", types: ["number"] },
-        { name: "priority", types: ["number"] },
-      ],
     },
   ],
   [
@@ -3674,6 +3708,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "is_sensor", types: ["boolean"] },
         { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
       ],
+      binding: {
+        file: `${B2D_SCRIPTS}/v2/script_box2d_fixture_v2.cpp`,
+        cFunction: "CheckFixtureDef",
+        contains:
+          'lua_getfield(L, index, "shape"); fixture_def.shape = CheckShapeDef(L, -1, out_shape); lua_pop(L, 1); TryGetNumberField(L, index, "friction", &fixture_def.friction); TryGetNumberField(L, index, "restitution", &fixture_def.restitution); TryGetNumberField(L, index, "density", &fixture_def.density); bool sensor = fixture_def.isSensor; bool has_sensor = TryGetBooleanField(L, index, "sensor", &sensor); if (!has_sensor) { TryGetBooleanField(L, index, "is_sensor", &sensor); }',
+      },
     },
   ],
   // The creation-time definitions the v3 bindings document in their C++ doc
@@ -3696,6 +3736,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
         { name: "enable_sensor_events", types: ["boolean"] },
       ],
+      binding: {
+        file: `${B2D_SCRIPTS}/v3/script_box2d_chain_v3.cpp`,
+        cFunction: "Body_CreateChain",
+        contains:
+          'dmArray<b2Vec2> vertices; lua_getfield(L, definition_index, "vertices"); CheckVerticesTable(L, -1, loop ? 4 : 2, &vertices); lua_pop(L, 1);',
+      },
     },
   ],
   // The shape table sits in `definition.shape` or is the definition itself, and
@@ -3706,6 +3752,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       retypedUpstream: ["b2d.shape_create_definition"],
       kind: "verbatim",
       ts: `({ shape: ${B2D_V3_SHAPE_TS} } | ${B2D_V3_SHAPE_TS}) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }`,
+      binding: {
+        file: `${B2D_SCRIPTS}/v3/script_box2d_shape_v3.cpp`,
+        cFunction: "CheckShapeCreateDef",
+        contains:
+          'lua_getfield(L, index, "shape"); if (lua_isnil(L, -1)) { lua_pop(L, 1); *out_shape_def = CheckShapeDef(L, index); } else { *out_shape_def = CheckShapeDef(L, -1); lua_pop(L, 1); }',
+      },
     },
   ],
   [
@@ -3719,6 +3771,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
         { name: "impulse_per_length", types: ["number"] },
         { name: "mask_bits", types: ["number"] },
       ],
+      binding: {
+        file: `${B2D_SCRIPTS}/v3/script_box2d_world_v3.cpp`,
+        cFunction: "World_Explode",
+        contains:
+          'lua_getfield(L, 2, "position"); def.position = CheckVec2(L, -1, GetPhysicsScale()); lua_pop(L, 1); lua_getfield(L, 2, "radius"); def.radius = luaL_checknumber(L, -1) * GetPhysicsScale();',
+      },
     },
   ],
   [
@@ -3734,7 +3792,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   [
     "b2d.body.create_chain:return:segments",
-    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS, binding: B2D_SHAPE_INFO_BINDING },
   ],
   [
     "b2d.body.get_fixtures:return:fixtures",
@@ -3747,8 +3805,19 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       fields: B2D_FIXTURE_INFO_FIELDS,
     },
   ],
-  // get_joints returns an array of opaque b2Joint handles (numbers).
-  ["b2d.body.get_joints:return:joints", { kind: "array", element: "number" }],
+  // get_joints returns an array of b2Joint handles: PushJoint pushes userdata.
+  [
+    "b2d.body.get_joints:return:joints",
+    {
+      kind: "array",
+      element: "b2Joint",
+      binding: {
+        file: `${B2D_SCRIPTS}/v3/script_box2d_body_v3.cpp`,
+        cFunction: "Body_GetJoints",
+        contains: "PushJoint(L, joints[i], collection); lua_rawseti(L, -2, joint_index);",
+      },
+    },
+  ],
   [
     "b2d.body.get_mass_data:return:data",
     {
@@ -3817,16 +3886,50 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       fields: B2D_FILTER_DATA_FIELDS,
     },
   ],
-  ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  [
+    "b2d.fixture.get_shape:return:shape",
+    {
+      kind: "object",
+      fields: B2D_SHAPE_TABLE_FIELDS,
+      binding: {
+        file: `${B2D_SCRIPTS}/v2/script_box2d_fixture_v2.cpp`,
+        cFunction: "PushShape",
+        contains:
+          'lua_pushboolean(L, is_loop); lua_setfield(L, -2, "loop"); PushVertices(L, chain->m_vertices, is_loop ? chain->m_count - 1 : chain->m_count); lua_setfield(L, -2, "vertices");',
+      },
+    },
+  ],
   [
     "b2d.fixture.set_shape:param:shape",
-    { kind: "verbatim", ts: B2D_V2_SHAPE_TS, retypedUpstream: ["b2d.shape.definition"] },
+    {
+      kind: "verbatim",
+      ts: B2D_V2_SHAPE_TS,
+      retypedUpstream: ["b2d.shape.definition"],
+      binding: B2D_V2_SHAPE_BINDING,
+    },
   ],
   // b2d.shape
-  ["b2d.shape.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  [
+    "b2d.shape.get_shape:return:shape",
+    {
+      kind: "object",
+      fields: B2D_SHAPE_TABLE_FIELDS,
+      binding: {
+        file: `${B2D_SCRIPTS}/v3/script_box2d_shape_v3.cpp`,
+        cFunction: "PushShape",
+        contains:
+          'dmScript::PushVector3(L, FromB2(capsule.center1, GetInvPhysicsScale())); lua_setfield(L, -2, "center1"); dmScript::PushVector3(L, FromB2(capsule.center2, GetInvPhysicsScale())); lua_setfield(L, -2, "center2");',
+      },
+    },
+  ],
   [
     "b2d.shape.set_shape:param:definition",
-    { kind: "verbatim", ts: B2D_V3_SHAPE_TS, retypedUpstream: ["b2d.shape.definition"] },
+    {
+      kind: "verbatim",
+      ts: B2D_V3_SHAPE_TS,
+      retypedUpstream: ["b2d.shape.definition"],
+      binding: B2D_V3_SHAPE_BINDING,
+    },
   ],
   [
     "b2d.shape.get_mass_data:return:data",
@@ -3838,7 +3941,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   [
     "b2d.shape.get_sensor_overlaps:return:overlaps",
-    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS, binding: B2D_SHAPE_INFO_BINDING },
   ],
   [
     "b2d.shape.ray_cast:return:hit",
@@ -4074,9 +4177,16 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   [
     "b2d.world.overlap_aabb:return:fixtures",
-    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+    {
+      kind: "array-object",
+      fields: B2D_FIXTURE_INFO_FIELDS,
+      binding: B2D_WORLD_FIXTURE_INFO_BINDING,
+    },
   ],
-  ["b2d.world.overlap_aabb:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  [
+    "b2d.world.overlap_aabb:return:hits",
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS, binding: B2D_SHAPE_INFO_BINDING },
+  ],
   [
     "b2d.world.overlap_aabb:return:stats",
     {
@@ -4101,9 +4211,16 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   [
     "b2d.world.overlap_shape:return:fixtures",
-    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+    {
+      kind: "array-object",
+      fields: B2D_FIXTURE_INFO_FIELDS,
+      binding: B2D_WORLD_FIXTURE_INFO_BINDING,
+    },
   ],
-  ["b2d.world.overlap_shape:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  [
+    "b2d.world.overlap_shape:return:hits",
+    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS, binding: B2D_SHAPE_INFO_BINDING },
+  ],
   [
     "b2d.world.overlap_shape:return:stats",
     {
@@ -4248,17 +4365,41 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       kind: "verbatim",
       ts: PHYSICS_SHAPE_DEFINITION_TS,
       retypedUpstream: ["physics.shape_data"],
+      binding: PHYSICS_SHAPE_DEFINITION_BINDING,
     },
   ],
   [
     "sys.save:param:table",
-    { kind: "verbatim", ts: SERIALIZED_TABLE_TS, retypedUpstream: ["table<any, any>"] },
+    {
+      kind: "verbatim",
+      ts: SERIALIZED_TABLE_TS,
+      retypedUpstream: ["table<any, any>"],
+      binding: SERIALIZED_TABLE_BINDING,
+    },
   ],
   [
     "sys.serialize:param:table",
-    { kind: "verbatim", ts: SERIALIZED_TABLE_TS, retypedUpstream: ["table<any, any>"] },
+    {
+      kind: "verbatim",
+      ts: SERIALIZED_TABLE_TS,
+      retypedUpstream: ["table<any, any>"],
+      binding: SERIALIZED_TABLE_BINDING,
+    },
   ],
 ]);
+
+// The curation the emitter applies to a slot: an entry with no `binding` or
+// `engine` pin applies everywhere, and a pinned one only where its ledger line
+// is in the target's engine evidence.
+export function evidencedTableSlotCuration(
+  key: string,
+  bindingEvidence: ReadonlySet<string>,
+): TableSlotCuration | undefined {
+  const curation = TABLE_SLOT_CURATIONS.get(key);
+  if (curation === undefined) return undefined;
+  if (curation.binding === undefined && curation.engine === undefined) return curation;
+  return bindingEvidence.has(pinEvidenceKey("TABLE_SLOT_CURATIONS", key)) ? curation : undefined;
+}
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
 // for a callback parameter's signature. Each entry carries two forms, chosen by
@@ -7893,7 +8034,7 @@ function mapSlotUnion(
     let ts: string;
     const slotCuration =
       slotKind !== undefined && slotName !== undefined
-        ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
+        ? evidencedTableSlotCuration(tableSlotKey(elementName, slotKind, slotName), bindingEvidence)
         : undefined;
     const lookupReturn =
       slotKind === "return" &&
@@ -8138,9 +8279,29 @@ export function inlineTableType(
     // variant field present only for some shape kinds, e.g. a b2d shape table).
     // A param-side field the engine requires stays required.
     const optional = (optionalFields && field.required !== true) || field.optional === true;
+    return { key, ts, optional };
+  });
+  // A doc that lists a field under more than one variant names it twice, and a
+  // repeated member is not valid TypeScript: it becomes one member at its first
+  // position, the union of its types, optional if any occurrence is.
+  const merged = new Map<string, { types: string[]; optional: boolean }>();
+  for (const { key, ts, optional } of members) {
+    const seen = merged.get(key);
+    if (seen === undefined) {
+      merged.set(key, { types: [ts], optional });
+      continue;
+    }
+    if (!seen.types.includes(ts)) seen.types.push(ts);
+    seen.optional ||= optional;
+  }
+  const rendered = [...merged].map(([key, { types, optional }]) => {
+    const ts =
+      types.length === 1
+        ? types.join("")
+        : types.map((type) => (type.includes("=>") ? `(${type})` : type)).join(" | ");
     return `${key}${optional ? "?" : ""}: ${ts}`;
   });
-  return `{ ${members.join("; ")} }`;
+  return `{ ${rendered.join("; ")} }`;
 }
 
 function nestedFieldType(field: TableField, object: string): string {

@@ -11,7 +11,9 @@ import {
   STRUCT_MEMBER_ADDITIONS,
   type StructMemberAddition,
   TABLE_FIELD_TYPE_OVERRIDES,
+  TABLE_SLOT_CURATIONS,
   type TableFieldTypeOverride,
+  type TableSlotCuration,
 } from "../src/emit-dts";
 import {
   type BindingFunction,
@@ -86,8 +88,9 @@ function definedPinHolds(targetId: string, pin: BindingPin): boolean {
 // there: a release older than the function has neither the struct nor the push.
 // Likewise a correction whose file the target does not vendor, or whose
 // function it does not define: a release older than the module or the function
-// declares no slot for it to correct. A key range with an `engine` field is
-// evidence where every one of its pins holds.
+// declares no slot for it to correct. A key range with an `engine` field, or a
+// table slot curation with `engine` pins, is evidence where every one of its
+// pins holds.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
@@ -95,6 +98,7 @@ export function bindingEvidenceFor(
   ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
   parameters: Iterable<readonly [string, ParamTypeCorrection]> = PARAM_TYPE_CORRECTIONS,
   fields: Iterable<readonly [string, TableFieldTypeOverride]> = TABLE_FIELD_TYPE_OVERRIDES,
+  curations: Iterable<readonly [string, TableSlotCuration]> = TABLE_SLOT_CURATIONS,
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
@@ -102,6 +106,7 @@ export function bindingEvidenceFor(
     ["RETURN_TYPE_CORRECTIONS", entries],
     ["PARAM_TYPE_CORRECTIONS", parameters],
     ["TABLE_FIELD_TYPE_OVERRIDES", fields],
+    ["TABLE_SLOT_CURATIONS", curations],
   ] as const;
   for (const [table, pinned] of corrections) {
     for (const [key, { binding }] of pinned) {
@@ -121,6 +126,11 @@ export function bindingEvidenceFor(
   for (const [key, { engine }] of ranges) {
     if (engine?.pins.every((pin) => enginePinHolds(target.id, pin))) {
       evidence.add(pinEvidenceKey("PROPERTY_KEY_RANGES", key));
+    }
+  }
+  for (const [key, { engine }] of curations) {
+    if (engine?.every((pin) => enginePinHolds(target.id, pin))) {
+      evidence.add(pinEvidenceKey("TABLE_SLOT_CURATIONS", key));
     }
   }
   return evidence;
@@ -166,12 +176,21 @@ export function targetBindingOptions(
   ranges?: Iterable<readonly [string, PropertyKeyRange]>,
   parameters?: Iterable<readonly [string, ParamTypeCorrection]>,
   fields?: Iterable<readonly [string, TableFieldTypeOverride]>,
+  curations?: Iterable<readonly [string, TableSlotCuration]>,
 ): TargetBindingOptions {
   const registeredConstants = registeredConstantFqns(target);
   const vendored = (target.source ?? null) === null;
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
-    bindingEvidence: bindingEvidenceFor(target, corrections, additions, ranges, parameters, fields),
+    bindingEvidence: bindingEvidenceFor(
+      target,
+      corrections,
+      additions,
+      ranges,
+      parameters,
+      fields,
+      curations,
+    ),
     ...(vendored ? { nilRaisingSlots: targetNilRaisingSlots(target.id) } : {}),
   };
 }
