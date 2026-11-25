@@ -2,11 +2,13 @@
   "physics.raycast": {
     "signatures": [
       "physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | undefined",
-      "physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined"
+      "physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined",
+      "physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean } | undefined): Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\"> | Omit<BuiltinMessages[\"ray_cast_response\"], \"request_id\">[] | undefined"
     ],
     "docs": [
       "Ray casts are used to test for intersections against collision objects in the physics world. Collision objects of types kinematic, dynamic and static are tested against. Trigger objects do not intersect with ray casts. Which collision objects to hit is filtered by their collision groups and can be configured through `groups`. NOTE: Ray casts will ignore collision objects that contain the starting point of the ray. This is a limitation in Box2D.",
-      "Ray cast with an options table, which returns the hits as a list: every hit with `all` set, else a list of the first one."
+      "Ray cast with an options table, which returns the hits as a list: every hit with `all` set, else a list of the first one.",
+      "Ray cast with an options value that may be `undefined`, which returns the first hit without one and the hits as a list with one."
     ]
   }
 }

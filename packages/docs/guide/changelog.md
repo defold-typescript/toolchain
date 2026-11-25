@@ -9,6 +9,20 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.70.1
+
+> Summary:
+>
+> - **An optional engine argument accepts a value that may be `undefined`**, as `physics.raycast` options do ([physics](/api/physics)).
+
+### Fixed
+
+- **Engine calls take an argument that may be `undefined` where the engine reads `nil` as leaving it out:**
+  - **`physics.raycast`** with options that may be `undefined` returns one hit, a list of hits, or `undefined`.
+  - **`sys.get_config_string`** with a default that may be `undefined` returns `string | undefined`.
+  - **`http.request`** takes options typed `http.RequestOptions | undefined`, and its callback receives progress events as well as the final response.
+  - **[b2d.joint](/api/b2d.joint)** `b2d.joint.get_motor_force`, `b2d.joint.get_motor_torque`, `b2d.joint.get_reaction_force` and `b2d.joint.get_reaction_torque` take `inv_dt` as optional, defaulting to 1.
+
 ## v0.70.0
 
 > Summary:

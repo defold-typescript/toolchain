@@ -1332,6 +1332,20 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   ["socket.newtry:param:finalizer", "socket.protect's example `local try = socket.newtry()`"],
   ...(
     [
+      ["get_motor_force", "Joint_GetMotorForce"],
+      ["get_motor_torque", "Joint_GetMotorTorque"],
+      ["get_reaction_force", "Joint_GetReactionForce"],
+      ["get_reaction_torque", "Joint_GetReactionTorque"],
+    ] as const
+  ).map(
+    ([name, cFunction]) =>
+      [
+        `b2d.joint.${name}:param:inv_dt`,
+        `script_box2d_joint_v2.cpp:${cFunction} reads argument 2 with luaL_optnumber(L, 2, 1.0)`,
+      ] as readonly [string, string],
+  ),
+  ...(
+    [
       "create_distance",
       "create_mouse",
       "create_prismatic",
