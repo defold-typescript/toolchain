@@ -462,6 +462,20 @@ function admits(signature: ts.Signature, count: number, checker: ts.TypeChecker)
   return required <= count && (restIndex(signature) !== undefined || params.length >= count);
 }
 
+// A following `|` extends a function, constructor or conditional type's last
+// part instead of joining the union, so such a constituent is parenthesized.
+function unionConstituent(text: string): string {
+  const source = ts.createSourceFile("constituent.ts", `type T = ${text};`, ts.ScriptTarget.Latest);
+  const [statement] = source.statements;
+  if (statement === undefined || !ts.isTypeAliasDeclaration(statement)) return text;
+  const node = statement.type;
+  return ts.isFunctionTypeNode(node) ||
+    ts.isConstructorTypeNode(node) ||
+    ts.isConditionalTypeNode(node)
+    ? `(${text})`
+    : text;
+}
+
 // Each type a signature taking `index + 1` arguments declares for the last, its
 // constraint in place of a type parameter, or `undefined`.
 function omittedForm(
@@ -486,7 +500,11 @@ function omittedForm(
     texts.delete("false");
     texts.add("boolean");
   }
-  return { label: OMITTED, text: [...texts, "undefined"].join(" | "), members: [] };
+  return {
+    label: OMITTED,
+    text: [...[...texts].map(unionConstituent), "undefined"].join(" | "),
+    members: [],
+  };
 }
 
 function omittedSlotsOf(
