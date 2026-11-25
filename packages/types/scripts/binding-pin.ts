@@ -1,20 +1,15 @@
 import {
-  type BindingPin,
-  type EngineSourcePin,
-  PARAM_TYPE_CORRECTIONS,
-  type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
-  pinEvidenceKey,
-  RETURN_TYPE_CORRECTIONS,
-  type ReturnTypeCorrection,
   STRUCT_MEMBER_ADDITIONS,
   type StructMemberAddition,
-  TABLE_FIELD_TYPE_OVERRIDES,
-  TABLE_SLOT_CURATIONS,
-  type TableFieldTypeOverride,
-  type TableSlotCuration,
 } from "../src/emit-dts";
+import {
+  type BindingPin,
+  type CorrectionPins,
+  type EngineSourcePin,
+  pinEvidenceKey,
+} from "../src/engine-pin";
 import {
   type BindingFunction,
   bindingDefinesFunction,
@@ -27,6 +22,7 @@ import {
   readBindingsForTarget,
   registeredConstantFqns,
 } from "./engine-binding-extract";
+import { ENGINE_PINNED_TABLES, type EnginePinnedTable } from "./engine-pinned-tables";
 import type { ApiTarget, TargetBindingOptions } from "./regen";
 
 function containsRun(body: readonly string[], run: readonly string[]): boolean {
@@ -80,39 +76,37 @@ function definedPinHolds(targetId: string, pin: BindingPin): boolean {
   );
 }
 
-// The ledger lines (`pinEvidenceKey`) of the binding-pinned corrections whose
-// pin holds in the target's vendored engine source; empty for a target with
+// Whether an entry's engine pins hold on the target: its `binding` pin, and
+// every one of its `engine` pins. An entry with neither has no engine evidence.
+function enginePinsHold(targetId: string, { binding, engine }: CorrectionPins): boolean {
+  if (binding === undefined && engine === undefined) return false;
+  return (
+    (binding === undefined || definedPinHolds(targetId, binding)) &&
+    (engine === undefined || engine.every((pin) => enginePinHolds(targetId, pin)))
+  );
+}
+
+// The ledger lines (`pinEvidenceKey`) of the engine-pinned corrections whose
+// pins hold in the target's vendored engine source; empty for a target with
 // none (a ref-doc target). Each line names its table, so a key two tables share
-// is evidence only for the table whose pin holds. A struct
-// member addition whose function the target does not define has no evidence
-// there: a release older than the function has neither the struct nor the push.
-// Likewise a correction whose file the target does not vendor, or whose
-// function it does not define: a release older than the module or the function
-// declares no slot for it to correct. A key range with an `engine` field, or a
-// table slot curation with `engine` pins, is evidence where every one of its
-// pins holds.
+// is evidence only for the table whose pin holds. A correction whose `binding`
+// file the target does not vendor, or whose function it does not define, has no
+// evidence there: a release older than the module or the function declares no
+// slot for it to correct. A struct member addition whose function the target
+// does not define has none either: a release older than the function has
+// neither the struct nor the push. A key range with an `engine` field is
+// evidence where every one of its pins holds.
 export function bindingEvidenceFor(
   target: ApiTarget,
-  entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
+  tables: readonly EnginePinnedTable[] = ENGINE_PINNED_TABLES,
   additions: Iterable<readonly [string, StructMemberAddition]> = STRUCT_MEMBER_ADDITIONS,
   ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
-  parameters: Iterable<readonly [string, ParamTypeCorrection]> = PARAM_TYPE_CORRECTIONS,
-  fields: Iterable<readonly [string, TableFieldTypeOverride]> = TABLE_FIELD_TYPE_OVERRIDES,
-  curations: Iterable<readonly [string, TableSlotCuration]> = TABLE_SLOT_CURATIONS,
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
-  const corrections = [
-    ["RETURN_TYPE_CORRECTIONS", entries],
-    ["PARAM_TYPE_CORRECTIONS", parameters],
-    ["TABLE_FIELD_TYPE_OVERRIDES", fields],
-    ["TABLE_SLOT_CURATIONS", curations],
-  ] as const;
-  for (const [table, pinned] of corrections) {
-    for (const [key, { binding }] of pinned) {
-      if (binding !== undefined && definedPinHolds(target.id, binding)) {
-        evidence.add(pinEvidenceKey(table, key));
-      }
+  for (const { name, entries } of tables) {
+    for (const [key, entry] of entries) {
+      if (enginePinsHold(target.id, entry)) evidence.add(pinEvidenceKey(name, key));
     }
   }
   for (const [key, { binding }] of additions) {
@@ -126,11 +120,6 @@ export function bindingEvidenceFor(
   for (const [key, { engine }] of ranges) {
     if (engine?.pins.every((pin) => enginePinHolds(target.id, pin))) {
       evidence.add(pinEvidenceKey("PROPERTY_KEY_RANGES", key));
-    }
-  }
-  for (const [key, { engine }] of curations) {
-    if (engine?.every((pin) => enginePinHolds(target.id, pin))) {
-      evidence.add(pinEvidenceKey("TABLE_SLOT_CURATIONS", key));
     }
   }
   return evidence;
@@ -171,26 +160,15 @@ function targetNilRaisingSlots(targetId: string): ReadonlyMap<string, readonly n
 // fresh emit and `regen` can never disagree on any of them.
 export function targetBindingOptions(
   target: ApiTarget,
-  corrections?: Iterable<readonly [string, ReturnTypeCorrection]>,
+  tables?: readonly EnginePinnedTable[],
   additions?: Iterable<readonly [string, StructMemberAddition]>,
   ranges?: Iterable<readonly [string, PropertyKeyRange]>,
-  parameters?: Iterable<readonly [string, ParamTypeCorrection]>,
-  fields?: Iterable<readonly [string, TableFieldTypeOverride]>,
-  curations?: Iterable<readonly [string, TableSlotCuration]>,
 ): TargetBindingOptions {
   const registeredConstants = registeredConstantFqns(target);
   const vendored = (target.source ?? null) === null;
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
-    bindingEvidence: bindingEvidenceFor(
-      target,
-      corrections,
-      additions,
-      ranges,
-      parameters,
-      fields,
-      curations,
-    ),
+    bindingEvidence: bindingEvidenceFor(target, tables, additions, ranges),
     ...(vendored ? { nilRaisingSlots: targetNilRaisingSlots(target.id) } : {}),
   };
 }

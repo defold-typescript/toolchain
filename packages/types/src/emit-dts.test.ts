@@ -61,6 +61,7 @@ import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
 import { targetBindingOptions } from "../scripts/binding-pin";
+import { ENGINE_PINNED_TABLES } from "../scripts/engine-pinned-tables";
 import {
   EDITOR_MODULE_MANIFEST,
   EDITOR_VM_MODULE_MANIFEST,
@@ -99,6 +100,7 @@ import {
   constantUnionSpelling,
   declaredTypePaths,
   defaultMapType,
+  type EmitOptions,
   emitDeclarations,
   emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
@@ -113,8 +115,6 @@ import {
   PARAM_TYPE_CORRECTIONS,
   PROPERTIES_INTERFACE,
   parseTableFields,
-  pinEvidenceKey,
-  RETURN_TYPE_CORRECTIONS,
   recoverCallbackSignature,
   routeTypeDeclarations,
   SLOT_LEVEL_LIST_PROSE,
@@ -125,6 +125,7 @@ import {
   UNDOCUMENTED_CONSTANTS,
   VARIABLE_TYPE_OVERRIDES,
 } from "./emit-dts";
+import { pinEvidenceKey } from "./engine-pin";
 import { engineTypeName } from "./engine-type-name";
 import { hashExampleSource } from "./example-store";
 import { parseLibraryIndexSlotClassifications } from "./index-slot-classifications";
@@ -135,23 +136,14 @@ import type { UrlParameterTable } from "./url-parameters";
 // supplies: each pinned correction's ledger line, so the correction applies.
 const EVERY_PIN_HOLDS = {
   bindingEvidence: new Set(
-    (
-      [
-        ["PARAM_TYPE_CORRECTIONS", PARAM_TYPE_CORRECTIONS],
-        ["RETURN_TYPE_CORRECTIONS", RETURN_TYPE_CORRECTIONS],
-        ["TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES],
-        ["TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS],
-      ] as const
-    ).flatMap(([table, entries]) =>
+    ENGINE_PINNED_TABLES.flatMap(({ name, entries }) =>
       [...entries]
-        .filter(
-          ([, entry]) =>
-            entry.binding !== undefined || ("engine" in entry && entry.engine !== undefined),
-        )
-        .map(([key]) => pinEvidenceKey(table, key)),
+        .filter(([, entry]) => entry.binding !== undefined || entry.engine !== undefined)
+        .map(([key]) => pinEvidenceKey(name, key)),
     ),
   ),
 };
+const PINNED = EVERY_PIN_HOLDS.bindingEvidence;
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
   const fn = module.functions.find((candidate) => candidate.name === name);
@@ -403,7 +395,7 @@ describe("emitDeclarations", () => {
       properties: [],
       typedefs: [],
     };
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     expect(out).toContain("function set_tile(url: string, layer: string): boolean;");
     expect(out).not.toContain("function set_tile(url: string, layer: string): void;");
   });
@@ -1609,7 +1601,7 @@ describe("emitDeclarations", () => {
       properties: [],
       typedefs: [],
     };
-    expect(emitDeclarations(module)).toContain(
+    expect(emitDeclarations(module, EVERY_PIN_HOLDS)).toContain(
       "function get_safe_area(): { safe_area: { x: number; y: number; inset_top: number } };",
     );
   });
@@ -1617,7 +1609,7 @@ describe("emitDeclarations", () => {
   test("get_render_target_info recovers its attachments level instead of flattening it", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const line =
-      emitDeclarations(module)
+      emitDeclarations(module, EVERY_PIN_HOLDS)
         .split("\n")
         .find((l) => l.includes("function get_render_target_info(")) ?? "";
     expect(line).toContain(
@@ -1632,14 +1624,7 @@ describe("emitDeclarations", () => {
 
   test("a flattened multi-table option bag emits nested inline objects without duplicate top-level keys", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module, {
-      bindingEvidence: new Set([
-        pinEvidenceKey(
-          "TABLE_FIELD_TYPE_OVERRIDES",
-          "resource.create_atlas:param:table:animations[].playback",
-        ),
-      ]),
-    });
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     expect(out).toContain(
       "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
@@ -1652,7 +1637,7 @@ describe("emitDeclarations", () => {
 
   test("emits 'a list of' atlas table fields as arrays while geometries recovers a nested array", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain(
       "flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]",
@@ -2471,7 +2456,7 @@ describe("number-list table-field recovery", () => {
 
   test("emits create_atlas/set_atlas top-level number-lists as number[] alongside the recovered geometries array", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain("vertices?: number[]");
     expect(createLine).toContain("uvs?: number[]");
@@ -2586,14 +2571,7 @@ describe("supplementary cross-reference table-field recovery", () => {
   });
 
   test("emits get_atlas's return as the inline object adopted from set_atlas, with the curated geometries array", () => {
-    const out = emitDeclarations(resourceModule, {
-      bindingEvidence: new Set([
-        pinEvidenceKey(
-          "TABLE_FIELD_TYPE_OVERRIDES",
-          "resource.get_atlas:return:data:animations[].playback",
-        ),
-      ]),
-    });
+    const out = emitDeclarations(resourceModule, EVERY_PIN_HOLDS);
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
       "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
@@ -2807,7 +2785,7 @@ describe("engine-required param fields", () => {
 
   test("a parsed option bag keeps the fields the binding reads unconditionally required", () => {
     const line = signatureLine(
-      emitDeclarations(parseDefoldApiDoc(resourceDoc)),
+      emitDeclarations(parseDefoldApiDoc(resourceDoc), EVERY_PIN_HOLDS),
       "function create_texture(",
     );
     for (const field of ["type", "width", "height", "format"]) {
@@ -2820,7 +2798,7 @@ describe("engine-required param fields", () => {
 
   test("a list member one level down is required inside its element", () => {
     const line = signatureLine(
-      emitDeclarations(parseDefoldApiDoc(resourceDoc)),
+      emitDeclarations(parseDefoldApiDoc(resourceDoc), EVERY_PIN_HOLDS),
       "function create_atlas(",
     );
     expect(line).toContain("animations: [{ id: string; width: number; height: number;");
@@ -2910,15 +2888,19 @@ describe("engine-required param fields", () => {
   test("a return slot is never corrected", () => {
     const fields: TableField[] = [{ name: "buffer", types: ["buffer"] }];
     expect(
-      applyRequiredFieldCorrections("resource.create_buffer", "return", "table", fields),
+      applyRequiredFieldCorrections("resource.create_buffer", "return", "table", fields, PINNED),
     ).toEqual(fields);
   });
 
   test("a correction naming a field the slot does not carry is a hard error", () => {
     expect(() =>
-      applyRequiredFieldCorrections("resource.create_buffer", "param", "table", [
-        { name: "transfer_ownership", types: ["boolean"] },
-      ]),
+      applyRequiredFieldCorrections(
+        "resource.create_buffer",
+        "param",
+        "table",
+        [{ name: "transfer_ownership", types: ["boolean"] }],
+        PINNED,
+      ),
     ).toThrow(/resource\.create_buffer:param:table:buffer/);
   });
 });
@@ -2955,8 +2937,15 @@ describe("list-field corrections", () => {
       "param",
       "table",
       parseTableFields(setAtlasDoc) ?? [],
+      PINNED,
     );
-    const corrected = applyListFieldCorrections("resource.set_atlas", "param", "table", parsed);
+    const corrected = applyListFieldCorrections(
+      "resource.set_atlas",
+      "param",
+      "table",
+      parsed,
+      PINNED,
+    );
     const animations = corrected.find((field) => field.name === "animations");
     expect(animations?.nonEmpty).toBe(true);
     expect(animations?.alternatives).toBe(
@@ -2970,7 +2959,7 @@ describe("list-field corrections", () => {
     expect(geometries?.alternatives).toBeUndefined();
     expect(
       inlineTableType(
-        applyListFieldCorrections("resource.set_atlas", "param", "table", atlasFields()),
+        applyListFieldCorrections("resource.set_atlas", "param", "table", atlasFields(), PINNED),
         identity,
         false,
       ),
@@ -2981,24 +2970,24 @@ describe("list-field corrections", () => {
 
   test("a return slot is never corrected", () => {
     expect(
-      applyListFieldCorrections("resource.set_atlas", "return", "table", atlasFields()),
+      applyListFieldCorrections("resource.set_atlas", "return", "table", atlasFields(), PINNED),
     ).toEqual(atlasFields());
   });
 
   test("a correction naming a field the slot does not carry is a hard error", () => {
     const fields = atlasFields().filter((field) => field.name !== "geometries");
-    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
-      /resource\.set_atlas:param:table:geometries/,
-    );
+    expect(() =>
+      applyListFieldCorrections("resource.set_atlas", "param", "table", fields, PINNED),
+    ).toThrow(/resource\.set_atlas:param:table:geometries/);
   });
 
   test("a correction naming a field that is not a list is a hard error", () => {
     const fields = atlasFields().map((field) =>
       field.name === "geometries" ? { ...field, isList: false } : field,
     );
-    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
-      /resource\.set_atlas:param:table:geometries/,
-    );
+    expect(() =>
+      applyListFieldCorrections("resource.set_atlas", "param", "table", fields, PINNED),
+    ).toThrow(/resource\.set_atlas:param:table:geometries/);
   });
 
   test("a replaced member the field does not carry is a hard error", () => {
@@ -3007,9 +2996,9 @@ describe("list-field corrections", () => {
         ? { ...field, fields: (field.fields ?? []).filter((member) => member.name !== "frame_end") }
         : field,
     );
-    expect(() => applyListFieldCorrections("resource.set_atlas", "param", "table", fields)).toThrow(
-      /resource\.set_atlas:param:table:animations.*frame_end/,
-    );
+    expect(() =>
+      applyListFieldCorrections("resource.set_atlas", "param", "table", fields, PINNED),
+    ).toThrow(/resource\.set_atlas:param:table:animations.*frame_end/);
   });
 });
 
@@ -3294,10 +3283,10 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("buffer.create declares its streams as an array of stream records", () => {
     const module = parseDefoldApiDoc(bufferDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "buffer.create")],
-    });
+    const out = emitDeclarations(
+      { ...module, functions: [requireFunction(module, "buffer.create")] },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
       'function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.ValueType; count?: number }, ...{ name?: Hash | string; type: buffer.ValueType; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };',
     );
@@ -3811,7 +3800,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
       { name: "uvs", types: ["table"], numberList: true },
       { name: "indices", types: ["table"], numberList: true },
     ];
-    expect([...NESTED_FIELD_CURATIONS]).toEqual([
+    expect([...NESTED_FIELD_CURATIONS].map(([key, { fields }]) => [key, fields])).toEqual([
       ["resource.set_atlas:param:table:geometries", members],
       ["resource.create_atlas:param:table:geometries", members],
       ["resource.get_atlas:return:data:geometries", members],
@@ -3823,7 +3812,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
       { name: "texture", types: ["string"] },
       { name: "geometries", types: ["table"] },
     ];
-    const out = applyNestedFieldCurations("resource.set_atlas", "param", "table", parsed);
+    const out = applyNestedFieldCurations("resource.set_atlas", "param", "table", parsed, PINNED);
     expect(out[0]).toEqual({ name: "texture", types: ["string"] });
     expect(out[1]).toEqual({
       name: "geometries",
@@ -3841,9 +3830,9 @@ describe("NESTED_FIELD_CURATIONS", () => {
 
   test("does nothing for an unkeyed slot", () => {
     const parsed = [{ name: "geometries", types: ["table"] }];
-    expect(applyNestedFieldCurations("resource.set_texture", "param", "table", parsed)).toEqual(
-      parsed,
-    );
+    expect(
+      applyNestedFieldCurations("resource.set_texture", "param", "table", parsed, PINNED),
+    ).toEqual(parsed);
   });
 
   test("keeps a parsed member list and appends only the members it lacks", () => {
@@ -3857,7 +3846,13 @@ describe("NESTED_FIELD_CURATIONS", () => {
         ],
       },
     ];
-    const out = applyNestedFieldCurations("resource.create_atlas", "param", "table", parsed);
+    const out = applyNestedFieldCurations(
+      "resource.create_atlas",
+      "param",
+      "table",
+      parsed,
+      PINNED,
+    );
     expect(out[0]?.fields?.map((field) => field.name)).toEqual([
       "id",
       "uvs",
@@ -3868,7 +3863,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
 
   test("drives the injection through emitDeclarations onto the three atlas slots", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(setLine).toContain(
@@ -3931,6 +3926,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
           returnValues: [],
         },
       ]),
+      EVERY_PIN_HOLDS,
     );
     expect(out).toContain("function set_metadata(values: [number, ...number[]], value_type: ");
 
@@ -4623,7 +4619,7 @@ describe("url-parameter address retyping", () => {
 
   test("a classified resource-path slot is inert — a fourth class widens nothing", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module, { urlParameters: committed });
+    const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
     // `resource.atlas#path` is classified `resource-path` in the committed
     // table. The alias map is a partial record, so the slot keeps the plain
     // `string` the ref-doc declares.
@@ -5099,7 +5095,7 @@ describe("documented constant slot expansion", () => {
 
   test("a family entry types a slot whose prose names nothing but whose example does", () => {
     const buffer = parseDefoldApiDoc(bufferDoc);
-    const out = emitDeclarations(buffer);
+    const out = emitDeclarations(buffer, EVERY_PIN_HOLDS);
     const valueTypes = union(
       buffer.constants
         .map((c) => c.name)
@@ -5393,7 +5389,7 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
   });
 
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
-    const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
+    const out = emitDeclarations(parseDefoldApiDoc(resourceDoc), EVERY_PIN_HOLDS);
     expect(out).toContain(
       'function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): Hash;',
     );
@@ -5401,10 +5397,16 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
 
   test("throws when the parse already recovered the field an addition supplies", () => {
     expect(() =>
-      applyFieldAdditions("resource.create_texture", "param", "table", [
-        { name: "width", types: ["number"] },
-        { name: "page_count", types: ["number"] },
-      ]),
+      applyFieldAdditions(
+        "resource.create_texture",
+        "param",
+        "table",
+        [
+          { name: "width", types: ["number"] },
+          { name: "page_count", types: ["number"] },
+        ],
+        new Set(),
+      ),
     ).toThrow("resource.create_texture:param:table:page_count");
   });
 });
@@ -6709,15 +6711,21 @@ describe("engine slot rules", () => {
   test("a non-empty slot turns its array into a tuple of one or more elements", () => {
     const record = "{ name?: Hash | string; type: buffer.ValueType; count?: number }";
     expect(
-      signatureLine(emitDeclarations(only(bufferDoc, "buffer.create")), "function create("),
+      signatureLine(
+        emitDeclarations(only(bufferDoc, "buffer.create"), EVERY_PIN_HOLDS),
+        "function create(",
+      ),
     ).toContain(`declaration: [${record}, ...${record}[]]`);
     const struct = "({ name: Hash | string; type: buffer.ValueType; count: number })";
     expect(
-      signatureLine(emitDeclarations(only(buffer114Doc, "buffer.create")), "function create("),
+      signatureLine(
+        emitDeclarations(only(buffer114Doc, "buffer.create"), EVERY_PIN_HOLDS),
+        "function create(",
+      ),
     ).toContain(`declaration: [${struct}, ...${struct}[]]`);
     expect(
       signatureLine(
-        emitDeclarations(only(buffer114Doc, "buffer.set_metadata")),
+        emitDeclarations(only(buffer114Doc, "buffer.set_metadata"), EVERY_PIN_HOLDS),
         "function set_metadata(",
       ),
     ).toContain("values: [number, ...number[]], ");
@@ -6726,7 +6734,7 @@ describe("engine slot rules", () => {
   test("an excludes slot drops the named constants from its type", () => {
     expect(
       signatureLine(
-        emitDeclarations(only(buffer114Doc, "buffer.set_metadata")),
+        emitDeclarations(only(buffer114Doc, "buffer.set_metadata"), EVERY_PIN_HOLDS),
         "function set_metadata(",
       ),
     ).toEndWith(
@@ -6782,19 +6790,24 @@ describe("engine slot rules", () => {
     expect(() =>
       emitDeclarations(
         renamed(only(resource114Doc, "resource.create_sound_data"), "options", "opts"),
+        EVERY_PIN_HOLDS,
       ),
     ).toThrow(/resource\.create_sound_data:param:options/);
   });
 
   test("a non-empty slot whose type is not one array throws, naming the key", () => {
     expect(() =>
-      emitDeclarations(retyped(only(buffer114Doc, "buffer.create"), "declaration", ["string"])),
+      emitDeclarations(
+        retyped(only(buffer114Doc, "buffer.create"), "declaration", ["string"]),
+        EVERY_PIN_HOLDS,
+      ),
     ).toThrow(/buffer\.create:param:declaration/);
   });
 
   test("an alongside drop the union lacks throws, naming the key and the drop", () => {
     expect(() =>
       emitDeclarations(retyped(only(goDoc, "go.delete"), "id", ["string", "hash", "url"]), {
+        ...EVERY_PIN_HOLDS,
         nilRaisingSlots: new Map([["go.delete", [2]]]),
       }),
     ).toThrow(/go\.delete:param:id.*boolean/);
@@ -6802,7 +6815,10 @@ describe("engine slot rules", () => {
 
   test("an alongside slot no call requires throws once binding slots are read", () => {
     expect(() =>
-      emitDeclarations(only(goDoc, "go.delete"), { nilRaisingSlots: new Map() }),
+      emitDeclarations(only(goDoc, "go.delete"), {
+        ...EVERY_PIN_HOLDS,
+        nilRaisingSlots: new Map(),
+      }),
     ).toThrow(/go\.delete:param:id.*recursive/);
   });
 });
@@ -6926,7 +6942,7 @@ describe("binding-pinned anchor and playback slot corrections", () => {
 
 describe("engine index base notes", () => {
   function docBlock(doc: unknown, fnName: string): string {
-    const lines = emitDeclarations(parseDefoldApiDoc(doc)).split("\n");
+    const lines = emitDeclarations(parseDefoldApiDoc(doc), EVERY_PIN_HOLDS).split("\n");
     const at = lines.findIndex((line) => line.includes(`function ${fnName}(`));
     if (at < 0) throw new Error(`no emitted function ${fnName}`);
     let start = at;
@@ -7943,7 +7959,10 @@ describe("STRUCT and TYPEDEF declarations", () => {
       type: "",
     })),
   };
-  const shapeDefinitionLine = (tokens: readonly string[]): string | undefined =>
+  const shapeDefinitionLine = (
+    tokens: readonly string[],
+    options: EmitOptions = EVERY_PIN_HOLDS,
+  ): string | undefined =>
     aliasLine(
       emitDeclarations(
         parseDefoldApiDoc({
@@ -7966,6 +7985,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
             },
           ],
         }),
+        options,
       ),
       "Definition",
     );
@@ -7979,6 +7999,17 @@ describe("STRUCT and TYPEDEF declarations", () => {
         `{ type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; ${shapeArmFields} }`,
         `{ type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; ${shapeArmFields} }`,
       ].join(" | ")};`,
+    );
+  });
+
+  test("the shape definition correction applies only with its ledger line in the evidence", () => {
+    const line = pinEvidenceKey("TYPEDEF_ALIAS_CORRECTIONS", "bullet3d.shape.definition");
+    const corrected = shapeDefinitionLine(shapeDefinitionTokens);
+    expect(shapeDefinitionLine(shapeDefinitionTokens, { bindingEvidence: new Set([line]) })).toBe(
+      corrected,
+    );
+    expect(shapeDefinitionLine(shapeDefinitionTokens, { bindingEvidence: new Set() })).not.toBe(
+      corrected,
     );
   });
 
@@ -8134,11 +8165,22 @@ describe("STRUCT and TYPEDEF declarations", () => {
   const resource113_2 = parseDefoldApiDoc(structSlots.resource);
 
   test("resource.atlas emits its member-keyed non-empty lists", () => {
-    const out = emitDeclarations(resource113_2);
+    const out = emitDeclarations(resource113_2, EVERY_PIN_HOLDS);
     const animation =
       'Omit<resource.Animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number })';
     expect(out).toContain("    geometries: [resource.Geometry, ...resource.Geometry[]];");
     expect(out).toContain(`    animations: [${animation}, ...(${animation})[]];`);
+  });
+
+  test("a member-keyed list correction applies only with its ledger line in the evidence", () => {
+    const key = "resource.atlas:member:geometries";
+    const evidence = new Set([pinEvidenceKey("LIST_FIELD_CORRECTIONS", key)]);
+    expect(emitDeclarations(resource113_2, { bindingEvidence: evidence })).toContain(
+      "    geometries: [resource.Geometry, ...resource.Geometry[]];",
+    );
+    expect(emitDeclarations(resource113_2, { bindingEvidence: new Set() })).toContain(
+      "    geometries: resource.Geometry[];",
+    );
   });
 
   test("resource.sound_data_options emits its member-keyed required, retyped data", () => {
@@ -8984,5 +9026,103 @@ describe("doc text that only looks like a tag", () => {
       typedefs: [],
     };
     expect(emitDeclarations(module)).toContain(`@param probability - ${sentence}`);
+  });
+});
+
+describe("engine-pinned correction gates", () => {
+  const evidenceOf = (table: string, key: string): EmitOptions => ({
+    bindingEvidence: new Set([pinEvidenceKey(table, key)]),
+  });
+  const NONE: EmitOptions = { bindingEvidence: new Set() };
+  const lineWith = (out: string, needle: string): string =>
+    out.split("\n").find((line) => line.includes(needle)) ?? "";
+
+  test("a property type correction applies only with its ledger line in the evidence", () => {
+    const go = parseDefoldApiDoc(goDoc);
+    const pinned = emitDeclarations(go, evidenceOf("PROPERTY_TYPE_CORRECTIONS", "go.scale"));
+    expect(pinned).toContain("    scale: number | Vector3;");
+    expect(emitDeclarations(go, NONE)).toContain("    scale: number;");
+  });
+
+  test("an engine slot rule applies only with its ledger line in the evidence", () => {
+    const module = parseDefoldApiDoc(bufferDoc);
+    const only = { ...module, functions: [requireFunction(module, "buffer.create")] };
+    const key = "buffer.create:param:declaration";
+    expect(
+      lineWith(emitDeclarations(only, evidenceOf("ENGINE_SLOT_RULES", key)), "function create("),
+    ).toContain("declaration: [{");
+    const unpinned = lineWith(emitDeclarations(only, NONE), "function create(");
+    expect(unpinned).not.toContain("declaration: [{");
+    expect(unpinned).toContain("}[]): ");
+  });
+
+  test("a list field correction applies only with its ledger line in the evidence", () => {
+    const fields: TableField[] = [
+      { name: "geometries", types: ["table"], isList: true, fields: [] },
+      {
+        name: "animations",
+        types: ["table"],
+        isList: true,
+        fields: [
+          { name: "frame_start", types: ["number"] },
+          { name: "frame_end", types: ["number"] },
+        ],
+      },
+    ];
+    const geometries = pinEvidenceKey(
+      "LIST_FIELD_CORRECTIONS",
+      "resource.set_atlas:param:table:geometries",
+    );
+    const corrected = applyListFieldCorrections(
+      "resource.set_atlas",
+      "param",
+      "table",
+      fields,
+      new Set([geometries]),
+    );
+    expect(corrected.map((field) => [field.name, field.nonEmpty])).toEqual([
+      ["geometries", true],
+      ["animations", undefined],
+    ]);
+    expect(
+      applyListFieldCorrections("resource.set_atlas", "param", "table", fields, new Set()),
+    ).toEqual(fields);
+  });
+
+  test("a callback signature curation applies only with its ledger line in the evidence", () => {
+    const model = parseDefoldApiDoc(modelDoc);
+    const key = "model.play_anim:param:complete_function";
+    expect(
+      lineWith(
+        emitDeclarations(model, evidenceOf("CALLBACK_SIGNATURE_CURATIONS", key)),
+        "function play_anim(",
+      ),
+    ).toContain('message: BuiltinMessages["model_animation_done"]) => void');
+    expect(lineWith(emitDeclarations(model, NONE), "function play_anim(")).toContain(
+      "message: Record<string | number, unknown>, sender: Url) => void",
+    );
+  });
+
+  test("a return type override applies only with its ledger line in the evidence", () => {
+    const sys = parseDefoldApiDoc(sysDoc);
+    const pinned = emitDeclarations(sys, evidenceOf("RETURN_TYPE_OVERRIDES", "sys.save"));
+    expect(lineWith(pinned, "function save(")).toEndWith("): boolean;");
+    expect(lineWith(emitDeclarations(sys, NONE), "function save(")).toEndWith("): void;");
+  });
+
+  test("a nested field curation applies only with its ledger line in the evidence", () => {
+    const parsed: TableField[] = [{ name: "geometries", types: ["table"] }];
+    const key = "resource.set_atlas:param:table:geometries";
+    const curated = applyNestedFieldCurations(
+      "resource.set_atlas",
+      "param",
+      "table",
+      parsed,
+      new Set([pinEvidenceKey("NESTED_FIELD_CURATIONS", key)]),
+    );
+    expect(curated[0]?.fields?.map((field) => field.name)).toEqual(["vertices", "uvs", "indices"]);
+    expect(
+      applyNestedFieldCurations("resource.set_atlas", "param", "table", parsed, new Set()),
+    ).toEqual(parsed);
   });
 });

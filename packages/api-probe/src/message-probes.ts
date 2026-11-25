@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { bindingEvidenceFor } from "../../types/scripts/binding-pin";
 import { comparedNamespaces } from "../../types/scripts/engine-binding-diff";
 import {
   declaredKinds,
@@ -164,7 +165,10 @@ export function messageProbes(
   const checker = program.getTypeChecker();
   const constants = new Set(declaredMembers(program, comparedNamespaces(target)).constants.keys());
   const origins = new Map(
-    builtinMessagesCatalog(MESSAGES_MANIFEST).entries.map((entry) => [entry.name, entry.origin]),
+    builtinMessagesCatalog(MESSAGES_MANIFEST, bindingEvidenceFor(target)).entries.map((entry) => [
+      entry.name,
+      entry.origin,
+    ]),
   );
   const symbol = builtinMessages(program, checker);
   if (symbol === undefined) throw new Error("api-probe: the surface declares no BuiltinMessages");

@@ -3,6 +3,31 @@
   "commit": "402218d5544666871f07ecdfa21032a7fb59413f",
   "files": [
     {
+      "path": "engine/gameobject/src/gameobject/gameobject.cpp",
+      "blobSha": "e9acea97058cf51cbe3070a55c95ccad0e056f66",
+      "sha256": "71675f0ba5764c6ab926db5442a10b33a664bc3a8969ba3804268c710c814158"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/camera_ddf.proto",
+      "blobSha": "77cc17e427bb0e4fc3b9347f8317a85070fb2f52",
+      "sha256": "216b000633f62e252374dad698e63067075af4402fe0bd130bb15a4e104b81d8"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/gamesys_ddf.proto",
+      "blobSha": "16dc74c8a7e6e2d265ec330458a8b75f99233332",
+      "sha256": "734b6b4a9bd9cb85b731c2847f03019be6d6217b630f78bf8f62e284e37c3737"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/physics_ddf.proto",
+      "blobSha": "41f047f8353aefb90e4180e51cda81c298cb0380",
+      "sha256": "c76de307dadff63527a2fd8b89b78f4135aa663a8ecf8be7471bdc7939d7367b"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/components/comp_label.cpp",
+      "blobSha": "4f78007ba638dfcbdc8415353d34e5c1ef4cc333",
+      "sha256": "6638422c5e6a5fff828277724ed88904252efeb11fc9fc3a99a875766318be56"
+    },
+    {
       "path": "engine/gamesys/src/gamesys/components/comp_model.cpp",
       "blobSha": "f4df928d09ba277b4b71e81e227c8d62d1e97e33",
       "sha256": "34352feeab93fcad2a95cad667fcb6a123baf92fed68a2ad58b6168d87d0211b"

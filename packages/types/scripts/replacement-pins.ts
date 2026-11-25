@@ -11,10 +11,8 @@ import {
   PARAM_TYPE_CORRECTIONS,
   PROPERTY_KEY_RANGES,
   PROPERTY_TYPE_CORRECTIONS,
-  pinEvidenceKey,
   RETURN_TYPE_CORRECTIONS,
   RETURN_TYPE_OVERRIDES,
-  type RefDocPin,
   STRUCT_MEMBER_ADDITIONS,
   TABLE_FIELD_TYPE_OVERRIDES,
   TABLE_SLOT_CURATIONS,
@@ -28,6 +26,8 @@ import {
   MESSAGE_FIELD_CONSTANT_GROUPS,
   MESSAGE_FIELD_CORRECTIONS,
 } from "../src/emit-messages";
+import { pinEvidenceKey, type RefDocPin } from "../src/engine-pin";
+import { messageEngineCorrectionEntries, messageFieldEntries } from "./engine-pinned-tables";
 
 export const REPLACEMENT_PIN_BASELINE_FILE = join(
   import.meta.dirname,
@@ -35,6 +35,12 @@ export const REPLACEMENT_PIN_BASELINE_FILE = join(
 );
 
 export type PinKind = "binding" | "engine" | "refDoc";
+
+// The ref-doc element a key names: the `name` its namespace's doc gives it.
+export interface RefDocElement {
+  readonly namespace: string;
+  readonly name: string;
+}
 
 // A table whose entries put a type in place of, or beside, what upstream
 // declares. `pinsOf` names the pins an entry carries, of which it may carry one.
@@ -47,57 +53,51 @@ export interface ReplacementTable<Entry = unknown> {
   readonly entries: Iterable<readonly [string, Entry]>;
   pinsOf(entry: Entry): readonly PinKind[];
   refDocOf(entry: Entry): RefDocPin | undefined;
-  elementOf(key: string): string;
+  elementOf(key: string): RefDocElement;
   readonly accepts: readonly PinKind[];
 }
 
-// Every ledger key opens with its element: `<element>:param:<slot>`,
-// `<element>:return:<slot>`, `<struct>:member:<name>`, or the bare element.
-function keyElement(key: string): string {
+function keyFqn(key: string): string {
   const colon = key.indexOf(":");
   return colon === -1 ? key : key.slice(0, colon);
 }
 
-function unpinned<Entry>(
-  name: string,
-  entries: Iterable<readonly [string, Entry]>,
-): ReplacementTable<Entry> {
-  return {
-    name,
-    entries,
-    pinsOf: () => [],
-    refDocOf: () => undefined,
-    elementOf: keyElement,
-    accepts: [],
-  };
+// Every ledger key opens with its element's FQN, which the doc names it by:
+// `<element>:param:<slot>`, `<element>:return:<slot>`, `<struct>:member:<name>`,
+// or the bare element.
+function keyElement(key: string): RefDocElement {
+  const fqn = keyFqn(key);
+  return { namespace: fqn.slice(0, fqn.lastIndexOf(".")), name: fqn };
+}
+
+// A property or message key, `<namespace>.<name>` before any `:`, whose doc
+// names the element by its bare name.
+function memberElement(key: string): RefDocElement {
+  const fqn = keyFqn(key);
+  const dot = fqn.lastIndexOf(".");
+  return { namespace: fqn.slice(0, dot), name: fqn.slice(dot + 1) };
 }
 
 // Each pin kind is read from the entry field of the same name.
 type PinFields = { readonly [Kind in PinKind]?: Kind extends "refDoc" ? RefDocPin : unknown };
 
+const EVERY_PIN: readonly PinKind[] = ["refDoc", "binding", "engine"];
+
 function pinned<Entry extends PinFields>(
   name: string,
   entries: Iterable<readonly [string, Entry]>,
   accepts: readonly PinKind[],
+  elementOf: (key: string) => RefDocElement = keyElement,
 ): ReplacementTable<Entry> {
   return {
     name,
     entries,
     pinsOf: (entry) => accepts.filter((kind) => entry[kind] !== undefined),
     refDocOf: (entry) => (accepts.includes("refDoc") ? entry.refDoc : undefined),
-    elementOf: keyElement,
+    elementOf,
     accepts,
   };
 }
-
-export function messageFieldEntries<
-  Entry extends { readonly origin: string; readonly name: string; readonly field: string },
->(entries: readonly Entry[]): (readonly [string, Entry])[] {
-  return entries.map((entry) => [`${entry.origin}.${entry.name}:${entry.field}`, entry] as const);
-}
-
-// `optional` and `required` change a field's optionality, not its type.
-const MESSAGE_TYPE_KINDS: ReadonlySet<string> = new Set(["retype", "add-field", "add-message"]);
 
 // A table is registered when one of its entries contradicts a type upstream
 // declares, or supplies one upstream omits, from evidence the emitter does not
@@ -109,23 +109,33 @@ export const REPLACEMENT_TABLES: readonly ReplacementTable[] = [
   pinned("TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES, ["binding"]),
   pinned("STRUCT_MEMBER_ADDITIONS", STRUCT_MEMBER_ADDITIONS, ["binding"]),
   pinned("PROPERTY_KEY_RANGES", PROPERTY_KEY_RANGES, ["engine"]),
-  unpinned("PROPERTY_TYPE_CORRECTIONS", PROPERTY_TYPE_CORRECTIONS),
-  unpinned("RETURN_TYPE_OVERRIDES", RETURN_TYPE_OVERRIDES),
-  unpinned("VARIABLE_TYPE_OVERRIDES", VARIABLE_TYPE_OVERRIDES),
-  unpinned("TYPEDEF_ALIAS_CORRECTIONS", TYPEDEF_ALIAS_CORRECTIONS),
-  unpinned("ENGINE_SLOT_RULES", ENGINE_SLOT_RULES),
-  unpinned("LIST_FIELD_CORRECTIONS", LIST_FIELD_CORRECTIONS),
-  pinned("TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS, ["refDoc", "binding", "engine"]),
-  unpinned("TABLE_SLOT_FIELD_ADDITIONS", TABLE_SLOT_FIELD_ADDITIONS),
-  unpinned("NESTED_FIELD_CURATIONS", NESTED_FIELD_CURATIONS),
-  unpinned("CALLBACK_SIGNATURE_CURATIONS", CALLBACK_SIGNATURE_CURATIONS),
-  unpinned("MESSAGE_FIELD_CORRECTIONS", messageFieldEntries(MESSAGE_FIELD_CORRECTIONS)),
-  unpinned("MESSAGE_FIELD_CONSTANT_GROUPS", messageFieldEntries(MESSAGE_FIELD_CONSTANT_GROUPS)),
-  unpinned(
+  pinned("PROPERTY_TYPE_CORRECTIONS", PROPERTY_TYPE_CORRECTIONS, EVERY_PIN, memberElement),
+  pinned("RETURN_TYPE_OVERRIDES", RETURN_TYPE_OVERRIDES, EVERY_PIN),
+  pinned("VARIABLE_TYPE_OVERRIDES", VARIABLE_TYPE_OVERRIDES, EVERY_PIN),
+  pinned("TYPEDEF_ALIAS_CORRECTIONS", TYPEDEF_ALIAS_CORRECTIONS, EVERY_PIN),
+  pinned("ENGINE_SLOT_RULES", ENGINE_SLOT_RULES, EVERY_PIN),
+  pinned("LIST_FIELD_CORRECTIONS", LIST_FIELD_CORRECTIONS, EVERY_PIN),
+  pinned("TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS, EVERY_PIN),
+  pinned("TABLE_SLOT_FIELD_ADDITIONS", TABLE_SLOT_FIELD_ADDITIONS, EVERY_PIN),
+  pinned("NESTED_FIELD_CURATIONS", NESTED_FIELD_CURATIONS, EVERY_PIN),
+  pinned("CALLBACK_SIGNATURE_CURATIONS", CALLBACK_SIGNATURE_CURATIONS, EVERY_PIN),
+  pinned(
+    "MESSAGE_FIELD_CORRECTIONS",
+    messageFieldEntries(MESSAGE_FIELD_CORRECTIONS),
+    EVERY_PIN,
+    memberElement,
+  ),
+  pinned(
+    "MESSAGE_FIELD_CONSTANT_GROUPS",
+    messageFieldEntries(MESSAGE_FIELD_CONSTANT_GROUPS),
+    EVERY_PIN,
+    memberElement,
+  ),
+  pinned(
     "MESSAGE_ENGINE_CORRECTIONS",
-    MESSAGE_ENGINE_CORRECTIONS.filter((entry) => MESSAGE_TYPE_KINDS.has(entry.kind)).map(
-      (entry) => [`${entry.origin}.${entry.name}:${entry.kind}`, entry] as const,
-    ),
+    messageEngineCorrectionEntries(MESSAGE_ENGINE_CORRECTIONS),
+    EVERY_PIN,
+    memberElement,
   ),
 ];
 
@@ -200,7 +210,6 @@ const PIN_NAMES: Readonly<Record<PinKind, string>> = {
 };
 
 function acceptedPins(accepts: readonly PinKind[]): string {
-  if (accepts.length === 0) return "the table has no pin field yet";
   return `the table accepts ${accepts.map((kind) => PIN_NAMES[kind]).join(" or ")}`;
 }
 

@@ -390,7 +390,7 @@ describe("engineEvidencePaths", () => {
       ],
       ["c.itemN", { prefix: "item", first: 1, last: 2, evidence: "1-2" }],
     ]);
-    expect(engineEvidencePaths(ranges)).toEqual(["engine/b/src/b.cpp", "engine/z/src/z.h"]);
+    expect(engineEvidencePaths(ranges, [])).toEqual(["engine/b/src/b.cpp", "engine/z/src/z.h"]);
   });
 
   test("lists a file only a table slot curation's engine pin names", () => {
@@ -408,10 +408,9 @@ describe("engineEvidencePaths", () => {
       ],
       ["a.g:param:t", { kind: "verbatim", ts: "PlainTable" }],
     ]);
-    expect(engineEvidencePaths(new Map(), curations)).toEqual([
-      "engine/a/src/a.h",
-      "engine/c/src/c.cpp",
-    ]);
+    expect(
+      engineEvidencePaths(new Map(), [{ name: "TABLE_SLOT_CURATIONS", entries: curations }]),
+    ).toEqual(["engine/a/src/a.h", "engine/c/src/c.cpp"]);
   });
 });
 

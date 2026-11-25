@@ -1,4 +1,4 @@
-import { pinEvidenceKey } from "../src/emit-dts";
+import { pinEvidenceKey } from "../src/engine-pin";
 import type { ProvenanceSurface } from "../src/optional-correction-provenance";
 import type { ReplacementTable } from "./replacement-pins";
 
@@ -55,8 +55,10 @@ function elementTexts(doc: unknown, name: string): string[] {
     });
 }
 
-function namespaceOf(element: string): string {
-  return element.slice(0, element.lastIndexOf("."));
+// Whether `surface` documents `namespace`: its own namespace, or one it nests
+// (`editor` documents `editor.tx.add`).
+function documents(surface: ProvenanceSurface, namespace: string): boolean {
+  return surface.namespace === namespace || namespace.startsWith(`${surface.namespace}.`);
 }
 
 // The ledger lines of the `refDoc`-pinned entries whose snippet one text field
@@ -74,12 +76,11 @@ export function refDocEvidenceFor(
       if (pin === undefined) continue;
       const wanted = refDocText(pin.contains);
       if (wanted === "") throw new Error(`${table.name}:${key}: refDoc pin states no text`);
-      const element = table.elementOf(key);
-      const namespace = namespaceOf(element);
+      const { namespace, name } = table.elementOf(key);
       const holds = surfaces.some(
         (surface) =>
-          surface.namespace === namespace &&
-          elementTexts(surface.doc, element).some((field) => field.includes(wanted)),
+          documents(surface, namespace) &&
+          elementTexts(surface.doc, name).some((field) => field.includes(wanted)),
       );
       if (holds) evidence.add(pinEvidenceKey(table.name, key));
     }

@@ -1,13 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { type ParamTypeCorrection, pinEvidenceKey, type TableSlotCuration } from "../src/emit-dts";
+import type { ParamTypeCorrection, TableSlotCuration } from "../src/emit-dts";
 import { MESSAGE_FIELD_CONSTANT_GROUPS } from "../src/emit-messages";
+import { pinEvidenceKey } from "../src/engine-pin";
 import { retainedSurfaces } from "../src/optional-correction-provenance";
 import { bindingEvidenceFor } from "./binding-pin";
+import { messageFieldEntries } from "./engine-pinned-tables";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import { refDocEvidenceFor } from "./ref-doc-pin";
-import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "./regen";
 import {
-  messageFieldEntries,
+  EDITOR_MODULE_MANIFEST,
+  loadApiTargets,
+  MODULE_MANIFEST,
+  VERSIONED_MODULE_MANIFEST,
+} from "./regen";
+import {
   parseReplacementPinBaseline,
   REPLACEMENT_TABLES,
   type ReplacementTable,
@@ -60,15 +66,6 @@ describe("replacementPinFindings", () => {
     const tables = [withEntries("PARAM_TYPE_CORRECTIONS", [[KEY, UNPINNED_PARAM]])];
     expect(replacementPinFindings(tables, [], new Set([PARAM_LINE]))).toEqual([
       `PARAM_TYPE_CORRECTIONS:${KEY}: no pin (the table accepts a binding pin)`,
-    ]);
-  });
-
-  test("an unpinned entry of a table with no pin field says so", () => {
-    const tables = [
-      withEntries("VARIABLE_TYPE_OVERRIDES", [["render.RENDER_TARGET_DEFAULT", "number"]]),
-    ];
-    expect(replacementPinFindings(tables, [], new Set())).toEqual([
-      "VARIABLE_TYPE_OVERRIDES:render.RENDER_TARGET_DEFAULT: no pin (the table has no pin field yet)",
     ]);
   });
 
@@ -237,14 +234,22 @@ describe("parseReplacementPinBaseline", () => {
 const DEFAULT_TARGET = loadApiTargets().find((candidate) => candidate.default === true);
 if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
 
-// Every ref-doc the global correction tables reach, as the provenance tests
-// build it: each runtime module regen emits and the extension goldens.
-const RETAINED_SURFACES = retainedSurfaces(
-  DEFAULT_TARGET.id,
-  MODULE_MANIFEST,
-  VERSIONED_MODULE_MANIFEST,
-  EXTENSION_GOLDEN_MANIFEST,
-);
+// Every ref-doc the global correction tables reach: each runtime module regen
+// emits and the extension goldens, as the provenance tests build it, and the
+// default target's editor modules, which carry the editor entries.
+const RETAINED_SURFACES = [
+  ...retainedSurfaces(
+    DEFAULT_TARGET.id,
+    MODULE_MANIFEST,
+    VERSIONED_MODULE_MANIFEST,
+    EXTENSION_GOLDEN_MANIFEST,
+  ),
+  ...EDITOR_MODULE_MANIFEST.map((entry) => ({
+    target: DEFAULT_TARGET.id,
+    namespace: entry.namespace,
+    doc: entry.doc,
+  })),
+];
 
 describe("the committed correction tables", () => {
   test("every entry carries a pin that holds on a retained target or sits in the baseline", () => {
@@ -260,18 +265,21 @@ describe("the committed correction tables", () => {
   test("a message constant-group entry added without a pin is a finding", () => {
     const timeStep = MESSAGE_FIELD_CONSTANT_GROUPS.find((entry) => entry.name === "set_time_step");
     if (!timeStep) throw new Error("no set_time_step constant group");
+    const { refDoc: _refDoc, ...unpinned } = timeStep;
     const record = {
       ...registered("MESSAGE_FIELD_CONSTANT_GROUPS"),
       entries: messageFieldEntries([
         ...MESSAGE_FIELD_CONSTANT_GROUPS,
-        { ...timeStep, field: "factor" },
+        { ...unpinned, field: "factor" },
       ]),
     };
-    const baseline = readReplacementPinBaseline().filter((line) =>
-      line.startsWith("MESSAGE_FIELD_CONSTANT_GROUPS:"),
+    const holding = new Set(
+      messageFieldEntries(MESSAGE_FIELD_CONSTANT_GROUPS).map(([key]) =>
+        pinEvidenceKey("MESSAGE_FIELD_CONSTANT_GROUPS", key),
+      ),
     );
-    expect(replacementPinFindings([record], baseline, new Set())).toEqual([
-      "MESSAGE_FIELD_CONSTANT_GROUPS:collectionproxy.set_time_step:factor: no pin (the table has no pin field yet)",
+    expect(replacementPinFindings([record], [], holding)).toEqual([
+      "MESSAGE_FIELD_CONSTANT_GROUPS:collectionproxy.set_time_step:factor: no pin (the table accepts a refDoc pin or a binding pin or an engine pin)",
     ]);
   });
 });

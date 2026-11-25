@@ -32,12 +32,14 @@ import {
   unknownDefoldTypeLeaves,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
+import { bindingEvidenceFor } from "./binding-pin";
 import { readVerdicts } from "./engine-binding-verdicts";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
   type ApiTarget,
   collectConstantFqns,
   generateModuleDeclaration,
+  loadApiTargets,
   loadSrcAugmentations,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
@@ -56,6 +58,20 @@ export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] = [
 ];
 
 const NO_KNOWN_CONSTANTS: ReadonlySet<string> = new Set();
+
+let defaultEvidence: ReadonlySet<string> | undefined;
+
+// The engine evidence of the default target, whose surface the audit measures,
+// so a correction resting on the engine source counts where that surface
+// applies it.
+function defaultTargetEvidence(): ReadonlySet<string> {
+  if (defaultEvidence === undefined) {
+    const target = loadApiTargets().find((candidate) => candidate.default === true);
+    if (target === undefined) throw new Error("api-targets.json: no default target");
+    defaultEvidence = bindingEvidenceFor(target);
+  }
+  return defaultEvidence;
+}
 
 // These message names are typed by builtin-messages-typing's separate surface
 // (BuiltinMessages), so a fixture `MESSAGE` element of the same name is not a
@@ -815,7 +831,13 @@ function auditEntry(
                 slot.element,
                 slot.kind,
                 slot.name,
-                applyNestedFieldCurations(slot.element, slot.kind, slot.name, parsed),
+                applyNestedFieldCurations(
+                  slot.element,
+                  slot.kind,
+                  slot.name,
+                  parsed,
+                  defaultTargetEvidence(),
+                ),
                 new Set(),
               )
             : parsed;

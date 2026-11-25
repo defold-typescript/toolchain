@@ -4,11 +4,8 @@
 // the parser discards it.
 
 import { correctionPins, pinMatches } from "./correction-pins";
-import {
-  pinEvidenceKey,
-  type ReturnFieldOptionalityCorrection,
-  type ReturnTypeCorrection,
-} from "./emit-dts";
+import type { ReturnFieldOptionalityCorrection, ReturnTypeCorrection } from "./emit-dts";
+import { pinEvidenceKey } from "./engine-pin";
 import type { ProvenanceSurface } from "./optional-correction-provenance";
 
 const NAMED_ENTITIES: Record<string, string> = {
