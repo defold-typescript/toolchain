@@ -3529,20 +3529,6 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain("textures: LuaMap<string, Hash>");
     expect(out).not.toContain("LuaMap<string |");
   });
-
-  test("physics create_joint and set_joint_properties recover the universal collide_connected field", () => {
-    const module = parseDefoldApiDoc(physicsDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [
-        requireFunction(module, "physics.create_joint"),
-        requireFunction(module, "physics.set_joint_properties"),
-      ],
-    });
-    const properties = "{ collide_connected?: boolean }";
-    expect(out).toContain(`properties: ${properties}`);
-    expect(out).toContain(`properties: ${properties}`);
-  });
 });
 
 describe("nil-return typing", () => {

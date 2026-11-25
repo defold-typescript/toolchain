@@ -798,6 +798,42 @@ describe("committed API surfaces — a table parameter takes an interface-typed 
   }
 });
 
+const JOINT_PROPERTIES_PROOF = resolve(VERSIONS_DIR, "joint-properties-proof.ts");
+
+describe("committed API surfaces — a joint properties table takes every joint-type field", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} accepts the joint-type fields the engine reads and rejects a mistyped one`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "joint-properties-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [JOINT_PROPERTIES_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — the properties table of physics.create_joint or ` +
+              `physics.set_joint_properties rejected a joint-type field the engine reads, ` +
+              `or accepted a field of the wrong type:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 // The compile wall above cannot see a missing `render_target` skip: the authored
 // wide arm repeats the generated signature, its table typed through
 // `render.RenderTargetParams` as the slot the generator withholds, so an

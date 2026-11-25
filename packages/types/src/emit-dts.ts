@@ -3234,6 +3234,34 @@ const SERIALIZED_TABLE_BINDING: BindingPin = {
     'if (key_type != LUA_TSTRING && key_type != LUA_TNUMBER && !key_hash) { table_stack.SetCapacity(0); luaL_error(L, "keys in table must be of type number, string or hash (found %s)", lua_typename(L, key_type)); }',
 };
 
+// Every field UnpackConnectJointParams reads, across the joint-type switch arms,
+// in the order of 1.13.2's `physics.JointProperties`. Each is optional: a field
+// the call omits keeps its default.
+const JOINT_PROPERTIES_FIELDS: readonly TableField[] = [
+  { name: "collide_connected", types: ["boolean"], optional: true },
+  { name: "length", types: ["number"], optional: true },
+  { name: "frequency", types: ["number"], optional: true },
+  { name: "damping", types: ["number"], optional: true },
+  { name: "max_length", types: ["number"], optional: true },
+  { name: "local_axis_a", types: ["vector3"], optional: true },
+  { name: "reference_angle", types: ["number"], optional: true },
+  { name: "lower_angle", types: ["number"], optional: true },
+  { name: "upper_angle", types: ["number"], optional: true },
+  { name: "lower_translation", types: ["number"], optional: true },
+  { name: "upper_translation", types: ["number"], optional: true },
+  { name: "max_motor_torque", types: ["number"], optional: true },
+  { name: "max_motor_force", types: ["number"], optional: true },
+  { name: "motor_speed", types: ["number"], optional: true },
+  { name: "enable_limit", types: ["boolean"], optional: true },
+  { name: "enable_motor", types: ["boolean"], optional: true },
+];
+const JOINT_PROPERTIES_BINDING: BindingPin = {
+  file: "gamesys/src/gamesys/scripts/script_physics.cpp",
+  cFunction: "UnpackConnectJointParams",
+  contains:
+    'UnpackBoolParam(L, table_index, "collide_connected", params.m_CollideConnected); switch (type) { case dmPhysics::JOINT_TYPE_SPRING: UnpackFloatParam(L, table_index, "length"',
+};
+
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map<
   string,
   TableSlotCuration
@@ -3590,33 +3618,18 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     },
   ],
   // physics.create_joint and physics.set_joint_properties both declare
-  // `properties` as a joint-type-specific table; the only universal field is
-  // `collide_connected` (parseTableFields already recovers it from the
-  // <span class="type">+<code> shape in the create_joint doc and the bare
-  // <code> shape in the set_joint_properties doc). Joint-type-specific fields
-  // stay deferred — they live in joint-type-specific docs the parser cannot
-  // see from a top-level param doc.
+  // `properties` as a joint-type-specific table, and both hand it to
+  // UnpackConnectJointParams, which reads `collide_connected` and then the
+  // fields of the joint's type. The parser recovers only `collide_connected`
+  // from the top-level param docs. 1.13.2 declares the same set as
+  // `physics.JointProperties`, so these curations apply only to earlier targets.
   [
     "physics.create_joint:param:properties",
-    {
-      refDoc: {
-        contains:
-          "The one field that is accepted for all joint types is: - boolean collide_connected",
-      },
-      kind: "object",
-      fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
-    },
+    { binding: JOINT_PROPERTIES_BINDING, kind: "object", fields: JOINT_PROPERTIES_FIELDS },
   ],
   [
     "physics.set_joint_properties:param:properties",
-    {
-      refDoc: {
-        contains:
-          "The collide_connected field cannot be updated/changed after a connection has been made.",
-      },
-      kind: "object",
-      fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
-    },
+    { binding: JOINT_PROPERTIES_BINDING, kind: "object", fields: JOINT_PROPERTIES_FIELDS },
   ],
   // compute/material shader-constant, sampler, and vertex-attribute setters take
   // "a table keyed by <name> with args tables as values": the `<dl>` documents
