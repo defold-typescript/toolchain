@@ -2304,6 +2304,16 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
     members: ["gui.SIZE_MODE_MANUAL", "gui.SIZE_MODE_AUTO"],
   },
   {
+    home: "particlefx",
+    name: "EMITTER_STATE",
+    members: [
+      "particlefx.EMITTER_STATE_SLEEPING",
+      "particlefx.EMITTER_STATE_PRESPAWN",
+      "particlefx.EMITTER_STATE_SPAWNING",
+      "particlefx.EMITTER_STATE_POSTSPAWN",
+    ],
+  },
+  {
     home: "profiler",
     name: "MODE",
     members: [
@@ -3847,6 +3857,44 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverr
   // sampler reports TEXTURE_TYPE_SAMPLER (6) and a separate texture binding one
   // of the four TEXTURE_TYPE_TEXTURE_* (7-10), none of which has a Lua constant.
   ["material.sampler_info:member:type", { ts: "graphics.TextureType | 6 | 7 | 8 | 9 | 10" }],
+  // Callback parameters a pre-1.13.2 `<dl>` types against the engine: the
+  // CONTEXT_EVENT_* values `event_type` takes are registered as numbers, the
+  // particle fx callback receives the node or nil, and a successful prewarm
+  // passes nil for its error.
+  [
+    "render.set_listener:param:callback:event_type",
+    {
+      ts: "typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "InitializeRenderScriptContext",
+        contains:
+          'lua_pushnumber(L, dmRender::CONTEXT_LOST); lua_setfield(L, -2, "CONTEXT_EVENT_CONTEXT_LOST");',
+      },
+    },
+  ],
+  [
+    "gui.play_particlefx:param:emitter_state_function:node",
+    {
+      ts: 'Opaque<"node"> | undefined',
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "PushPfxCallbackArguments",
+        contains: "LuaPushNode(L, luainfo->m_Scene, luainfo->m_Node); } else { lua_pushnil(L); }",
+      },
+    },
+  ],
+  [
+    "font.prewarm_text:param:callback:errstring",
+    {
+      ts: "string | undefined",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_font.cpp",
+        cFunction: "PrewarmTextCallback",
+        contains: "lua_pushstring(L, errmsg); else lua_pushnil(L);",
+      },
+    },
+  ],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -4326,15 +4374,20 @@ export function applyFieldTypeOverrides(
  * to typescript-to-lua as ambient source, and TSTL rejects regex literals.
  */
 export function recoverCallbackSignature(token: string): string | null {
+  const named = callbackTokenParameterNames(token);
+  if (named === null) return null;
+  return `(${named.map((n) => `${n}: unknown`).join(", ")}) => void`;
+}
+
+export function callbackTokenParameterNames(token: string): string[] | null {
   const match = /^function\((.*)\)$/.exec(token);
   if (match === null) return null;
   const body = match[1] ?? "";
   const raw = body.trim() === "" ? [] : body.split(",");
-  const named = raw.map((param, index) => {
+  return raw.map((param, index) => {
     const trimmed = param.trim();
     return TS_IDENTIFIER.test(trimmed) ? trimmed : `arg${index}`;
   });
-  return `(${named.map((n) => `${n}: unknown`).join(", ")}) => void`;
 }
 
 // The trailing `([^<]*)` captures the plain prose immediately after the type
@@ -7013,6 +7066,49 @@ function callbackTypeFromFields(
   return `(${args.join(", ")}) => void`;
 }
 
+// Up to 1.13.1 the reference writes a callback as `function(self, handle, ...)`
+// and lists each parameter's type in the slot doc's `<dl>`, with a `constant`
+// parameter's values in a `<ul>` after it, so a constant expands from the whole
+// slot doc. A parameter takes its listed type by name; one the list leaves out
+// stays `unknown`, as `recoverCallbackSignature` types it. A listed type the
+// engine contradicts is retyped through TABLE_FIELD_TYPE_OVERRIDES, and stays
+// `unknown` where the entry's pin cannot be checked, since the doc type is the
+// one the entry exists to contradict. Undefined when the list names none of the
+// token's parameters other than `self`.
+function listedCallbackSignature(
+  token: string,
+  doc: string,
+  slotKey: string,
+  mapType: DefoldTypeMapper,
+  bindingEvidence: ReadonlySet<string>,
+  constantsNamed: (doc: string) => readonly string[],
+): string | undefined {
+  const names = callbackTokenParameterNames(token);
+  if (names === null) return undefined;
+  const listed = new Map((parseTableFields(doc) ?? []).map((field) => [field.name, field]));
+  if (!names.some((name) => name !== "self" && listed.has(name))) return undefined;
+  const outputMapType = (leaf: string): string => mapType(leaf, "output");
+  const args = names.map((name) => {
+    const key = `${slotKey}:${name}`;
+    const override = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+    const field = listed.get(name);
+    let ts: string;
+    if (override !== undefined) {
+      ts = override.binding === undefined || bindingEvidence.has(key) ? override.ts : "unknown";
+    } else if (field === undefined) {
+      ts = "unknown";
+    } else {
+      ts = callbackArgumentType(
+        { name, doc, types: field.types, isOptional: false },
+        outputMapType,
+        constantsNamed,
+      );
+    }
+    return `${name}: ${ts}`;
+  });
+  return `(${args.join(", ")}) => void`;
+}
+
 // Like `unionFromTokens`, but a `table` token whose slot doc carries a parseable
 // `<dl>` field list emits an inline object type instead of the opaque `Record`
 // fallback. Other tokens in the union map unchanged. `optionalFields` marks the
@@ -7183,7 +7279,20 @@ function mapSlotUnion(
         slotKind !== undefined && slotName !== undefined
           ? CALLBACK_SIGNATURE_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
           : undefined;
-      if (curation === undefined) {
+      const listed =
+        curation === undefined && slotKind !== undefined && slotName !== undefined
+          ? listedCallbackSignature(
+              token,
+              doc,
+              tableSlotKey(elementName, slotKind, slotName),
+              mapType,
+              bindingEvidence,
+              (fieldDoc) => constantTokens(elementName, slotKind, slotName, fieldDoc),
+            )
+          : undefined;
+      if (listed !== undefined) {
+        ts = listed;
+      } else if (curation === undefined) {
         ts = lookupReturn ? asLookupTable(mapType(token)) : mapType(token);
       } else if (isLualsFunctionToken(token)) {
         ts = curation.typed ?? mapType(token);

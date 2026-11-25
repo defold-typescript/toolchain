@@ -61,7 +61,7 @@ declare global {
      * });
      * ```
      */
-    function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void): number;
+    function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void): number;
     /**
      * associates a ttf resource to a .fontc file
      *

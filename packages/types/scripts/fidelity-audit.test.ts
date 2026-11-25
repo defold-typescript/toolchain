@@ -27,9 +27,12 @@ import {
   UNATTRIBUTED_OPTIONAL_CORRECTIONS,
   unexplainedInexpressibleCalls,
   unmarkedOptionalSlots,
+  untypedCallbackParameters,
+  untypedCallbackParametersIn,
 } from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
 import { MODULE_MANIFEST as ENGINE_MODULE_MANIFEST, type ModuleManifestEntry } from "./regen";
+import { vendoredTargets } from "./sync-engine-bindings";
 
 function manifestOf(doc: unknown): readonly ModuleManifestEntry[] {
   return [{ namespace: "test", doc, outFile: "test.d.ts" }];
@@ -1777,4 +1780,51 @@ describe("inexpressible example calls — the arity class gate", () => {
     expect(reach.withCalls).toBeGreaterThan(0);
     expect(reach.withCalls + reach.withoutCalls).toBeGreaterThan(reach.withCalls);
   });
+});
+
+describe("untypedCallbackParameters", () => {
+  const timerDoc = (handleType: string) => ({
+    info: { namespace: "timer", name: "Timer", brief: "", description: "" },
+    elements: [
+      {
+        type: "FUNCTION",
+        name: "timer.delay",
+        brief: "",
+        description: "",
+        returnvalues: [],
+        parameters: [
+          {
+            name: "callback",
+            doc: `timer callback function\n<dl>\n<dt><code>self</code></dt>\n<dd><span class="type">object</span> The current object</dd>\n<dt><code>handle</code></dt>\n<dd><span class="type">${handleType}</span> The handle of the timer</dd>\n</dl>`,
+            types: ["function(self, handle)"],
+            is_optional: "True",
+          },
+        ],
+      },
+    ],
+  });
+  const untypedDeclaration =
+    "declare global {\n  namespace timer {\n    function delay(callback?: ((self: unknown, handle: unknown) => void) | undefined): void;\n  }\n}\n";
+
+  test("a listed parameter the declaration leaves unknown is one finding naming the doc type", () => {
+    expect(untypedCallbackParametersIn(timerDoc("number"), untypedDeclaration)).toEqual([
+      { key: "timer.delay:param:callback:handle", docTypes: ["number"] },
+    ]);
+  });
+
+  test("a parameter the declaration types is no finding", () => {
+    const typed =
+      "declare global {\n  namespace timer {\n    function delay(callback?: ((self: unknown, handle: number) => void) | undefined): void;\n  }\n}\n";
+    expect(untypedCallbackParametersIn(timerDoc("number"), typed)).toEqual([]);
+  });
+
+  test("a listed type the type map itself maps to unknown is no finding", () => {
+    expect(untypedCallbackParametersIn(timerDoc("any"), untypedDeclaration)).toEqual([]);
+  });
+
+  for (const target of vendoredTargets()) {
+    test(`${target.id} types every callback parameter its doc lists`, () => {
+      expect(untypedCallbackParameters(target)).toEqual([]);
+    });
+  }
 });

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as ts from "typescript";
 import { type ApiFunction, parseDefoldApiDoc } from "../src/api-doc";
@@ -8,6 +9,8 @@ import {
   applyFieldTypeOverrides,
   applyNestedFieldCurations,
   buildTableDocResolver,
+  callbackTokenParameterNames,
+  defaultMapType,
   firstSlotAlternativeOf,
   HANDLE_METHOD_LOCAL,
   HOMOGENEOUS_ARRAY_SLOTS,
@@ -32,6 +35,7 @@ import { parseMessagesDoc } from "../src/emit-messages";
 import { readVerdicts } from "./engine-binding-verdicts";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
+  type ApiTarget,
   collectConstantFqns,
   generateModuleDeclaration,
   loadSrcAugmentations,
@@ -1092,6 +1096,90 @@ function stripNamespace(name: string): string {
 
 function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {
   return `${elementName}:${slotKind}:${slotName}`;
+}
+
+export interface UntypedCallbackParameter {
+  // `<fqn>:param:<slot>:<parameter>`
+  readonly key: string;
+  readonly docTypes: readonly string[];
+}
+
+// A `function(...)` callback parameter the slot doc's `<dl>` types, which the
+// declaration still emits `unknown`. `self` and a listed type the type map maps
+// to `unknown` are out of scope; a function the declaration does not carry (a
+// skip rule withholds it for a hand-written overload) is not read.
+export function untypedCallbackParametersIn(
+  doc: unknown,
+  declaration: string,
+): UntypedCallbackParameter[] {
+  const callbacks = declaredCallbackParameters(declaration);
+  const findings: UntypedCallbackParameter[] = [];
+  for (const fn of parseDefoldApiDoc(doc).functions) {
+    for (const parameter of fn.parameters) {
+      const slotKey = tableSlotKey(fn.name, "param", parameter.name);
+      for (const token of parameter.types) {
+        const names = callbackTokenParameterNames(token);
+        if (names === null) continue;
+        const listed = parseTableFields(parameter.doc) ?? [];
+        for (const field of listed) {
+          if (field.name === "self" || !names.includes(field.name)) continue;
+          if (field.types.every((type) => defaultMapType(type, "output") === "unknown")) continue;
+          const key = `${slotKey}:${field.name}`;
+          if (callbacks.get(key) === true) findings.push({ key, docTypes: field.types });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
+// Each callback parameter of a declared function's parameter, keyed
+// `<fqn>:param:<slot>:<parameter>`, to whether any declaration types it `unknown`.
+function declaredCallbackParameters(declaration: string): Map<string, boolean> {
+  const source = ts.createSourceFile("declaration.d.ts", declaration, ts.ScriptTarget.Latest);
+  const out = new Map<string, boolean>();
+  const functionTypes = (node: ts.TypeNode): ts.FunctionTypeNode[] => {
+    if (ts.isFunctionTypeNode(node)) return [node];
+    if (ts.isParenthesizedTypeNode(node)) return functionTypes(node.type);
+    if (ts.isUnionTypeNode(node)) return node.types.flatMap(functionTypes);
+    return [];
+  };
+  const visit = (node: ts.Node, path: readonly string[]): void => {
+    if (ts.isModuleDeclaration(node)) {
+      const global = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+      const inner = global ? path : [...path, node.name.getText(source)];
+      if (node.body !== undefined) visit(node.body, inner);
+      return;
+    }
+    if (ts.isFunctionDeclaration(node) && node.name !== undefined) {
+      const fqn = [...path, node.name.text].join(".");
+      for (const parameter of node.parameters) {
+        if (parameter.type === undefined) continue;
+        for (const callback of functionTypes(parameter.type)) {
+          for (const argument of callback.parameters) {
+            const key = `${fqn}:param:${parameter.name.getText(source)}:${argument.name.getText(source)}`;
+            const unknown = argument.type?.kind === ts.SyntaxKind.UnknownKeyword;
+            out.set(key, (out.get(key) ?? false) || unknown);
+          }
+        }
+      }
+      return;
+    }
+    ts.forEachChild(node, (child) => visit(child, path));
+  };
+  visit(source, []);
+  return out;
+}
+
+// `untypedCallbackParametersIn` over every module of a committed target: its
+// fixture docs against the declarations it ships under `generatedDir`.
+export function untypedCallbackParameters(target: ApiTarget): UntypedCallbackParameter[] {
+  const root = resolve(import.meta.dirname, "..");
+  return [...target.modules, ...(target.editorModules ?? [])].flatMap((module) => {
+    const doc = JSON.parse(readFileSync(resolve(root, target.fixturesDir, module.fixture), "utf8"));
+    const declaration = readFileSync(resolve(root, target.generatedDir, module.outFile), "utf8");
+    return untypedCallbackParametersIn(doc, declaration);
+  });
 }
 
 export function buildFidelityReport(

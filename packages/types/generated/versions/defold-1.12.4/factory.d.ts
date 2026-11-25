@@ -93,7 +93,7 @@ declare global {
      * factory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the factory.
      *

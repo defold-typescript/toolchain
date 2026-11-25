@@ -9,11 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.70.1
+## v0.71.0
 
 > Summary:
 >
-> - **An optional engine argument accepts a value that may be `undefined`**, as `physics.raycast` options do ([physics](/api/physics)).
+> - **Callbacks on Defold 1.12.4 to 1.13.1 type their documented parameters** ([pinning](./pinning-defold-target.md)).
+> - **An optional engine argument accepts `undefined`**, as `physics.raycast` options do.
+
+### Improved
+
+- **Callbacks on a pinned Defold 1.12.4 to 1.13.1 target type each parameter their docs list** instead of `unknown`, such as `timer.delay`'s `handle`, `sound.play`'s `sender` and `particlefx.play`'s `state`, typed `particlefx.EmitterState` as on newer targets. Where the old docs name the wrong type, the parameter follows the engine: `render.set_listener`'s `event_type` takes the [`render.CONTEXT_EVENT_*`](/api/render) constants, and `gui.play_particlefx`'s `node` and `font.prewarm_text`'s `errstring` may be `undefined`.
 
 ### Fixed
 

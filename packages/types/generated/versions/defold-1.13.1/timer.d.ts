@@ -58,12 +58,12 @@ declare global {
      * @example
      * Repetitive timer which canceled after 10 calls
      * ```ts
-     * function call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {
+     * function call_every_second(self: unknown, handle: number, time_elapsed: number) {
      *   const state = self as { counter: number };
      *   state.counter = state.counter + 1;
      *   print("Call #", state.counter);
      *   if (state.counter === 10) {
-     *     timer.cancel(handle as number); // cancel timer after 10 calls
+     *     timer.cancel(handle); // cancel timer after 10 calls
      *   }
      * }
      *
@@ -73,7 +73,7 @@ declare global {
      * }
      * ```
      */
-    function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;
+    function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;
     /**
      * Get information about timer.
      *

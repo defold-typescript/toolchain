@@ -7,6 +7,7 @@ declare global {
    * shader constants.
    */
   namespace particlefx {
+    type EmitterState = typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SPAWNING | typeof particlefx.EMITTER_STATE_POSTSPAWN;
     /**
      * The emitter is not spawning any particles, but has particles that are still alive.
      */
@@ -61,7 +62,7 @@ declare global {
      * });
      * ```
      */
-    function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;
+    function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void): void;
     /**
      * Resets a shader constant for a particle FX component emitter.
      * The constant must be defined in the material assigned to the emitter.

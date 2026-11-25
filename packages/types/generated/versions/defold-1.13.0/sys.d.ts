@@ -719,7 +719,7 @@ declare global {
      * });
      * ```
      */
-    function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;
+    function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;
     /**
      * Disables rendering
      *
