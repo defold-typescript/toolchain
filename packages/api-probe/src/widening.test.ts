@@ -79,6 +79,14 @@ describe("widening findings on a fixture surface", () => {
     "    function widen_raise(a: number, d: number): number;",
     "    function widen_raise_open(a: number, d?: number): number;",
     "    function widen_raise_open(a: string): string;",
+    "    function widen_cb(a: number): number;",
+    "    function widen_cb(a: number, cb: () => void): number;",
+    "    function widen_cb_open(a: number, cb?: () => number): number;",
+    "    function widen_cb_open(a: string): string;",
+    "    function widen_cb_fixed(a: number): number;",
+    "    function widen_cb_fixed(a: number, cb: (() => number) | undefined): number;",
+    "    function widen_cb_raise(a: number): number;",
+    "    function widen_cb_raise(a: number, cb: () => void): number;",
     "    function widen_unknown(a: number): number;",
     "    function widen_unknown(a: number, o: { all?: boolean }): string;",
     "    function widen_middle(a: number): number;",
@@ -102,6 +110,10 @@ describe("widening findings on a fixture surface", () => {
     ["sys.widen_omit_narrow 2", "accepts"],
     ["sys.widen_raise 2", "raises"],
     ["sys.widen_raise_open 2", "raises"],
+    ["sys.widen_cb 2", "accepts"],
+    ["sys.widen_cb_open 2", "raises"],
+    ["sys.widen_cb_fixed 2", "accepts"],
+    ["sys.widen_cb_raise 2", "raises"],
     // As `vmath.matrix4_scale`: `f(1, nil)` runs as `f(1)`, `f(1, nil, 1)` raises.
     ["sys.widen_middle 2", "accepts"],
     ["sys.widen_middle 3", "raises"],
@@ -210,6 +222,28 @@ describe("widening findings on a fixture surface", () => {
     expect(omittedFindings("sys.widen_raise_open")).toEqual([
       ["sys.widen_raise_open overload1-optional 2 omitted sound", false],
     ]);
+  });
+
+  test("an omitted callback the engine accepts as nil and no overload takes as undefined is incomplete", () => {
+    expect(omittedFindings("sys.widen_cb")).toEqual([
+      ["sys.widen_cb overload2-required 2 omitted complete", false],
+    ]);
+  });
+
+  test("an optional callback the engine raises on as nil is unsound", () => {
+    expect(omittedFindings("sys.widen_cb_open")).toEqual([
+      ["sys.widen_cb_open overload1-optional 2 omitted sound", false],
+    ]);
+  });
+
+  test("an omitted callback taken as undefined is no finding", () => {
+    expect(omittedFindings("sys.widen_cb_fixed")).toEqual([]);
+    expect(omittedForms("sys.widen_cb_fixed")).toContain("omitted");
+  });
+
+  test("an omitted callback the engine raises on and every overload refuses as undefined is no finding", () => {
+    expect(omittedFindings("sys.widen_cb_raise")).toEqual([]);
+    expect(omittedForms("sys.widen_cb_raise")).toContain("omitted");
   });
 
   test("an omitted argument with no recorded nil handling is unchecked", () => {
