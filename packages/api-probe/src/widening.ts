@@ -1,6 +1,11 @@
 import { basename } from "node:path";
 import ts from "typescript";
 import { comparedNamespaces } from "../../types/scripts/engine-binding-diff";
+import {
+  type BindingSlot,
+  mergeBindings,
+  readBindingsForTarget,
+} from "../../types/scripts/engine-binding-extract";
 import { declaredMembers } from "../../types/scripts/lua-kind";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { type CheckedCall, checkCalls } from "./call-check";
@@ -59,6 +64,10 @@ export interface BaseCall {
   readonly call: string;
 }
 
+// How the engine treats `nil` at an argument: `accepts` runs the call as if the
+// argument were left out, `raises` fails it.
+export type NilHandling = "accepts" | "raises";
+
 // What the gate checks: each function by the name its base calls carry.
 export interface WideningSurface {
   readonly functions: ReadonlyMap<string, ts.Symbol>;
@@ -69,6 +78,9 @@ export interface WideningSurface {
   // The string literals a slot keyed `<fn> <slot>` is checked with, beside
   // `string`, in place of the members its declared type holds.
   readonly literals?: ReadonlyMap<string, readonly string[]>;
+  // The engine's nil handling at a function's 1-based argument, `undefined`
+  // where nothing records it. Unset, no omitted argument is judged.
+  readonly nilHandling?: (fn: string, slot: number) => NilHandling | undefined;
 }
 
 export function findingKey(finding: WideningFinding): string {
@@ -329,13 +341,10 @@ function callTo(node: ts.Node, name: string, source: ts.SourceFile): ts.CallExpr
   return ts.forEachChild(node, (child) => callTo(child, name, source));
 }
 
-// Each argument of the call to `call.name` and each property of a table
-// argument, with the base call's text that puts a widened value there.
-function slotsOf(
+// The call to `call.name` in a base call, with the source parsed from it.
+function parsedCall(
   call: BaseCall,
-  signatures: readonly ts.Signature[],
-  checker: ts.TypeChecker,
-): Slot[] {
+): { readonly source: ts.SourceFile; readonly target: ts.CallExpression } | undefined {
   const source = ts.createSourceFile("base.ts", call.call, ts.ScriptTarget.Latest, true);
   const [statement] = source.statements;
   if (
@@ -343,9 +352,24 @@ function slotsOf(
     !ts.isExpressionStatement(statement) ||
     !ts.isCallExpression(statement.expression)
   ) {
-    return [];
+    return undefined;
   }
-  const target = callTo(statement.expression, call.name, source) ?? statement.expression;
+  return {
+    source,
+    target: callTo(statement.expression, call.name, source) ?? statement.expression,
+  };
+}
+
+// Each argument of the call to `call.name` and each property of a table
+// argument, with the base call's text that puts a widened value there.
+function slotsOf(
+  call: BaseCall,
+  signatures: readonly ts.Signature[],
+  checker: ts.TypeChecker,
+): Slot[] {
+  const parsed = parsedCall(call);
+  if (parsed === undefined) return [];
+  const { source, target } = parsed;
   const overload = /^overload(\d+)-/.exec(call.variant)?.[1];
   const own = signatures[overload === undefined ? 0 : Number(overload) - 1];
   if (own === undefined) return [];
@@ -403,6 +427,107 @@ function slotsOf(
   return slots;
 }
 
+const OMITTED = "omitted";
+
+// The last argument of a base call that another base call of the same function
+// leaves out. A binding records how the engine treats `nil` passed last, where
+// `f(a, nil)` runs as `f(a)` or raises; a `nil` before other arguments can take
+// another branch, so an argument the call passes before its last is no slot.
+interface OmittedSlot {
+  readonly fn: string;
+  readonly variant: string;
+  // 1-based, as the engine counts arguments.
+  readonly index: number;
+  readonly template: string;
+  // `undefined` when no signature declares a type for the argument.
+  readonly form: Form | undefined;
+  // The base call passing the argument, and the base calls leaving it out that
+  // hold the most of its leading arguments unchanged.
+  readonly longer: BaseCall;
+  readonly shorter: readonly BaseCall[];
+}
+
+// Whether `signature` takes a call of `count` arguments.
+function admits(signature: ts.Signature, count: number, checker: ts.TypeChecker): boolean {
+  const params = signature.getParameters();
+  const required = params.filter((param) => {
+    const declaration = param.valueDeclaration;
+    return (
+      declaration !== undefined &&
+      ts.isParameter(declaration) &&
+      declaration.dotDotDotToken === undefined &&
+      !checker.isOptionalParameter(declaration)
+    );
+  }).length;
+  return required <= count && (restIndex(signature) !== undefined || params.length >= count);
+}
+
+// Each type a signature taking `index + 1` arguments declares for the last, its
+// constraint in place of a type parameter, or `undefined`.
+function omittedForm(
+  signatures: readonly ts.Signature[],
+  index: number,
+  checker: ts.TypeChecker,
+): Form | undefined {
+  const texts = new Set<string>();
+  for (const signature of signatures) {
+    if (!admits(signature, index + 1, checker)) continue;
+    const declared = argumentType(signature, index, checker);
+    if (declared === undefined) continue;
+    const type = checker.getBaseConstraintOfType(declared) ?? declared;
+    for (const part of type.isUnion() ? type.types : [type]) {
+      texts.add(checker.typeToString(part, undefined, TYPE_TEXT));
+    }
+  }
+  if (texts.size === 0) return undefined;
+  texts.delete("undefined");
+  if (texts.has("true") && texts.has("false")) {
+    texts.delete("true");
+    texts.delete("false");
+    texts.add("boolean");
+  }
+  return { label: OMITTED, text: [...texts, "undefined"].join(" | "), members: [] };
+}
+
+function omittedSlotsOf(
+  calls: readonly BaseCall[],
+  signatures: readonly ts.Signature[],
+  checker: ts.TypeChecker,
+): OmittedSlot[] {
+  const parsed = calls.flatMap((call) => {
+    const own = parsedCall(call);
+    if (own === undefined) return [];
+    const texts = own.target.arguments.map((argument) => argument.getText(own.source));
+    return [{ call, ...own, texts }];
+  });
+  const slots: OmittedSlot[] = [];
+  for (const longer of parsed) {
+    const index = longer.texts.length - 1;
+    const argument = longer.target.arguments[index];
+    if (argument === undefined || !parsed.some((other) => other.texts.length <= index)) continue;
+    const leading = parsed.filter(
+      (other) =>
+        other.texts.length <= index && other.texts.every((text, at) => text === longer.texts[at]),
+    );
+    const most = Math.max(...leading.map((other) => other.texts.length));
+    slots.push({
+      fn: longer.call.name,
+      variant: longer.call.variant,
+      index: index + 1,
+      template: replaced(
+        longer.call.call,
+        argument.getStart(longer.source),
+        argument.end,
+        PLACEHOLDER,
+      ),
+      form: omittedForm(signatures, index, checker),
+      longer: longer.call,
+      shorter: leading.filter((other) => other.texts.length === most).map((other) => other.call),
+    });
+  }
+  return slots;
+}
+
 function memberForm(member: Member): Form {
   return { label: readable(member.text), text: member.text, members: [] };
 }
@@ -437,25 +562,35 @@ function formsOf(domain: Domain): Form[] {
   });
 }
 
+type Placed = Slot | OmittedSlot;
+
 interface Checked {
   readonly checker: ts.TypeChecker;
   // Each slot's forms, by label, with the call the checker made of it.
-  readonly results: ReadonlyMap<Slot, ReadonlyMap<string, CheckedCall>>;
+  readonly results: ReadonlyMap<Placed, ReadonlyMap<string, CheckedCall>>;
   // Each form whose type text the checker rejects, with its errors.
-  readonly invalid: ReadonlyMap<Slot, ReadonlyMap<string, readonly string[]>>;
+  readonly invalid: ReadonlyMap<Placed, ReadonlyMap<string, readonly string[]>>;
+  // Each call checked as written, by its text.
+  readonly raw: ReadonlyMap<string, CheckedCall>;
 }
 
 function check(
   program: ts.Program,
-  plan: ReadonlyMap<Slot, readonly Form[]>,
+  plan: ReadonlyMap<Placed, readonly Form[]>,
   prelude: readonly string[],
+  raw: readonly string[] = [],
 ): Checked {
-  if (plan.size === 0) {
-    return { checker: program.getTypeChecker(), results: new Map(), invalid: new Map() };
+  if (plan.size === 0 && raw.length === 0) {
+    return {
+      checker: program.getTypeChecker(),
+      results: new Map(),
+      invalid: new Map(),
+      raw: new Map(),
+    };
   }
   const bindings = new Map<string, string>();
   const calls: string[] = [];
-  const placed: [Slot, Form][] = [];
+  const placed: [Placed, Form][] = [];
   for (const [slot, forms] of plan) {
     for (const form of forms) {
       let binding = bindings.get(form.text);
@@ -469,12 +604,12 @@ function check(
   }
   const texts = [...bindings.keys()];
   const declarations = texts.map((text) => `declare const ${bindings.get(text)}: ${text};`);
-  const checked = checkCalls(program, calls, declarations, prelude);
+  const checked = checkCalls(program, [...calls, ...raw], declarations, prelude);
   const declarationErrors = new Map(
     texts.map((text, i) => [text, checked.declarations[i] ?? []] as const),
   );
-  const results = new Map<Slot, Map<string, CheckedCall>>();
-  const invalid = new Map<Slot, Map<string, readonly string[]>>();
+  const results = new Map<Placed, Map<string, CheckedCall>>();
+  const invalid = new Map<Placed, Map<string, readonly string[]>>();
   placed.forEach(([slot, form], i) => {
     const errors = declarationErrors.get(form.text) ?? [];
     if (errors.length > 0) {
@@ -487,18 +622,21 @@ function check(
     own.set(form.label, checked.calls[i] as CheckedCall);
     results.set(slot, own);
   });
-  return { checker: checked.checker, results, invalid };
+  const rawResults = new Map(
+    raw.map((call, i) => [call, checked.calls[calls.length + i] as CheckedCall] as const),
+  );
+  return { checker: checked.checker, results, invalid, raw: rawResults };
 }
 
 function typeText(type: ts.Type, checker: ts.TypeChecker): string {
   return readable(checker.typeToString(type, undefined, TYPE_TEXT));
 }
 
-// Where the widened call resolves to a type a member call's does not fit, a
-// sentence naming it: a captured value's type when the call captures one, else
-// its return or a callback parameter's type.
+// Where the widened call resolves to a type the call `subject` names does not
+// fit, a sentence naming it: a captured value's type when the call captures
+// one, else its return or a callback parameter's type.
 function uncovered(
-  member: string,
+  subject: string,
   ownCall: CheckedCall,
   widenedCall: CheckedCall,
   checker: ts.TypeChecker,
@@ -508,7 +646,7 @@ function uncovered(
     for (const [at, type] of captured.entries()) {
       const ownType = ownCall.captures?.[at];
       if (ownType !== undefined && !checker.isTypeAssignableTo(ownType, type)) {
-        return `captures ${typeText(type, checker)}, but member ${member} captures ${typeText(ownType, checker)}`;
+        return `captures ${typeText(type, checker)}, but ${subject} captures ${typeText(ownType, checker)}`;
       }
     }
     return undefined;
@@ -518,7 +656,7 @@ function uncovered(
   const returned = own.getReturnType();
   const widenedReturn = widened.getReturnType();
   if (!checker.isTypeAssignableTo(returned, widenedReturn)) {
-    return `returns ${typeText(widenedReturn, checker)}, but member ${member} returns ${typeText(returned, checker)}`;
+    return `returns ${typeText(widenedReturn, checker)}, but ${subject} returns ${typeText(returned, checker)}`;
   }
   const params = widened.getParameters();
   for (const [index, param] of params.entries()) {
@@ -535,7 +673,7 @@ function uncovered(
       const passed = checker.getTypeOfSymbol(ownReceived);
       const declared = checker.getTypeOfSymbol(received);
       if (!checker.isTypeAssignableTo(passed, declared)) {
-        return `callback ${param.name} parameter ${received.name} is typed ${typeText(declared, checker)}, but member ${member} passes ${typeText(passed, checker)}`;
+        return `callback ${param.name} parameter ${received.name} is typed ${typeText(declared, checker)}, but ${subject} passes ${typeText(passed, checker)}`;
       }
     }
   }
@@ -584,7 +722,52 @@ function judge(
     );
   }
   for (const [label, result] of members) {
-    const detail = uncovered(label, result, widened, checker);
+    const detail = uncovered(`member ${label}`, result, widened, checker);
+    if (detail !== undefined) return finding("sound", detail);
+  }
+  return undefined;
+}
+
+// An omitted argument's form judged against the engine's nil handling there:
+// where the engine accepts nil, the form compiles with a result covering the
+// calls passing and leaving out the argument; where it raises, it does not
+// compile.
+function judgeOmitted(
+  slot: OmittedSlot,
+  form: Form,
+  handling: NilHandling,
+  widened: CheckedCall | undefined,
+  raw: ReadonlyMap<string, CheckedCall>,
+  checker: ts.TypeChecker,
+): WideningFinding | undefined {
+  if (widened === undefined) return undefined;
+  const text = readable(form.text);
+  const finding = (rule: WideningRule, detail: string): WideningFinding => ({
+    fn: slot.fn,
+    variant: slot.variant,
+    slot: String(slot.index),
+    form: form.label,
+    rule,
+    verdictable: false,
+    detail,
+  });
+  if (handling === "raises") {
+    if (widened.signature === undefined) return undefined;
+    return finding(
+      "sound",
+      `accepts ${text}, but the engine raises on nil at argument ${slot.index}`,
+    );
+  }
+  if (widened.signature === undefined) {
+    return finding(
+      "complete",
+      `rejects ${text}, but the engine accepts nil at argument ${slot.index}: ${widened.errors.join("; ")}`,
+    );
+  }
+  for (const call of [...slot.shorter, slot.longer]) {
+    const own = raw.get(call.call);
+    if (own?.signature === undefined) continue;
+    const detail = uncovered(`call ${call.variant}`, own, widened, checker);
     if (detail !== undefined) return finding("sound", detail);
   }
   return undefined;
@@ -597,22 +780,49 @@ function literalDomain(literals: readonly string[]): Domain {
   };
 }
 
-// The engine functions `target` declares, with the witness generator's base calls.
+const bindingSlotCache = new Map<string, ReadonlyMap<string, readonly BindingSlot[]>>();
+
+// The nil handling `target`'s bindings record, read on first use: a slot the
+// binding requires, or raises on when passed nil, raises; any other optional
+// slot accepts nil; a slot it reads in a way the extractor cannot follow, or
+// never reads, records nothing.
+function bindingNilHandling(
+  target: ApiTarget,
+): (fn: string, slot: number) => NilHandling | undefined {
+  return (fn, index) => {
+    let functions = bindingSlotCache.get(target.id);
+    if (functions === undefined) {
+      functions = new Map(
+        mergeBindings(readBindingsForTarget(target.id).functions).map(
+          (binding) => [`${binding.namespace}.${binding.name}`, binding.slots] as const,
+        ),
+      );
+      bindingSlotCache.set(target.id, functions);
+    }
+    const slot = functions.get(fn)?.find((candidate) => candidate.index === index);
+    if (slot === undefined || slot.manual !== undefined) return undefined;
+    return slot.optional && slot.nilRaises !== true ? "accepts" : "raises";
+  };
+}
+
+// The engine functions `target` declares, with the witness generator's base
+// calls and the nil handling its bindings record.
 export function engineSurface(
   program: ts.Program,
   target: ApiTarget = probeTarget(),
 ): WideningSurface {
   const { functions } = declaredMembers(program, comparedNamespaces(target));
   const { calls, unwitnessed } = baseCalls(target, program);
-  return { functions, calls, unwitnessed };
+  return { functions, calls, unwitnessed, nilHandling: bindingNilHandling(target) };
 }
 
 // The slots of every function of `surface` that branches on an argument's
-// type, and the branching functions no base call reaches.
+// type, its omitted arguments when the surface records nil handling, and the
+// branching functions no base call reaches.
 function branchingSlots(
   surface: WideningSurface,
   checker: ts.TypeChecker,
-): { slots: Slot[]; unchecked: UncheckedEntry[] } {
+): { slots: Slot[]; omitted: OmittedSlot[]; unchecked: UncheckedEntry[] } {
   const callsByName = new Map<string, BaseCall[]>();
   for (const call of surface.calls) {
     const own = callsByName.get(call.name) ?? [];
@@ -621,6 +831,7 @@ function branchingSlots(
   }
   const unchecked: UncheckedEntry[] = [];
   const slots: Slot[] = [];
+  const omitted: OmittedSlot[] = [];
   for (const [fqn, symbol] of surface.functions) {
     const signatures = checker
       .getTypeOfSymbol(symbol)
@@ -656,8 +867,15 @@ function branchingSlots(
         if (members.length >= 2 || open.size > 0) slots.push(slot);
       }
     }
+    if (surface.nilHandling === undefined) continue;
+    const omittedTemplates = new Set<string>();
+    for (const slot of omittedSlotsOf(calls, signatures, checker)) {
+      if (omittedTemplates.has(slot.template)) continue;
+      omittedTemplates.add(slot.template);
+      omitted.push(slot);
+    }
   }
-  return { slots, unchecked };
+  return { slots, omitted, unchecked };
 }
 
 // A call of a branching function with one slot holding a literal member of its
@@ -718,9 +936,40 @@ export function wideningFindings(
 ): Widening {
   const checker = program.getTypeChecker();
   const prelude = surface.prelude ?? [];
-  const { slots, unchecked } = branchingSlots(surface, checker);
+  const { slots, omitted, unchecked } = branchingSlots(surface, checker);
   const plan = new Map(slots.map((slot) => [slot, formsOf(slot.domain)] as const));
-  const first = check(program, plan, prelude);
+  const omittedKey = (slot: OmittedSlot) =>
+    `${slot.fn} ${slot.variant} ${slot.index} ${OMITTED} unchecked`;
+  const handled = omitted.flatMap((slot) => {
+    const handling = surface.nilHandling?.(slot.fn, slot.index);
+    const { form } = slot;
+    if (handling !== undefined && form !== undefined) return [{ slot, form, handling }];
+    unchecked.push({
+      fn: slot.fn,
+      key: omittedKey(slot),
+      reason:
+        handling === undefined
+          ? "no binding records the slot's nil handling"
+          : "no signature declares a type for the argument",
+    });
+    return [];
+  });
+  const raw = [
+    ...new Set(
+      handled
+        .filter(({ handling }) => handling === "accepts")
+        .flatMap(({ slot }) => [slot.longer, ...slot.shorter].map((call) => call.call)),
+    ),
+  ];
+  const first = check(
+    program,
+    new Map<Placed, readonly Form[]>([
+      ...plan,
+      ...handled.map(({ slot, form }) => [slot, [form]] as const),
+    ]),
+    prelude,
+    raw,
+  );
   // The first accepted and the first rejected member, which need the member
   // results, are checked with their two members in a second pass.
   const mixed = new Map<Slot, Form[]>();
@@ -776,6 +1025,26 @@ export function wideningFindings(
       variant: slot.variant,
       slot: slot.name,
       forms: forms.filter((form) => invalid?.has(form.label) !== true).map((form) => form.label),
+    });
+  }
+  for (const { slot, form, handling } of handled) {
+    const errors = first.invalid.get(slot)?.get(form.label);
+    if (errors !== undefined) {
+      unchecked.push({
+        fn: slot.fn,
+        key: omittedKey(slot),
+        reason: `the form's type does not compile: ${errors.join("; ")}`,
+      });
+      continue;
+    }
+    const widened = first.results.get(slot)?.get(form.label);
+    const finding = judgeOmitted(slot, form, handling, widened, first.raw, first.checker);
+    if (finding !== undefined) findings.push(finding);
+    checked.push({
+      fn: slot.fn,
+      variant: slot.variant,
+      slot: String(slot.index),
+      forms: [OMITTED],
     });
   }
   return { findings, checked, unchecked };

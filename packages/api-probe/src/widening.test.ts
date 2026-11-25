@@ -67,13 +67,62 @@ describe("widening findings on a fixture surface", () => {
     "    function widen_opt<N extends 1 | 2>(n?: N): number;",
     "    function widen_agree<T extends WidenA | WidenB>(a: T, b: number | T): T;",
     '    function widen_one<K extends "a" | (string & {})>(id: K): K extends "a" ? string : number;',
+    "    function widen_omit(a: number): number;",
+    "    function widen_omit(a: number, o: { all?: boolean }): string;",
+    "    function widen_omit_fixed(a: number): number;",
+    "    function widen_omit_fixed(a: number, o: { all?: boolean }): string;",
+    "    function widen_omit_fixed(a: number, o: { all?: boolean } | undefined): number | string;",
+    "    function widen_omit_narrow(a: number): number;",
+    "    function widen_omit_narrow(a: number, o: { all?: boolean }): string;",
+    "    function widen_omit_narrow(a: number, o: { all?: boolean } | undefined): number;",
+    "    function widen_raise(a: number): number;",
+    "    function widen_raise(a: number, d: number): number;",
+    "    function widen_raise_open(a: number, d?: number): number;",
+    "    function widen_raise_open(a: string): string;",
+    "    function widen_unknown(a: number): number;",
+    "    function widen_unknown(a: number, o: { all?: boolean }): string;",
+    "    function widen_middle(a: number): number;",
+    "    function widen_middle(a: number, b: number, c: number): number;",
+    "    function widen_arity(): number;",
+    "    function widen_arity(a?: string): number;",
+    "    function widen_arity(a: number, b: number): number;",
     "  }",
     "}",
   ].join("\n");
-  const widening = wideningFindings(
-    overlayProgram(surfaceProgram(probeTarget()), new Map([[FIXTURE, fixture]])),
-  );
+  const program = overlayProgram(surfaceProgram(probeTarget()), new Map([[FIXTURE, fixture]]));
+  // Without nil handling, as the ECS surface is built.
+  const { nilHandling: _engine, ...surface } = engineSurface(program);
+  const widening = wideningFindings(program, surface);
   const findings = (fn: string) => findingsOf(widening, fn);
+  // The engine's nil handling at each fixture slot keyed `<fn> <slot>`;
+  // `sys.widen_unknown` has none.
+  const fixtureNil = new Map<string, "accepts" | "raises">([
+    ["sys.widen_omit 2", "accepts"],
+    ["sys.widen_omit_fixed 2", "accepts"],
+    ["sys.widen_omit_narrow 2", "accepts"],
+    ["sys.widen_raise 2", "raises"],
+    ["sys.widen_raise_open 2", "raises"],
+    // As `vmath.matrix4_scale`: `f(1, nil)` runs as `f(1)`, `f(1, nil, 1)` raises.
+    ["sys.widen_middle 2", "accepts"],
+    ["sys.widen_middle 3", "raises"],
+    ["sys.widen_arity 1", "accepts"],
+    ["sys.widen_arity 2", "raises"],
+  ]);
+  const omittedNames = new Set([
+    ...[...fixtureNil.keys()].map((key) => key.split(" ")[0] as string),
+    "sys.widen_unknown",
+  ]);
+  const omitted = wideningFindings(program, {
+    ...surface,
+    functions: new Map([...surface.functions].filter(([fn]) => omittedNames.has(fn))),
+    calls: surface.calls.filter((call) => omittedNames.has(call.name)),
+    nilHandling: (fn, slot) => fixtureNil.get(`${fn} ${slot}`),
+  });
+  const omittedFindings = (fn: string) => findingsOf(omitted, fn);
+  const omittedForms = (fn: string, slot = "2") =>
+    omitted.checked
+      .filter((entry) => entry.fn === fn && entry.slot === slot)
+      .flatMap((entry) => entry.forms);
 
   test("a conditional rest that distributes over a union accepts the union and the mixed pair", () => {
     expect(findings("sys.widen_payload")).toEqual([
@@ -131,6 +180,65 @@ describe("widening findings on a fixture surface", () => {
   test("every fixture function gets a base call", () => {
     expect(widening.unchecked.filter((entry) => entry.fn.startsWith("sys.widen_"))).toEqual([]);
   });
+
+  test("an omitted argument the engine accepts as nil and no overload takes as undefined is incomplete", () => {
+    expect(omittedFindings("sys.widen_omit")).toEqual([
+      ["sys.widen_omit overload2-required 2 omitted complete", false],
+    ]);
+  });
+
+  test("an omitted argument taken as undefined with a result covering both calls is no finding", () => {
+    expect(omittedFindings("sys.widen_omit_fixed")).toEqual([]);
+    expect(omittedForms("sys.widen_omit_fixed")).toContain("omitted");
+  });
+
+  test("an omitted argument taken as undefined with a result the longer call does not fit is unsound", () => {
+    expect(omittedFindings("sys.widen_omit_narrow")).toEqual([
+      ["sys.widen_omit_narrow overload2-required 2 omitted sound", false],
+    ]);
+    const [finding] = omitted.findings.filter((entry) => entry.fn === "sys.widen_omit_narrow");
+    expect(finding?.detail).toContain("returns number");
+    expect(finding?.detail).toContain("returns string");
+  });
+
+  test("an omitted argument the engine raises on and every overload refuses as undefined is no finding", () => {
+    expect(omittedFindings("sys.widen_raise")).toEqual([]);
+    expect(omittedForms("sys.widen_raise")).toContain("omitted");
+  });
+
+  test("an optional argument the engine raises on as nil is unsound", () => {
+    expect(omittedFindings("sys.widen_raise_open")).toEqual([
+      ["sys.widen_raise_open overload1-optional 2 omitted sound", false],
+    ]);
+  });
+
+  test("an omitted argument with no recorded nil handling is unchecked", () => {
+    expect(omittedFindings("sys.widen_unknown")).toEqual([]);
+    const entries = omitted.unchecked.filter((entry) => entry.fn === "sys.widen_unknown");
+    expect(entries.map((entry) => entry.key)).toEqual([
+      "sys.widen_unknown overload2-required 2 omitted unchecked",
+    ]);
+    expect(entries[0]?.reason).toContain("no binding records");
+  });
+
+  test("only the last argument a call passes is judged as omitted", () => {
+    expect(omittedFindings("sys.widen_middle")).toEqual([]);
+    expect(omittedForms("sys.widen_middle", "3")).toContain("omitted");
+    expect(omittedForms("sys.widen_middle", "2")).toEqual([]);
+  });
+
+  test("an omitted argument's form holds only what signatures taking that many arguments declare", () => {
+    expect(omittedFindings("sys.widen_arity")).toEqual([]);
+    expect(omittedForms("sys.widen_arity", "1")).toContain("omitted");
+    expect(omittedForms("sys.widen_arity", "2")).toContain("omitted");
+  });
+
+  test("a surface without nil handling judges no omitted argument", () => {
+    expect(widening.checked.filter((entry) => entry.forms.includes("omitted"))).toEqual([]);
+    expect(widening.unchecked.filter((entry) => entry.key.endsWith(" omitted unchecked"))).toEqual(
+      [],
+    );
+  });
 });
 
 // Every finding and unchecked entry keyed, with ` (repo)` or ` (user)` when
@@ -172,6 +280,17 @@ function verdictProblems(
 }
 
 describe("widening findings on the shipped surface", () => {
+  test("the engine surface reads each slot's nil handling from the target's bindings", () => {
+    const target = probeTarget();
+    const { nilHandling } = engineSurface(surfaceProgram(target), target);
+    // `lua_istable(L, 4)` reads a nil options argument as no table.
+    expect(nilHandling?.("physics.raycast", 4)).toBe("accepts");
+    expect(nilHandling?.("physics.raycast", 1)).toBe("raises");
+    expect(nilHandling?.("sys.get_config_int", 2)).toBe("raises");
+    expect(nilHandling?.("physics.raycast", 9)).toBeUndefined();
+    expect(nilHandling?.("sys.no_such_function", 1)).toBeUndefined();
+  });
+
   test(
     "every finding and unchecked function has a verdict, and every verdict a finding",
     () => {

@@ -13978,8 +13978,9 @@ page](/api/defold-1.13.1/render).
 ###### sys.get_config_string
 
 The reference documents that the lookup can return `nil`. The typed overloads
-already return `string | undefined` without a default and `string` with one; see
-the [1.13.1 `sys` page](/api/defold-1.13.1/sys).
+already return `string | undefined` without a default, `string` with one, and
+`string | undefined` with a default that may be `undefined`; see the [1.13.1
+`sys` page](/api/defold-1.13.1/sys).
 
 ###### socket.client
 
@@ -15132,16 +15133,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_max_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_max_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_min_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_motor_force(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
+- function get_motor_force(joint: Opaque<"b2Joint">, inv_dt?: number): number; [since 1.13.0]
 - function get_motor_force(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_motor_speed(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
+- function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt?: number): number; [since 1.13.0]
 - function get_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_mouse_target(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
 - function get_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt: number): Vector3; [since 1.13.0]
+- function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt?: number): Vector3; [since 1.13.0]
 - function get_reaction_force(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
+- function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt?: number): number; [since 1.13.0]
 - function get_reaction_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_reference_angle(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_spring_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
@@ -16279,7 +16280,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### http
 
 - http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; }, sender: Url) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: false; proxy?: string; }): void
-- http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; }): void
+- http.request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; url: string; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_sent?: number; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number; } | { status?: undefined; url: string; response?: undefined; headers?: undefined; path?: undefined; error?: undefined; bytes_sent: number; bytes_received: number; bytes_total: number; range_start?: undefined; range_end?: undefined; document_size?: undefined; }, sender: Url) => void, headers: LuaMap<string, string> | Record<string, string> | undefined, post_data: string | undefined, options: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; } | undefined): void
 - interface RequestOptions { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean; proxy?: string; } [since 1.13.2]
 
 ### image
@@ -16460,6 +16461,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
+- physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean } | undefined): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[]): void;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;
@@ -16812,6 +16814,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_config_number(key: string, default_value: number): number;
 - sys.get_config_string(key: string): string | undefined
 - sys.get_config_string(key: string, default_value: string): string
+- sys.get_config_string(key: string, default_value: string | undefined): string | undefined
 - function get_connectivity(): sys.Network;
 - function get_engine_info(): sys.EngineInfo;
 - function get_host_path(filename: string): string;

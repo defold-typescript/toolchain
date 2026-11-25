@@ -25,6 +25,14 @@ const listed = physics.raycast(a, b, g, { all: true });
 const _listed: Equal<NonNullable<typeof listed>[number]["position"], Vector3> = true;
 void _listed;
 
+// `lua_istable(L, 4)` reads a nil options argument as no table, so an options
+// value that may be undefined returns either shape.
+type Hit = Omit<BuiltinMessages["ray_cast_response"], "request_id">;
+declare const maybeOptions: { all?: boolean } | undefined;
+const either = physics.raycast(a, b, g, maybeOptions);
+const _either: Equal<typeof either, Hit | Hit[] | undefined> = true;
+void _either;
+
 // script_http.cpp:PostProgress posts bytes_sent, bytes_received, bytes_total
 // and url, and no status, while report_progress is set.
 http.request(

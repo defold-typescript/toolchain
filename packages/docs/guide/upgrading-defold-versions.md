@@ -575,8 +575,9 @@ page](/api/defold-1.13.1/render).
 #### sys.get_config_string
 
 The reference documents that the lookup can return `nil`. The typed overloads
-already return `string | undefined` without a default and `string` with one; see
-the [1.13.1 `sys` page](/api/defold-1.13.1/sys).
+already return `string | undefined` without a default, `string` with one, and
+`string | undefined` with a default that may be `undefined`; see the [1.13.1
+`sys` page](/api/defold-1.13.1/sys).
 
 #### socket.client
 

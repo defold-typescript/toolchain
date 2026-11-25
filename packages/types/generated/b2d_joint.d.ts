@@ -961,7 +961,7 @@ declare global {
      * @param inv_dt - inverse time step
      * @returns motor force
      */
-    function get_motor_force(joint: Opaque<"b2Joint">, inv_dt: number): number;
+    function get_motor_force(joint: Opaque<"b2Joint">, inv_dt?: number): number;
     /**
      * Get motor speed.
      *
@@ -983,7 +983,7 @@ declare global {
      * @param inv_dt - inverse time step
      * @returns motor torque
      */
-    function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt: number): number;
+    function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt?: number): number;
     /**
      * Get the target for a mouse joint.
      *
@@ -1012,7 +1012,7 @@ declare global {
      * @param inv_dt - inverse time step
      * @returns reaction force
      */
-    function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt: number): Vector3;
+    function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt?: number): Vector3;
     /**
      * Get reaction torque.
      *
@@ -1027,7 +1027,7 @@ declare global {
      * @param inv_dt - inverse time step
      * @returns reaction torque
      */
-    function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt: number): number;
+    function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt?: number): number;
     /**
      * Get the reference angle.
      *

@@ -438,9 +438,9 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "msg.post": 2,
   "msg.url": 10,
   "render.render_target": 2,
-  "physics.raycast": 2,
+  "physics.raycast": 3,
   "http.request": 2,
-  "sys.get_config_string": 2,
+  "sys.get_config_string": 3,
   "sys.set_engine_throttle": 2,
   "vmath.euler_to_quat": 2,
 };

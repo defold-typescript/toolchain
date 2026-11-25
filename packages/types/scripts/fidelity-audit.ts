@@ -353,6 +353,10 @@ export const UNATTRIBUTED_OPTIONAL_CORRECTIONS: ReadonlyMap<string, string> = ne
       "b2d.fixture.set_density:param:update_mass",
       "render.set_render_target:param:render_target",
       "buffer.get_bytes:param:stream_name",
+      "b2d.joint.get_motor_force:param:inv_dt",
+      "b2d.joint.get_motor_torque:param:inv_dt",
+      "b2d.joint.get_reaction_force:param:inv_dt",
+      "b2d.joint.get_reaction_torque:param:inv_dt",
     ] as const
   ).map(
     (key) =>

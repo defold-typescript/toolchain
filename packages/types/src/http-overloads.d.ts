@@ -69,7 +69,7 @@ declare global {
      * @param callback - response callback function. A progress event carries `bytes_sent`, `bytes_received`, `bytes_total` and `url` but no `status`, so `response.status === undefined` marks one. `id` is an internal message identifier; do not use it.
      * @param headers - optional table with custom headers
      * @param post_data - optional data to send
-     * @param options - request options with `report_progress` set to `true` or to a `boolean` value, for example one from an `http.RequestOptions`
+     * @param options - request options with `report_progress` set to `true` or to a `boolean` value, for example one from an `http.RequestOptions`, or a value that may be `undefined`
      * @example
      * ```ts
      * function update_my_progress_bar(self: unknown, fraction: number) {
@@ -99,6 +99,8 @@ declare global {
      * @remarks
      * script_http.cpp:PostProgress posts `bytes_sent`, `bytes_received`,
      * `bytes_total` and `url` on each progress event, and sets no `status`.
+     * script_http.cpp:Http_Request reads argument 6 only when it is not nil,
+     * so a nil options argument reports no progress.
      */
     function request(
       url: string,
@@ -139,14 +141,16 @@ declare global {
       ) => void,
       headers: LuaMap<string, string> | Record<string, string> | undefined,
       post_data: string | undefined,
-      options: {
-        timeout?: number;
-        path?: string;
-        ignore_cache?: boolean;
-        chunked_transfer?: boolean;
-        report_progress?: boolean;
-        proxy?: string;
-      },
+      options:
+        | {
+            timeout?: number;
+            path?: string;
+            ignore_cache?: boolean;
+            chunked_transfer?: boolean;
+            report_progress?: boolean;
+            proxy?: string;
+          }
+        | undefined,
     ): void;
   }
 }
