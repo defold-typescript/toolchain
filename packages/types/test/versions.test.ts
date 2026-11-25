@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { resolve } from "node:path";
+import { targetBindingOptions } from "../scripts/binding-pin";
 import { selectCompleteVersionSurfaces } from "../scripts/generate-api-availability";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { KIND_MODULE_MANIFEST, loadApiTargets } from "../scripts/regen";
@@ -258,8 +259,10 @@ describe("versioned API surface — consumer tsconfig proof", () => {
     if (!target) throw new Error("no defold-1.13.0 target");
     const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
     try {
+      // Built as its committed surface is, with what its engine source shows.
       await materializeVersionedSurface(target, {
         destDir: resolve(root, "versions", "defold-1.13.0"),
+        emitOptions: targetBindingOptions(target),
       });
       const tsconfigPath = writeProofConfig(
         root,

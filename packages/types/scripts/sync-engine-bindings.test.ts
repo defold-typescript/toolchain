@@ -61,6 +61,16 @@ describe("selectBindingPaths", () => {
     expect(vendored.filter((path) => !selected.includes(path))).toEqual([]);
   });
 
+  test("keeps LuaSocket's except.c, which a binding pin reads, and no other C source", () => {
+    expect(
+      selectBindingPaths([
+        "engine/script/src/luasocket/except.c",
+        "engine/script/src/luasocket/tcp.c",
+        "engine/script/src/script_luasocket.cpp",
+      ]),
+    ).toEqual(["engine/script/src/luasocket/except.c", "engine/script/src/script_luasocket.cpp"]);
+  });
+
   test("drops test sources and platform stubs", () => {
     expect(selected.filter((path) => path.includes("/test/"))).toEqual([]);
     expect(selected.filter((path) => /_(null|android)\.cpp$/.test(path))).toEqual([]);

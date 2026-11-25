@@ -20,6 +20,10 @@ const PLATFORM_STUB = /_(null|android)\.cpp$/;
 // binding calls, such as the go property-options reader in `gameobject_script_util.cpp`.
 const LUA_SOURCE =
   /\bluaL_register\s*\(|\bluaL_[rR]eg\s+\w+\s*\[\s*\]|\b\w+\s*\(\s*(?:struct\s+)?lua_State\s*\*/;
+// C sources a binding pin reads: LuaSocket's `except.c` defines the functions
+// `socket.newtry` and `socket.protect` return. The binding extractor lists only
+// `.cpp` files, so it never reads them.
+const PINNED_C_SOURCES: ReadonlySet<string> = new Set(["engine/script/src/luasocket/except.c"]);
 
 export interface EngineBlobId {
   readonly path: string;
@@ -47,8 +51,9 @@ export interface EngineEvidenceManifest {
 
 export function selectBindingPaths(treePaths: readonly string[]): string[] {
   return treePaths
-    .filter((path) => ENGINE_SOURCE.test(path) && !path.includes("/test/"))
     .filter((path) => {
+      if (PINNED_C_SOURCES.has(path)) return true;
+      if (!ENGINE_SOURCE.test(path) || path.includes("/test/")) return false;
       const basename = path.slice(path.lastIndexOf("/") + 1);
       return BINDING_BASENAME.test(basename) && !PLATFORM_STUB.test(basename);
     })

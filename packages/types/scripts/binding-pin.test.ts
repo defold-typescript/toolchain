@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type BindingPin,
   type EngineSourcePin,
+  type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
   type ReturnTypeCorrection,
@@ -159,6 +160,28 @@ describe("bindingEvidenceFor", () => {
     expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [], [], [])]).toEqual(
       [],
     );
+  });
+
+  test("a release that predates the pinned function shows no evidence", () => {
+    const blendCase: readonly [string, ParamTypeCorrection] = [
+      "render.set_blend_func_separate:param:source_factor_color",
+      {
+        adds: "graphics.BlendFactor",
+        upstream: ["number"],
+        reason: "",
+        binding: {
+          file: "render/src/render/render_script.cpp",
+          cFunction: "RenderScript_SetBlendFuncSeparate",
+          contains: "if (!CheckBlendFactor(factors[f]))",
+        },
+      },
+    ];
+    expect([
+      ...bindingEvidenceFor(apiTarget("defold-1.12.4"), [], [], [], [blendCase], []),
+    ]).toEqual([]);
+    expect([
+      ...bindingEvidenceFor(apiTarget("defold-1.13.0"), [], [], [], [blendCase], []),
+    ]).toEqual(["render.set_blend_func_separate:param:source_factor_color"]);
   });
 
   test("an engine-pinned key range is evidence on every vendored target", () => {

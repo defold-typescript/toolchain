@@ -573,7 +573,7 @@
     }
   },
   "returnCorrections": {
-    "b2d.get_body": { "pins": [["b2Body"]], "replaces": ["Opaque<\"b2Body\">", "undefined"] },
+    "b2d.get_body": { "pins": [["b2Body"]], "adds": ["nil"] },
     "b2d.shape.ray_cast": {
       "pins": [["table"]],
       "replaces": [

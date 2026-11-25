@@ -31,6 +31,7 @@ import {
   openAnnotationVerdictSlots,
   parseAnnotationVerdicts,
 } from "../packages/types/scripts/lua-annotation-verdicts.ts";
+import { parseReplacementPinBaseline } from "../packages/types/scripts/replacement-pins.ts";
 import {
   candidateSlots,
   parseAssetPortalManifest,
@@ -124,6 +125,14 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
           readPortalVerdicts(dir),
         ),
       ),
+  },
+  {
+    id: "replacement-pin-baseline",
+    dir: "packages/types/scripts",
+    file: "replacement-pin-baseline.json",
+    parse: (raw, path) =>
+      Object.fromEntries(parseReplacementPinBaseline(raw, path).map((line) => [line, true])),
+    collect: (file, parsed) => Object.keys(parsed).map((line) => `${file}: ${line}`),
   },
 ];
 
