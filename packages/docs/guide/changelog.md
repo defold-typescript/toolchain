@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **Callbacks on Defold 1.12.4 to 1.13.1 type their documented parameters** ([pinning](./pinning-defold-target.md)).
 > - **An optional engine argument accepts `undefined`**, as `physics.raycast` options do.
-> - **Older pins type Box2D handles, mount names and spawn properties as their engine does** ([pinning](./pinning-defold-target.md)).
+> - **Older pins type Box2D handles, mount names, spawn properties and joint properties as their engine does** ([pinning](./pinning-defold-target.md)).
 > - **`iap.finish` and `iap.acknowledge` take the listener's transaction.**
 > - **A Defold 1.9.8 pin types built-in messages and `label.scale` from its reference** ([pinning](./pinning-defold-target.md#materializing-the-pinned-surface)).
 
@@ -42,6 +42,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Box2D handles** on 1.13.0 and 1.13.1: the `shape_id` of each entry `b2d.body.get_shapes`, `b2d.chain.get_segments`, `b2d.body.create_chain`, `b2d.shape.get_sensor_overlaps`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` return is an `Opaque<"b2Shape">` that the [b2d.shape](/api/b2d.shape) functions take, and `b2d.body.get_joints` returns `Opaque<"b2Joint">[]`.
   - **`liveupdate.get_mounts`** names each mount by `Hash` on 1.13.0 and 1.13.1, and returns an untyped table on 1.12.4, whose engine names it by string.
   - **Spawn properties** of `factory.create` and `collectionfactory.create` are a `PlainTable` before 1.13.2, since those engines spawn the object with no properties when a value is a string.
+  - **Joint properties** of `physics.create_joint` and `physics.set_joint_properties` take every joint-type field the engine reads, such as `length`, `frequency`, `motor_speed` and `local_axis_a`, as 1.13.2's `physics.JointProperties` does.
 - **`iap.finish` and `iap.acknowledge`** take the transaction the `iap.set_listener` callback receives, so a listener passes it on as it is.
 
 ## v0.70.0

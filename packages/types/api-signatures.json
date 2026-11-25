@@ -6279,7 +6279,7 @@
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_CAPSULE\u0000": "const SHAPE_TYPE_CAPSULE: number & { readonly __brand: \"physics.SHAPE_TYPE_CAPSULE\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_HULL\u0000": "const SHAPE_TYPE_HULL: number & { readonly __brand: \"physics.SHAPE_TYPE_HULL\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_SPHERE\u0000": "const SHAPE_TYPE_SPHERE: number & { readonly __brand: \"physics.SHAPE_TYPE_SPHERE\" };",
-      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.get_gravity\u0000[]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_gravity(): Vector3;",
       "physics\u0000FUNCTION\u0000physics.get_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_group(url: string | Hash | Url): Hash;",
@@ -6294,7 +6294,7 @@
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
       "physics\u0000FUNCTION\u0000physics.set_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function set_group(url: string | Hash | Url, group: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.set_hflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_hflip(url: string | Hash | Url, flip: boolean): void;",
-      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;",
       "physics\u0000FUNCTION\u0000physics.set_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;",
       "physics\u0000FUNCTION\u0000physics.set_vflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_vflip(url: string | Hash | Url, flip: boolean): void;",
@@ -7636,7 +7636,7 @@
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_CAPSULE\u0000": "const SHAPE_TYPE_CAPSULE: number & { readonly __brand: \"physics.SHAPE_TYPE_CAPSULE\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_HULL\u0000": "const SHAPE_TYPE_HULL: number & { readonly __brand: \"physics.SHAPE_TYPE_HULL\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_SPHERE\u0000": "const SHAPE_TYPE_SPHERE: number & { readonly __brand: \"physics.SHAPE_TYPE_SPHERE\" };",
-      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.get_gravity\u0000[]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_gravity(): Vector3;",
       "physics\u0000FUNCTION\u0000physics.get_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_group(url: string | Hash | Url): Hash;",
@@ -7651,7 +7651,7 @@
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
       "physics\u0000FUNCTION\u0000physics.set_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function set_group(url: string | Hash | Url, group: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.set_hflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_hflip(url: string | Hash | Url, flip: boolean): void;",
-      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;",
       "physics\u0000FUNCTION\u0000physics.set_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;",
       "physics\u0000FUNCTION\u0000physics.set_vflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_vflip(url: string | Hash | Url, flip: boolean): void;",
@@ -8663,7 +8663,7 @@
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_CAPSULE\u0000": "const SHAPE_TYPE_CAPSULE: number & { readonly __brand: \"physics.SHAPE_TYPE_CAPSULE\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_HULL\u0000": "const SHAPE_TYPE_HULL: number & { readonly __brand: \"physics.SHAPE_TYPE_HULL\" };",
       "physics\u0000CONSTANT\u0000physics.SHAPE_TYPE_SPHERE\u0000": "const SHAPE_TYPE_SPHERE: number & { readonly __brand: \"physics.SHAPE_TYPE_SPHERE\" };",
-      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.create_joint\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.get_gravity\u0000[]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_gravity(): Vector3;",
       "physics\u0000FUNCTION\u0000physics.get_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Hash\"],\"isOptional\":false}]": "function get_group(url: string | Hash | Url): Hash;",
@@ -8678,7 +8678,7 @@
       "physics\u0000FUNCTION\u0000physics.set_gravity\u0000[{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(gravity: Vector3): void;",
       "physics\u0000FUNCTION\u0000physics.set_group\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function set_group(url: string | Hash | Url, group: string | Hash): void;",
       "physics\u0000FUNCTION\u0000physics.set_hflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_hflip(url: string | Hash | Url, flip: boolean): void;",
-      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;",
+      "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;",
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;",
       "physics\u0000FUNCTION\u0000physics.set_shape\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;",
       "physics\u0000FUNCTION\u0000physics.set_vflip\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_vflip(url: string | Hash | Url, flip: boolean): void;",
@@ -25862,7 +25862,10 @@
         "param:3:position_a": { "type": "Vector3", "optional": false },
         "param:4:collisionobject_b": { "type": "string | Hash | Url", "optional": false },
         "param:5:position_b": { "type": "Vector3", "optional": false },
-        "param:6:properties": { "type": "{ collide_connected?: boolean }", "optional": true }
+        "param:6:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": true
+        }
       },
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
@@ -25925,7 +25928,10 @@
       "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
         "param:1:joint_id": { "type": "string | Hash", "optional": false },
-        "param:2:properties": { "type": "{ collide_connected?: boolean }", "optional": false }
+        "param:2:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": false
+        }
       },
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -29717,7 +29723,10 @@
         "param:3:position_a": { "type": "Vector3", "optional": false },
         "param:4:collisionobject_b": { "type": "string | Hash | Url", "optional": false },
         "param:5:position_b": { "type": "Vector3", "optional": false },
-        "param:6:properties": { "type": "{ collide_connected?: boolean }", "optional": true }
+        "param:6:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": true
+        }
       },
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
@@ -29780,7 +29789,10 @@
       "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
         "param:1:joint_id": { "type": "string | Hash", "optional": false },
-        "param:2:properties": { "type": "{ collide_connected?: boolean }", "optional": false }
+        "param:2:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": false
+        }
       },
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
@@ -32267,7 +32279,10 @@
         "param:3:position_a": { "type": "Vector3", "optional": false },
         "param:4:collisionobject_b": { "type": "string | Hash | Url", "optional": false },
         "param:5:position_b": { "type": "Vector3", "optional": false },
-        "param:6:properties": { "type": "{ collide_connected?: boolean }", "optional": true }
+        "param:6:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": true
+        }
       },
       "physics\u0000FUNCTION\u0000physics.destroy_joint\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
@@ -32330,7 +32345,10 @@
       "physics\u0000FUNCTION\u0000physics.set_joint_properties\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:collisionobject": { "type": "string | Hash | Url", "optional": false },
         "param:1:joint_id": { "type": "string | Hash", "optional": false },
-        "param:2:properties": { "type": "{ collide_connected?: boolean }", "optional": false }
+        "param:2:properties": {
+          "type": "{ collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }",
+          "optional": false
+        }
       },
       "physics\u0000FUNCTION\u0000physics.set_maskbit\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },

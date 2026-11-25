@@ -48,7 +48,7 @@ declare global {
      * See each joint type for possible properties field. The one field that is accepted for all joint types is:
      * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
-    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean }): void;
+    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.
@@ -430,7 +430,7 @@ declare global {
      * @param properties - joint specific properties table
      * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
-    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;
+    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
     /**
      * Sets or clears the masking of a group (maskbit) in a collision object.
      *
