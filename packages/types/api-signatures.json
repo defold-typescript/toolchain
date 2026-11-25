@@ -5308,7 +5308,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.apply_linear_impulse_to_center\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function apply_linear_impulse_to_center(body: Opaque<\"b2Body\">, impulse: Vector3): void;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.apply_torque\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function apply_torque(body: Opaque<\"b2Body\">, torque: number): void;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.compute_aabb\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function compute_aabb(body: Opaque<\"b2Body\">): { lower: Vector3; upper: Vector3 };",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.create_chain\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function create_chain(body: Opaque<\"b2Body\">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<\"b2Chain\">, { shape_id: number }[]]>;",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.create_chain\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function create_chain(body: Opaque<\"b2Body\">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<\"b2Chain\">, { shape_id: Opaque<\"b2Shape\"> }[]]>;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create_fixture(body: Opaque<\"b2Body\">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_shape\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function create_shape(body: Opaque<\"b2Body\">, definition: ({ shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 } } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; shape_id: Opaque<\"b2Shape\">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.destroy_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function destroy_fixture(body: Opaque<\"b2Body\">, fixture_index: number): void;",
@@ -5325,7 +5325,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_force\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_force(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_gravity_scale\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_gravity_scale(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_inertia\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_inertia(body: Opaque<\"b2Body\">): number;",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_joints(body: Opaque<\"b2Body\">): number[];",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_joints(body: Opaque<\"b2Body\">): Opaque<\"b2Joint\">[];",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_damping\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_linear_damping(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_velocity\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_linear_velocity(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_velocity_from_local_point\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_linear_velocity_from_local_point(body: Opaque<\"b2Body\">, local_point: Vector3): Vector3;",
@@ -5340,7 +5340,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_next\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]": "function get_next(body: Opaque<\"b2Body\">): Opaque<\"b2Body\">;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_position\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_rotational_inertia\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_rotational_inertia(body: Opaque<\"b2Body\">): number;",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shapes(body: Opaque<\"b2Body\">): { shape_id: number }[];",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shapes(body: Opaque<\"b2Body\">): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_sleep_threshold\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_sleep_threshold(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_transform\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_transform(body: Opaque<\"b2Body\">): { position: Vector3; angle: number };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_type\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"(number & { readonly __brand: \\\"b2d.body.B2_DYNAMIC_BODY\\\" }) | (number & { readonly __brand: \\\"b2d.body.B2_KINEMATIC_BODY\\\" }) | (number & { readonly __brand: \\\"b2d.body.B2_STATIC_BODY\\\" })\"],\"isOptional\":false}]": "function get_type(body: Opaque<\"b2Body\">): (number & { readonly __brand: \"b2d.body.B2_DYNAMIC_BODY\" }) | (number & { readonly __brand: \"b2d.body.B2_KINEMATIC_BODY\" }) | (number & { readonly __brand: \"b2d.body.B2_STATIC_BODY\" });",
@@ -5382,7 +5382,7 @@
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_material\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_material(chain: Opaque<\"b2Chain\">): number;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_restitution\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_restitution(chain: Opaque<\"b2Chain\">): number;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segment_count\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_segment_count(chain: Opaque<\"b2Chain\">): number;",
-      "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_segments(chain: Opaque<\"b2Chain\">): { shape_id: number }[];",
+      "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_segments(chain: Opaque<\"b2Chain\">): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": "function get_world(chain: Opaque<\"b2Chain\">): Opaque<\"b2World\">;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(chain: Opaque<\"b2Chain\">): boolean;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.set_friction\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_friction(chain: Opaque<\"b2Chain\">, friction: number): void;",
@@ -5548,7 +5548,7 @@
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_mass_data\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mass_data(shape_id: Opaque<\"b2Shape\">): { mass: number; center: Vector3; inertia: number };\nfunction get_mass_data(body: Opaque<\"b2Body\">, shape_index: number): { mass: number; center: Vector3; inertia: number };",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_material\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_material(shape_id: Opaque<\"b2Shape\">): number;\nfunction get_material(body: Opaque<\"b2Body\">, shape_index: number): number;",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_capacity\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_sensor_capacity(shape_id: Opaque<\"b2Shape\">): number;\nfunction get_sensor_capacity(body: Opaque<\"b2Body\">, shape_index: number): number;",
-      "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sensor_overlaps(shape_id: Opaque<\"b2Shape\">): { shape_id: number }[];\nfunction get_sensor_overlaps(body: Opaque<\"b2Body\">, shape_index: number): { shape_id: number }[];",
+      "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sensor_overlaps(shape_id: Opaque<\"b2Shape\">): { shape_id: Opaque<\"b2Shape\"> }[];\nfunction get_sensor_overlaps(body: Opaque<\"b2Body\">, shape_index: number): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_shape\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape_id: Opaque<\"b2Shape\">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };\nfunction get_shape(body: Opaque<\"b2Body\">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": "function get_world(shape_id: Opaque<\"b2Shape\">): Opaque<\"b2World\">;\nfunction get_world(body: Opaque<\"b2Body\">, shape_index: number): Opaque<\"b2World\">;",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(shape_id: Opaque<\"b2Shape\">): boolean;\nfunction is_valid(body: Opaque<\"b2Body\">, shape_index: number): boolean;",
@@ -5582,9 +5582,9 @@
       "b2d.world\u0000FUNCTION\u0000b2d.world.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(world: Opaque<\"b2World\">): boolean;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.is_warm_starting_enabled\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_warm_starting_enabled(world: Opaque<\"b2World\">): boolean;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;",
-      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;",
+      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<\"b2Shape\"> }[], { node_visits: number; leaf_visits: number }]>;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;",
-      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;",
+      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<\"b2Shape\"> }[], { node_visits: number; leaf_visits: number }]>;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.rebuild_static_tree\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[]": "function rebuild_static_tree(world: Opaque<\"b2World\">): void;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.set_contact_tuning\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_contact_tuning(world: Opaque<\"b2World\">, hertz: number, damping_ratio: number, pushout: number): void;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.set_gravity\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(world: Opaque<\"b2World\">, gravity: Vector3): void;",
@@ -5645,7 +5645,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -5690,7 +5690,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -6211,7 +6211,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_UNKNOWN\u0000": "const LIVEUPDATE_UNKNOWN: number & { readonly __brand: \"liveupdate.LIVEUPDATE_UNKNOWN\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_VERSION_MISMATCH\u0000": "const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_VERSION_MISMATCH\" };",
       "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: number) => void): number;",
-      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: string; uri: string; priority: number }[];",
+      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: Hash; uri: string; priority: number }[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): number;",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_NORMAL\u0000": "const CONSTANT_TYPE_NORMAL: number & { readonly __brand: \"material.CONSTANT_TYPE_NORMAL\" };",
@@ -6667,7 +6667,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.apply_linear_impulse_to_center\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function apply_linear_impulse_to_center(body: Opaque<\"b2Body\">, impulse: Vector3): void;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.apply_torque\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function apply_torque(body: Opaque<\"b2Body\">, torque: number): void;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.compute_aabb\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function compute_aabb(body: Opaque<\"b2Body\">): { lower: Vector3; upper: Vector3 };",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.create_chain\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function create_chain(body: Opaque<\"b2Body\">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<\"b2Chain\">, { shape_id: number }[]]>;",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.create_chain\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function create_chain(body: Opaque<\"b2Body\">, definition: { vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; friction?: number; restitution?: number; material?: number; filter?: { category_bits?: number; mask_bits?: number; group_index?: number }; enable_sensor_events?: boolean }): LuaMultiReturn<[Opaque<\"b2Chain\">, { shape_id: Opaque<\"b2Shape\"> }[]]>;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create_fixture(body: Opaque<\"b2Body\">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_shape\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function create_shape(body: Opaque<\"b2Body\">, definition: ({ shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 } } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3 }) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): { index: number; shape_id: Opaque<\"b2Shape\">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.destroy_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function destroy_fixture(body: Opaque<\"b2Body\">, fixture_index: number): void;",
@@ -6684,7 +6684,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_force\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_force(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_gravity_scale\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_gravity_scale(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_inertia\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_inertia(body: Opaque<\"b2Body\">): number;",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_joints(body: Opaque<\"b2Body\">): number[];",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_joints(body: Opaque<\"b2Body\">): Opaque<\"b2Joint\">[];",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_damping\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_linear_damping(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_velocity\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_linear_velocity(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_velocity_from_local_point\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_linear_velocity_from_local_point(body: Opaque<\"b2Body\">, local_point: Vector3): Vector3;",
@@ -6699,7 +6699,7 @@
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_next\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]": "function get_next(body: Opaque<\"b2Body\">): Opaque<\"b2Body\">;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_position\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Vector3\"],\"isOptional\":false}]": "function get_position(body: Opaque<\"b2Body\">): Vector3;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_rotational_inertia\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_rotational_inertia(body: Opaque<\"b2Body\">): number;",
-      "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shapes(body: Opaque<\"b2Body\">): { shape_id: number }[];",
+      "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shapes(body: Opaque<\"b2Body\">): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_sleep_threshold\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_sleep_threshold(body: Opaque<\"b2Body\">): number;",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_transform\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_transform(body: Opaque<\"b2Body\">): { position: Vector3; angle: number };",
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_type\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"(number & { readonly __brand: \\\"b2d.body.B2_DYNAMIC_BODY\\\" }) | (number & { readonly __brand: \\\"b2d.body.B2_KINEMATIC_BODY\\\" }) | (number & { readonly __brand: \\\"b2d.body.B2_STATIC_BODY\\\" })\"],\"isOptional\":false}]": "function get_type(body: Opaque<\"b2Body\">): (number & { readonly __brand: \"b2d.body.B2_DYNAMIC_BODY\" }) | (number & { readonly __brand: \"b2d.body.B2_KINEMATIC_BODY\" }) | (number & { readonly __brand: \"b2d.body.B2_STATIC_BODY\" });",
@@ -6741,7 +6741,7 @@
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_material\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_material(chain: Opaque<\"b2Chain\">): number;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_restitution\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_restitution(chain: Opaque<\"b2Chain\">): number;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segment_count\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_segment_count(chain: Opaque<\"b2Chain\">): number;",
-      "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_segments(chain: Opaque<\"b2Chain\">): { shape_id: number }[];",
+      "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_segments(chain: Opaque<\"b2Chain\">): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": "function get_world(chain: Opaque<\"b2Chain\">): Opaque<\"b2World\">;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(chain: Opaque<\"b2Chain\">): boolean;",
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.set_friction\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_friction(chain: Opaque<\"b2Chain\">, friction: number): void;",
@@ -6907,7 +6907,7 @@
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_mass_data\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mass_data(shape_id: Opaque<\"b2Shape\">): { mass: number; center: Vector3; inertia: number };\nfunction get_mass_data(body: Opaque<\"b2Body\">, shape_index: number): { mass: number; center: Vector3; inertia: number };",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_material\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_material(shape_id: Opaque<\"b2Shape\">): number;\nfunction get_material(body: Opaque<\"b2Body\">, shape_index: number): number;",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_capacity\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_sensor_capacity(shape_id: Opaque<\"b2Shape\">): number;\nfunction get_sensor_capacity(body: Opaque<\"b2Body\">, shape_index: number): number;",
-      "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sensor_overlaps(shape_id: Opaque<\"b2Shape\">): { shape_id: number }[];\nfunction get_sensor_overlaps(body: Opaque<\"b2Body\">, shape_index: number): { shape_id: number }[];",
+      "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sensor_overlaps(shape_id: Opaque<\"b2Shape\">): { shape_id: Opaque<\"b2Shape\"> }[];\nfunction get_sensor_overlaps(body: Opaque<\"b2Body\">, shape_index: number): { shape_id: Opaque<\"b2Shape\"> }[];",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_shape\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_shape(shape_id: Opaque<\"b2Shape\">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };\nfunction get_shape(body: Opaque<\"b2Body\">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": "function get_world(shape_id: Opaque<\"b2Shape\">): Opaque<\"b2World\">;\nfunction get_world(body: Opaque<\"b2Body\">, shape_index: number): Opaque<\"b2World\">;",
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(shape_id: Opaque<\"b2Shape\">): boolean;\nfunction is_valid(body: Opaque<\"b2Body\">, shape_index: number): boolean;",
@@ -6941,9 +6941,9 @@
       "b2d.world\u0000FUNCTION\u0000b2d.world.is_valid\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_valid(world: Opaque<\"b2World\">): boolean;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.is_warm_starting_enabled\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_warm_starting_enabled(world: Opaque<\"b2World\">): boolean;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;",
-      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;",
+      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_aabb\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_aabb(world: Opaque<\"b2World\">, aabb: { lower: Vector3; upper: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<\"b2Shape\"> }[], { node_visits: number; leaf_visits: number }]>;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>;",
-      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>;",
+      "b2d.world\u0000FUNCTION\u0000b2d.world.overlap_shape\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]": "function overlap_shape(world: Opaque<\"b2World\">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: Opaque<\"b2Shape\"> }[], { node_visits: number; leaf_visits: number }]>;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.rebuild_static_tree\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]->[]": "function rebuild_static_tree(world: Opaque<\"b2World\">): void;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.set_contact_tuning\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_contact_tuning(world: Opaque<\"b2World\">, hertz: number, damping_ratio: number, pushout: number): void;",
       "b2d.world\u0000FUNCTION\u0000b2d.world.set_gravity\u0000[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":false}]->[]": "function set_gravity(world: Opaque<\"b2World\">, gravity: Vector3): void;",
@@ -7004,7 +7004,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -7048,7 +7048,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -7568,7 +7568,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_UNKNOWN\u0000": "const LIVEUPDATE_UNKNOWN: number & { readonly __brand: \"liveupdate.LIVEUPDATE_UNKNOWN\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_VERSION_MISMATCH\u0000": "const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_VERSION_MISMATCH\" };",
       "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: number) => void): number;",
-      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: string; uri: string; priority: number }[];",
+      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: Hash; uri: string; priority: number }[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): number;",
       "material\u0000CONSTANT\u0000material.CONSTANT_TYPE_NORMAL\u0000": "const CONSTANT_TYPE_NORMAL: number & { readonly __brand: \"material.CONSTANT_TYPE_NORMAL\" };",
@@ -8103,7 +8103,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -8141,7 +8141,7 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"factory.STATUS_LOADED\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"factory.STATUS_LOADING\" };",
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
-      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
+      "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
@@ -8623,7 +8623,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_UNKNOWN\u0000": "const LIVEUPDATE_UNKNOWN: number & { readonly __brand: \"liveupdate.LIVEUPDATE_UNKNOWN\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_VERSION_MISMATCH\u0000": "const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_VERSION_MISMATCH\" };",
       "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number;",
-      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: string; uri: string; priority: number }[];",
+      "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): Record<string | number, unknown>;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string): number;",
       "model\u0000FUNCTION\u0000model.cancel\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function cancel(url: string | Hash | Url): void;",
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };",
@@ -23406,7 +23406,7 @@
           "optional": false
         },
         "return:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
-        "return:1:segments": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:1:segments": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -23486,7 +23486,7 @@
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "return:0:joints": { "type": "number[]", "optional": false }
+        "return:0:joints": { "type": "Opaque<\"b2Joint\">[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_damping\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -23553,7 +23553,7 @@
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "return:0:shapes": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:shapes": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_sleep_threshold\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -23725,7 +23725,7 @@
       },
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
-        "return:0:segments": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:segments": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": {
         "param:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
@@ -24377,7 +24377,7 @@
       },
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape_id": { "type": "Opaque<\"b2Shape\">", "optional": false },
-        "return:0:overlaps": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:overlaps": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_shape\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape_id": { "type": "Opaque<\"b2Shape\">", "optional": false },
@@ -24642,7 +24642,7 @@
           "optional": true
         },
         "param:3:max_results": { "type": "number", "optional": true },
-        "return:0:hits": { "type": "{ shape_id: number }[]", "optional": false },
+        "return:0:hits": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false },
         "return:1:stats": {
           "type": "{ node_visits: number; leaf_visits: number }",
           "optional": false
@@ -24679,7 +24679,7 @@
           "optional": true
         },
         "param:3:max_results": { "type": "number", "optional": true },
-        "return:0:hits": { "type": "{ shape_id: number }[]", "optional": false },
+        "return:0:hits": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false },
         "return:1:stats": {
           "type": "{ node_visits: number; leaf_visits: number }",
           "optional": false
@@ -24887,10 +24887,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
           "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
@@ -25018,10 +25015,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -25716,7 +25710,7 @@
       },
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:mounts": {
-          "type": "{ name: string; uri: string; priority: number }[]",
+          "type": "{ name: Hash; uri: string; priority: number }[]",
           "optional": false
         }
       },
@@ -27275,7 +27269,7 @@
           "optional": false
         },
         "return:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
-        "return:1:segments": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:1:segments": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.create_fixture\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -27355,7 +27349,7 @@
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_joints\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "return:0:joints": { "type": "number[]", "optional": false }
+        "return:0:joints": { "type": "Opaque<\"b2Joint\">[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_linear_damping\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -27422,7 +27416,7 @@
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_shapes\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
-        "return:0:shapes": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:shapes": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.body\u0000FUNCTION\u0000b2d.body.get_sleep_threshold\u0000[{\"types\":[\"Opaque<\\\"b2Body\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:body": { "type": "Opaque<\"b2Body\">", "optional": false },
@@ -27594,7 +27588,7 @@
       },
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_segments\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
-        "return:0:segments": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:segments": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.chain\u0000FUNCTION\u0000b2d.chain.get_world\u0000[{\"types\":[\"Opaque<\\\"b2Chain\\\">\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"b2World\\\">\"],\"isOptional\":false}]": {
         "param:0:chain": { "type": "Opaque<\"b2Chain\">", "optional": false },
@@ -28246,7 +28240,7 @@
       },
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_sensor_overlaps\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape_id": { "type": "Opaque<\"b2Shape\">", "optional": false },
-        "return:0:overlaps": { "type": "{ shape_id: number }[]", "optional": false }
+        "return:0:overlaps": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false }
       },
       "b2d.shape\u0000FUNCTION\u0000b2d.shape.get_shape\u0000[{\"types\":[\"Opaque<\\\"b2Shape\\\">\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:shape_id": { "type": "Opaque<\"b2Shape\">", "optional": false },
@@ -28511,7 +28505,7 @@
           "optional": true
         },
         "param:3:max_results": { "type": "number", "optional": true },
-        "return:0:hits": { "type": "{ shape_id: number }[]", "optional": false },
+        "return:0:hits": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false },
         "return:1:stats": {
           "type": "{ node_visits: number; leaf_visits: number }",
           "optional": false
@@ -28548,7 +28542,7 @@
           "optional": true
         },
         "param:3:max_results": { "type": "number", "optional": true },
-        "return:0:hits": { "type": "{ shape_id: number }[]", "optional": false },
+        "return:0:hits": { "type": "{ shape_id: Opaque<\"b2Shape\"> }[]", "optional": false },
         "return:1:stats": {
           "type": "{ node_visits: number; leaf_visits: number }",
           "optional": false
@@ -28756,10 +28750,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
           "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
@@ -28879,10 +28870,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -29577,7 +29565,7 @@
       },
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:mounts": {
-          "type": "{ name: string; uri: string; priority: number }[]",
+          "type": "{ name: Hash; uri: string; priority: number }[]",
           "optional": false
         }
       },
@@ -31440,10 +31428,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:ids": {
           "type": "LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> }",
@@ -31521,10 +31506,7 @@
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:position": { "type": "Vector3", "optional": true },
         "param:2:rotation": { "type": "Quaternion", "optional": true },
-        "param:3:properties": {
-          "type": "LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })",
-          "optional": true
-        },
+        "param:3:properties": { "type": "PlainTable", "optional": true },
         "param:4:scale": { "type": "number | Vector3", "optional": true },
         "return:0:id": { "type": "Hash | undefined", "optional": false }
       },
@@ -32206,10 +32188,7 @@
         "return:0:result": { "type": "number", "optional": false }
       },
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:mounts": {
-          "type": "{ name: string; uri: string; priority: number }[]",
-          "optional": false
-        }
+        "return:0:mounts": { "type": "Record<string | number, unknown>", "optional": false }
       },
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:name": { "type": "string", "optional": false },

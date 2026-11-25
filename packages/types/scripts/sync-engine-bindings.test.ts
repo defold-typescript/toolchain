@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { PROPERTY_KEY_RANGES, type PropertyKeyRange } from "../src/emit-dts";
+import {
+  PROPERTY_KEY_RANGES,
+  type PropertyKeyRange,
+  type TableSlotCuration,
+} from "../src/emit-dts";
 import { enginePinHolds } from "./binding-pin";
 import {
   authenticateEvidence,
@@ -387,6 +391,27 @@ describe("engineEvidencePaths", () => {
       ["c.itemN", { prefix: "item", first: 1, last: 2, evidence: "1-2" }],
     ]);
     expect(engineEvidencePaths(ranges)).toEqual(["engine/b/src/b.cpp", "engine/z/src/z.h"]);
+  });
+
+  test("lists a file only a table slot curation's engine pin names", () => {
+    const curations: ReadonlyMap<string, TableSlotCuration> = new Map([
+      [
+        "a.f:param:t",
+        {
+          kind: "verbatim",
+          ts: "PlainTable",
+          engine: [
+            { file: "c/src/c.cpp", contains: "C" },
+            { file: "a/src/a.h", contains: "A" },
+          ],
+        },
+      ],
+      ["a.g:param:t", { kind: "verbatim", ts: "PlainTable" }],
+    ]);
+    expect(engineEvidencePaths(new Map(), curations)).toEqual([
+      "engine/a/src/a.h",
+      "engine/c/src/c.cpp",
+    ]);
   });
 });
 

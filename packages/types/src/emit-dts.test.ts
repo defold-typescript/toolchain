@@ -131,8 +131,8 @@ import { parseLibraryIndexSlotClassifications } from "./index-slot-classificatio
 import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
 
-// What a vendored target whose engine source shows every binding pin supplies:
-// each binding-pinned correction's ledger line, so the correction applies.
+// What a vendored target whose engine source shows every binding and engine pin
+// supplies: each pinned correction's ledger line, so the correction applies.
 const EVERY_PIN_HOLDS = {
   bindingEvidence: new Set(
     (
@@ -140,10 +140,14 @@ const EVERY_PIN_HOLDS = {
         ["PARAM_TYPE_CORRECTIONS", PARAM_TYPE_CORRECTIONS],
         ["RETURN_TYPE_CORRECTIONS", RETURN_TYPE_CORRECTIONS],
         ["TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES],
+        ["TABLE_SLOT_CURATIONS", TABLE_SLOT_CURATIONS],
       ] as const
     ).flatMap(([table, entries]) =>
       [...entries]
-        .filter(([, entry]) => entry.binding !== undefined)
+        .filter(
+          ([, entry]) =>
+            entry.binding !== undefined || ("engine" in entry && entry.engine !== undefined),
+        )
         .map(([key]) => pinEvidenceKey(table, key)),
     ),
   ),
@@ -1832,7 +1836,7 @@ describe("emitDeclarations", () => {
 
   test("emits physics.set_shape's cross-referenced data param as an inline object, not Record", () => {
     const module = parseDefoldApiDoc(physicsDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     const line = out.split("\n").find((l) => l.includes("function set_shape(")) ?? "";
     expect(line).toContain("type: typeof physics.SHAPE_TYPE_SPHERE");
     expect(line).not.toContain("Record<");
@@ -1849,7 +1853,7 @@ describe("emitDeclarations", () => {
 
   test("emits physics.set_shape's data param as one arm per shape kind", () => {
     const module = parseDefoldApiDoc(physicsDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, EVERY_PIN_HOLDS);
     const line = out.split("\n").find((l) => l.includes("function set_shape(")) ?? "";
     expect(line).toContain(
       "table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
@@ -2383,6 +2387,25 @@ describe("inlineTableType list arrays", () => {
     );
     expect(out).toBe("{ items: { id: string } }");
   });
+
+  // physics.get_shape's doc lists `diameter` under both the sphere and the
+  // capsule kind, so a slot that reads its flattened fields names it twice.
+  test("a field named twice is one member: the union of its types, optional if either is", () => {
+    const out = inlineTableType(
+      [
+        { name: "type", types: ["number"] },
+        { name: "diameter", types: ["number"] },
+        { name: "dimensions", types: ["vector3"], optional: true },
+        { name: "diameter", types: ["string"], optional: true },
+        { name: "height", types: ["number"] },
+      ],
+      identity,
+      false,
+    );
+    expect(out).toBe(
+      "{ type: number; diameter?: number | string; dimensions?: vector3; height: number }",
+    );
+  });
 });
 
 describe("number-list table-field recovery", () => {
@@ -2806,7 +2829,7 @@ describe("engine-required param fields", () => {
   });
 
   test("a curated object and its nested fields take the correction too", () => {
-    const out = emitDeclarations(parseDefoldApiDoc(b2dBody113Doc));
+    const out = emitDeclarations(parseDefoldApiDoc(b2dBody113Doc), EVERY_PIN_HOLDS);
     expect(signatureLine(out, 'function set_mass_data(body: Opaque<"b2Body">, data: {')).toContain(
       "data: { mass: number; center: Vector3; inertia: number }",
     );
@@ -2829,7 +2852,7 @@ describe("engine-required param fields", () => {
 
   test("create_shape takes the v3 shape kinds and either sensor flag", () => {
     const line = signatureLine(
-      emitDeclarations(parseDefoldApiDoc(b2dBody113Doc)),
+      emitDeclarations(parseDefoldApiDoc(b2dBody113Doc), EVERY_PIN_HOLDS),
       'function create_shape(body: Opaque<"b2Body">, definition',
     );
     expect(line).toContain(
@@ -2844,7 +2867,7 @@ describe("engine-required param fields", () => {
 
   test("a Box2D shape slot is a union discriminated on type", () => {
     const line = signatureLine(
-      emitDeclarations(parseDefoldApiDoc(b2dShapeDoc)),
+      emitDeclarations(parseDefoldApiDoc(b2dShapeDoc), EVERY_PIN_HOLDS),
       "function set_shape(shape_id",
     );
     expect(line).toContain(
@@ -2859,7 +2882,7 @@ describe("engine-required param fields", () => {
 
   test("physics.set_shape takes one arm per collision shape kind", () => {
     const line = signatureLine(
-      emitDeclarations(parseDefoldApiDoc(physicsDoc)),
+      emitDeclarations(parseDefoldApiDoc(physicsDoc), EVERY_PIN_HOLDS),
       "function set_shape(",
     );
     expect(line).toContain("{ type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 }");
@@ -3007,12 +3030,10 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "font.get_info:return:info",
       "iap.finish:param:transaction",
       "iap.acknowledge:param:transaction",
-      "iap.buy:param:options",
       "liveupdate.get_mounts:return:mounts",
       "model.get_aabb:return:aabb",
       "model.get_mesh_aabb:return:aabb",
       "physics.raycast_async:param:groups",
-      "push.schedule:param:notification_settings",
       "socket.select:param:recvt",
       "socket.select:param:sendt",
       "socket.select:return:sockets_r",
@@ -3237,17 +3258,38 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain("{ node_visits: number; leaf_visits: number }");
   });
 
-  test("collectionfactory.create keys its properties by instance id hash only, read-only", () => {
+  test("collectionfactory.create keys its properties by instance id hash only, read-only, where its pin holds", () => {
     const module = parseDefoldApiDoc(collectionfactoryDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "collectionfactory.create")],
-    });
-    const properties =
-      "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>";
-    expect(out).toContain(
-      `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`,
+    const only = { ...module, functions: [requireFunction(module, "collectionfactory.create")] };
+    const signature = (properties: string): string =>
+      `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`;
+    const line = pinEvidenceKey(
+      "TABLE_SLOT_CURATIONS",
+      "collectionfactory.create:param:properties",
     );
+    expect(emitDeclarations(only, { bindingEvidence: new Set([line]) })).toContain(
+      signature(
+        "ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>",
+      ),
+    );
+    expect(emitDeclarations(only)).toContain(signature("PlainTable"));
+    expect(
+      emitDeclarations(only, {
+        bindingEvidence: new Set([
+          "PARAM_TYPE_CORRECTIONS:collectionfactory.create:param:properties",
+        ]),
+      }),
+    ).toContain(signature("PlainTable"));
+  });
+
+  test("a refDoc-pinned table slot curation applies with no engine evidence", () => {
+    expect(TABLE_SLOT_CURATIONS.get("compute.set_textures:param:textures")?.refDoc).toBeDefined();
+    const module = parseDefoldApiDoc(computeDoc);
+    const out = emitDeclarations(
+      { ...module, functions: [requireFunction(module, "compute.set_textures")] },
+      { bindingEvidence: new Set() },
+    );
+    expect(out).toContain("textures: LuaMap<string, Hash> | Record<string, Hash>");
   });
 
   test("buffer.create declares its streams as an array of stream records", () => {
@@ -3315,14 +3357,14 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
   });
 
-  test("liveupdate.get_mounts recovers an array of mount records", () => {
+  test("liveupdate.get_mounts recovers an array of mount records named by hash", () => {
     const module = parseDefoldApiDoc(liveupdateDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "liveupdate.get_mounts")],
-    });
+    const out = emitDeclarations(
+      { ...module, functions: [requireFunction(module, "liveupdate.get_mounts")] },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
-      "function get_mounts(): { name: string; uri: string; priority: number }[];",
+      "function get_mounts(): { name: Hash; uri: string; priority: number }[];",
     );
   });
 
@@ -3386,7 +3428,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     );
   });
 
-  test("iap finish/acknowledge recover the shared transaction object and buy recovers its options bag", () => {
+  test("iap finish/acknowledge take the listener's transaction and buy recovers its options bag", () => {
     const module = parseDefoldApiDoc(iapDoc);
     const out = emitDeclarations({
       ...module,
@@ -3396,8 +3438,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
         requireFunction(module, "iap.buy"),
       ],
     });
-    const transaction =
-      "{ ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }";
+    const transaction = "Parameters<Parameters<typeof set_listener>[0]>[1]";
     expect(out).toContain(`function finish(transaction: ${transaction}): void;`);
     expect(out).toContain(`function acknowledge(transaction: ${transaction}): void;`);
     expect(out).toContain(
@@ -3993,7 +4034,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
             returnValues: [],
           },
         ]),
-        { urlParameters: urlParameterTable as UrlParameterTable },
+        { ...EVERY_PIN_HOLDS, urlParameters: urlParameterTable as UrlParameterTable },
       );
       // The committed table classifies the slot `game-object`, and both arms follow it.
       expect(out).toContain(
@@ -6403,10 +6444,10 @@ describe("the body, shape_index alternative arity", () => {
 
   test("a curated b2d.shape element gains a body, shape_index overload in place of shape_id", () => {
     const module = parseDefoldApiDoc(b2dShapeDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "b2d.shape.set_shape")],
-    });
+    const out = emitDeclarations(
+      { ...module, functions: [requireFunction(module, "b2d.shape.set_shape")] },
+      EVERY_PIN_HOLDS,
+    );
     const [primary, overload, ...rest] = signaturesOf(out, "set_shape");
     expect(rest).toEqual([]);
     expect(primary).toStartWith('function set_shape(shape_id: Opaque<"b2Shape">, definition: {');

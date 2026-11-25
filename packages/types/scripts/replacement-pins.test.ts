@@ -125,7 +125,51 @@ describe("replacementPinFindings", () => {
         [],
         new Set(),
       ),
-    ).toEqual([`${line}: no pin (the table accepts a refDoc pin)`]);
+    ).toEqual([
+      `${line}: no pin (the table accepts a refDoc pin or a binding pin or an engine pin)`,
+    ]);
+  });
+
+  test("a table slot curation counts as pinned through one holding binding pin of its own", () => {
+    const key = "factory.create:param:properties";
+    const curation: TableSlotCuration = {
+      kind: "verbatim",
+      ts: "PlainTable",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_factory.cpp",
+        cFunction: "FactoryComp_Create",
+        contains: "lua_next",
+      },
+    };
+    const line = pinEvidenceKey("TABLE_SLOT_CURATIONS", key);
+    const tables = [withEntries("TABLE_SLOT_CURATIONS", [[key, curation]])];
+    expect(replacementPinFindings(tables, [], new Set([line]))).toEqual([]);
+    expect(replacementPinFindings(tables, [], new Set())).toEqual([
+      `${line}: its pin holds on no vendored target`,
+    ]);
+    const twice = { ...curation, refDoc: { contains: "the properties" } };
+    expect(
+      replacementPinFindings(
+        [withEntries("TABLE_SLOT_CURATIONS", [[key, twice]])],
+        [],
+        new Set([line]),
+      ),
+    ).toEqual([`${line}: carries more than one pin`]);
+  });
+
+  test("a table slot curation pinned only by engine pins counts as pinned", () => {
+    const key = "sys.save:param:table";
+    const curation: TableSlotCuration = {
+      kind: "verbatim",
+      ts: "PlainTable",
+      engine: [{ file: "script/src/script_table.cpp", contains: "lua_next" }],
+    };
+    const line = pinEvidenceKey("TABLE_SLOT_CURATIONS", key);
+    const tables = [withEntries("TABLE_SLOT_CURATIONS", [[key, curation]])];
+    expect(replacementPinFindings(tables, [], new Set([line]))).toEqual([]);
+    expect(replacementPinFindings(tables, [line], new Set([line]))).toEqual([
+      `${line}: stale, the entry is pinned`,
+    ]);
   });
 
   test("two entries of one table with the same ledger key throw", () => {

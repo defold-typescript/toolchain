@@ -157,7 +157,7 @@ describe("api-targets registry", () => {
     expect(existsSync(fixturePath)).toBe(true);
     const entry = loadTargetModules(target).find((e) => e.namespace === "b2d.body");
     if (!entry) throw new Error("no b2d.body entry from loadTargetModules");
-    const { contents: fresh } = generateModuleDeclaration(entry);
+    const { contents: fresh } = generateModuleDeclaration(entry, targetBindingOptions(target));
     const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
     expect(committed).toBe(fresh);
   });

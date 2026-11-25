@@ -57,7 +57,7 @@ declare module "iap" {
    *
    * @param transaction - transaction table parameter as supplied in listener callback
    */
-  function acknowledge(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
+  function acknowledge(transaction: Parameters<Parameters<typeof set_listener>[0]>[1]): void;
   /**
    * Purchase a product.
    *
@@ -91,7 +91,7 @@ declare module "iap" {
    *
    * @param transaction - transaction table parameter as supplied in listener callback
    */
-  function finish(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
+  function finish(transaction: Parameters<Parameters<typeof set_listener>[0]>[1]): void;
   /**
    * Get current iap provider
    *

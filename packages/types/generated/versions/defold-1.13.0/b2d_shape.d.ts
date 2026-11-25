@@ -273,7 +273,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns array of shape info tables
      */
-    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[];
+    function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: Opaque<"b2Shape"> }[];
     /**
      * Get sensor overlaps.
      *
@@ -281,7 +281,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns array of shape info tables
      */
-    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
+    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: Opaque<"b2Shape"> }[];
     /**
      * Get a shape's geometry.
      *

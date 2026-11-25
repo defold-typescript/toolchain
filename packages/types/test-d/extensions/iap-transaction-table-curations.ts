@@ -1,33 +1,18 @@
 import * as iap from "iap";
 
-// iap.finish and iap.acknowledge take the same prose-only transaction object the
-// field parser cannot read; it is hand-curated as a param-side object curation,
-// so every field is optional. A value shaped like the curated transaction is
-// accepted by both, and a concrete field reads as `string | undefined` without a
-// cast.
+// iap.finish and iap.acknowledge take "the transaction table parameter as
+// supplied in listener callback", so the listener hands its transaction on as it
+// is, and a table missing the listener's fields is no transaction.
 
-type FinishTransaction = Parameters<typeof iap.finish>[0];
-type AcknowledgeTransaction = Parameters<typeof iap.acknowledge>[0];
+iap.set_listener((_self, transaction) => {
+  iap.finish(transaction);
+  iap.acknowledge(transaction);
+  const _ident: string = transaction.ident;
+  void _ident;
+});
 
-const transaction: FinishTransaction = {
-  ident: "com.example.coins",
-  state: 4,
-  trans_ident: "trans-1",
-  date: "2024-01-01",
-  original_trans: "orig-1",
-  receipt: "deadbeef",
-  signature: "sig",
-  user_id: "user-1",
-};
+// @ts-expect-error a table with only an ident is not the listener's transaction
+iap.finish({ ident: "com.example.coins" });
 
-iap.finish(transaction);
-
-const sameShape: AcknowledgeTransaction = transaction;
-iap.acknowledge(sameShape);
-
-const _ident: string | undefined = transaction.ident;
-void _ident;
-
-// @ts-expect-error ident is string | undefined, not number
-const _badIdent: number = transaction.ident;
-void _badIdent;
+// @ts-expect-error a table with only an ident is not the listener's transaction
+iap.acknowledge({ ident: "com.example.coins" });

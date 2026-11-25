@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { PROPERTY_KEY_RANGES, type PropertyKeyRange } from "../src/emit-dts";
+import {
+  PROPERTY_KEY_RANGES,
+  type PropertyKeyRange,
+  TABLE_SLOT_CURATIONS,
+  type TableSlotCuration,
+} from "../src/emit-dts";
 import { type ApiTarget, loadApiTargets } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
@@ -82,13 +87,18 @@ export function evidenceDir(target: ApiTarget, packageRoot: string = PACKAGE_ROO
   return resolve(packageRoot, target.fixturesDir, ENGINE_EVIDENCE_DIR);
 }
 
-// The repository paths of every engine file a key range's `engine` pins name.
+// The repository paths of every engine file a key range's or a table slot
+// curation's `engine` pins name.
 export function engineEvidencePaths(
   ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
+  curations: Iterable<readonly [string, TableSlotCuration]> = TABLE_SLOT_CURATIONS,
 ): string[] {
   const paths = new Set<string>();
   for (const [, range] of ranges) {
     for (const pin of range.engine?.pins ?? []) paths.add(`engine/${pin.file}`);
+  }
+  for (const [, curation] of curations) {
+    for (const pin of curation.engine ?? []) paths.add(`engine/${pin.file}`);
   }
   return [...paths].sort();
 }
