@@ -1933,7 +1933,7 @@
     },
     {
       "sourceHash": "181c1feca6bf14c8",
-      "ts": "function sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  // play 'boom' sound fx when the countdown has completed\n  const { play_id } = message as { play_id: number };\n  if (message_id === hash(\"sound_done\") && play_id === (self as { countdown_id: number }).countdown_id) {\n    sound.play(\"#boom\", undefined, sound_done);\n  }\n}\n\nexport default defineScript({\n  init() {\n    return { countdown_id: sound.play(\"#countdown\", undefined, sound_done) };\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    return {\n      countdown_id: sound.play(\"#countdown\", undefined, function sound_done(self, message_id, message) {\n        // play 'boom' sound fx when the countdown has completed\n        if (message_id === hash(\"sound_done\") && message.play_id === (self as { countdown_id: number }).countdown_id) {\n          sound.play(\"#boom\", undefined, sound_done);\n        }\n      }),\n    };\n  },\n});"
     }
   ],
   "sound.set_gain": [
@@ -2277,7 +2277,7 @@
     },
     {
       "sourceHash": "777732bd4b7c14a2",
-      "ts": "function call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {\n  const state = self as { counter: number };\n  state.counter = state.counter + 1;\n  print(\"Call #\", state.counter);\n  if (state.counter === 10) {\n    timer.cancel(handle as number); // cancel timer after 10 calls\n  }\n}\n\nfunction start_counting(self: { counter: number }) {\n  self.counter = 0;\n  timer.delay(1, true, call_every_second);\n}"
+      "ts": "function call_every_second(self: unknown, handle: number, time_elapsed: number) {\n  const state = self as { counter: number };\n  state.counter = state.counter + 1;\n  print(\"Call #\", state.counter);\n  if (state.counter === 10) {\n    timer.cancel(handle); // cancel timer after 10 calls\n  }\n}\n\nfunction start_counting(self: { counter: number }) {\n  self.counter = 0;\n  timer.delay(1, true, call_every_second);\n}"
     }
   ],
   "timer.get_info": [

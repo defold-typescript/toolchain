@@ -991,7 +991,7 @@ declare global {
      * });
      * ```
      */
-    function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;
+    function set_listener(callback?: (self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void): void;
     /**
      * Sets the scale and units used to calculate depth values.
      * If `graphics.STATE_POLYGON_OFFSET_FILL` is enabled, each fragment's depth value

@@ -534,7 +534,7 @@ describe("the loose-type class", () => {
   });
 
   const NAMED_LOOSE_CALLBACK =
-    "function cb(self: unknown, handle: unknown) {\n  timer.cancel(handle as number);\n}\ntimer.delay(1, false, cb);";
+    'function cb(self: unknown, request_id: unknown) {\n  print(request_id as number);\n}\nsys.load_buffer_async("/data.bin", cb);';
 
   function sharedFor(body: string): LooseTypeFinding[] {
     const fqn = "fixture.probe";
@@ -552,7 +552,7 @@ describe("the loose-type class", () => {
 
   test("an annotation an older surface's looser declaration still needs is not the body's to fix", () => {
     expect(looseFor(NAMED_LOOSE_CALLBACK)).toEqual([
-      { kind: "loose-parameter", text: "handle", declared: "number" },
+      { kind: "loose-parameter", text: "request_id", declared: "number" },
     ]);
     expect(looseFor(NAMED_LOOSE_CALLBACK, scriptSurface)).toEqual([]);
     expect(sharedFor(NAMED_LOOSE_CALLBACK)).toEqual([]);

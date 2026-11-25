@@ -1252,7 +1252,7 @@ declare global {
      * gui.play_flipbook(node, "button");
      * ```
      */
-    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void): void;
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void): void;
     /**
      * Play flipbook animation on a box or pie node.
      * The current node texture must contain the animation.
@@ -1300,7 +1300,7 @@ declare global {
      * gui.play_flipbook(node, "button");
      * ```
      */
-    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: unknown) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;
+    function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;
     /**
      * Plays the paricle fx for a gui node
      *
@@ -1336,7 +1336,7 @@ declare global {
      * });
      * ```
      */
-    function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;
+    function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;
     /**
      * Resets the input context of keyboard. This will clear marked text.
      */

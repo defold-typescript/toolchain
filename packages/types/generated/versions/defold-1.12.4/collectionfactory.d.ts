@@ -117,7 +117,7 @@ declare global {
      * collectionfactory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the collection factory.
      * Setting the prototype to "nil" will revert back to the original prototype.

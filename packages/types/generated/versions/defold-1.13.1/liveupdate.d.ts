@@ -82,7 +82,7 @@ declare global {
      * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, (result) => {}); // season pack, overriding content in the other packs
      * ```
      */
-    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number;
+    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: number) => void): number;
     /**
      * Get an array of the current mounts
      * This can be used to determine if a new mount is needed or not

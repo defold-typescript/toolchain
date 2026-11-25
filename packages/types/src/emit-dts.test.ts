@@ -89,6 +89,7 @@ import {
   applyNestedFieldCurations,
   applyRequiredFieldCorrections,
   buildTableDocResolver,
+  CALLBACK_SIGNATURE_CURATIONS,
   CONSTANT_UNION_ALIASES,
   type ConstantUnionAlias,
   type ConstantUnionNamedRow,
@@ -470,6 +471,145 @@ describe("emitDeclarations", () => {
     expect(emitDeclarations(module)).toContain(
       "function delay(callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): void;",
     );
+  });
+
+  describe("a function(...) callback types the parameters its doc lists", () => {
+    const listed = (entries: readonly (readonly [string, string])[], after = ""): string =>
+      `callback function\n<dl>\n${entries
+        .map(
+          ([name, type]) =>
+            `<dt><code>${name}</code></dt>\n<dd><span class="type">${type}</span> The ${name}</dd>`,
+        )
+        .join("\n")}\n</dl>${after}`;
+    const callbackModule = (
+      fqn: string,
+      slot: string,
+      token: string,
+      doc: string,
+      constants: readonly string[] = [],
+    ): ApiModule => ({
+      namespace: fqn.slice(0, fqn.lastIndexOf(".")),
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: fqn,
+          brief: "",
+          description: "",
+          parameters: [{ name: slot, doc, types: [token], isOptional: false }],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: constants.map((name) => ({ name, brief: "", description: "" })),
+      properties: [],
+      typedefs: [],
+    });
+    const timerToken = "function(self, handle, time_elapsed)";
+
+    test("each listed parameter takes its doc type, and self stays unknown", () => {
+      const doc = listed([
+        ["self", "object"],
+        ["handle", "number"],
+        ["time_elapsed", "number"],
+      ]);
+      expect(
+        emitDeclarations(callbackModule("timer.delay", "callback", timerToken, doc)),
+      ).toContain(
+        "function delay(callback: (self: unknown, handle: number, time_elapsed: number) => void): void;",
+      );
+    });
+
+    test("a parameter the list does not name stays unknown", () => {
+      const doc = listed([["handle", "number"]]);
+      expect(
+        emitDeclarations(callbackModule("timer.delay", "callback", timerToken, doc)),
+      ).toContain(
+        "function delay(callback: (self: unknown, handle: number, time_elapsed: unknown) => void): void;",
+      );
+    });
+
+    test("a doc with no list keeps every parameter unknown", () => {
+      const doc = "timer callback function";
+      expect(
+        emitDeclarations(callbackModule("timer.delay", "callback", timerToken, doc)),
+      ).toContain(
+        "function delay(callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): void;",
+      );
+    });
+
+    test("a listed name the token lacks adds nothing, and the list types by name", () => {
+      const doc = listed([
+        ["time_elapsed", "number"],
+        ["extra", "string"],
+        ["handle", "hash"],
+      ]);
+      expect(
+        emitDeclarations(callbackModule("timer.delay", "callback", timerToken, doc)),
+      ).toContain(
+        "function delay(callback: (self: unknown, handle: Hash, time_elapsed: number) => void): void;",
+      );
+    });
+
+    test("a CALLBACK_SIGNATURE_CURATIONS untyped form still wins over the list", () => {
+      const doc = listed([
+        ["self", "object"],
+        ["event", "constant"],
+        ["data", "table"],
+      ]);
+      const out = emitDeclarations(
+        callbackModule("window.set_listener", "callback", "function(self, event, data)", doc),
+      );
+      expect(out).toContain(
+        `function set_listener(callback: ${CALLBACK_SIGNATURE_CURATIONS.get("window.set_listener:param:callback")?.untyped}): void;`,
+      );
+    });
+
+    test("a binding-pinned override retypes a listed parameter only where its pin holds", () => {
+      const doc = listed([
+        ["self", "object"],
+        ["node", "hash"],
+        ["emitter", "hash"],
+      ]);
+      const module = callbackModule(
+        "gui.play_particlefx",
+        "emitter_state_function",
+        "function(self, node, emitter)",
+        doc,
+      );
+      const key = "gui.play_particlefx:param:emitter_state_function:node";
+      const override = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+      expect(override?.binding).toBeDefined();
+      expect(emitDeclarations(module, { bindingEvidence: new Set([key]) })).toContain(
+        `(self: unknown, node: ${override?.ts}, emitter: Hash) => void`,
+      );
+      expect(emitDeclarations(module)).toContain(
+        "(self: unknown, node: unknown, emitter: Hash) => void",
+      );
+    });
+
+    test("a constant parameter expands to the constants its slot doc names", () => {
+      const doc = listed(
+        [
+          ["self", "object"],
+          ["state", "constant"],
+        ],
+        "\n<ul>\n<li><code>particlefx.EMITTER_STATE_SLEEPING</code></li>\n<li><code>particlefx.EMITTER_STATE_PRESPAWN</code></li>\n</ul>",
+      );
+      const module = callbackModule(
+        "gui.play_particlefx",
+        "emitter_state_function",
+        "function(self, state)",
+        doc,
+      );
+      const knownConstantFqns = new Set([
+        "particlefx.EMITTER_STATE_SLEEPING",
+        "particlefx.EMITTER_STATE_PRESPAWN",
+      ]);
+      expect(emitDeclarations(module, { knownConstantFqns })).toContain(
+        '(self: unknown, state: number & { readonly __brand: "particlefx.EMITTER_STATE_SLEEPING" } | number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" }) => void',
+      );
+    });
   });
 
   test("window.set_listener's callback is curated with a typed event union and record data", () => {
@@ -6966,7 +7106,7 @@ describe("corrections the engine bindings demand", () => {
 
   test("a slot the binding refuses to go without is required", () => {
     expect(line(collectionfactoryDoc, "function load(")).toBe(
-      "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
     );
   });
 

@@ -193,22 +193,21 @@ declare global {
      * @example
      * Using the callback argument, you can chain several sounds together:
      * ```ts
-     * function sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {
-     *   // play 'boom' sound fx when the countdown has completed
-     *   const { play_id } = message as { play_id: number };
-     *   if (message_id === hash("sound_done") && play_id === (self as { countdown_id: number }).countdown_id) {
-     *     sound.play("#boom", undefined, sound_done);
-     *   }
-     * }
-     *
      * export default defineScript({
      *   init() {
-     *     return { countdown_id: sound.play("#countdown", undefined, sound_done) };
+     *     return {
+     *       countdown_id: sound.play("#countdown", undefined, function sound_done(self, message_id, message) {
+     *         // play 'boom' sound fx when the countdown has completed
+     *         if (message_id === hash("sound_done") && message.play_id === (self as { countdown_id: number }).countdown_id) {
+     *           sound.play("#boom", undefined, sound_done);
+     *         }
+     *       }),
+     *     };
      *   },
      * });
      * ```
      */
-    function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;
+    function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): number;
     /**
      * Set gain on all active playing voices of a sound.
      *

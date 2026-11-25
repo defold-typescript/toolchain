@@ -5647,7 +5647,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "collectionfactory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;",
@@ -5692,13 +5692,13 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
       "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
-      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "factory\u0000FUNCTION\u0000factory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "factory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof factory.STATUS_UNLOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_LOADED;",
       "font\u0000FUNCTION\u0000font.add_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function add_font(fontc: string | Hash, ttf: string | Hash): void;",
       "font\u0000FUNCTION\u0000font.get_info\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_info(fontc: string | Hash): { path: Hash; fonts: { path: string; path_hash: Hash }[] };",
-      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void): number;",
+      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void): number;",
       "font\u0000FUNCTION\u0000font.remove_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function remove_font(fontc: string | Hash, ttf: string | Hash): void;",
       "go\u0000CONSTANT\u0000go.EASING_INBACK\u0000": "const EASING_INBACK: number & { readonly __brand: \"go.EASING_INBACK\" };",
       "go\u0000CONSTANT\u0000go.EASING_INBOUNCE\u0000": "const EASING_INBOUNCE: number & { readonly __brand: \"go.EASING_INBOUNCE\" };",
@@ -6101,8 +6101,8 @@
       "gui\u0000FUNCTION\u0000gui.new_text_node\u0000[{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.new_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>;\nfunction new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.pick_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function pick_node(node: Opaque<\"node\">, x: number, y: number): boolean;",
-      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: unknown) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
-      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;",
+      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<\"node\">) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<\"node\">) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
+      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "gui\u0000FUNCTION\u0000gui.reset_keyboard\u0000[]->[]": "function reset_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
@@ -6210,7 +6210,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_UNKNOWN\u0000": "const LIVEUPDATE_UNKNOWN: number & { readonly __brand: \"liveupdate.LIVEUPDATE_UNKNOWN\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_VERSION_MISMATCH\u0000": "const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_VERSION_MISMATCH\" };",
-      "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number;",
+      "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: number) => void): number;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: string; uri: string; priority: number }[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): number;",
@@ -6261,13 +6261,14 @@
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_PRESPAWN\u0000": "const EMITTER_STATE_PRESPAWN: number & { readonly __brand: \"particlefx.EMITTER_STATE_PRESPAWN\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SLEEPING\u0000": "const EMITTER_STATE_SLEEPING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SLEEPING\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SPAWNING\u0000": "const EMITTER_STATE_SPAWNING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SPAWNING\" };",
-      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;",
+      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.set_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Matrix4\",\"Vector4\"],\"isOptional\":false}]->[]": "function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.stop\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop(url: string | Hash | Url): void;\nfunction stop(url: string | Hash | Url, options: { clear?: boolean }): void;",
       "particlefx\u0000PROPERTY\u0000animation\u0000": "animation: Hash;",
       "particlefx\u0000PROPERTY\u0000image\u0000": "image: Hash;",
       "particlefx\u0000PROPERTY\u0000material\u0000": "material: Hash;",
+      "particlefx\u0000TYPEDEF\u0000EmitterState\u0000": "type EmitterState = typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SPAWNING | typeof particlefx.EMITTER_STATE_POSTSPAWN;",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_FIXED\u0000": "const JOINT_TYPE_FIXED: number & { readonly __brand: \"physics.JOINT_TYPE_FIXED\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_HINGE\u0000": "const JOINT_TYPE_HINGE: number & { readonly __brand: \"physics.JOINT_TYPE_HINGE\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_SLIDER\u0000": "const JOINT_TYPE_SLIDER: number & { readonly __brand: \"physics.JOINT_TYPE_SLIDER\" };",
@@ -6363,7 +6364,7 @@
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_func\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_depth_func(func: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_depth_mask(depth: boolean): void;",
-      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
+      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target?: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;\nfunction set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;",
@@ -6489,7 +6490,7 @@
       "sound\u0000FUNCTION\u0000sound.is_music_playing\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_music_playing(): boolean;",
       "sound\u0000FUNCTION\u0000sound.is_phone_call_active\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_phone_call_active(): boolean;",
       "sound\u0000FUNCTION\u0000sound.pause\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function pause(url: string | Hash | Url, pause: boolean): void;",
-      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;",
+      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): number;",
       "sound\u0000FUNCTION\u0000sound.set_gain\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_gain(url: string | Hash | Url, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_group_gain\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_group_gain(group: string | Hash, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_pan\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_pan(url: string | Hash | Url, pan: number): void;",
@@ -6542,7 +6543,7 @@
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
-      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
+      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
       "sys\u0000FUNCTION\u0000sys.set_render_enabled\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_render_enabled(enable: boolean): void;",
       "sys\u0000FUNCTION\u0000sys.set_update_frequency\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_update_frequency(frequency: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_vsync_swap_interval\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_vsync_swap_interval(swap_interval: number): void;",
@@ -6563,7 +6564,7 @@
       "tilemap\u0000PROPERTY\u0000tile_source\u0000": "tile_source: Hash;",
       "timer\u0000CONSTANT\u0000timer.INVALID_TIMER_HANDLE\u0000": "const INVALID_TIMER_HANDLE: number & { readonly __brand: \"timer.INVALID_TIMER_HANDLE\" };",
       "timer\u0000FUNCTION\u0000timer.cancel\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function cancel(handle: number): boolean;",
-      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;",
+      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;",
       "timer\u0000FUNCTION\u0000timer.get_info\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;",
       "timer\u0000FUNCTION\u0000timer.trigger\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function trigger(handle: number): boolean;",
       "types\u0000FUNCTION\u0000types.is_hash\u0000[{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_hash(var_: unknown): var_ is Hash;",
@@ -7005,7 +7006,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "collectionfactory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;",
@@ -7049,13 +7050,13 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
       "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
-      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "factory\u0000FUNCTION\u0000factory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "factory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof factory.STATUS_UNLOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_LOADED;",
       "font\u0000FUNCTION\u0000font.add_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function add_font(fontc: string | Hash, ttf: string | Hash): void;",
       "font\u0000FUNCTION\u0000font.get_info\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_info(fontc: string | Hash): { path: Hash; fonts: { path: string; path_hash: Hash }[] };",
-      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void): number;",
+      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void): number;",
       "font\u0000FUNCTION\u0000font.remove_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function remove_font(fontc: string | Hash, ttf: string | Hash): void;",
       "go\u0000CONSTANT\u0000go.EASING_INBACK\u0000": "const EASING_INBACK: number & { readonly __brand: \"go.EASING_INBACK\" };",
       "go\u0000CONSTANT\u0000go.EASING_INBOUNCE\u0000": "const EASING_INBOUNCE: number & { readonly __brand: \"go.EASING_INBOUNCE\" };",
@@ -7457,8 +7458,8 @@
       "gui\u0000FUNCTION\u0000gui.new_text_node\u0000[{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.new_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>;\nfunction new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.pick_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function pick_node(node: Opaque<\"node\">, x: number, y: number): boolean;",
-      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: unknown) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
-      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;",
+      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<\"node\">) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<\"node\">) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
+      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "gui\u0000FUNCTION\u0000gui.reset_keyboard\u0000[]->[]": "function reset_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
@@ -7566,7 +7567,7 @@
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\u0000": "const LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_UNKNOWN\u0000": "const LIVEUPDATE_UNKNOWN: number & { readonly __brand: \"liveupdate.LIVEUPDATE_UNKNOWN\" };",
       "liveupdate\u0000CONSTANT\u0000liveupdate.LIVEUPDATE_VERSION_MISMATCH\u0000": "const LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: \"liveupdate.LIVEUPDATE_VERSION_MISMATCH\" };",
-      "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number;",
+      "liveupdate\u0000FUNCTION\u0000liveupdate.add_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: number) => void): number;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.get_mounts\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_mounts(): { name: string; uri: string; priority: number }[];",
       "liveupdate\u0000FUNCTION\u0000liveupdate.is_built_with_excluded_files\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_built_with_excluded_files(): boolean;",
       "liveupdate\u0000FUNCTION\u0000liveupdate.remove_mount\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function remove_mount(name: string | Hash): number;",
@@ -7617,13 +7618,14 @@
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_PRESPAWN\u0000": "const EMITTER_STATE_PRESPAWN: number & { readonly __brand: \"particlefx.EMITTER_STATE_PRESPAWN\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SLEEPING\u0000": "const EMITTER_STATE_SLEEPING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SLEEPING\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SPAWNING\u0000": "const EMITTER_STATE_SPAWNING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SPAWNING\" };",
-      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;",
+      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.set_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Matrix4\",\"Vector4\"],\"isOptional\":false}]->[]": "function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.stop\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop(url: string | Hash | Url): void;\nfunction stop(url: string | Hash | Url, options: { clear?: boolean }): void;",
       "particlefx\u0000PROPERTY\u0000animation\u0000": "animation: Hash;",
       "particlefx\u0000PROPERTY\u0000image\u0000": "image: Hash;",
       "particlefx\u0000PROPERTY\u0000material\u0000": "material: Hash;",
+      "particlefx\u0000TYPEDEF\u0000EmitterState\u0000": "type EmitterState = typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SPAWNING | typeof particlefx.EMITTER_STATE_POSTSPAWN;",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_FIXED\u0000": "const JOINT_TYPE_FIXED: number & { readonly __brand: \"physics.JOINT_TYPE_FIXED\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_HINGE\u0000": "const JOINT_TYPE_HINGE: number & { readonly __brand: \"physics.JOINT_TYPE_HINGE\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_SLIDER\u0000": "const JOINT_TYPE_SLIDER: number & { readonly __brand: \"physics.JOINT_TYPE_SLIDER\" };",
@@ -7719,7 +7721,7 @@
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_func\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_depth_func(func: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_depth_mask(depth: boolean): void;",
-      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
+      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target?: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;\nfunction set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;",
@@ -7845,7 +7847,7 @@
       "sound\u0000FUNCTION\u0000sound.is_music_playing\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_music_playing(): boolean;",
       "sound\u0000FUNCTION\u0000sound.is_phone_call_active\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_phone_call_active(): boolean;",
       "sound\u0000FUNCTION\u0000sound.pause\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function pause(url: string | Hash | Url, pause: boolean): void;",
-      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;",
+      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): number;",
       "sound\u0000FUNCTION\u0000sound.set_gain\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_gain(url: string | Hash | Url, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_group_gain\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_group_gain(group: string | Hash, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_pan\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_pan(url: string | Hash | Url, pan: number): void;",
@@ -7898,7 +7900,7 @@
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
-      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
+      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
       "sys\u0000FUNCTION\u0000sys.set_render_enabled\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_render_enabled(enable: boolean): void;",
       "sys\u0000FUNCTION\u0000sys.set_update_frequency\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_update_frequency(frequency: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_vsync_swap_interval\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_vsync_swap_interval(swap_interval: number): void;",
@@ -7919,7 +7921,7 @@
       "tilemap\u0000PROPERTY\u0000tile_source\u0000": "tile_source: Hash;",
       "timer\u0000CONSTANT\u0000timer.INVALID_TIMER_HANDLE\u0000": "const INVALID_TIMER_HANDLE: number & { readonly __brand: \"timer.INVALID_TIMER_HANDLE\" };",
       "timer\u0000FUNCTION\u0000timer.cancel\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function cancel(handle: number): boolean;",
-      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;",
+      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;",
       "timer\u0000FUNCTION\u0000timer.get_info\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;",
       "timer\u0000FUNCTION\u0000timer.trigger\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function trigger(handle: number): boolean;",
       "types\u0000FUNCTION\u0000types.is_hash\u0000[{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_hash(var_: unknown): var_ is Hash;",
@@ -8103,7 +8105,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): collectionfactory.Status;",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "collectionfactory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED;",
@@ -8141,13 +8143,13 @@
       "factory\u0000CONSTANT\u0000factory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"factory.STATUS_UNLOADED\" };",
       "factory\u0000FUNCTION\u0000factory.create\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Vector3\"],\"isOptional\":true},{\"types\":[\"Quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"Vector3\",\"number\"],\"isOptional\":true}]->[{\"types\":[\"Hash\",\"nil\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;",
       "factory\u0000FUNCTION\u0000factory.get_status\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_status(url: string | Hash | Url): factory.Status;",
-      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+      "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
       "factory\u0000FUNCTION\u0000factory.set_prototype\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;",
       "factory\u0000FUNCTION\u0000factory.unload\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[]": "function unload(url: string | Hash | Url): void;",
       "factory\u0000TYPEDEF\u0000Status\u0000": "type Status = typeof factory.STATUS_UNLOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_LOADED;",
       "font\u0000FUNCTION\u0000font.add_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function add_font(fontc: string | Hash, ttf: string | Hash): void;",
       "font\u0000FUNCTION\u0000font.get_info\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_info(fontc: string | Hash): { path: Hash; fonts: { path: string; path_hash: Hash }[] };",
-      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void): number;",
+      "font\u0000FUNCTION\u0000font.prewarm_text\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function prewarm_text(fontc: string | Hash, text: string, callback?: (self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void): number;",
       "font\u0000FUNCTION\u0000font.remove_font\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function remove_font(fontc: string | Hash, ttf: string | Hash): void;",
       "go\u0000CONSTANT\u0000go.EASING_INBACK\u0000": "const EASING_INBACK: number & { readonly __brand: \"go.EASING_INBACK\" };",
       "go\u0000CONSTANT\u0000go.EASING_INBOUNCE\u0000": "const EASING_INBOUNCE: number & { readonly __brand: \"go.EASING_INBOUNCE\" };",
@@ -8511,8 +8513,8 @@
       "gui\u0000FUNCTION\u0000gui.new_text_node\u0000[{\"types\":[\"Vector3\",\"Vector4\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]": "function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<\"node\">;",
       "gui\u0000FUNCTION\u0000gui.new_texture\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>;\nfunction new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<\"constant\">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.pick_node\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function pick_node(node: Opaque<\"node\">, x: number, y: number): boolean;",
-      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: unknown) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
-      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;",
+      "gui\u0000FUNCTION\u0000gui.play_flipbook\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<\"node\">) => void): void;\nfunction play_flipbook(node: Opaque<\"node\">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<\"node\">) => void) | undefined, play_properties: { offset?: number; playback_rate?: number }): void;",
+      "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play_particlefx(node: Opaque<\"node\">, emitter_state_function?: (self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "gui\u0000FUNCTION\u0000gui.reset_keyboard\u0000[]->[]": "function reset_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
@@ -8643,13 +8645,14 @@
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_PRESPAWN\u0000": "const EMITTER_STATE_PRESPAWN: number & { readonly __brand: \"particlefx.EMITTER_STATE_PRESPAWN\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SLEEPING\u0000": "const EMITTER_STATE_SLEEPING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SLEEPING\" };",
       "particlefx\u0000CONSTANT\u0000particlefx.EMITTER_STATE_SPAWNING\u0000": "const EMITTER_STATE_SPAWNING: number & { readonly __brand: \"particlefx.EMITTER_STATE_SPAWNING\" };",
-      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;",
+      "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.reset_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[]": "function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.set_constant\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"Matrix4\",\"Vector4\"],\"isOptional\":false}]->[]": "function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;",
       "particlefx\u0000FUNCTION\u0000particlefx.stop\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function stop(url: string | Hash | Url): void;\nfunction stop(url: string | Hash | Url, options: { clear?: boolean }): void;",
       "particlefx\u0000PROPERTY\u0000animation\u0000": "animation: Hash;",
       "particlefx\u0000PROPERTY\u0000image\u0000": "image: Hash;",
       "particlefx\u0000PROPERTY\u0000material\u0000": "material: Hash;",
+      "particlefx\u0000TYPEDEF\u0000EmitterState\u0000": "type EmitterState = typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SPAWNING | typeof particlefx.EMITTER_STATE_POSTSPAWN;",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_FIXED\u0000": "const JOINT_TYPE_FIXED: number & { readonly __brand: \"physics.JOINT_TYPE_FIXED\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_HINGE\u0000": "const JOINT_TYPE_HINGE: number & { readonly __brand: \"physics.JOINT_TYPE_HINGE\" };",
       "physics\u0000CONSTANT\u0000physics.JOINT_TYPE_SLIDER\u0000": "const JOINT_TYPE_SLIDER: number & { readonly __brand: \"physics.JOINT_TYPE_SLIDER\" };",
@@ -8743,7 +8746,7 @@
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_func\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_depth_func(func: number): void;",
       "render\u0000FUNCTION\u0000render.set_depth_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_depth_mask(depth: boolean): void;",
-      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
+      "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": "function set_listener(callback?: (self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"Matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"Hash\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target?: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;\nfunction set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;",
@@ -8869,7 +8872,7 @@
       "sound\u0000FUNCTION\u0000sound.is_music_playing\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_music_playing(): boolean;",
       "sound\u0000FUNCTION\u0000sound.is_phone_call_active\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_phone_call_active(): boolean;",
       "sound\u0000FUNCTION\u0000sound.pause\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function pause(url: string | Hash | Url, pause: boolean): void;",
-      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;",
+      "sound\u0000FUNCTION\u0000sound.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): number;",
       "sound\u0000FUNCTION\u0000sound.set_gain\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_gain(url: string | Hash | Url, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_group_gain\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_group_gain(group: string | Hash, gain: number): void;",
       "sound\u0000FUNCTION\u0000sound.set_pan\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_pan(url: string | Hash | Url, pan: number): void;",
@@ -8921,7 +8924,7 @@
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: LuaPairsIterable<string | number | Hash, unknown> | (PlainTable & { readonly __tstlIterable?: never }) | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "sys.set_engine_throttle(enable: false): void\nsys.set_engine_throttle(enable: boolean, cooldown: number): void",
-      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
+      "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: string, message: string, traceback: string) => void): void;",
       "sys\u0000FUNCTION\u0000sys.set_render_enabled\u0000[{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_render_enabled(enable: boolean): void;",
       "sys\u0000FUNCTION\u0000sys.set_update_frequency\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_update_frequency(frequency: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_vsync_swap_interval\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_vsync_swap_interval(swap_interval: number): void;",
@@ -8941,7 +8944,7 @@
       "tilemap\u0000PROPERTY\u0000tile_source\u0000": "tile_source: Hash;",
       "timer\u0000CONSTANT\u0000timer.INVALID_TIMER_HANDLE\u0000": "const INVALID_TIMER_HANDLE: number & { readonly __brand: \"timer.INVALID_TIMER_HANDLE\" };",
       "timer\u0000FUNCTION\u0000timer.cancel\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function cancel(handle: number): boolean;",
-      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;",
+      "timer\u0000FUNCTION\u0000timer.delay\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: number, time_elapsed: number) => void): number;",
       "timer\u0000FUNCTION\u0000timer.get_info\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false}]": "function get_info(handle: number): { time_remaining: number; delay: number; repeating: boolean } | undefined;",
       "timer\u0000FUNCTION\u0000timer.trigger\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function trigger(handle: number): boolean;",
       "types\u0000FUNCTION\u0000types.is_hash\u0000[{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_hash(var_: unknown): var_ is Hash;",
@@ -24901,7 +24904,7 @@
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -25029,7 +25032,7 @@
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -25055,7 +25058,7 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:text": { "type": "string", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void",
+          "type": "(self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void",
           "optional": true
         },
         "return:0:request_id": { "type": "number", "optional": false }
@@ -25441,14 +25444,14 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:animation": { "type": "string | Hash", "optional": false },
         "param:2:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\">) => void",
           "optional": true
         }
       },
       "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, node: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -25706,7 +25709,7 @@
         "param:1:uri": { "type": "string", "optional": false },
         "param:2:priority": { "type": "number", "optional": false },
         "param:3:callback": {
-          "type": "(self: unknown, name: unknown, uri: unknown, result: unknown) => void",
+          "type": "(self: unknown, name: Hash, uri: string, result: number) => void",
           "optional": false
         },
         "return:0:result": { "type": "number", "optional": false }
@@ -25840,7 +25843,7 @@
       "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, id: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -26119,7 +26122,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:callback": {
-          "type": "(self: unknown, event_type: unknown) => void",
+          "type": "(self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void",
           "optional": true
         }
       },
@@ -26698,7 +26701,7 @@
           "optional": true
         },
         "param:2:complete_function": {
-          "type": "(self: unknown, message_id: unknown, message: unknown, sender: unknown) => void",
+          "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
           "optional": true
         },
         "return:0:play_id": { "type": "number", "optional": false }
@@ -26855,7 +26858,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:error_handler": {
-          "type": "(source: unknown, message: unknown, traceback: unknown) => void",
+          "type": "(source: string, message: string, traceback: string) => void",
           "optional": false
         }
       },
@@ -26925,7 +26928,7 @@
         "param:0:delay": { "type": "number", "optional": false },
         "param:1:repeating": { "type": "boolean", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, handle: unknown, time_elapsed: unknown) => void",
+          "type": "(self: unknown, handle: number, time_elapsed: number) => void",
           "optional": false
         },
         "return:0:handle": { "type": "number", "optional": false }
@@ -28770,7 +28773,7 @@
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -28890,7 +28893,7 @@
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -28916,7 +28919,7 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:text": { "type": "string", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void",
+          "type": "(self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void",
           "optional": true
         },
         "return:0:request_id": { "type": "number", "optional": false }
@@ -29302,14 +29305,14 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:animation": { "type": "string | Hash", "optional": false },
         "param:2:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\">) => void",
           "optional": true
         }
       },
       "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, node: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -29567,7 +29570,7 @@
         "param:1:uri": { "type": "string", "optional": false },
         "param:2:priority": { "type": "number", "optional": false },
         "param:3:callback": {
-          "type": "(self: unknown, name: unknown, uri: unknown, result: unknown) => void",
+          "type": "(self: unknown, name: Hash, uri: string, result: number) => void",
           "optional": false
         },
         "return:0:result": { "type": "number", "optional": false }
@@ -29701,7 +29704,7 @@
       "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, id: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -29980,7 +29983,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:callback": {
-          "type": "(self: unknown, event_type: unknown) => void",
+          "type": "(self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void",
           "optional": true
         }
       },
@@ -30559,7 +30562,7 @@
           "optional": true
         },
         "param:2:complete_function": {
-          "type": "(self: unknown, message_id: unknown, message: unknown, sender: unknown) => void",
+          "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
           "optional": true
         },
         "return:0:play_id": { "type": "number", "optional": false }
@@ -30716,7 +30719,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:error_handler": {
-          "type": "(source: unknown, message: unknown, traceback: unknown) => void",
+          "type": "(source: string, message: string, traceback: string) => void",
           "optional": false
         }
       },
@@ -30786,7 +30789,7 @@
         "param:0:delay": { "type": "number", "optional": false },
         "param:1:repeating": { "type": "boolean", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, handle: unknown, time_elapsed: unknown) => void",
+          "type": "(self: unknown, handle: number, time_elapsed: number) => void",
           "optional": false
         },
         "return:0:handle": { "type": "number", "optional": false }
@@ -31454,7 +31457,7 @@
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -31532,7 +31535,7 @@
       "factory\u0000FUNCTION\u0000factory.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:complete_function": {
-          "type": "(self: unknown, url: unknown, result: unknown) => void",
+          "type": "(self: unknown, url: Url, result: boolean) => void",
           "optional": false
         }
       },
@@ -31558,7 +31561,7 @@
         "param:0:fontc": { "type": "string | Hash", "optional": false },
         "param:1:text": { "type": "string", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, request_id: unknown, result: unknown, errstring: unknown) => void",
+          "type": "(self: unknown, request_id: number, result: boolean, errstring: string | undefined) => void",
           "optional": true
         },
         "return:0:request_id": { "type": "number", "optional": false }
@@ -31935,14 +31938,14 @@
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:animation": { "type": "string | Hash", "optional": false },
         "param:2:complete_function": {
-          "type": "(self: unknown, node: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\">) => void",
           "optional": true
         }
       },
       "gui\u0000FUNCTION\u0000gui.play_particlefx\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, node: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, node: Opaque<\"node\"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -32260,7 +32263,7 @@
       "particlefx\u0000FUNCTION\u0000particlefx.play\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:url": { "type": "string | Hash | Url", "optional": false },
         "param:1:emitter_state_function": {
-          "type": "(self: unknown, id: unknown, emitter: unknown, state: unknown) => void",
+          "type": "(self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void",
           "optional": true
         }
       },
@@ -32533,7 +32536,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[]": {
         "param:0:callback": {
-          "type": "(self: unknown, event_type: unknown) => void",
+          "type": "(self: unknown, event_type: typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED) => void",
           "optional": true
         }
       },
@@ -33112,7 +33115,7 @@
           "optional": true
         },
         "param:2:complete_function": {
-          "type": "(self: unknown, message_id: unknown, message: unknown, sender: unknown) => void",
+          "type": "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
           "optional": true
         },
         "return:0:play_id": { "type": "number", "optional": false }
@@ -33265,7 +33268,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
         "param:0:error_handler": {
-          "type": "(source: unknown, message: unknown, traceback: unknown) => void",
+          "type": "(source: string, message: string, traceback: string) => void",
           "optional": false
         }
       },
@@ -33331,7 +33334,7 @@
         "param:0:delay": { "type": "number", "optional": false },
         "param:1:repeating": { "type": "boolean", "optional": false },
         "param:2:callback": {
-          "type": "(self: unknown, handle: unknown, time_elapsed: unknown) => void",
+          "type": "(self: unknown, handle: number, time_elapsed: number) => void",
           "optional": false
         },
         "return:0:handle": { "type": "number", "optional": false }
