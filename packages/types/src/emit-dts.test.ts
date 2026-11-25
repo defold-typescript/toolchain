@@ -113,6 +113,7 @@ import {
   PARAM_TYPE_CORRECTIONS,
   PROPERTIES_INTERFACE,
   parseTableFields,
+  pinEvidenceKey,
   RETURN_TYPE_CORRECTIONS,
   recoverCallbackSignature,
   routeTypeDeclarations,
@@ -131,12 +132,20 @@ import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
 
 // What a vendored target whose engine source shows every binding pin supplies:
-// each binding-pinned correction key, so the correction applies.
+// each binding-pinned correction's ledger line, so the correction applies.
 const EVERY_PIN_HOLDS = {
   bindingEvidence: new Set(
-    [...PARAM_TYPE_CORRECTIONS, ...RETURN_TYPE_CORRECTIONS, ...TABLE_FIELD_TYPE_OVERRIDES]
-      .filter(([, entry]) => entry.binding !== undefined)
-      .map(([key]) => key),
+    (
+      [
+        ["PARAM_TYPE_CORRECTIONS", PARAM_TYPE_CORRECTIONS],
+        ["RETURN_TYPE_CORRECTIONS", RETURN_TYPE_CORRECTIONS],
+        ["TABLE_FIELD_TYPE_OVERRIDES", TABLE_FIELD_TYPE_OVERRIDES],
+      ] as const
+    ).flatMap(([table, entries]) =>
+      [...entries]
+        .filter(([, entry]) => entry.binding !== undefined)
+        .map(([key]) => pinEvidenceKey(table, key)),
+    ),
   ),
 };
 
@@ -591,7 +600,8 @@ describe("emitDeclarations", () => {
       const key = "gui.play_particlefx:param:emitter_state_function:node";
       const override = TABLE_FIELD_TYPE_OVERRIDES.get(key);
       expect(override?.binding).toBeDefined();
-      expect(emitDeclarations(module, { bindingEvidence: new Set([key]) })).toContain(
+      const evidence = new Set([pinEvidenceKey("TABLE_FIELD_TYPE_OVERRIDES", key)]);
+      expect(emitDeclarations(module, { bindingEvidence: evidence })).toContain(
         `(self: unknown, node: ${override?.ts}, emitter: Hash) => void`,
       );
       expect(emitDeclarations(module)).toContain(
@@ -1619,7 +1629,12 @@ describe("emitDeclarations", () => {
   test("a flattened multi-table option bag emits nested inline objects without duplicate top-level keys", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module, {
-      bindingEvidence: new Set(["resource.create_atlas:param:table:animations[].playback"]),
+      bindingEvidence: new Set([
+        pinEvidenceKey(
+          "TABLE_FIELD_TYPE_OVERRIDES",
+          "resource.create_atlas:param:table:animations[].playback",
+        ),
+      ]),
     });
     expect(out).toContain(
       "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
@@ -2549,7 +2564,12 @@ describe("supplementary cross-reference table-field recovery", () => {
 
   test("emits get_atlas's return as the inline object adopted from set_atlas, with the curated geometries array", () => {
     const out = emitDeclarations(resourceModule, {
-      bindingEvidence: new Set(["resource.get_atlas:return:data:animations[].playback"]),
+      bindingEvidence: new Set([
+        pinEvidenceKey(
+          "TABLE_FIELD_TYPE_OVERRIDES",
+          "resource.get_atlas:return:data:animations[].playback",
+        ),
+      ]),
     });
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
@@ -3082,23 +3102,23 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "sys.save:param:table",
       "sys.serialize:param:table",
     ]);
-    expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toMatchObject({
       kind: "keyed-object",
     });
-    expect(TABLE_SLOT_CURATIONS.get("compute.set_textures:param:textures")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("compute.set_textures:param:textures")).toMatchObject({
       kind: "mapping",
       key: "string",
       value: "hash",
     });
-    expect(TABLE_SLOT_CURATIONS.get("model.get_blend_weights:return:weights")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("model.get_blend_weights:return:weights")).toMatchObject({
       kind: "array",
       element: "number",
     });
-    expect(TABLE_SLOT_CURATIONS.get("graphics.get_engine_adapters:return:adapters")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("graphics.get_engine_adapters:return:adapters")).toMatchObject({
       kind: "array",
       element: "string",
     });
-    expect(TABLE_SLOT_CURATIONS.get("b2d.world.cast_ray:return:hits")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("b2d.world.cast_ray:return:hits")).toMatchObject({
       kind: "array-object",
       fields: [
         { name: "fixture", types: ["number"] },
@@ -3108,7 +3128,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
         { name: "fraction", types: ["number"] },
       ],
     });
-    expect(TABLE_SLOT_CURATIONS.get("physics.get_shape:return:table")).toEqual({
+    expect(TABLE_SLOT_CURATIONS.get("physics.get_shape:return:table")).toMatchObject({
       kind: "object",
       fields: [
         { name: "type", types: ["number"] },
@@ -4886,7 +4906,7 @@ describe("component property type fidelity", () => {
     expect(model).not.toContain("[key:");
     expect(model).not.toContain("textureN:");
     const engine = emitDeclarations(placeholder("model"), {
-      bindingEvidence: new Set(["model.textureN"]),
+      bindingEvidence: new Set([pinEvidenceKey("PROPERTY_KEY_RANGES", "model.textureN")]),
     });
     for (let unit = 0; unit <= 15; unit++) {
       expect(engine).toContain(`    texture${unit}: Hash;`);
@@ -5198,14 +5218,16 @@ describe("return-side optionality corrections", () => {
 
   test("a binding-pinned correction applies only where the binding evidence holds its key", () => {
     const factory = parseDefoldApiDoc(factory114Doc);
-    const evidence = new Set(["factory.create"]);
+    const evidence = new Set([pinEvidenceKey("RETURN_TYPE_CORRECTIONS", "factory.create")]);
     expect(
       signatureLine(emitDeclarations(factory, { bindingEvidence: evidence }), "function create("),
     ).toEndWith("): Hash | undefined;");
     expect(signatureLine(emitDeclarations(factory), "function create(")).toEndWith("): Hash;");
     expect(
       signatureLine(
-        emitDeclarations(factory, { bindingEvidence: new Set(["factory.unload"]) }),
+        emitDeclarations(factory, {
+          bindingEvidence: new Set([pinEvidenceKey("RETURN_TYPE_CORRECTIONS", "factory.unload")]),
+        }),
         "function create(",
       ),
     ).toEndWith("): Hash;");
@@ -5214,6 +5236,7 @@ describe("return-side optionality corrections", () => {
   describe("binding-pinned struct member additions", () => {
     const LIMIT = "graphics.adapter_limits:member:max_storage_buffers_per_stage";
     const FAMILY = "sys.interface_info:member:family";
+    const LIMIT_LINE = pinEvidenceKey("STRUCT_MEMBER_ADDITIONS", LIMIT);
     const interfaceLines = (out: string, name: string): string[] => {
       const lines = out.split("\n");
       const start = lines.indexOf(`  interface ${name} {`);
@@ -5225,7 +5248,7 @@ describe("return-side optionality corrections", () => {
       const graphics = parseDefoldApiDoc(graphics114Doc);
       expect(
         interfaceLines(
-          emitDeclarations(graphics, { bindingEvidence: new Set([LIMIT]) }),
+          emitDeclarations(graphics, { bindingEvidence: new Set([LIMIT_LINE]) }),
           "AdapterLimits",
         ),
       ).toContain("    max_storage_buffers_per_stage: number;");
@@ -5237,7 +5260,9 @@ describe("return-side optionality corrections", () => {
     test("an optional addition keeps its literal type and its optionality", () => {
       expect(
         interfaceLines(
-          emitDeclarations(parseDefoldApiDoc(sys114Doc), { bindingEvidence: new Set([FAMILY]) }),
+          emitDeclarations(parseDefoldApiDoc(sys114Doc), {
+            bindingEvidence: new Set([pinEvidenceKey("STRUCT_MEMBER_ADDITIONS", FAMILY)]),
+          }),
           "InterfaceInfo",
         ),
       ).toContain('    family?: "ipv4" | "ipv6";');
@@ -5260,13 +5285,15 @@ describe("return-side optionality corrections", () => {
       };
       expect(() => emitDeclarations(parseDefoldApiDoc(declared))).toThrow(LIMIT);
       expect(() =>
-        emitDeclarations(parseDefoldApiDoc(declared), { bindingEvidence: new Set([LIMIT]) }),
+        emitDeclarations(parseDefoldApiDoc(declared), { bindingEvidence: new Set([LIMIT_LINE]) }),
       ).toThrow(LIMIT);
     });
   });
 
   test("a nullable correction keeps each target's own base type", () => {
-    const evidence = new Set(["collectionproxy.set_collection"]);
+    const evidence = new Set([
+      pinEvidenceKey("RETURN_TYPE_CORRECTIONS", "collectionproxy.set_collection"),
+    ]);
     expect(
       signatureLine(
         emitDeclarations(parseDefoldApiDoc(collectionproxy114Doc), { bindingEvidence: evidence }),
@@ -5285,7 +5312,11 @@ describe("return-side optionality corrections", () => {
     const image = parseDefoldApiDoc(image114Doc);
     expect(
       signatureLine(
-        emitDeclarations(image, { bindingEvidence: new Set(["image.get_astc_header"]) }),
+        emitDeclarations(image, {
+          bindingEvidence: new Set([
+            pinEvidenceKey("RETURN_TYPE_CORRECTIONS", "image.get_astc_header"),
+          ]),
+        }),
         "function get_astc_header(",
       ),
     ).toEndWith("): image.AstcHeader;");
@@ -6738,13 +6769,27 @@ describe("engine slot rules", () => {
 describe("binding-pinned anchor and playback slot corrections", () => {
   const emittedLine = (out: string, needle: string): string =>
     out.split("\n").find((line) => line.includes(needle)) ?? "";
-  const ANCHOR_KEYS = new Set(["gui.set_xanchor:param:anchor", "gui.set_yanchor:param:anchor"]);
-  const PLAYBACK_KEYS = new Set([
-    "go.animate:param:playback",
-    "resource.create_atlas:param:table:animations[].playback",
-    "resource.set_atlas:param:table:animations[].playback",
-    "resource.get_atlas:return:data:animations[].playback",
+  const ANCHOR_KEYS = new Set([
+    pinEvidenceKey("PARAM_TYPE_CORRECTIONS", "gui.set_xanchor:param:anchor"),
+    pinEvidenceKey("PARAM_TYPE_CORRECTIONS", "gui.set_yanchor:param:anchor"),
   ]);
+  const PLAYBACK_KEYS = new Set([
+    pinEvidenceKey("PARAM_TYPE_CORRECTIONS", "go.animate:param:playback"),
+    pinEvidenceKey(
+      "TABLE_FIELD_TYPE_OVERRIDES",
+      "resource.create_atlas:param:table:animations[].playback",
+    ),
+    pinEvidenceKey(
+      "TABLE_FIELD_TYPE_OVERRIDES",
+      "resource.set_atlas:param:table:animations[].playback",
+    ),
+    pinEvidenceKey(
+      "TABLE_FIELD_TYPE_OVERRIDES",
+      "resource.get_atlas:return:data:animations[].playback",
+    ),
+  ]);
+  const getterEvidence = (...names: string[]) =>
+    new Set(names.map((name) => pinEvidenceKey("RETURN_TYPE_CORRECTIONS", name)));
 
   test("anchor setters follow the reference without evidence and use axis subsets with evidence", () => {
     const unpinned = emitDeclarations(parseDefoldApiDoc(gui114Doc));
@@ -6770,13 +6815,13 @@ describe("binding-pinned anchor and playback slot corrections", () => {
     expect(emittedLine(unpinned, "function get_yanchor(")).toEndWith("): gui.Anchor;");
 
     const pinned = emitDeclarations(parseDefoldApiDoc(gui114Doc), {
-      bindingEvidence: new Set(["gui.get_xanchor", "gui.get_yanchor"]),
+      bindingEvidence: getterEvidence("gui.get_xanchor", "gui.get_yanchor"),
     });
     expect(emittedLine(pinned, "function get_xanchor(")).toEndWith(X_SUBSET);
     expect(emittedLine(pinned, "function get_yanchor(")).toEndWith(Y_SUBSET);
 
     const xOnly = emitDeclarations(parseDefoldApiDoc(gui114Doc), {
-      bindingEvidence: new Set(["gui.get_xanchor"]),
+      bindingEvidence: getterEvidence("gui.get_xanchor"),
     });
     expect(emittedLine(xOnly, "function get_xanchor(")).toEndWith(X_SUBSET);
     expect(emittedLine(xOnly, "function get_yanchor(")).toEndWith("): gui.Anchor;");
@@ -6791,6 +6836,20 @@ describe("binding-pinned anchor and playback slot corrections", () => {
       bindingEvidence: PLAYBACK_KEYS,
     });
     expect(emittedLine(pinned, "function animate(")).toContain("playback: go.Playback");
+  });
+
+  test("a param correction does not apply when its key holds only under another table's name", () => {
+    const key = "go.animate:param:playback";
+    const elsewhere = emitDeclarations(parseDefoldApiDoc(goDoc), {
+      bindingEvidence: new Set([
+        pinEvidenceKey("TABLE_FIELD_TYPE_OVERRIDES", key),
+        pinEvidenceKey("RETURN_TYPE_CORRECTIONS", key),
+        key,
+      ]),
+    });
+    expect(emittedLine(elsewhere, "function animate(")).toContain(
+      "playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
+    );
   });
 
   test("prose-table atlas playback follows its reference without evidence and uses full Playback with evidence", () => {

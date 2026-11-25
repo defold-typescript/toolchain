@@ -5,6 +5,7 @@ import {
   type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
+  pinEvidenceKey,
   type ReturnTypeCorrection,
 } from "../src/emit-dts";
 import {
@@ -152,7 +153,7 @@ describe("bindingEvidenceFor", () => {
 
   test("a return correction's pin is evidence where the target's binding shows it", () => {
     expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [], [], [])]).toEqual(
-      ["bullet3d.shape.get_shape"],
+      ["RETURN_TYPE_CORRECTIONS:bullet3d.shape.get_shape"],
     );
   });
 
@@ -181,29 +182,40 @@ describe("bindingEvidenceFor", () => {
     ]).toEqual([]);
     expect([
       ...bindingEvidenceFor(apiTarget("defold-1.13.0"), [], [], [], [blendCase], []),
-    ]).toEqual(["render.set_blend_func_separate:param:source_factor_color"]);
+    ]).toEqual(["PARAM_TYPE_CORRECTIONS:render.set_blend_func_separate:param:source_factor_color"]);
+  });
+
+  test("a holding param pin is evidence under its table's ledger line, never the bare key", () => {
+    const evidence = bindingEvidenceFor(apiTarget("defold-1.14.0"));
+    const key = "go.animate:param:playback";
+    expect(evidence.has(pinEvidenceKey("PARAM_TYPE_CORRECTIONS", key))).toBe(true);
+    expect(evidence.has(key)).toBe(false);
+    expect([...evidence].filter((line) => !line.includes(":"))).toEqual([]);
   });
 
   test("an engine-pinned key range is evidence on every vendored target", () => {
     for (const target of vendoredTargets()) {
-      expect({ target: target.id, has: bindingEvidenceFor(target).has("model.textureN") }).toEqual({
+      expect({
+        target: target.id,
+        has: bindingEvidenceFor(target).has(TEXTURE_RANGE_LINE),
+      }).toEqual({
         target: target.id,
         has: true,
       });
     }
-    expect(bindingEvidenceFor(apiTarget("defold-1.9.8")).has("model.textureN")).toBe(false);
+    expect(bindingEvidenceFor(apiTarget("defold-1.9.8")).has(TEXTURE_RANGE_LINE)).toBe(false);
   });
 
   test("every vendored target carries anchor and playback correction evidence", () => {
     const keys = [
-      "gui.set_xanchor:param:anchor",
-      "gui.set_yanchor:param:anchor",
-      "gui.get_xanchor",
-      "gui.get_yanchor",
-      "go.animate:param:playback",
-      "resource.create_atlas:param:table:animations[].playback",
-      "resource.set_atlas:param:table:animations[].playback",
-      "resource.get_atlas:return:data:animations[].playback",
+      "PARAM_TYPE_CORRECTIONS:gui.set_xanchor:param:anchor",
+      "PARAM_TYPE_CORRECTIONS:gui.set_yanchor:param:anchor",
+      "RETURN_TYPE_CORRECTIONS:gui.get_xanchor",
+      "RETURN_TYPE_CORRECTIONS:gui.get_yanchor",
+      "PARAM_TYPE_CORRECTIONS:go.animate:param:playback",
+      "TABLE_FIELD_TYPE_OVERRIDES:resource.create_atlas:param:table:animations[].playback",
+      "TABLE_FIELD_TYPE_OVERRIDES:resource.set_atlas:param:table:animations[].playback",
+      "TABLE_FIELD_TYPE_OVERRIDES:resource.get_atlas:return:data:animations[].playback",
     ];
     for (const target of vendoredTargets()) {
       const evidence = bindingEvidenceFor(target);
@@ -232,6 +244,7 @@ describe("bindingEvidenceFor", () => {
 });
 
 const MODEL_TEXTURE_RANGE = PROPERTY_KEY_RANGES.get("model.textureN") as PropertyKeyRange;
+const TEXTURE_RANGE_LINE = pinEvidenceKey("PROPERTY_KEY_RANGES", "model.textureN");
 const MODEL_PINS: readonly EngineSourcePin[] = MODEL_TEXTURE_RANGE.engine?.pins ?? [];
 const RENDER_H_PIN = MODEL_PINS.find(
   (pin) => pin.file === "render/src/dmsdk/render/render.h",

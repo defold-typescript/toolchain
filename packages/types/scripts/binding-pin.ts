@@ -5,6 +5,7 @@ import {
   type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
+  pinEvidenceKey,
   RETURN_TYPE_CORRECTIONS,
   type ReturnTypeCorrection,
   STRUCT_MEMBER_ADDITIONS,
@@ -77,8 +78,10 @@ function definedPinHolds(targetId: string, pin: BindingPin): boolean {
   );
 }
 
-// The binding-pinned correction keys whose pin holds in the target's vendored
-// engine source; empty for a target with none (a ref-doc target). A struct
+// The ledger lines (`pinEvidenceKey`) of the binding-pinned corrections whose
+// pin holds in the target's vendored engine source; empty for a target with
+// none (a ref-doc target). Each line names its table, so a key two tables share
+// is evidence only for the table whose pin holds. A struct
 // member addition whose function the target does not define has no evidence
 // there: a release older than the function has neither the struct nor the push.
 // Likewise a correction whose file the target does not vendor, or whose
@@ -95,9 +98,16 @@ export function bindingEvidenceFor(
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
-  for (const corrections of [entries, parameters, fields]) {
-    for (const [key, { binding }] of corrections) {
-      if (binding !== undefined && definedPinHolds(target.id, binding)) evidence.add(key);
+  const corrections = [
+    ["RETURN_TYPE_CORRECTIONS", entries],
+    ["PARAM_TYPE_CORRECTIONS", parameters],
+    ["TABLE_FIELD_TYPE_OVERRIDES", fields],
+  ] as const;
+  for (const [table, pinned] of corrections) {
+    for (const [key, { binding }] of pinned) {
+      if (binding !== undefined && definedPinHolds(target.id, binding)) {
+        evidence.add(pinEvidenceKey(table, key));
+      }
     }
   }
   for (const [key, { binding }] of additions) {
@@ -105,12 +115,12 @@ export function bindingEvidenceFor(
       bindingDefinesFunction(target.id, binding.file, binding.cFunction) &&
       bindingPinHolds(target.id, binding)
     ) {
-      evidence.add(key);
+      evidence.add(pinEvidenceKey("STRUCT_MEMBER_ADDITIONS", key));
     }
   }
   for (const [key, { engine }] of ranges) {
     if (engine?.pins.every((pin) => enginePinHolds(target.id, pin))) {
-      evidence.add(key);
+      evidence.add(pinEvidenceKey("PROPERTY_KEY_RANGES", key));
     }
   }
   return evidence;

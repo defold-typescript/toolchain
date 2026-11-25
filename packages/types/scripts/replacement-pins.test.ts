@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { ParamTypeCorrection } from "../src/emit-dts";
+import { type ParamTypeCorrection, pinEvidenceKey, type TableSlotCuration } from "../src/emit-dts";
 import { MESSAGE_FIELD_CONSTANT_GROUPS } from "../src/emit-messages";
+import { retainedSurfaces } from "../src/optional-correction-provenance";
 import { bindingEvidenceFor } from "./binding-pin";
+import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
+import { refDocEvidenceFor } from "./ref-doc-pin";
+import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "./regen";
 import {
   messageFieldEntries,
   parseReplacementPinBaseline,
@@ -37,11 +41,12 @@ const PINNED_PARAM: ParamTypeCorrection = {
 
 const { binding: _binding, ...UNPINNED_PARAM } = PINNED_PARAM;
 const KEY = "factory.create:param:url";
+const PARAM_LINE = pinEvidenceKey("PARAM_TYPE_CORRECTIONS", KEY);
 
 describe("replacementPinFindings", () => {
   test("a pinned entry whose pin holds and that is not baselined yields nothing", () => {
     const tables = [withEntries("PARAM_TYPE_CORRECTIONS", [[KEY, PINNED_PARAM]])];
-    expect(replacementPinFindings(tables, [], new Set([KEY]))).toEqual([]);
+    expect(replacementPinFindings(tables, [], new Set([PARAM_LINE]))).toEqual([]);
   });
 
   test("a pinned entry whose pin holds on no vendored target is a finding", () => {
@@ -53,8 +58,8 @@ describe("replacementPinFindings", () => {
 
   test("an unpinned entry missing from the baseline names the pins its table accepts", () => {
     const tables = [withEntries("PARAM_TYPE_CORRECTIONS", [[KEY, UNPINNED_PARAM]])];
-    expect(replacementPinFindings(tables, [], new Set([KEY]))).toEqual([
-      `PARAM_TYPE_CORRECTIONS:${KEY}: no binding or engine pin (the table accepts a binding pin)`,
+    expect(replacementPinFindings(tables, [], new Set([PARAM_LINE]))).toEqual([
+      `PARAM_TYPE_CORRECTIONS:${KEY}: no pin (the table accepts a binding pin)`,
     ]);
   });
 
@@ -63,7 +68,7 @@ describe("replacementPinFindings", () => {
       withEntries("VARIABLE_TYPE_OVERRIDES", [["render.RENDER_TARGET_DEFAULT", "number"]]),
     ];
     expect(replacementPinFindings(tables, [], new Set())).toEqual([
-      "VARIABLE_TYPE_OVERRIDES:render.RENDER_TARGET_DEFAULT: no binding or engine pin (the table has no pin field yet)",
+      "VARIABLE_TYPE_OVERRIDES:render.RENDER_TARGET_DEFAULT: no pin (the table has no pin field yet)",
     ]);
   });
 
@@ -77,7 +82,7 @@ describe("replacementPinFindings", () => {
   test("a baseline line whose entry has a pin is stale", () => {
     const tables = [withEntries("PARAM_TYPE_CORRECTIONS", [[KEY, PINNED_PARAM]])];
     expect(
-      replacementPinFindings(tables, [`PARAM_TYPE_CORRECTIONS:${KEY}`], new Set([KEY])),
+      replacementPinFindings(tables, [`PARAM_TYPE_CORRECTIONS:${KEY}`], new Set([PARAM_LINE])),
     ).toEqual([`PARAM_TYPE_CORRECTIONS:${KEY}: stale, the entry is pinned`]);
   });
 
@@ -88,6 +93,41 @@ describe("replacementPinFindings", () => {
     ]);
   });
 
+  test("a pin holding under one table never vouches for another table's entry of the same key", () => {
+    const tables = [
+      withEntries("PARAM_TYPE_CORRECTIONS", [[KEY, PINNED_PARAM]]),
+      withEntries("TABLE_FIELD_TYPE_OVERRIDES", [
+        [KEY, { ts: "string", binding: PINNED_PARAM.binding }],
+      ]),
+    ];
+    expect(replacementPinFindings(tables, [], new Set([PARAM_LINE]))).toEqual([
+      `TABLE_FIELD_TYPE_OVERRIDES:${KEY}: its pin holds on no vendored target`,
+    ]);
+  });
+
+  test("a refDoc-pinned entry holds only where its own ref-doc evidence does", () => {
+    const key = "physics.raycast_async:param:groups";
+    const curation: TableSlotCuration = {
+      kind: "array",
+      element: "hash",
+      refDoc: { contains: "the hashed groups" },
+    };
+    const { refDoc: _refDoc, ...unpinned } = curation;
+    const line = pinEvidenceKey("TABLE_SLOT_CURATIONS", key);
+    const pinned = [withEntries("TABLE_SLOT_CURATIONS", [[key, curation]])];
+    expect(replacementPinFindings(pinned, [], new Set([line]))).toEqual([]);
+    expect(replacementPinFindings(pinned, [], new Set([key]))).toEqual([
+      `${line}: its pin holds on no retained ref-doc`,
+    ]);
+    expect(
+      replacementPinFindings(
+        [withEntries("TABLE_SLOT_CURATIONS", [[key, unpinned]])],
+        [],
+        new Set(),
+      ),
+    ).toEqual([`${line}: no pin (the table accepts a refDoc pin)`]);
+  });
+
   test("two entries of one table with the same ledger key throw", () => {
     const tables = [
       withEntries("PARAM_TYPE_CORRECTIONS", [
@@ -95,7 +135,7 @@ describe("replacementPinFindings", () => {
         [KEY, PINNED_PARAM],
       ]),
     ];
-    expect(() => replacementPinFindings(tables, [], new Set([KEY]))).toThrow(
+    expect(() => replacementPinFindings(tables, [], new Set([PARAM_LINE]))).toThrow(
       `PARAM_TYPE_CORRECTIONS:${KEY}`,
     );
   });
@@ -112,7 +152,12 @@ describe("replacementPinFindings", () => {
       },
     };
     const tables = [withEntries("PROPERTY_KEY_RANGES", [["model.textureN", range]])];
-    expect(replacementPinFindings(tables, [], new Set(["model.textureN"]))).toEqual([]);
+    expect(
+      replacementPinFindings(tables, [], new Set(["PROPERTY_KEY_RANGES:model.textureN"])),
+    ).toEqual([]);
+    expect(replacementPinFindings(tables, [], new Set(["model.textureN"]))).toEqual([
+      "PROPERTY_KEY_RANGES:model.textureN: its pin holds on no vendored target",
+    ]);
     expect(replacementPinFindings(tables, [], new Set())).toEqual([
       "PROPERTY_KEY_RANGES:model.textureN: its pin holds on no vendored target",
     ]);
@@ -145,9 +190,21 @@ describe("parseReplacementPinBaseline", () => {
   });
 });
 
+const DEFAULT_TARGET = loadApiTargets().find((candidate) => candidate.default === true);
+if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
+
+// Every ref-doc the global correction tables reach, as the provenance tests
+// build it: each runtime module regen emits and the extension goldens.
+const RETAINED_SURFACES = retainedSurfaces(
+  DEFAULT_TARGET.id,
+  MODULE_MANIFEST,
+  VERSIONED_MODULE_MANIFEST,
+  EXTENSION_GOLDEN_MANIFEST,
+);
+
 describe("the committed correction tables", () => {
-  test("every entry carries a pin that holds on a vendored target or sits in the baseline", () => {
-    const evidenceKeys = new Set<string>();
+  test("every entry carries a pin that holds on a retained target or sits in the baseline", () => {
+    const evidenceKeys = new Set(refDocEvidenceFor(REPLACEMENT_TABLES, RETAINED_SURFACES));
     for (const target of vendoredTargets()) {
       for (const key of bindingEvidenceFor(target)) evidenceKeys.add(key);
     }
@@ -170,7 +227,7 @@ describe("the committed correction tables", () => {
       line.startsWith("MESSAGE_FIELD_CONSTANT_GROUPS:"),
     );
     expect(replacementPinFindings([record], baseline, new Set())).toEqual([
-      "MESSAGE_FIELD_CONSTANT_GROUPS:collectionproxy.set_time_step:factor: no binding or engine pin (the table has no pin field yet)",
+      "MESSAGE_FIELD_CONSTANT_GROUPS:collectionproxy.set_time_step:factor: no pin (the table has no pin field yet)",
     ]);
   });
 });

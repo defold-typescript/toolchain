@@ -93,11 +93,11 @@ export interface EmitOptions {
   // `UNDOCUMENTED_CONSTANTS` back-fill. Absent for a surface with no vendored
   // bindings (a ref-doc target), where every entry the ref-doc omits is emitted.
   registeredConstants?: ReadonlySet<string>;
-  // The `RETURN_TYPE_CORRECTIONS` and `STRUCT_MEMBER_ADDITIONS` keys whose binding
-  // pin holds in the target's vendored engine source, and the
-  // `PROPERTY_KEY_RANGES` keys whose `engine` pins all hold there. A pinned
-  // entry applies only when its key is here, so a surface with no vendored
-  // bindings (absent) applies none of them.
+  // The ledger lines (`pinEvidenceKey`) of the binding-pinned entries whose pin
+  // holds in the target's vendored engine source, and of the
+  // `PROPERTY_KEY_RANGES` entries whose `engine` pins all hold there. A pinned
+  // entry applies only when its own table's line is here, so a surface with no
+  // vendored bindings (absent) applies none of them.
   bindingEvidence?: ReadonlySet<string>;
   // The 1-based parameter slots, keyed by function FQN, that the target's engine
   // bindings let a call omit but raise on when passed nil. Each optional one
@@ -416,6 +416,12 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // A nil push proves nil-ability and nothing about the base type, so such an
 // entry usually carries `nullable` rather than `ts`; an entry keeping `ts`
 // takes its base from the slot's own prose.
+// The ledger line a pinned entry's evidence is recorded under, `<TABLE>:<key>`,
+// so a key two tables share never vouches for the other table's entry.
+export function pinEvidenceKey(table: string, key: string): string {
+  return `${table}:${key}`;
+}
+
 export interface BindingPin {
   // Relative to the target's vendored `engine/` tree.
   readonly file: string;
@@ -2815,6 +2821,14 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
 // (`tilemap.get_tiles` → `tiles[row][col]`).
 export type NestedMapping = { key: string; value: string };
 
+// Text an element's own ref-doc states, which an entry only makes precise. It
+// holds where a retained target's ref-doc for that element contains it, compared
+// with tags dropped and whitespace collapsed. It classifies the entry and never
+// gates its emit.
+export interface RefDocPin {
+  readonly contains: string;
+}
+
 // A curation applies where the slot declares the prose `table` token, or a later
 // spelling a newer release retypes the same slot to without fixing it
 // (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
@@ -2845,7 +2859,7 @@ export type TableSlotCuration =
     // A slot whose faithful shape no field list can carry, such as a union
     // discriminated on `type`. `ts` is emitted verbatim, already mapped.
     | { kind: "verbatim"; ts: string }
-  ) & { readonly retypedUpstream?: readonly string[] };
+  ) & { readonly retypedUpstream?: readonly string[]; readonly refDoc?: RefDocPin };
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
@@ -3080,6 +3094,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "buffer.create:param:declaration",
     {
+      refDoc: { contains: "A table where each entry (table) describes a stream" },
       kind: "array-object",
       fields: [
         { name: "name", types: ["hash", "string"] },
@@ -3102,7 +3117,18 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       retypedUpstream: ["table<hash, table<string|hash, any>>"],
     },
   ],
-  ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
+  [
+    "collectionfactory.create:return:ids",
+    {
+      refDoc: {
+        contains:
+          "contains a key for each game object id (hash), as addressed if the collection file was top level, and the corresponding spawned instance id (hash) as value",
+      },
+      kind: "mapping",
+      key: "hash",
+      value: "hash",
+    },
+  ],
   [
     "factory.create:param:properties",
     {
@@ -3133,6 +3159,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "font.get_info:return:info",
     {
+      refDoc: {
+        contains:
+          "An array of associated font (e.g. .ttf) files. Each item is a table that contains",
+      },
       kind: "object",
       fields: [
         { name: "path", types: ["hash"] },
@@ -3214,6 +3244,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "model.get_aabb:return:aabb",
     {
+      refDoc: { contains: "return vmath.vector3(0,0,0) for min and max fields" },
       kind: "object",
       fields: [
         { name: "min", types: ["vector3"] },
@@ -3224,6 +3255,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "model.get_mesh_aabb:return:aabb",
     {
+      refDoc: {
+        contains:
+          "AABB information return as a table with min and max fields, where min and max has type vmath.vector3",
+      },
       kind: "mapping",
       key: "hash",
       value: [
@@ -3232,7 +3267,16 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["physics.raycast_async:param:groups", { kind: "array", element: "hash" }],
+  [
+    "physics.raycast_async:param:groups",
+    {
+      refDoc: {
+        contains: "a lua table containing the hashed groups for which to test collisions against",
+      },
+      kind: "array",
+      element: "hash",
+    },
+  ],
   // push.schedule's `notification_settings` is documented in the fixture as prose
   // only ("Table with notification and platform specific fields"), so the field
   // set is curated from the Defold push reference: an iOS `action`, an iOS
@@ -3249,11 +3293,29 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["socket.select:param:recvt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
-  ["socket.select:param:sendt", { kind: "array", element: SOCKET_HANDLE_TOKENS }],
+  [
+    "socket.select:param:recvt",
+    {
+      refDoc: { contains: "array with the sockets to test for characters available for reading" },
+      kind: "array",
+      element: SOCKET_HANDLE_TOKENS,
+    },
+  ],
+  [
+    "socket.select:param:sendt",
+    {
+      refDoc: {
+        contains:
+          "array with sockets that are watched to see if it is OK to immediately write on them",
+      },
+      kind: "array",
+      element: SOCKET_HANDLE_TOKENS,
+    },
+  ],
   [
     "socket.select:return:sockets_r",
     {
+      refDoc: { contains: "a list with the sockets ready for reading" },
       kind: "array",
       element: SOCKET_HANDLE_TOKENS,
       retypedUpstream: ["table<integer|socket_selectable, socket_selectable|integer>"],
@@ -3262,6 +3324,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "socket.select:return:sockets_w",
     {
+      refDoc: { contains: "a list with the sockets ready for writing" },
       kind: "array",
       element: SOCKET_HANDLE_TOKENS,
       retypedUpstream: ["table<integer|socket_selectable, socket_selectable|integer>"],
@@ -3270,6 +3333,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "tilemap.get_tile_info:return:tile_info",
     {
+      refDoc: { contains: "index = 0, -- h_flip = false, -- v_flip = true, -- rotate_90 = false" },
       kind: "object",
       fields: [
         { name: "index", types: ["number"] },
@@ -3287,7 +3351,12 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // never a `Record` (which would imply a dense index object).
   [
     "tilemap.get_tiles:return:tiles",
-    { kind: "mapping", key: "number", value: { key: "number", value: "number" } },
+    {
+      refDoc: { contains: "You can iterate it using tiles[row_index][column_index]" },
+      kind: "mapping",
+      key: "number",
+      value: { key: "number", value: "number" },
+    },
   ],
   // resource.get_text_metrics's `metrics` return is an untyped name-only <ul>
   // (width/height/max_ascent/max_descent, no <span class="type"> and no See
@@ -3297,6 +3366,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "resource.get_text_metrics:return:metrics",
     {
+      refDoc: {
+        contains: "a table with the following fields: width height max_ascent max_descent",
+      },
       kind: "object",
       fields: [
         { name: "width", types: ["number"] },
@@ -3317,6 +3389,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "resource.get_render_target_info:return:table",
     {
+      refDoc: {
+        contains: "a table of attachments, where each attachment contains the following entries",
+      },
       kind: "object",
       fields: [
         { name: "handle", types: ["number"] },
@@ -3346,6 +3421,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "profiler.view_recorded_frame:param:frame_index",
     {
+      refDoc: { contains: "a table where you specify one of the following parameters" },
       kind: "object",
       fields: [
         { name: "distance", types: ["number"] },
@@ -3357,10 +3433,27 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // homogeneous list of resource paths (prose only, no field list), each a
   // hexadecimal string: script_collectionproxy.cpp:GetResourceHashCallback pushes
   // every entry with lua_pushlstring.
-  ["collectionproxy.get_resources:return:resources", { kind: "array", element: "string" }],
+  [
+    "collectionproxy.get_resources:return:resources",
+    {
+      refDoc: {
+        contains:
+          "Each entry is a hexadecimal string that represents the data of the specific resource.",
+      },
+      kind: "array",
+      element: "string",
+    },
+  ],
   // render.predicate's `tags` is "table of tags ... can be of either hash or
   // string type", a homogeneous array whose element is the string|hash union.
-  ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
+  [
+    "render.predicate:param:tags",
+    {
+      refDoc: { contains: "The tags can be of either hash or string type" },
+      kind: "array",
+      element: ["string", "hash"],
+    },
+  ],
   // render.clear's `buffers` maps the graphics.BUFFER_TYPE_* constants its doc
   // names as keys to their clear value: vector4 for the color buffer, number for
   // depth/stencil. Both sides are union tokens the mapping string branch splits,
@@ -3370,6 +3463,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "render.clear:param:buffers",
     {
+      refDoc: {
+        contains:
+          "table with keys specifying which buffers to clear and values set to clear values",
+      },
       retypedUpstream: ["table<graphics.BUFFER_TYPE, number|vector4>"],
       kind: "mapping",
       key: "graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT",
@@ -3386,6 +3483,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "physics.create_joint:param:properties",
     {
+      refDoc: {
+        contains:
+          "The one field that is accepted for all joint types is: - boolean collide_connected",
+      },
       kind: "object",
       fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
     },
@@ -3393,6 +3494,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "physics.set_joint_properties:param:properties",
     {
+      refDoc: {
+        contains:
+          "The collide_connected field cannot be updated/changed after a connection has been made.",
+      },
       kind: "object",
       fields: [{ name: "collide_connected", types: ["boolean"], optional: true }],
     },
@@ -3403,30 +3508,94 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // The keyed-object curation re-keys the parser-recovered args fields as
   // `Record<string, { … }>`, restoring the keyed-by-name layer a flat object
   // curation drops — so the documented `{ tint: { value: … } }` call compiles.
-  ["compute.set_constants:param:constants", { kind: "keyed-object" }],
-  ["compute.set_samplers:param:samplers", { kind: "keyed-object" }],
-  ["material.set_constants:param:constants", { kind: "keyed-object" }],
-  ["material.set_samplers:param:samplers", { kind: "keyed-object" }],
-  ["material.set_vertex_attributes:param:attributes", { kind: "keyed-object" }],
+  [
+    "compute.set_constants:param:constants",
+    {
+      refDoc: { contains: "A table keyed by constant name with args tables as values" },
+      kind: "keyed-object",
+    },
+  ],
+  [
+    "compute.set_samplers:param:samplers",
+    {
+      refDoc: { contains: "A table keyed by sampler name with args tables as values" },
+      kind: "keyed-object",
+    },
+  ],
+  [
+    "material.set_constants:param:constants",
+    {
+      refDoc: { contains: "A table keyed by constant name with args tables as values" },
+      kind: "keyed-object",
+    },
+  ],
+  [
+    "material.set_samplers:param:samplers",
+    {
+      refDoc: { contains: "A table keyed by sampler name with args tables as values" },
+      kind: "keyed-object",
+    },
+  ],
+  [
+    "material.set_vertex_attributes:param:attributes",
+    {
+      refDoc: { contains: "A table keyed by vertex attribute name with args tables as values" },
+      kind: "keyed-object",
+    },
+  ],
   // compute/material texture setters take "a table keyed by sampler name with
   // texture resources as values" — a name-keyed map to a resource-path hash.
-  ["compute.set_textures:param:textures", { kind: "mapping", key: "string", value: "hash" }],
-  ["material.set_textures:param:textures", { kind: "mapping", key: "string", value: "hash" }],
+  [
+    "compute.set_textures:param:textures",
+    {
+      refDoc: { contains: "A table keyed by sampler name with texture resources as values." },
+      kind: "mapping",
+      key: "string",
+      value: "hash",
+    },
+  ],
+  [
+    "material.set_textures:param:textures",
+    {
+      refDoc: { contains: "A table keyed by sampler name with texture resources as values." },
+      kind: "mapping",
+      key: "string",
+      value: "hash",
+    },
+  ],
   // model blend weights are a numeric Lua array ("array of weight values"), not
   // an opaque record; get returns the array, set takes it (optional on the param
   // side — omitting it resets the weights).
-  ["model.get_blend_weights:return:weights", { kind: "array", element: "number" }],
-  ["model.set_blend_weights:param:weights", { kind: "array", element: "number" }],
+  [
+    "model.get_blend_weights:return:weights",
+    { refDoc: { contains: "array of weight values" }, kind: "array", element: "number" },
+  ],
+  [
+    "model.set_blend_weights:param:weights",
+    {
+      refDoc: { contains: "array of weight values (1-based indices)" },
+      kind: "array",
+      element: "number",
+    },
+  ],
   // graphics adapter inspection. get_engine_adapters returns "array of adapter
   // family name strings"; get_adapter_info returns a documented object whose
   // `limits` sub-table is a flat number map, `extensions` a string array, and
   // `features` an array of graphics.CONTEXT_FEATURE_* ids (numbers). The
   // `limits`/`extensions`/`features` shapes live in codehilite blocks the parser
   // cannot read, so the whole object is curated from the prose field list.
-  ["graphics.get_engine_adapters:return:adapters", { kind: "array", element: "string" }],
+  [
+    "graphics.get_engine_adapters:return:adapters",
+    {
+      refDoc: { contains: "array of adapter family name strings" },
+      kind: "array",
+      element: "string",
+    },
+  ],
   [
     "graphics.get_adapter_info:return:info",
     {
+      refDoc: { contains: "table with the following fields: family string adapter family name" },
       kind: "object",
       fields: [
         { name: "family", types: ["string"] },
@@ -3470,6 +3639,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.get_version:return:info",
     {
+      refDoc: { contains: "version info with fields version, major, middle, and minor" },
       kind: "object",
       fields: [
         { name: "version", types: ["number"] },
@@ -3480,7 +3650,14 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     },
   ],
   // b2d.body
-  ["b2d.body.compute_aabb:return:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
+  [
+    "b2d.body.compute_aabb:return:aabb",
+    {
+      refDoc: { contains: "table with lower and upper vector3 fields" },
+      kind: "object",
+      fields: B2D_AABB_FIELDS,
+    },
+  ],
   [
     "b2d.body.create_fixture:param:definition",
     {
@@ -3544,23 +3721,62 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["b2d.body.create_fixture:return:fixture", { kind: "object", fields: B2D_FIXTURE_INFO_FIELDS }],
+  [
+    "b2d.body.create_fixture:return:fixture",
+    {
+      refDoc: {
+        contains:
+          "fixture info table with index, type, sensor, density, friction, restitution, and child_count",
+      },
+      kind: "object",
+      fields: B2D_FIXTURE_INFO_FIELDS,
+    },
+  ],
   [
     "b2d.body.create_chain:return:segments",
     { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
   ],
   [
     "b2d.body.get_fixtures:return:fixtures",
-    { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
+    {
+      refDoc: {
+        contains:
+          "array of fixture info tables with index, type, sensor, density, friction, restitution, and child_count",
+      },
+      kind: "array-object",
+      fields: B2D_FIXTURE_INFO_FIELDS,
+    },
   ],
   // get_joints returns an array of opaque b2Joint handles (numbers).
   ["b2d.body.get_joints:return:joints", { kind: "array", element: "number" }],
-  ["b2d.body.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
-  ["b2d.body.set_mass_data:param:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
-  ["b2d.body.get_shapes:return:shapes", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
+  [
+    "b2d.body.get_mass_data:return:data",
+    {
+      refDoc: { contains: "table with mass, center in local coordinates, and inertia." },
+      kind: "object",
+      fields: B2D_MASS_DATA_FIELDS,
+    },
+  ],
+  [
+    "b2d.body.set_mass_data:param:data",
+    {
+      refDoc: { contains: "table with mass, center in local coordinates, and inertia." },
+      kind: "object",
+      fields: B2D_MASS_DATA_FIELDS,
+    },
+  ],
+  [
+    "b2d.body.get_shapes:return:shapes",
+    {
+      refDoc: { contains: "a table of shape info entries. Each entry includes shape_id" },
+      kind: "array-object",
+      fields: B2D_SHAPE_INFO_FIELDS,
+    },
+  ],
   [
     "b2d.body.get_transform:return:transform",
     {
+      refDoc: { contains: "table with position and angle in radians." },
       kind: "object",
       fields: [
         { name: "position", types: ["vector3"] },
@@ -3571,12 +3787,36 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // b2d.chain
   [
     "b2d.chain.get_segments:return:segments",
-    { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
+    {
+      refDoc: {
+        contains:
+          "array of shape info tables for the chain segments. Each entry includes shape_id.",
+      },
+      kind: "array-object",
+      fields: B2D_SHAPE_INFO_FIELDS,
+    },
   ],
   // b2d.fixture
-  ["b2d.fixture.get_aabb:return:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
-  ["b2d.fixture.get_filter_data:return:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
-  ["b2d.fixture.set_filter_data:param:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
+  [
+    "b2d.fixture.get_aabb:return:aabb",
+    { refDoc: { contains: "table with lower and upper" }, kind: "object", fields: B2D_AABB_FIELDS },
+  ],
+  [
+    "b2d.fixture.get_filter_data:return:filter",
+    {
+      refDoc: { contains: "table with category_bits, mask_bits, and group_index" },
+      kind: "object",
+      fields: B2D_FILTER_DATA_FIELDS,
+    },
+  ],
+  [
+    "b2d.fixture.set_filter_data:param:filter",
+    {
+      refDoc: { contains: "table with category_bits, mask_bits, and group_index" },
+      kind: "object",
+      fields: B2D_FILTER_DATA_FIELDS,
+    },
+  ],
   ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
   [
     "b2d.fixture.set_shape:param:shape",
@@ -3588,7 +3828,14 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     "b2d.shape.set_shape:param:definition",
     { kind: "verbatim", ts: B2D_V3_SHAPE_TS, retypedUpstream: ["b2d.shape.definition"] },
   ],
-  ["b2d.shape.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
+  [
+    "b2d.shape.get_mass_data:return:data",
+    {
+      refDoc: { contains: "table with mass, center, and inertia" },
+      kind: "object",
+      fields: B2D_MASS_DATA_FIELDS,
+    },
+  ],
   [
     "b2d.shape.get_sensor_overlaps:return:overlaps",
     { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS },
@@ -3596,6 +3843,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.shape.ray_cast:return:hit",
     {
+      refDoc: { contains: "hit table with point, normal, fraction, and iterations, or nil" },
       kind: "object",
       fields: [
         { name: "point", types: ["vector3"] },
@@ -3610,6 +3858,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_distance:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, length, frequency, damping_ratio, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3624,6 +3876,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_mouse:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with target, max_force, frequency, damping_ratio, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "target", types: ["vector3"] },
@@ -3637,6 +3893,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_prismatic:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, local_axis_a, reference_angle, enable_limit, lower_translation, upper_translation, enable_motor, max_motor_force, motor_speed, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3656,6 +3916,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_revolute:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, reference_angle, enable_limit, lower_angle, upper_angle, enable_motor, max_motor_torque, motor_speed, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3674,6 +3938,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_weld:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, reference_angle, frequency, damping_ratio, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3688,6 +3956,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_wheel:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, local_axis_a, enable_motor, max_motor_torque, motor_speed, frequency, damping_ratio, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3705,6 +3977,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_friction:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, max_force, max_torque, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3718,6 +3994,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_rope:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with local_anchor_a, local_anchor_b, max_length, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "local_anchor_a", types: ["vector3"] },
@@ -3730,6 +4010,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.joint.create_pulley:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with ground_anchor_a, ground_anchor_b, local_anchor_a, local_anchor_b, length_a, length_b, ratio, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "ground_anchor_a", types: ["vector3"] },
@@ -3745,11 +4029,19 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   [
     "b2d.joint.create_gear:param:definition",
-    { kind: "object", fields: [{ name: "ratio", types: ["number"] }] },
+    {
+      refDoc: { contains: "optional definition with ratio" },
+      kind: "object",
+      fields: [{ name: "ratio", types: ["number"] }],
+    },
   ],
   [
     "b2d.joint.create_motor:param:definition",
     {
+      refDoc: {
+        contains:
+          "optional definition with linear_offset, angular_offset, max_force, max_torque, correction_factor, and collide_connected",
+      },
       kind: "object",
       fields: [
         { name: "linear_offset", types: ["vector3"] },
@@ -3762,32 +4054,107 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     },
   ],
   // b2d.world broad-phase queries + movers.
-  ["b2d.world.overlap_aabb:param:aabb", { kind: "object", fields: B2D_AABB_FIELDS }],
-  ["b2d.world.overlap_aabb:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.overlap_aabb:param:aabb",
+    {
+      refDoc: { contains: "table with lower and upper vector3 fields" },
+      kind: "object",
+      fields: B2D_AABB_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.overlap_aabb:param:filter",
+    {
+      refDoc: {
+        contains: "optional query filter with category_bits, mask_bits, and optional group_index",
+      },
+      kind: "object",
+      fields: B2D_QUERY_FILTER_FIELDS,
+    },
+  ],
   [
     "b2d.world.overlap_aabb:return:fixtures",
     { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
   ],
   ["b2d.world.overlap_aabb:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
-  ["b2d.world.overlap_aabb:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
+  [
+    "b2d.world.overlap_aabb:return:stats",
+    {
+      refDoc: { contains: "table with node_visits and leaf_visits" },
+      kind: "object",
+      fields: B2D_QUERY_STATS_FIELDS,
+    },
+  ],
   [
     "b2d.world.overlap_shape:param:shape",
     { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
   ],
-  ["b2d.world.overlap_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.overlap_shape:param:filter",
+    {
+      refDoc: {
+        contains: "optional query filter with category_bits, mask_bits, and optional group_index",
+      },
+      kind: "object",
+      fields: B2D_QUERY_FILTER_FIELDS,
+    },
+  ],
   [
     "b2d.world.overlap_shape:return:fixtures",
     { kind: "array-object", fields: B2D_FIXTURE_INFO_FIELDS },
   ],
   ["b2d.world.overlap_shape:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
-  ["b2d.world.overlap_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
-  ["b2d.world.cast_ray:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
-  ["b2d.world.cast_ray:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
-  ["b2d.world.cast_ray:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
-  ["b2d.world.cast_ray_closest:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
+  [
+    "b2d.world.overlap_shape:return:stats",
+    {
+      refDoc: { contains: "table with node_visits and leaf_visits" },
+      kind: "object",
+      fields: B2D_QUERY_STATS_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_ray:param:filter",
+    {
+      refDoc: {
+        contains: "optional query filter with category_bits, mask_bits, and optional group_index",
+      },
+      kind: "object",
+      fields: B2D_QUERY_FILTER_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_ray:return:hits",
+    {
+      refDoc: { contains: "array of hit tables with fixture, shape, point, normal, and fraction" },
+      kind: "array-object",
+      fields: B2D_CAST_HIT_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_ray:return:stats",
+    {
+      refDoc: { contains: "table with node_visits and leaf_visits" },
+      kind: "object",
+      fields: B2D_QUERY_STATS_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_ray_closest:param:filter",
+    {
+      refDoc: {
+        contains: "optional query filter with category_bits, mask_bits, and optional group_index",
+      },
+      kind: "object",
+      fields: B2D_QUERY_FILTER_FIELDS,
+    },
+  ],
   [
     "b2d.world.cast_ray_closest:return:hit",
     {
+      refDoc: {
+        contains:
+          "hit table with fixture, shape, point, normal, fraction, node_visits, and leaf_visits, or nil",
+      },
       kind: "object",
       fields: [
         { name: "fixture", types: ["number"] },
@@ -3804,14 +4171,75 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     "b2d.world.cast_shape:param:shape",
     { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
   ],
-  ["b2d.world.cast_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
-  ["b2d.world.cast_shape:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
-  ["b2d.world.cast_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
-  ["b2d.world.cast_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
-  ["b2d.world.cast_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
-  ["b2d.world.collide_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
-  ["b2d.world.collide_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
-  ["physics.get_shape:return:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
+  [
+    "b2d.world.cast_shape:param:filter",
+    {
+      refDoc: {
+        contains: "optional query filter with category_bits, mask_bits, and optional group_index",
+      },
+      kind: "object",
+      fields: B2D_QUERY_FILTER_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_shape:return:hits",
+    {
+      refDoc: { contains: "array of hit tables with fixture, shape, point, normal, and fraction" },
+      kind: "array-object",
+      fields: B2D_CAST_HIT_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_shape:return:stats",
+    {
+      refDoc: { contains: "table with node_visits and leaf_visits" },
+      kind: "object",
+      fields: B2D_QUERY_STATS_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_mover:param:capsule",
+    {
+      refDoc: { contains: "capsule table with center1, center2, and radius" },
+      kind: "object",
+      fields: B2D_CAPSULE_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.cast_mover:param:filter",
+    {
+      refDoc: { contains: "optional query filter with category_bits and mask_bits" },
+      kind: "object",
+      fields: B2D_MOVER_FILTER_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.collide_mover:param:capsule",
+    {
+      refDoc: { contains: "capsule table with center1, center2, and radius" },
+      kind: "object",
+      fields: B2D_CAPSULE_FIELDS,
+    },
+  ],
+  [
+    "b2d.world.collide_mover:param:filter",
+    {
+      refDoc: { contains: "optional query filter with category_bits and mask_bits" },
+      kind: "object",
+      fields: B2D_MOVER_FILTER_FIELDS,
+    },
+  ],
+  [
+    "physics.get_shape:return:table",
+    {
+      refDoc: {
+        contains:
+          "The returned table contains different fields depending on which type the shape is.",
+      },
+      kind: "object",
+      fields: PHYSICS_SHAPE_TABLE_FIELDS,
+    },
+  ],
   // 1.13.2 retypes the slot to the `physics.shape_data` typedef, which declares
   // every field but `type` optional and admits every shape type.
   [
@@ -4642,7 +5070,9 @@ export function applyFieldTypeOverrides(
   const typed = (field: TableField, path: string): TableField => {
     const key = `${prefix}${path}`;
     const override = TABLE_FIELD_TYPE_OVERRIDES.get(key);
-    return override === undefined || (override.binding !== undefined && !bindingEvidence.has(key))
+    return override === undefined ||
+      (override.binding !== undefined &&
+        !bindingEvidence.has(pinEvidenceKey("TABLE_FIELD_TYPE_OVERRIDES", key)))
       ? field
       : { ...field, tsType: override.ts };
   };
@@ -5218,7 +5648,11 @@ function structDeclaration(
     );
   }
   const added = [...STRUCT_MEMBER_ADDITIONS]
-    .filter(([key]) => key.startsWith(memberPrefix) && bindingEvidence.has(key))
+    .filter(
+      ([key]) =>
+        key.startsWith(memberPrefix) &&
+        bindingEvidence.has(pinEvidenceKey("STRUCT_MEMBER_ADDITIONS", key)),
+    )
     .map(([key, addition]) => ({ ...addition.member, name: key.slice(memberPrefix.length) }));
   const stale = [
     ...REQUIRED_FIELD_CORRECTIONS.keys(),
@@ -5234,7 +5668,10 @@ function structDeclaration(
     const list = LIST_FIELD_CORRECTIONS.get(key);
     const listedRetype = TABLE_FIELD_TYPE_OVERRIDES.get(key);
     const retyped =
-      listedRetype?.binding === undefined || bindingEvidence.has(key) ? listedRetype : undefined;
+      listedRetype?.binding === undefined ||
+      bindingEvidence.has(pinEvidenceKey("TABLE_FIELD_TYPE_OVERRIDES", key))
+        ? listedRetype
+        : undefined;
     const optional =
       (member.isOptional || OPTIONAL_MEMBER_CORRECTIONS.has(key)) &&
       !REQUIRED_FIELD_CORRECTIONS.has(key);
@@ -6922,7 +7359,8 @@ function parameterType(
   if (
     correction === undefined ||
     !pinMatches(p.types, correctionPins(correction)) ||
-    (correction.binding !== undefined && !bindingEvidence.has(key))
+    (correction.binding !== undefined &&
+      !bindingEvidence.has(pinEvidenceKey("PARAM_TYPE_CORRECTIONS", key)))
   ) {
     return mapped;
   }
@@ -7107,7 +7545,10 @@ function emitReturn(
   // and it is a per-slot render, so it reports its slot.
   const listed = RETURN_TYPE_CORRECTIONS.get(elementName);
   const correction =
-    listed?.binding === undefined || bindingEvidence.has(elementName) ? listed : undefined;
+    listed?.binding === undefined ||
+    bindingEvidence.has(pinEvidenceKey("RETURN_TYPE_CORRECTIONS", elementName))
+      ? listed
+      : undefined;
   if (returnValues.length === 0) return { type: "void", trailing: "", slots: [] };
   if (returnValues.length > 1) {
     // Defold multi-returns are positional and always present; each slot maps
@@ -7225,7 +7666,8 @@ function emitPropertyMembers(
   const keys: string[] = [];
   if (keyRange !== undefined) {
     const last =
-      keyRange.engine !== undefined && bindingEvidence.has(rangeKey)
+      keyRange.engine !== undefined &&
+      bindingEvidence.has(pinEvidenceKey("PROPERTY_KEY_RANGES", rangeKey))
         ? keyRange.engine.last
         : keyRange.last;
     for (let unit = keyRange.first; unit <= last; unit++) keys.push(`${keyRange.prefix}${unit}`);
@@ -7389,7 +7831,11 @@ function listedCallbackSignature(
     const field = listed.get(name);
     let ts: string;
     if (override !== undefined) {
-      ts = override.binding === undefined || bindingEvidence.has(key) ? override.ts : "unknown";
+      ts =
+        override.binding === undefined ||
+        bindingEvidence.has(pinEvidenceKey("TABLE_FIELD_TYPE_OVERRIDES", key))
+          ? override.ts
+          : "unknown";
     } else if (field === undefined) {
       ts = "unknown";
     } else {

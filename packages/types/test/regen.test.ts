@@ -1761,8 +1761,8 @@ describe("per-target binding evidence", () => {
   test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
     const options = targetBindingOptions(target("defold-1.14.0"), entries, additions, [], [], []);
     expect([...(options.bindingEvidence ?? [])]).toEqual([
-      "factory.create",
-      "graphics.adapter_limits:member:max_storage_buffers_per_stage",
+      "RETURN_TYPE_CORRECTIONS:factory.create",
+      "STRUCT_MEMBER_ADDITIONS:graphics.adapter_limits:member:max_storage_buffers_per_stage",
     ]);
     expect(options.registeredConstants?.size ?? 0).toBeGreaterThan(0);
   });
@@ -1794,8 +1794,8 @@ describe("per-target binding evidence", () => {
       fieldCorrections,
     ).bindingEvidence;
     expect([...(evidence ?? [])]).toEqual([
-      "factory.create:param:mode",
-      "factory.create:param:options:mode",
+      "PARAM_TYPE_CORRECTIONS:factory.create:param:mode",
+      "TABLE_FIELD_TYPE_OVERRIDES:factory.create:param:options:mode",
     ]);
   });
 
@@ -1822,7 +1822,9 @@ describe("per-target binding evidence", () => {
       ...(targetBindingOptions(target(id), missing, [], [], [], []).bindingEvidence ?? ["missing"]),
     ];
     expect(evidenceOn("defold-1.12.4")).toEqual([]);
-    expect(evidenceOn("defold-1.14.0")).toEqual(["graphics.get_adapter_info"]);
+    expect(evidenceOn("defold-1.14.0")).toEqual([
+      "RETURN_TYPE_CORRECTIONS:graphics.get_adapter_info",
+    ]);
   });
 
   test("an unvendored target gets an empty evidence set", () => {
