@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/fidelity-floor.ts";
 import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import type {
@@ -32,6 +32,7 @@ import {
   ANNOTATION_VERDICTS_DIR,
   ANNOTATION_VERDICTS_FILE_NAME,
 } from "../packages/types/scripts/lua-annotation-verdicts.ts";
+import { REPLACEMENT_PIN_BASELINE_FILE } from "../packages/types/scripts/replacement-pins.ts";
 import { readCoverageRegistries } from "./asset-portal-check.ts";
 import {
   collectOpenSlots,
@@ -57,7 +58,12 @@ const LINE_SHAPES: Record<string, RegExp> = {
     /^[A-Za-z0-9._-]+\.json: (runtime|editor):[^\s:]+:[a-z-]+(:\S+)? open \(annotated [^()]*, declared [^()]*\)$/,
   "asset-portal-candidates":
     /^[A-Za-z0-9._-]+\.json: (script-api|native-untyped|pure-lua-annotated|pure-lua):[^\s:]+:https?:\/\/\S+$/,
+  "replacement-pin-baseline": /^replacement-pin-baseline\.json: [A-Z_]+:\S+$/,
 };
+
+// Where the replacement-pin gate reads the baseline, relative to the repo root,
+// so the ratchet source and the gate cannot read different files.
+const BASELINE_PATH = relative(REPO_ROOT, REPLACEMENT_PIN_BASELINE_FILE);
 
 // Taken from package-root, the one module that names where the library data lives,
 // so a library data change runs this suite.
@@ -125,6 +131,7 @@ function tempRoot(
   portal: unknown = portalManifest([]),
   aliases: Record<string, string> = {},
   verdicts: Record<string, string> = {},
+  replacementBaseline: unknown = [],
 ): string {
   const root = mkdtempSync(join(tmpdir(), "ratchet-backlog-"));
   const data = dataOf(root);
@@ -223,6 +230,8 @@ function tempRoot(
     join(annotationDir, ANNOTATION_VERDICTS_FILE_NAME),
     `${JSON.stringify(annotationVerdicts, null, 2)}\n`,
   );
+  mkdirSync(join(root, dirname(BASELINE_PATH)), { recursive: true });
+  writeFileSync(join(root, BASELINE_PATH), `${JSON.stringify(replacementBaseline, null, 2)}\n`);
   return root;
 }
 
@@ -318,6 +327,56 @@ describe("collectOpenSlots — both floor sources through the production readers
       expect(collectOpenSlots(root, dataOf(root), "fidelity-floor")).toEqual([
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
       ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("replacement-pin-baseline — unpinned corrections as backlog", () => {
+  const withBaseline = (baseline: unknown) =>
+    tempRoot(
+      { "fidelity/a.json": 1 },
+      { b: { callable: 1, field: 1 } },
+      {},
+      {},
+      {},
+      portalManifest([]),
+      {},
+      {},
+      baseline,
+    );
+
+  test("one line per baseline entry, naming the baseline file", () => {
+    const root = withBaseline([
+      "PARAM_TYPE_CORRECTIONS:go.delete:param:id",
+      "TABLE_SLOT_CURATIONS:go.animate:param:easing",
+    ]);
+    try {
+      expect(collectOpenSlots(root, dataOf(root), "replacement-pin-baseline")).toEqual([
+        "replacement-pin-baseline.json: PARAM_TYPE_CORRECTIONS:go.delete:param:id",
+        "replacement-pin-baseline.json: TABLE_SLOT_CURATIONS:go.animate:param:easing",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an empty baseline yields no line", () => {
+    const root = withBaseline([]);
+    try {
+      expect(collectOpenSlots(root, dataOf(root), "replacement-pin-baseline")).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an unsorted baseline throws the parser's error rather than reading as satisfied", () => {
+    const root = withBaseline(["TABLE_SLOT_CURATIONS:b", "PARAM_TYPE_CORRECTIONS:a"]);
+    try {
+      expect(() => collectOpenSlots(root, dataOf(root), "replacement-pin-baseline")).toThrow(
+        "PARAM_TYPE_CORRECTIONS:a sorts before TABLE_SLOT_CURATIONS:b",
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

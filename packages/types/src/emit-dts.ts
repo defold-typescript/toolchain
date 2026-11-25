@@ -392,30 +392,30 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ],
 ]);
 
-// A function whose `returnvalues` declare a concrete type while the same slot's
-// prose documents a `nil` alternative. Distinct from RETURN_TYPE_OVERRIDES
-// above, which fills an *empty* `returnvalues`: these contradict a token
-// upstream explicitly declares, so each entry records it and
-// `return-correction-provenance.test.ts` pins it against every vendored
-// ref-doc. Upstream adding `nil` to `types` hands the case to the top-level
-// `nil` projection in `mapSlotUnion` and reds the entry, which is then deleted
-// rather than re-pinned.
+// A function whose `returnvalues` declare a type the engine binding
+// contradicts, most often a concrete type where the binding also pushes `nil`.
+// Distinct from RETURN_TYPE_OVERRIDES above, which fills an *empty*
+// `returnvalues`: these contradict a token upstream explicitly declares, so
+// each entry records it and `return-correction-provenance.test.ts` pins it
+// against every vendored ref-doc. Upstream adding `nil` to `types` hands the
+// case to the top-level `nil` projection in `mapSlotUnion` and reds the entry,
+// which is then deleted rather than re-pinned.
 //
-// The same table holds a `function` return whose prose documents the returned
-// function's contract, which the bare token cannot carry: `socket.protect`'s
-// safe function "returns nil followed by an error message", and
-// `socket.newtry`'s try function returns its first argument when it is truthy
-// and throws otherwise, the LuaSocket contract its example relies on to unwrap
+// The same table holds a `function` return whose returned function has a
+// contract the bare token cannot carry, both defined in LuaSocket's `except.c`:
+// `socket.protect`'s safe function returns nil followed by the error message,
+// and `socket.newtry`'s try function returns its arguments when the first is
+// truthy and throws otherwise, the contract its example relies on to unwrap
 // `socket.connect`'s `client, err` pair. The try function takes that pair
 // destructured into separate arguments; a boxed `LuaMultiReturn` is rejected
-// because TSTL passes it as one table, which is always truthy. `reason` quotes
-// the slot prose the provenance test searches for, as for the `nil` entries.
+// because TSTL passes it as one table, which is always truthy.
 //
-// An entry with a `binding` rests on the engine source instead of the prose:
-// it applies only on a target whose vendored binding shows the pin (the
+// Every entry rests on the engine source through its `binding`: it applies only
+// on a target whose vendored binding shows the pin (the
 // `EmitOptions.bindingEvidence` keys), and `reason` names that binding in words.
 // A nil push proves nil-ability and nothing about the base type, so such an
-// entry usually carries `nullable` rather than `ts`.
+// entry usually carries `nullable` rather than `ts`; an entry keeping `ts`
+// takes its base from the slot's own prose.
 export interface BindingPin {
   // Relative to the target's vendored `engine/` tree.
   readonly file: string;
@@ -463,9 +463,14 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   [
     "b2d.get_body",
     {
-      ts: 'Opaque<"b2Body"> | undefined',
+      nullable: true,
       upstream: ["b2Body"],
-      reason: "the body if successful. Otherwise nil.",
+      reason: "script_box2d.cpp:B2D_GetBody pushes nil when the collision object has no body",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/box2d/script_box2d.cpp",
+        cFunction: "B2D_GetBody",
+        contains: "else lua_pushnil(L); return 1;",
+      },
     },
   ],
   [
@@ -473,7 +478,12 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
     {
       ts: "{ point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined",
       upstream: ["table"],
-      reason: "and iterations, or nil",
+      reason: "v3/script_box2d_shape_v3.cpp:Shape_RayCast pushes nil when the ray misses",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/box2d/v3/script_box2d_shape_v3.cpp",
+        cFunction: "Shape_RayCast",
+        contains: "if (!output.hit) { lua_pushnil(L); return 1; }",
+      },
     },
   ],
   [
@@ -481,7 +491,13 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
     {
       ts: "{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined",
       upstream: ["table"],
-      reason: "and leaf_visits, or nil",
+      reason:
+        "v2/script_box2d_world_v2.cpp:World_CastRayClosest pushes nil when the ray hits nothing",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/box2d/v2/script_box2d_world_v2.cpp",
+        cFunction: "World_CastRayClosest",
+        contains: "if (!callback.HasHit()) { lua_pushnil(L); return 1; }",
+      },
     },
   ],
   [
@@ -489,8 +505,13 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
     {
       ts: "number | undefined",
       upstream: ["number"],
-      reason: "codes if unsuccessful",
+      reason: "gui_script.cpp:LuaNewTexture pushes true, nil when the texture is created",
       slot: "code",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaNewTexture",
+        contains: "if (r == RESULT_OK) { lua_pushboolean(L, 1); lua_pushnil(L); }",
+      },
     },
   ],
   // 1.13.2 retypes the return to `render_predicate`, whose TYPEDEF aliases
@@ -501,7 +522,14 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: 'Opaque<"render_predicate">',
       upstream: ["number"],
       retypedUpstream: [["render_predicate"]],
-      reason: "new predicate",
+      reason:
+        "render_script.cpp:RenderScript_Predicate pushes a userdata, which render.draw reads with RenderScriptPredicate_Check",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_Predicate",
+        contains:
+          "HPredicate* p_predicate = (HPredicate*) lua_newuserdata(L, sizeof(HPredicate*));",
+      },
     },
   ],
   // 1.13.2 declares both as `fun(...:any):any`, which emits
@@ -512,7 +540,13 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: "(...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>",
       upstream: ["function(function())"],
       retypedUpstream: [["fun(...:any):any"]],
-      reason: "returns nil followed by an error message.",
+      reason:
+        "luasocket/except.c:protected_ returns nil and the error message when the protected function throws",
+      binding: {
+        file: "script/src/luasocket/except.c",
+        cFunction: "protected_",
+        contains: "if (unwrap(L)) return 2;",
+      },
     },
   ],
   [
@@ -521,7 +555,13 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: "<T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T",
       upstream: ["function"],
       retypedUpstream: [["fun(...:any):any"]],
-      reason: "the customized try function.",
+      reason:
+        "luasocket/except.c:finalize throws when its first argument is falsy and otherwise returns its arguments",
+      binding: {
+        file: "script/src/luasocket/except.c",
+        cFunction: "finalize",
+        contains: "lua_error(L); return 0; } else return lua_gettop(L);",
+      },
     },
   ],
   [
@@ -691,19 +731,21 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   ],
 ]);
 
-// A parameter whose declared `types` disagree with what the same element's
-// prose, an upstream example, or the engine binding demonstrably takes — a render
-// target by resource name, a texture unit, a Lua sequence where `table` is
-// declared, a hash the binding refuses as a string. Admission rule: only a slot
-// that evidence contradicts; a slot that is merely imprecise is not a candidate.
+// A parameter whose declared `types` disagree with what the engine binding
+// demonstrably takes — a render target by resource name, a texture unit, a Lua
+// sequence where `table` is declared, a hash the binding refuses as a string.
+// Admission rule: only a slot that evidence contradicts; a slot that is merely
+// imprecise is not a candidate.
 // A correction either replaces the mapped type exactly with `ts`, or edits the
 // mapped union: `adds` appends what the slot also takes and `removes` drops
 // members the binding raises on. Union edits keep the URL address alias, array
 // curation and constant mapping live; optionality stays with `isDocOptional`.
 // Each entry records the upstream tokens it contradicts, plus any later spelling
 // of the same defect in `retypedUpstream`, and applies only to a slot still
-// declaring one of them. An entry with a `binding` also requires its exact
-// `EmitOptions.bindingEvidence` key. `param-correction-provenance.test.ts` pins
+// declaring one of them. Its `binding` names the code the correction rests on,
+// and the entry also requires that exact `EmitOptions.bindingEvidence` key, so
+// it applies only on a target whose vendored binding shows the pin.
+// `param-correction-provenance.test.ts` pins
 // the ref-doc tokens against every retained target; once no target declares a
 // pin, the entry is deleted rather than re-pinned.
 interface ParamTypeCorrectionBase {
@@ -721,6 +763,21 @@ export type ParamTypeCorrection = ParamTypeCorrectionBase &
 
 const CAMERA_ADDRESS_REASON =
   "render_script_camera.cpp:CheckRenderCamera resolves anything but a number handle through ResolveURL, which takes a string or a hash";
+const CAMERA_ADDRESS_BINDING: BindingPin = {
+  file: "render/src/render/render_script_camera.cpp",
+  cFunction: "CheckRenderCamera",
+  contains: "if (dmScript::ResolveURL(L, index, &url, 0) != dmMessage::RESULT_OK)",
+};
+// The reader behind render.get_render_target_width, get_render_target_height
+// and set_render_target_size, and behind set_render_target's non-nil target.
+const RENDER_TARGET_NAME_BINDING: BindingPin = {
+  file: "render/src/render/render_script.cpp",
+  cFunction: "CheckRenderTarget",
+  contains:
+    "else if (dmScript::IsHash(L, index) || lua_isstring(L, index)) { dmhash_t rt_id = dmScript::CheckHashOrString(L, index);",
+};
+const RENDER_STATE_CHECK =
+  "if (state != dmGraphics::STATE_DEPTH_TEST && state != dmGraphics::STATE_STENCIL_TEST && state != dmGraphics::STATE_ALPHA_TEST && state != dmGraphics::STATE_BLEND && state != dmGraphics::STATE_CULL_FACE && state != dmGraphics::STATE_POLYGON_OFFSET_FILL)";
 
 const CAMERA_SLOT_FUNCTIONS = [
   "get_aspect_ratio",
@@ -812,17 +869,29 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           adds: "string | Hash",
           upstream: ["url", "number", "nil"],
           reason: CAMERA_ADDRESS_REASON,
+          binding: CAMERA_ADDRESS_BINDING,
         },
       ] as const,
   ),
-  ...(["set_group", "get_maskbit", "set_maskbit"] as const).map(
-    (name) =>
+  ...(
+    [
+      ["set_group", "Physics_SetGroup"],
+      ["get_maskbit", "Physics_GetMaskBit"],
+      ["set_maskbit", "Physics_SetMaskBit"],
+    ] as const
+  ).map(
+    ([name, cFunction]) =>
       [
         `physics.${name}:param:group`,
         {
           adds: "Hash",
           upstream: ["string"],
-          reason: `script_physics.cpp reads the ${name} group with CheckHashOrString(L, 2)`,
+          reason: `script_physics.cpp:${cFunction} reads the group with CheckHashOrString(L, 2)`,
+          binding: {
+            file: "gamesys/src/gamesys/scripts/script_physics.cpp",
+            cFunction,
+            contains: "dmhash_t group_id = dmScript::CheckHashOrString(L, 2);",
+          },
         },
       ] as const,
   ),
@@ -832,6 +901,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: "string",
       upstream: ["hash"],
       reason: "script_resource.cpp:GetTextMetrics reads the font path with CheckHashOrString(L, 1)",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+        cFunction: "GetTextMetrics",
+        contains: "dmhash_t path_hash = dmScript::CheckHashOrString(L, 1);",
+      },
     },
   ],
   [
@@ -840,7 +914,12 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: "string | Hash",
       upstream: ["url"],
       reason:
-        "script_collectionproxy.cpp:CollectionProxy_GetResourcesInternal resolves the proxy through GetComponentFromLua, which takes a string or a hash",
+        "script_collectionproxy.cpp:GetCollectionUrlHashFromCollectionProxy resolves the proxy through ResolveURL, which takes a string or a hash",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_collectionproxy.cpp",
+        cFunction: "GetCollectionUrlHashFromCollectionProxy",
+        contains: "dmScript::ResolveURL(L, index, &receiver, 0x0);",
+      },
     },
   ],
   ...(["screen_to_local", "set_screen_position"] as const).map(
@@ -851,6 +930,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           adds: "Vector4",
           upstream: ["vector3"],
           reason: "gui_script.cpp:GetPositionFromArgumentIndex takes a vector3 or a vector4",
+          binding: {
+            file: "gui/src/gui_script.cpp",
+            cFunction: "GetPositionFromArgumentIndex",
+            contains: "if ((v4 = dmScript::ToVector4(L, index))) { return Point3(v4->getXYZ()); }",
+          },
         },
       ] as const,
   ),
@@ -860,6 +944,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: "Matrix4",
       upstream: ["vector4"],
       reason: "script_particlefx.cpp:ParticleFX_SetConstant takes a vector4 or a matrix4 value",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_particlefx.cpp",
+        cFunction: "ParticleFX_SetConstant",
+        contains: "bool is_matrix4_type = dmScript::IsMatrix4(L,4);",
+      },
     },
   ],
   [
@@ -867,7 +956,12 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "Hash",
       upstream: ["string", "constant"],
-      reason: "gui_script.cpp reads the animate property with CheckHashOrString(L, 2)",
+      reason: "gui_script.cpp:LuaAnimate reads the property with CheckHashOrString(L, 2)",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaAnimate",
+        contains: "dmhash_t property_hash = dmScript::CheckHashOrString(L, 2);",
+      },
     },
   ],
   [
@@ -898,6 +992,12 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           adds: "undefined",
           upstream: ["node"],
           reason: `gui_script.cpp:${cFunction} pushes its result table before testing argument 1 with lua_isnil, so nil selects the whole scene and an absent argument reaches LuaCheckNodeInternal and raises`,
+          binding: {
+            file: "gui/src/gui_script.cpp",
+            cFunction,
+            contains:
+              "if (!lua_isnil(L, 1)) { dmGui::HNode hnode; InternalNode* root = LuaCheckNodeInternal(L, 1, &hnode);",
+          },
         },
       ] as const,
   ),
@@ -911,6 +1011,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           upstream: ["string"],
           reason:
             "script_bullet3d_constraint.cpp:CheckSliderMotorAxis raises \"motor must be 'linear' or 'angular'\" on any other string",
+          binding: {
+            file: "gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_constraint.cpp",
+            cFunction: "CheckSliderMotorAxis",
+            contains: "luaL_error(L, \"motor must be 'linear' or 'angular'.\");",
+          },
         },
       ] as const,
   ),
@@ -920,6 +1025,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       removes: ["string"],
       upstream: ["string", "hash"],
       reason: "script_sound.cpp:Sound_GetGroupName reads CheckHash(L, 1), which refuses a string",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_sound.cpp",
+        cFunction: "Sound_GetGroupName",
+        contains: "dmhash_t group_hash = dmScript::CheckHash(L, 1);",
+      },
     },
   ],
   ...(["get_mesh_enabled", "set_mesh_enabled"] as const).map(
@@ -929,7 +1039,13 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
         {
           removes: ["Url"],
           upstream: ["string", "hash", "url"],
-          reason: `script_model.cpp reads the ${name} mesh id with CheckHashOrString(L, 2), which refuses a url`,
+          reason:
+            "script_model.cpp:LuaModelComp_GetSetMeshEnabled_Internal reads the mesh id with CheckHashOrString(L, 2), which refuses a url",
+          binding: {
+            file: "gamesys/src/gamesys/scripts/script_model.cpp",
+            cFunction: "LuaModelComp_GetSetMeshEnabled_Internal",
+            contains: "*out_mesh_id = dmScript::CheckHashOrString(L, 2);",
+          },
         },
       ] as const,
   ),
@@ -940,8 +1056,15 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["string", "hash"],
       reason:
         "script_resource.cpp:CheckCreateTextureResourceParams reads the path with luaL_checkstring(L, 1), which refuses a hash",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+        cFunction: "CheckCreateTextureResourceParams",
+        contains: "const char* path = luaL_checkstring(L, 1);",
+      },
     },
   ],
+  // render.RENDER_TARGET_DEFAULT is not registered, so it reads as nil
+  // (NIL_CONSTANTS), and a nil target selects the default one.
   [
     "render.set_render_target:param:render_target",
     {
@@ -949,43 +1072,42 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["render_target"],
       retypedUpstream: [["render_target", "string", "hash", "nil"]],
       reason:
-        "\"render.RENDER_TARGET_DEFAULT to set the default render target\"; example `render.set_render_target('my_rt_resource')`; 1.13.2 adds the names but still omits the constant",
+        "render_script.cpp:RenderScript_SetRenderTarget keeps the default target for nil and reads anything else with CheckRenderTarget, which takes a render target resource by name; 1.13.2 adds the names but still omits the constant",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_SetRenderTarget",
+        contains: "if (!lua_isnil(L, 1)) render_target = CheckRenderTarget(L, 1, i);",
+      },
     },
   ],
-  [
-    "render.get_render_target_width:param:render_target",
-    {
-      adds: "string | Hash",
-      upstream: ["render_target"],
-      reason:
-        "example `render.get_render_target_width('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)`",
-    },
-  ],
-  [
-    "render.get_render_target_height:param:render_target",
-    {
-      adds: "string | Hash",
-      upstream: ["render_target"],
-      reason:
-        "example `render.get_render_target_height('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)`",
-    },
-  ],
-  [
-    "render.set_render_target_size:param:render_target",
-    {
-      adds: "string | Hash",
-      upstream: ["render_target"],
-      reason:
-        "\"a render target created from either a render script, or from a render target resource\"; example `render.set_render_target_size('my_rt_resource', ...)`",
-    },
-  ],
+  ...(
+    ["get_render_target_width", "get_render_target_height", "set_render_target_size"] as const
+  ).map(
+    (name) =>
+      [
+        `render.${name}:param:render_target`,
+        {
+          adds: "string | Hash",
+          upstream: ["render_target"],
+          reason:
+            "render_script.cpp:CheckRenderTarget takes a render target resource by string or hash name",
+          binding: RENDER_TARGET_NAME_BINDING,
+        },
+      ] as const,
+  ),
   [
     "render.enable_texture:param:handle_or_name",
     {
       adds: 'Opaque<"render_target"> | number',
       upstream: ["texture", "string", "hash"],
       reason:
-        "\"render target or texture handle that should be bound, or a named resource\"; examples `render.enable_texture(0, self.my_render_target, ...)` and `render.enable_texture(0, 'my_rt_resource', ...)`; `resource.get_texture_info` returns the handle as a number",
+        "render_script.cpp:RenderScript_EnableTexture reads a number in argument 2 as an asset handle, a render target's or a texture's, which `resource.get_texture_info` returns as a number",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_EnableTexture",
+        contains:
+          "if (lua_isnumber(L, 2)) { asset_handle = (dmGraphics::HAssetHandle) lua_tonumber(L, 2);",
+      },
     },
   ],
   [
@@ -996,6 +1118,12 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["texture", "string", "hash"],
       reason:
         "render_script.cpp:RenderScript_DisableTexture reads a number as a texture unit with lua_isnumber and anything else with CheckHashOrString; a texture handle is a number, so it is read as a unit",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_DisableTexture",
+        contains:
+          "if (lua_isnumber(L, 1)) { unit = lua_tointeger(L, 1); } else { sampler_hash = dmScript::CheckHashOrString(L, 1); }",
+      },
     },
   ],
   [
@@ -1003,8 +1131,8 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "string | Hash",
       upstream: ["url", "number", "nil"],
-      reason:
-        'example `render.set_camera("main:/my_go#camera")`; render_script.cpp:RenderScript_SetCamera resolves a non-number camera through ResolveURL, which also takes a hash',
+      reason: `render_script.cpp:RenderScript_SetCamera reads the camera with CheckRenderCamera; ${CAMERA_ADDRESS_REASON}`,
+      binding: CAMERA_ADDRESS_BINDING,
     },
   ],
   [
@@ -1015,17 +1143,32 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["number"],
       reason:
         "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns; 1.13.2 types the slot `render_predicate`, whose type mapping is that brand",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_Draw",
+        contains: "HPredicate* tmp = RenderScriptPredicate_Check(L, 1);",
+      },
     },
   ],
-  ...(["enable_state", "disable_state"] as const).map(
-    (name) =>
+  ...(
+    [
+      ["enable_state", "RenderScript_EnableState"],
+      ["disable_state", "RenderScript_DisableState"],
+    ] as const
+  ).map(
+    ([name, cFunction]) =>
       [
         `render.${name}:param:state`,
         {
           adds: "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
           removes: ["graphics.State"],
           upstream: ["graphics.STATE"],
-          reason: `render_script.cpp:RenderScript_${name === "enable_state" ? "Enable" : "Disable"}State raises "Invalid state" on any state but the six it lists, so graphics.STATE_SCISSOR_TEST and graphics.STATE_ALPHA_TEST_SUPPORTED are rejected`,
+          reason: `render_script.cpp:${cFunction} raises "Invalid state" on any state but the six it lists, so graphics.STATE_SCISSOR_TEST and graphics.STATE_ALPHA_TEST_SUPPORTED are rejected`,
+          binding: {
+            file: "render/src/render/render_script.cpp",
+            cFunction,
+            contains: RENDER_STATE_CHECK,
+          },
         },
       ] as const,
   ),
@@ -1046,6 +1189,11 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
           upstream: ["number"],
           reason:
             'render_script.cpp:RenderScript_SetBlendFuncSeparate raises "Invalid blend factor" on any value CheckBlendFactor does not list',
+          binding: {
+            file: "render/src/render/render_script.cpp",
+            cFunction: "RenderScript_SetBlendFuncSeparate",
+            contains: "if (!CheckBlendFactor(factors[f]))",
+          },
         },
       ] as const,
   ),
@@ -1056,7 +1204,12 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["string", "hash", "url", "table"],
       retypedUpstream: [["string", "hash", "url", "(string|hash|url)[]"]],
       reason:
-        "example `go.delete(true)` deletes the script game object and its children; 1.13.2 types the id list but still omits `boolean`",
+        "gameobject_script.cpp:Script_Delete reads a boolean argument 1 as the recursive flag for the script's own game object, as in the example `go.delete(true)`; 1.13.2 types the id list but still omits `boolean`",
+      binding: {
+        file: "gameobject/src/gameobject/gameobject_script.cpp",
+        cFunction: "Script_Delete",
+        contains: "recursive = lua_toboolean(L, 1); lua_pop(L, 1);",
+      },
     },
   ],
   [
@@ -1064,7 +1217,14 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "string",
       upstream: ["hash"],
-      reason: 'sys.load_buffer example `buffer.get_bytes(my_buffer, "data")`',
+      reason:
+        'script_buffer.cpp:GetBytes never reads argument 2, so the stream name the sys.load_buffer example passes as a string, `buffer.get_bytes(my_buffer, "data")`, is accepted',
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_buffer.cpp",
+        cFunction: "GetBytes",
+        contains: "dmScript::CheckBufferUnpack(L, 1);",
+        lacks: "L, 2",
+      },
     },
   ],
   [
@@ -1072,29 +1232,33 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     {
       adds: "Vector3",
       upstream: ["quaternion", "vector4"],
-      reason: "gui.set example `gui.set_rotation(node, vmath.vector3(0,0,45))`",
-    },
-  ],
-  [
-    "sys.save:param:table",
-    {
-      adds: "readonly unknown[]",
-      upstream: ["table"],
-      retypedUpstream: [["table<any, any>"]],
       reason:
-        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.save`; 1.13.2\'s `table<any, any>` emits a `LuaTable`, which refuses an array',
+        "gui_script.cpp:LuaSetRotation reads a vector3 as euler angles, as in the gui.set example `gui.set_rotation(node, vmath.vector3(0,0,45))`",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaSetRotation",
+        contains: "if ((v3 = dmScript::ToVector3(L, 2)))",
+      },
     },
   ],
-  [
-    "sys.serialize:param:table",
-    {
-      adds: "readonly unknown[]",
-      upstream: ["table"],
-      retypedUpstream: [["table<any, any>"]],
-      reason:
-        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.serialize`; 1.13.2\'s `table<any, any>` emits a `LuaTable`, which refuses an array',
-    },
-  ],
+  ...(
+    [
+      ["save", "Sys_Save", "luaL_checktype(L, 2, LUA_TTABLE);"],
+      ["serialize", "Sys_Serialize", "luaL_checktype(L, 1, LUA_TTABLE);"],
+    ] as const
+  ).map(
+    ([name, cFunction, contains]) =>
+      [
+        `sys.${name}:param:table`,
+        {
+          adds: "readonly unknown[]",
+          upstream: ["table"],
+          retypedUpstream: [["table<any, any>"]],
+          reason: `script_sys.cpp:${cFunction} takes any table with luaL_checktype, an array such as the example's \`table.insert\` builds included; 1.13.2's \`table<any, any>\` emits a \`LuaTable\`, which refuses an array`,
+          binding: { file: "script/src/script_sys.cpp", cFunction, contains },
+        },
+      ] as const,
+  ),
   [
     "window.set_dim_mode:param:mode",
     {
@@ -1103,15 +1267,29 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       upstream: ["window.DIMMING"],
       reason:
         'script_window.cpp:SetDimMode raises "The dim mode specified is not supported." for anything but DIMMING_ON and DIMMING_OFF',
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_window.cpp",
+        cFunction: "SetDimMode",
+        contains: 'return luaL_error(L, "The dim mode specified is not supported.");',
+      },
     },
   ],
-  ...(["texture", "render_target"] as const).map((handle): [string, ParamTypeCorrection] => [
+  ...(
+    [
+      ["texture", "GetTextureInfo", "texture_handle"],
+      ["render_target", "GetRenderTargetInfo", "rt_handle"],
+    ] as const
+  ).map(([handle, cFunction, local]): [string, ParamTypeCorrection] => [
     `resource.get_${handle}_info:param:path`,
     {
       adds: "number",
       upstream: ["hash", "string", handle],
-      reason:
-        "script_resource.cpp reads any number in slot 1 as the handle, which `info.handle` returns and older targets declared as `number`",
+      reason: `script_resource.cpp:${cFunction} reads any number in slot 1 as the handle, which \`info.handle\` returns and older targets declared as \`number\``,
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+        cFunction,
+        contains: `if (lua_isnumber(L, 1)) { ${local} = lua_tonumber(L, 1);`,
+      },
     },
   ]),
   [
@@ -1120,7 +1298,13 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       adds: "number",
       upstream: ["tilemap.TRANSFORM"],
       reason:
-        "a bitmask: the ref-doc example passes tilemap.H_FLIP + tilemap.V_FLIP + tilemap.ROTATE_90, a sum no single TRANSFORM member names",
+        "script_tilemap.cpp:TileMap_SetTile reads the transform as an integer bitmask up to MAX_TRANSFORM_FLAG, so a sum such as the example's tilemap.H_FLIP + tilemap.V_FLIP + tilemap.ROTATE_90 is accepted",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_tilemap.cpp",
+        cFunction: "TileMap_SetTile",
+        contains:
+          "bitmask = dmMath::Abs(luaL_checkinteger(L, 6)); if (bitmask > MAX_TRANSFORM_FLAG)",
+      },
     },
   ],
 ]);
@@ -3780,23 +3964,46 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // `<element>:<kind>:<slot>:<field>`, mirroring NESTED_FIELD_CURATIONS; a field
 // one level down is `<field>.<member>`, or `<field>[].<member>` inside a list.
 //
-// Unpinned records below rest on ref-doc tokens or prose. The atlas animation
+// Every record carries an engine binding pin and applies only when the matching
+// `EmitOptions.bindingEvidence` key holds for the target. The atlas animation
 // `playback` field is documented as `constant` with the prose "the default value
-// is go.PLAYBACK_ONCE_FORWARD", which names the enum the bare token cannot; its
-// records also carry engine binding pins and apply only when the matching
-// `EmitOptions.bindingEvidence` key holds for the target.
+// is go.PLAYBACK_ONCE_FORWARD", which names the enum the bare token cannot.
 //
 // `gui.set`'s `options.key` is documented as `hash`, while upstream's own
-// example sets a named font with `{ key = "my_font_name" }`.
+// example sets a named font with `{ key = "my_font_name" }`, and
+// gameobject_script_util.cpp:ParsePropertyOptionKey reads it with
+// CheckHashOrString.
 //
 // `render.set_render_target`'s `options.transient` is documented as `table`
-// with the prose "a list of buffer types", and upstream's example passes
-// graphics.BUFFER_TYPE_* constants.
+// with the prose "a list of buffer types", and
+// render_script.cpp:RenderScript_SetRenderTarget ORs each element in as a
+// buffer type bit.
 //
 // `resource.create_sound_data`'s `options.data` is documented as `string`, while
 // script_resource.cpp:CreateSoundData reads it with CheckBufferOrString.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
+// gamesys_script.cpp:GetConstantValuesFromLua, behind both set_constants, reads
+// a table value as a list of vectors and matrices.
+const CONSTANT_VALUE_BINDING: BindingPin = {
+  file: "gamesys/src/gamesys/gamesys_script.cpp",
+  cFunction: "GetConstantValuesFromLua",
+  contains:
+    "if (dmScript::IsVector4(L, -1) || dmScript::IsVector3(L, -1) || lua_isnumber(L, -1)) { count++; } else if (dmScript::IsMatrix4(L, -1)) { count += 4; }",
+};
+const SOUND_DATA_BINDING: BindingPin = {
+  file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+  cFunction: "CreateSoundData",
+  contains: 'lua_getfield(L, -1, "data"); data = CheckBufferOrString(L, -1, &data_size);',
+};
+// gamesys_script.cpp:PushTextureInfo pushes the usage flags as one integer for
+// resource.get_texture_info, each resource.get_render_target_info attachment
+// and material.get_textures.
+const TEXTURE_INFO_FLAGS_BINDING: BindingPin = {
+  file: "gamesys/src/gamesys/gamesys_script.cpp",
+  cFunction: "PushTextureInfo",
+  contains: 'lua_pushinteger(L, texture_flags); lua_setfield(L, -2, "flags");',
+};
 const ATLAS_BINDING_FILE = "gamesys/src/gamesys/scripts/script_resource.cpp";
 const ATLAS_INPUT_PLAYBACK_BINDING: BindingPin = {
   file: ATLAS_BINDING_FILE,
@@ -3814,11 +4021,41 @@ export interface TableFieldTypeOverride {
   readonly binding?: BindingPin;
 }
 
-export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverride> = new Map([
-  ["compute.set_constants:param:constants:value", { ts: CONSTANT_VALUE_TS }],
-  ["material.set_constants:param:constants:value", { ts: CONSTANT_VALUE_TS }],
-  ["material.set_vertex_attributes:param:attributes:value", { ts: ATTRIBUTE_VALUE_TS }],
-  ["material.get_vertex_attributes:return:table:value", { ts: ATTRIBUTE_VALUE_TS }],
+export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverride> = new Map<
+  string,
+  TableFieldTypeOverride
+>([
+  [
+    "compute.set_constants:param:constants:value",
+    { ts: CONSTANT_VALUE_TS, binding: CONSTANT_VALUE_BINDING },
+  ],
+  [
+    "material.set_constants:param:constants:value",
+    { ts: CONSTANT_VALUE_TS, binding: CONSTANT_VALUE_BINDING },
+  ],
+  [
+    "material.set_vertex_attributes:param:attributes:value",
+    {
+      ts: ATTRIBUTE_VALUE_TS,
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_material.cpp",
+        cFunction: "Material_SetVertexAttributes",
+        contains: "values_float[i] = luaL_checknumber(L, -1);",
+      },
+    },
+  ],
+  [
+    "material.get_vertex_attributes:return:table:value",
+    {
+      ts: ATTRIBUTE_VALUE_TS,
+      binding: {
+        file: "gamesys/src/gamesys/gamesys_script.cpp",
+        cFunction: "PushVertexAttributeValue",
+        contains:
+          "lua_newtable(L); for (uint32_t i = 0; i < element_count; ++i) { lua_pushnumber(L, values[i]); lua_rawseti(L, -2, i + 1); }",
+      },
+    },
+  ],
   [
     "resource.set_atlas:param:table:animations[].playback",
     { ts: "go.Playback", binding: ATLAS_INPUT_PLAYBACK_BINDING },
@@ -3831,32 +4068,90 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverr
     "resource.get_atlas:return:data:animations[].playback",
     { ts: "go.Playback", binding: ATLAS_OUTPUT_PLAYBACK_BINDING },
   ],
-  ["render.set_render_target:param:options:transient", { ts: "graphics.BufferType[]" }],
-  ["resource.create_sound_data:param:options:data", { ts: 'string | Opaque<"buffer">' }],
+  [
+    "render.set_render_target:param:options:transient",
+    {
+      ts: "graphics.BufferType[]",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_SetRenderTarget",
+        contains: "transient_buffer_types |= luaL_checkint(L, -1);",
+      },
+    },
+  ],
+  [
+    "resource.create_sound_data:param:options:data",
+    { ts: 'string | Opaque<"buffer">', binding: SOUND_DATA_BINDING },
+  ],
   // The option bags 1.13.2 types as a STRUCT, whose members still carry the
   // narrower upstream types: `gui.set`'s (its slot is declared in
   // gui-overloads.d.ts) and `resource.create_sound_data`'s.
-  ["gui.set_options:member:key", { ts: "string | Hash" }],
-  ["resource.sound_data_options:member:data", { ts: 'string | Opaque<"buffer">' }],
+  [
+    "gui.set_options:member:key",
+    {
+      ts: "string | Hash",
+      binding: {
+        file: "gameobject/src/gameobject/gameobject_script_util.cpp",
+        cFunction: "ParsePropertyOptionKey",
+        contains:
+          'lua_getfield(L, index, "key"); if (!lua_isnil(L, -1)) { dmhash_t value = dmScript::CheckHashOrString(L, -1);',
+      },
+    },
+  ],
+  [
+    "resource.sound_data_options:member:data",
+    { ts: 'string | Opaque<"buffer">', binding: SOUND_DATA_BINDING },
+  ],
   // Bitmasks typed as their flag enum: the create_texture example passes
   // TEXTURE_USAGE_FLAG_STORAGE + TEXTURE_USAGE_FLAG_SAMPLE, a sum no single member
-  // names, and a reported value combines them the same way.
+  // names, and a reported value combines them the same way. Each binding reads
+  // or pushes the flags as one integer.
   ...(
     [
-      "resource.texture_creation_params",
-      "resource.texture_info",
-      "resource.render_target_attachment_info",
-      "material.texture_info",
+      [
+        "resource.texture_creation_params",
+        {
+          file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+          cFunction: "CheckCreateTextureResourceParams",
+          contains:
+            'uint32_t usage_flags = (uint32_t) CheckTableInteger(L, 2, "flags", dmGraphics::TEXTURE_USAGE_FLAG_SAMPLE);',
+        },
+      ],
+      ["resource.texture_info", TEXTURE_INFO_FLAGS_BINDING],
+      ["resource.render_target_attachment_info", TEXTURE_INFO_FLAGS_BINDING],
+      ["material.texture_info", TEXTURE_INFO_FLAGS_BINDING],
     ] as const
   ).map(
-    (struct) => [`${struct}:member:flags`, { ts: "graphics.TextureUsageFlag | number" }] as const,
+    ([struct, binding]) =>
+      [`${struct}:member:flags`, { ts: "graphics.TextureUsageFlag | number", binding }] as const,
   ),
-  ["render.render_target_buffer_params:member:flags", { ts: "render.RenderTargetFlag | number" }],
+  [
+    "render.render_target_buffer_params:member:flags",
+    {
+      ts: "render.RenderTargetFlag | number",
+      binding: {
+        file: "render/src/render/render_script.cpp",
+        cFunction: "RenderScript_RenderTarget",
+        contains: "int flags = luaL_checkinteger(L, -1);",
+      },
+    },
+  ],
   // gamesys_script.cpp:PushSampler, behind both get_samplers, pushes the raw
   // texture type; NormalizeBindableTextureType never runs there. A separate
   // sampler reports TEXTURE_TYPE_SAMPLER (6) and a separate texture binding one
   // of the four TEXTURE_TYPE_TEXTURE_* (7-10), none of which has a Lua constant.
-  ["material.sampler_info:member:type", { ts: "graphics.TextureType | 6 | 7 | 8 | 9 | 10" }],
+  [
+    "material.sampler_info:member:type",
+    {
+      ts: "graphics.TextureType | 6 | 7 | 8 | 9 | 10",
+      binding: {
+        file: "gamesys/src/gamesys/gamesys_script.cpp",
+        cFunction: "PushSampler",
+        contains:
+          'lua_pushinteger(L, (lua_Integer) info.m_TextureType); lua_setfield(L, -2, "type");',
+      },
+    },
+  ],
   // Callback parameters a pre-1.13.2 `<dl>` types against the engine: the
   // CONTEXT_EVENT_* values `event_type` takes are registered as numbers, the
   // particle fx callback receives the node or nil, and a successful prewarm

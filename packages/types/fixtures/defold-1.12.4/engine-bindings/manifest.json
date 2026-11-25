@@ -173,6 +173,11 @@
       "sha256": "76454ab89b5e3425fda9f956dd8d4c8ee2fc36f8df239c828edb13ef5dfb4fbc"
     },
     {
+      "path": "engine/script/src/luasocket/except.c",
+      "blobSha": "002e701068efba4ebe6c9e4969f0bf80d834120a",
+      "sha256": "0243d84fbbd01cd9c8c437e7d6fa651c9d02cda8ab6bffebfb3eae0db8abe3f6"
+    },
+    {
       "path": "engine/script/src/script.cpp",
       "blobSha": "c5a6dddb6d98a27968a4fe1cfe4090ef50c590cd",
       "sha256": "a826458883dac01a3f196cc761fd8b9ac0665f16da9b4c9cefb373373c6e4402"

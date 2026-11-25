@@ -1810,16 +1810,19 @@ describe("per-target binding evidence", () => {
     expect(evidenceOn("defold-1.12.4")).toEqual([]);
   });
 
-  test("a return correction whose function the target lacks still throws", () => {
+  test("a return correction has no evidence where the target lacks its function", () => {
+    // 1.12.4 vendors script_graphics.cpp but predates Graphics_GetAdapterInfo.
     const missing: readonly [string, ReturnTypeCorrection][] = [
       [
         "graphics.get_adapter_info",
         { nullable: true, upstream: ["table"], reason: "pins a function", binding: STORAGE_LIMIT },
       ],
     ];
-    expect(() => targetBindingOptions(target("defold-1.12.4"), missing, [])).toThrow(
-      /Graphics_GetAdapterInfo/,
-    );
+    const evidenceOn = (id: string) => [
+      ...(targetBindingOptions(target(id), missing, [], [], [], []).bindingEvidence ?? ["missing"]),
+    ];
+    expect(evidenceOn("defold-1.12.4")).toEqual([]);
+    expect(evidenceOn("defold-1.14.0")).toEqual(["graphics.get_adapter_info"]);
   });
 
   test("an unvendored target gets an empty evidence set", () => {

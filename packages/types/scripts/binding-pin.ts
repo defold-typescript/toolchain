@@ -69,13 +69,22 @@ export function enginePinHolds(targetId: string, pin: EngineSourcePin): boolean 
   return containsRun(tokens, snippet(`engine pin ${where}`, pin.contains));
 }
 
+function definedPinHolds(targetId: string, pin: BindingPin): boolean {
+  return (
+    bindingVendorsFile(targetId, pin.file) &&
+    bindingDefinesFunction(targetId, pin.file, pin.cFunction) &&
+    bindingPinHolds(targetId, pin)
+  );
+}
+
 // The binding-pinned correction keys whose pin holds in the target's vendored
 // engine source; empty for a target with none (a ref-doc target). A struct
 // member addition whose function the target does not define has no evidence
 // there: a release older than the function has neither the struct nor the push.
-// Likewise a correction whose file the target does not vendor: a release older
-// than the module declares no slot for it to correct. A key range with an
-// `engine` field is evidence where every one of its pins holds.
+// Likewise a correction whose file the target does not vendor, or whose
+// function it does not define: a release older than the module or the function
+// declares no slot for it to correct. A key range with an `engine` field is
+// evidence where every one of its pins holds.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
@@ -86,31 +95,9 @@ export function bindingEvidenceFor(
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
-  for (const [key, { binding }] of entries) {
-    if (
-      binding !== undefined &&
-      bindingVendorsFile(target.id, binding.file) &&
-      bindingPinHolds(target.id, binding)
-    ) {
-      evidence.add(key);
-    }
-  }
-  for (const [key, { binding }] of parameters) {
-    if (
-      binding !== undefined &&
-      bindingVendorsFile(target.id, binding.file) &&
-      bindingPinHolds(target.id, binding)
-    ) {
-      evidence.add(key);
-    }
-  }
-  for (const [key, { binding }] of fields) {
-    if (
-      binding !== undefined &&
-      bindingVendorsFile(target.id, binding.file) &&
-      bindingPinHolds(target.id, binding)
-    ) {
-      evidence.add(key);
+  for (const corrections of [entries, parameters, fields]) {
+    for (const [key, { binding }] of corrections) {
+      if (binding !== undefined && definedPinHolds(target.id, binding)) evidence.add(key);
     }
   }
   for (const [key, { binding }] of additions) {

@@ -523,6 +523,7 @@ engine/resource/src/test/test_resource_chunk_cache.cpp
 engine/rig/src/rig.cpp
 engine/rig/src/rig_null.cpp
 engine/rig/src/test/test_rig.cpp
+engine/script/src/luasocket/except.c
 engine/script/src/script.cpp
 engine/script/src/script_bitop.cpp
 engine/script/src/script_ddf.cpp

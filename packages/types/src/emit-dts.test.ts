@@ -113,6 +113,7 @@ import {
   PARAM_TYPE_CORRECTIONS,
   PROPERTIES_INTERFACE,
   parseTableFields,
+  RETURN_TYPE_CORRECTIONS,
   recoverCallbackSignature,
   routeTypeDeclarations,
   SLOT_LEVEL_LIST_PROSE,
@@ -128,6 +129,16 @@ import { hashExampleSource } from "./example-store";
 import { parseLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
+
+// What a vendored target whose engine source shows every binding pin supplies:
+// each binding-pinned correction key, so the correction applies.
+const EVERY_PIN_HOLDS = {
+  bindingEvidence: new Set(
+    [...PARAM_TYPE_CORRECTIONS, ...RETURN_TYPE_CORRECTIONS, ...TABLE_FIELD_TYPE_OVERRIDES]
+      .filter(([, entry]) => entry.binding !== undefined)
+      .map(([key]) => key),
+  ),
+};
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
   const fn = module.functions.find((candidate) => candidate.name === name);
@@ -1079,14 +1090,14 @@ describe("emitDeclarations", () => {
     });
 
     test("appends the entry's members and keeps a trailing optional ?", () => {
-      const out = emitDeclarations(moduleWith(elementName, [lead, slot(true)]));
+      const out = emitDeclarations(moduleWith(elementName, [lead, slot(true)]), EVERY_PIN_HOLDS);
       expect(out).toContain(
         `function ${localName}(lead: number, ${slotName}?: ${mapped} | ${adds}): void;`,
       );
     });
 
     test("appends the entry's members and keeps a required slot required", () => {
-      const out = emitDeclarations(moduleWith(elementName, [slot(false), lead]));
+      const out = emitDeclarations(moduleWith(elementName, [slot(false), lead]), EVERY_PIN_HOLDS);
       expect(out).toContain(
         `function ${localName}(${slotName}: ${mapped} | ${adds}, lead: number): void;`,
       );
@@ -1109,26 +1120,29 @@ describe("emitDeclarations", () => {
     const namespace = elementName.slice(0, elementName.lastIndexOf("."));
     const localName = elementName.slice(elementName.lastIndexOf(".") + 1);
     const emitted = (name: string) =>
-      emitDeclarations({
-        namespace,
-        brief: "",
-        description: "",
-        functions: [
-          {
-            name,
-            brief: "",
-            description: "",
-            parameters: [
-              { name: slotName, doc: "", types: [...correction.upstream], isOptional: false },
-            ],
-            returnValues: [],
-          },
-        ],
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      });
+      emitDeclarations(
+        {
+          namespace,
+          brief: "",
+          description: "",
+          functions: [
+            {
+              name,
+              brief: "",
+              description: "",
+              parameters: [
+                { name: slotName, doc: "", types: [...correction.upstream], isOptional: false },
+              ],
+              returnValues: [],
+            },
+          ],
+          variables: [],
+          constants: [],
+          properties: [],
+          typedefs: [],
+        },
+        EVERY_PIN_HOLDS,
+      );
     const slotType = (out: string, local: string) =>
       new RegExp(`function ${local}\\(${slotName}: (.+)\\): void;`).exec(out)?.[1] ?? "";
 
@@ -2843,7 +2857,7 @@ describe("engine-required param fields", () => {
   });
 
   test("render.draw takes the predicate handle render.predicate returns", () => {
-    const out = emitDeclarations(parseDefoldApiDoc(renderDoc));
+    const out = emitDeclarations(parseDefoldApiDoc(renderDoc), EVERY_PIN_HOLDS);
     expect(signatureLine(out, "function predicate(")).toContain('): Opaque<"render_predicate">;');
     expect(signatureLine(out, "function draw(")).toContain(
       'draw(predicate: Opaque<"render_predicate">,',
@@ -3117,14 +3131,17 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("keyed-object curation re-keys the parser-recovered args table by name", () => {
     const module = parseDefoldApiDoc(computeDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [
-        requireFunction(module, "compute.set_constants"),
-        requireFunction(module, "compute.set_samplers"),
-        requireFunction(module, "compute.set_textures"),
-      ],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [
+          requireFunction(module, "compute.set_constants"),
+          requireFunction(module, "compute.set_samplers"),
+          requireFunction(module, "compute.set_textures"),
+        ],
+      },
+      EVERY_PIN_HOLDS,
+    );
     // set_constants keeps the keyed-by-name layer, and the value field's
     // documented array branch is pinned via TABLE_FIELD_TYPE_OVERRIDES.
     expect(out).toContain(
@@ -3140,13 +3157,16 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("material vertex-attribute value override emits the number[] array branch", () => {
     const module = parseDefoldApiDoc(materialDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [
-        requireFunction(module, "material.set_vertex_attributes"),
-        requireFunction(module, "material.get_vertex_attributes"),
-      ],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [
+          requireFunction(module, "material.set_vertex_attributes"),
+          requireFunction(module, "material.get_vertex_attributes"),
+        ],
+      },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
       "attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[];",
     );
@@ -3223,10 +3243,13 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("render.set_render_target takes its transient buffers as a list of buffer types", () => {
     const module = parseDefoldApiDoc(renderDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "render.set_render_target")],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [requireFunction(module, "render.set_render_target")],
+      },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain("options?: { transient?: graphics.BufferType[] }");
   });
 
@@ -3391,10 +3414,13 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("collectionproxy.get_resources recovers a string[] return", () => {
     const module = parseDefoldApiDoc(collectionproxyDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "collectionproxy.get_resources")],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [requireFunction(module, "collectionproxy.get_resources")],
+      },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
       "function get_resources(collectionproxy: Url | string | Hash): string[];",
     );
@@ -3403,10 +3429,13 @@ describe("TABLE_SLOT_CURATIONS", () => {
 
   test("render.predicate recovers a (string | Hash)[] tags param", () => {
     const module = parseDefoldApiDoc(renderDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [requireFunction(module, "render.predicate")],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [requireFunction(module, "render.predicate")],
+      },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
       'function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;',
     );
@@ -4045,6 +4074,7 @@ describe("camera/font residual fidelity recovery", () => {
           returnValues: [],
         },
       ]),
+      EVERY_PIN_HOLDS,
     );
     expect(out).toContain(
       "function set_fov(camera: Url | number | string | Hash | undefined, fov: number): void;",
@@ -4069,6 +4099,7 @@ describe("camera/font residual fidelity recovery", () => {
           returnValues: [],
         },
       ]),
+      EVERY_PIN_HOLDS,
     );
     expect(out).toContain("function get_fov(camera?: Url | number | string | Hash): void;");
     expect(out).not.toContain("| undefined");
@@ -4147,15 +4178,18 @@ describe("slot-level array-of-object recovery", () => {
 
   test("material records-collection getters emit arrays of records, textures a slot-keyed map", () => {
     const module = parseDefoldApiDoc(materialDoc);
-    const out = emitDeclarations({
-      ...module,
-      functions: [
-        requireFunction(module, "material.get_constants"),
-        requireFunction(module, "material.get_samplers"),
-        requireFunction(module, "material.get_textures"),
-        requireFunction(module, "material.get_vertex_attributes"),
-      ],
-    });
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [
+          requireFunction(module, "material.get_constants"),
+          requireFunction(module, "material.get_samplers"),
+          requireFunction(module, "material.get_textures"),
+          requireFunction(module, "material.get_vertex_attributes"),
+        ],
+      },
+      EVERY_PIN_HOLDS,
+    );
     expect(out).toContain(
       "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
     );
@@ -4492,7 +4526,7 @@ describe("url-parameter address retyping", () => {
 
   test("a triple-typed slot the committed table leaves unclassified keeps its string member", () => {
     const module = parseDefoldApiDoc(modelDoc);
-    const out = emitDeclarations(module, { urlParameters: committed });
+    const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
     // `model.get_mesh_enabled` carries the `string | hash | url` triple on its
     // url slot, and the table does not classify it: the triple alone must not
     // retype. (`mesh_id` drops `Url` through PARAM_TYPE_CORRECTIONS.)
@@ -5141,7 +5175,7 @@ describe("return-side optionality corrections", () => {
   });
 
   test("b2d.get_body carries the prose-documented nil alternative", () => {
-    expect(signatureLine(emitDeclarations(b2d), "function get_body(")).toBe(
+    expect(signatureLine(emitDeclarations(b2d, EVERY_PIN_HOLDS), "function get_body(")).toBe(
       'function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;',
     );
   });
@@ -5152,11 +5186,11 @@ describe("return-side optionality corrections", () => {
   });
 
   test("the ray casts carry the prose-documented nil on a miss", () => {
-    const shape = emitDeclarations(parseDefoldApiDoc(b2dShapeDoc));
+    const shape = emitDeclarations(parseDefoldApiDoc(b2dShapeDoc), EVERY_PIN_HOLDS);
     for (const line of shape.split("\n").filter((l) => l.includes("function ray_cast("))) {
       expect(line.trim()).toEndWith("iterations: number } | undefined;");
     }
-    const world = emitDeclarations(parseDefoldApiDoc(b2dWorldDoc));
+    const world = emitDeclarations(parseDefoldApiDoc(b2dWorldDoc), EVERY_PIN_HOLDS);
     const closest = world.split("\n").filter((l) => l.includes("function cast_ray_closest("));
     expect(closest).toHaveLength(2);
     for (const line of closest) expect(line.trim()).toEndWith("leaf_visits: number } | undefined;");
@@ -5262,7 +5296,10 @@ describe("return-side optionality corrections", () => {
 
   test("a slot-scoped correction rewrites one value of a multi-return", () => {
     expect(
-      signatureLine(emitDeclarations(parseDefoldApiDoc(gui113Doc)), "function new_texture("),
+      signatureLine(
+        emitDeclarations(parseDefoldApiDoc(gui113Doc), EVERY_PIN_HOLDS),
+        "function new_texture(",
+      ),
     ).toEndWith("): LuaMultiReturn<[boolean, number | undefined]>;");
   });
 
@@ -6629,7 +6666,7 @@ describe("engine slot rules", () => {
     const struct = "resource.SoundDataOptions";
     expect(
       signatureLine(
-        emitDeclarations(only(resource114Doc, "resource.create_sound_data")),
+        emitDeclarations(only(resource114Doc, "resource.create_sound_data"), EVERY_PIN_HOLDS),
         "function create_sound_data(",
       ),
     ).toContain(
@@ -6638,7 +6675,7 @@ describe("engine slot rules", () => {
     const table = '{ data: string | Opaque<"buffer">; filesize?: number; partial?: boolean }';
     expect(
       signatureLine(
-        emitDeclarations(only(resourceDoc, "resource.create_sound_data")),
+        emitDeclarations(only(resourceDoc, "resource.create_sound_data"), EVERY_PIN_HOLDS),
         "function create_sound_data(",
       ),
     ).toContain(
@@ -6648,6 +6685,7 @@ describe("engine slot rules", () => {
 
   test("an alongside slot is required and narrowed only in the call that requires its partner", () => {
     const out = emitDeclarations(only(goDoc, "go.delete"), {
+      ...EVERY_PIN_HOLDS,
       nilRaisingSlots: new Map([["go.delete", [2]]]),
     });
     const [shorter, longer, ...rest] = signaturesOf(out, "function _delete(");
@@ -6661,7 +6699,7 @@ describe("engine slot rules", () => {
 
   test("an emit with no binding slots leaves an alongside slot's single call alone", () => {
     const [line, ...rest] = signaturesOf(
-      emitDeclarations(only(goDoc, "go.delete")),
+      emitDeclarations(only(goDoc, "go.delete"), EVERY_PIN_HOLDS),
       "function _delete(",
     );
     expect(rest).toEqual([]);
@@ -7030,7 +7068,7 @@ describe("overload slot aliases", () => {
 
 describe("signatures upstream documents in prose", () => {
   function emittedLine(doc: Parameters<typeof parseDefoldApiDoc>[0], needle: string): string {
-    const out = emitDeclarations(parseDefoldApiDoc(doc));
+    const out = emitDeclarations(parseDefoldApiDoc(doc), EVERY_PIN_HOLDS);
     const line = out.split("\n").find((l) => l.includes(needle));
     if (line === undefined) throw new Error(`no emitted line contains ${needle}`);
     return line;
@@ -7098,7 +7136,7 @@ describe("corrections the engine bindings demand", () => {
   // One representative slot per correction class, emitted from the real
   // fixture, so a correction keyed to a slot the emitter never reads reds here.
   function line(doc: unknown, marker: string): string {
-    const out = emitDeclarations(parseDefoldApiDoc(doc));
+    const out = emitDeclarations(parseDefoldApiDoc(doc), EVERY_PIN_HOLDS);
     const found = out.split("\n").find((l) => l.includes(marker));
     if (found === undefined) throw new Error(`no emitted line contains ${marker}`);
     return found.trim();
@@ -8004,7 +8042,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
   });
 
   test("resource.sound_data_options emits its member-keyed required, retyped data", () => {
-    const lines = emitDeclarations(resource113_2).split("\n");
+    const lines = emitDeclarations(resource113_2, EVERY_PIN_HOLDS).split("\n");
     const start = lines.indexOf("  interface SoundDataOptions {");
     expect(start).toBeGreaterThan(-1);
     const end = lines.indexOf("  }", start);
@@ -8029,6 +8067,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
           },
         ],
       }),
+      EVERY_PIN_HOLDS,
     );
     expect(out).toContain("    flags?: graphics.TextureUsageFlag | number;");
   });
@@ -8061,7 +8100,7 @@ describe("upstream-pinned corrections", () => {
   ): string =>
     emitDeclarations(
       parseDefoldApiDoc({ info: { namespace }, elements: [element] }),
-      declaredTypes === undefined ? {} : { declaredTypes },
+      declaredTypes === undefined ? EVERY_PIN_HOLDS : { ...EVERY_PIN_HOLDS, declaredTypes },
     );
   const signature = (out: string, local: string): string =>
     out.split("\n").find((line) => line.includes(`function ${local}(`)) ?? "";
