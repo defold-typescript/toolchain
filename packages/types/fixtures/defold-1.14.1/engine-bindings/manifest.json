@@ -350,6 +350,26 @@
   ],
   "evidence": [
     {
+      "path": "engine/gameobject/src/gameobject/gameobject.cpp",
+      "blobSha": "90ce1b1226d48d8b4464d1abbbfb68b7511edfbc"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/camera_ddf.proto",
+      "blobSha": "baf30250b888bdca675a22852d90e6a2b9029c6a"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/gamesys_ddf.proto",
+      "blobSha": "d540c69dc7ff954faefe7c990fff60de5a7e5d39"
+    },
+    {
+      "path": "engine/gamesys/proto/gamesys/physics_ddf.proto",
+      "blobSha": "9455e7ce68c91f12a0857d4347a1f42d7276b5f2"
+    },
+    {
+      "path": "engine/gamesys/src/gamesys/components/comp_label.cpp",
+      "blobSha": "5a5c65d0e81f46e6e526173d86530f9525b12b0d"
+    },
+    {
       "path": "engine/gamesys/src/gamesys/components/comp_model.cpp",
       "blobSha": "faeffb924052acce555f875dbd005489f2902b34"
     },

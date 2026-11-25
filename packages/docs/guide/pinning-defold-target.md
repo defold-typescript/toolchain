@@ -378,6 +378,10 @@ How the surface is produced depends on the resolved version:
   So the engine types (`Vector3`, `Hash`, `Url`, …) are ambient globals — name
   them with no import, matching the namespace ergonomics (`vmath`, `go`, …) —
   and a pinned project compiles the same call sites an unpinned one does.
+  A correction the toolchain draws from Defold's engine source applies only to
+  the pre-baked versions, whose engine source it carries, so a generated surface
+  keeps the reference docs' types there: on `defold-1.9.8`, `label.scale` and
+  some built-in message payloads read as that release's reference states them.
 
 The `.defold-types/` directory is generated output, so build adds it to the
 project `.gitignore`. The materialized directory is reported in `--json` output

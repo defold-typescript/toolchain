@@ -1219,7 +1219,8 @@ describe("versioned regen drift guard", () => {
   test.each([...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))])(
     "%s: committed per-version builtin-messages.d.ts names only the target's own aliases",
     async (versionId) => {
-      const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+      const evidence = targetBindingOptions(regenTargetOf(versionId)).bindingEvidence;
+      const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, evidence ?? new Set(), {
         importsFrom: regenTargetOf(versionId).coreTypesImport,
         groupSpellings: messageGroupSpellings(
           VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === versionId),
@@ -1565,9 +1566,11 @@ describe("editor-script kind index", () => {
 
 describe("regen drift guard — builtin messages", () => {
   test("committed builtin-messages.d.ts matches a fresh pipeline run byte-for-byte", async () => {
-    const fresh = generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
-      groupSpellings: messageGroupSpellings(MODULE_MANIFEST),
-    });
+    const fresh = generateBuiltinMessagesDeclaration(
+      MESSAGES_MANIFEST,
+      DEFAULT_REGEN_OPTIONS.bindingEvidence ?? new Set(),
+      { groupSpellings: messageGroupSpellings(MODULE_MANIFEST) },
+    );
     const committed = await Bun.file(resolve(GENERATED, MESSAGES_MANIFEST.outFile)).text();
     if (committed !== fresh) {
       throw new Error(
@@ -1761,11 +1764,8 @@ describe("per-target binding evidence", () => {
   test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
     const options = targetBindingOptions(
       target("defold-1.14.0"),
-      entries,
+      [{ name: "RETURN_TYPE_CORRECTIONS", entries }],
       additions,
-      [],
-      [],
-      [],
       [],
     );
     expect([...(options.bindingEvidence ?? [])]).toEqual([
@@ -1795,11 +1795,11 @@ describe("per-target binding evidence", () => {
 
     const evidence = targetBindingOptions(
       target("defold-1.14.0"),
+      [
+        { name: "PARAM_TYPE_CORRECTIONS", entries: parameterCorrections },
+        { name: "TABLE_FIELD_TYPE_OVERRIDES", entries: fieldCorrections },
+      ],
       [],
-      [],
-      [],
-      parameterCorrections,
-      fieldCorrections,
       [],
     ).bindingEvidence;
     expect([...(evidence ?? [])]).toEqual([
@@ -1811,9 +1811,7 @@ describe("per-target binding evidence", () => {
   test("a struct member addition has no evidence where the target lacks its function", () => {
     // 1.13.1 binds the function without the push; 1.12.4 predates the function.
     const evidenceOn = (id: string) => [
-      ...(targetBindingOptions(target(id), [], additions, [], [], [], []).bindingEvidence ?? [
-        "missing",
-      ]),
+      ...(targetBindingOptions(target(id), [], additions, []).bindingEvidence ?? ["missing"]),
     ];
     expect(evidenceOn("defold-1.13.1")).toEqual([]);
     expect(evidenceOn("defold-1.12.4")).toEqual([]);
@@ -1828,9 +1826,12 @@ describe("per-target binding evidence", () => {
       ],
     ];
     const evidenceOn = (id: string) => [
-      ...(targetBindingOptions(target(id), missing, [], [], [], [], []).bindingEvidence ?? [
-        "missing",
-      ]),
+      ...(targetBindingOptions(
+        target(id),
+        [{ name: "RETURN_TYPE_CORRECTIONS", entries: missing }],
+        [],
+        [],
+      ).bindingEvidence ?? ["missing"]),
     ];
     expect(evidenceOn("defold-1.12.4")).toEqual([]);
     expect(evidenceOn("defold-1.14.0")).toEqual([
@@ -1841,7 +1842,11 @@ describe("per-target binding evidence", () => {
   test("an unvendored target gets an empty evidence set", () => {
     const refDoc = targets.find((candidate) => (candidate.source ?? null) !== null);
     if (!refDoc) throw new Error("api-targets.json: no ref-doc target");
-    const options = targetBindingOptions(refDoc, entries, additions);
+    const options = targetBindingOptions(
+      refDoc,
+      [{ name: "RETURN_TYPE_CORRECTIONS", entries }],
+      additions,
+    );
     expect([...(options.bindingEvidence ?? ["missing"])]).toEqual([]);
     expect(options.registeredConstants).toBeUndefined();
   });

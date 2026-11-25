@@ -1,14 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import {
-  type BindingPin,
-  type EngineSourcePin,
   type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
-  pinEvidenceKey,
   type ReturnTypeCorrection,
   type TableSlotCuration,
 } from "../src/emit-dts";
+import {
+  type BindingPin,
+  type CorrectionPins,
+  type EngineSourcePin,
+  pinEvidenceKey,
+} from "../src/engine-pin";
 import {
   bindingEvidenceFor,
   bindingPinHolds,
@@ -17,7 +20,9 @@ import {
   targetBindingOptions,
 } from "./binding-pin";
 import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
+import type { EnginePinnedTable } from "./engine-pinned-tables";
 import { type ApiTarget, loadApiTargets } from "./regen";
+import { REPLACEMENT_TABLES } from "./replacement-pins";
 import { vendoredTargets } from "./sync-engine-bindings";
 
 const TARGET = "defold-1.14.0";
@@ -137,6 +142,13 @@ function bound(name: string, slots: BindingSlot[]): BindingFunction {
   };
 }
 
+function table(
+  name: string,
+  ...entries: readonly (readonly [string, CorrectionPins])[]
+): EnginePinnedTable {
+  return { name, entries };
+}
+
 describe("bindingEvidenceFor", () => {
   const meshCase: readonly [string, ReturnTypeCorrection] = [
     "bullet3d.shape.get_shape",
@@ -154,13 +166,23 @@ describe("bindingEvidenceFor", () => {
 
   test("a return correction's pin is evidence where the target's binding shows it", () => {
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [], [], [], []),
+      ...bindingEvidenceFor(
+        apiTarget("defold-1.14.0"),
+        [table("RETURN_TYPE_CORRECTIONS", meshCase)],
+        [],
+        [],
+      ),
     ]).toEqual(["RETURN_TYPE_CORRECTIONS:bullet3d.shape.get_shape"]);
   });
 
   test("a release that does not ship the pinned file shows no evidence", () => {
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [], [], [], []),
+      ...bindingEvidenceFor(
+        apiTarget("defold-1.13.1"),
+        [table("RETURN_TYPE_CORRECTIONS", meshCase)],
+        [],
+        [],
+      ),
     ]).toEqual([]);
   });
 
@@ -179,10 +201,20 @@ describe("bindingEvidenceFor", () => {
       },
     ];
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.12.4"), [], [], [], [blendCase], [], []),
+      ...bindingEvidenceFor(
+        apiTarget("defold-1.12.4"),
+        [table("PARAM_TYPE_CORRECTIONS", blendCase)],
+        [],
+        [],
+      ),
     ]).toEqual([]);
     expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.13.0"), [], [], [], [blendCase], [], []),
+      ...bindingEvidenceFor(
+        apiTarget("defold-1.13.0"),
+        [table("PARAM_TYPE_CORRECTIONS", blendCase)],
+        [],
+        [],
+      ),
     ]).toEqual(["PARAM_TYPE_CORRECTIONS:render.set_blend_func_separate:param:source_factor_color"]);
   });
 
@@ -234,7 +266,12 @@ describe("bindingEvidenceFor", () => {
     const key = "collectionfactory.create:param:properties";
     const line = pinEvidenceKey("TABLE_SLOT_CURATIONS", key);
     const evidenceOf = (curation: TableSlotCuration): string[] => [
-      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [], [], [], [[key, curation]]),
+      ...bindingEvidenceFor(
+        apiTarget("defold-1.14.0"),
+        [table("TABLE_SLOT_CURATIONS", [key, curation])],
+        [],
+        [],
+      ),
     ];
     const bound: TableSlotCuration = {
       kind: "verbatim",
@@ -261,9 +298,32 @@ describe("bindingEvidenceFor", () => {
         engine: { last: 15, pins: [{ ...RENDER_H_PIN, contains: RENDER_H_PIN_AT_8 }] },
       },
     ];
-    expect([
-      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified], [], [], []),
-    ]).toEqual([]);
+    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified])]).toEqual([]);
+  });
+});
+
+describe("engine-pinned correction tables", () => {
+  const evidence = bindingEvidenceFor(apiTarget("defold-1.14.1"));
+
+  test.each([
+    "PROPERTY_TYPE_CORRECTIONS",
+    "ENGINE_SLOT_RULES",
+    "LIST_FIELD_CORRECTIONS",
+    "CALLBACK_SIGNATURE_CURATIONS",
+    "TYPEDEF_ALIAS_CORRECTIONS",
+    "RETURN_TYPE_OVERRIDES",
+    "NESTED_FIELD_CURATIONS",
+    "MESSAGE_FIELD_CORRECTIONS",
+    "MESSAGE_FIELD_CONSTANT_GROUPS",
+    "MESSAGE_ENGINE_CORRECTIONS",
+  ])("%s: each engine-pinned entry the ledger registers is evidence where it holds", (name) => {
+    const table = REPLACEMENT_TABLES.find((candidate) => candidate.name === name);
+    if (!table) throw new Error(`${name} is not registered`);
+    const lines = [...table.entries]
+      .filter(([, entry]) => table.pinsOf(entry).some((kind) => kind !== "refDoc"))
+      .map(([key]) => pinEvidenceKey(name, key));
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.filter((line) => !evidence.has(line))).toEqual([]);
   });
 });
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
+import { ENGINE_PINNED_TABLES } from "../scripts/engine-pinned-tables";
 import { parseDefoldApiDoc } from "./api-doc";
 import { constantGroupSpellings } from "./emit-dts";
 import {
@@ -18,6 +19,17 @@ import {
   type MessageEngineCorrection,
   parseMessagesDoc,
 } from "./emit-messages";
+import { pinEvidenceKey } from "./engine-pin";
+
+// What a vendored target whose engine source shows every pin supplies.
+const EVERY_PIN_HOLDS: ReadonlySet<string> = new Set(
+  ENGINE_PINNED_TABLES.flatMap(({ name, entries }) =>
+    [...entries]
+      .filter(([, entry]) => entry.binding !== undefined || entry.engine !== undefined)
+      .map(([key]) => pinEvidenceKey(name, key)),
+  ),
+);
+const NO_EVIDENCE: ReadonlySet<string> = new Set();
 
 // The spelling of each constant group the target's own modules declare.
 const targetSpellings = (version: string): ReadonlyMap<string, string> =>
@@ -289,9 +301,12 @@ describe("applyMessageDeprecations", () => {
     const raw = JSON.parse(
       await Bun.file(new URL("../fixtures/messages_doc.json", import.meta.url)).text(),
     );
-    const emitted = emitBuiltinMessages(applyMessageOverlays(parseMessagesDoc(raw)), {
-      groupSpellings: targetSpellings("1.14.1"),
-    });
+    const emitted = emitBuiltinMessages(
+      applyMessageOverlays(parseMessagesDoc(raw), EVERY_PIN_HOLDS),
+      {
+        groupSpellings: targetSpellings("1.14.1"),
+      },
+    );
     const generated = await Bun.file(
       new URL("../generated/builtin-messages.d.ts", import.meta.url),
     ).text();
@@ -325,7 +340,7 @@ describe("applyMessageFieldCorrections", () => {
   ];
 
   test("retypes the corrected field and leaves its siblings alone", () => {
-    const [entry] = applyMessageFieldCorrections(camera, overlay).entries;
+    const [entry] = applyMessageFieldCorrections(camera, NO_EVIDENCE, overlay).entries;
     expect(entry?.payload.map((field) => [field.name, field.types])).toEqual([
       ["fov", ["number"]],
       ["orthographic_projection", ["number"]],
@@ -344,15 +359,19 @@ describe("applyMessageFieldCorrections", () => {
         },
       ],
     };
-    expect(() => applyMessageFieldCorrections(fixed, overlay)).toThrow(/upstream now declares/);
-    expect(() => applyMessageFieldCorrections({ entries: [] }, overlay)).toThrow(
+    expect(() => applyMessageFieldCorrections(fixed, NO_EVIDENCE, overlay)).toThrow(
+      /upstream now declares/,
+    );
+    expect(() => applyMessageFieldCorrections({ entries: [] }, NO_EVIDENCE, overlay)).toThrow(
       /no catalog field/,
     );
   });
 
   test("every committed correction matches the committed catalog", () => {
     expect(MESSAGE_FIELD_CORRECTIONS.length).toBeGreaterThan(0);
-    expect(() => applyMessageFieldCorrections(parseMessagesDoc(messagesDoc))).not.toThrow();
+    expect(() =>
+      applyMessageFieldCorrections(parseMessagesDoc(messagesDoc), EVERY_PIN_HOLDS),
+    ).not.toThrow();
   });
 });
 
@@ -414,7 +433,7 @@ describe("applyMessageEngineCorrections", () => {
   }
 
   test("optional and required flip only the named fields", () => {
-    const out = applyMessageEngineCorrections(sound, [optionalDelay, requiredPlayId]);
+    const out = applyMessageEngineCorrections(sound, NO_EVIDENCE, [optionalDelay, requiredPlayId]);
     expect(payloadOf(out, "play_sound")).toEqual([
       ["gain", true],
       ["delay", true],
@@ -427,7 +446,7 @@ describe("applyMessageEngineCorrections", () => {
   });
 
   test("add-field appends the engine fields and add-message adds the message", () => {
-    const out = applyMessageEngineCorrections(sound, [addPan, addSetPan]);
+    const out = applyMessageEngineCorrections(sound, NO_EVIDENCE, [addPan, addSetPan]);
     expect(payloadOf(out, "play_sound")).toEqual([
       ["gain", true],
       ["delay", false],
@@ -445,27 +464,29 @@ describe("applyMessageEngineCorrections", () => {
 
   test("each kind throws once the catalog already states the engine fact", () => {
     expect(() =>
-      applyMessageEngineCorrections(sound, [{ ...optionalDelay, fields: ["gain"] }]),
+      applyMessageEngineCorrections(sound, NO_EVIDENCE, [{ ...optionalDelay, fields: ["gain"] }]),
     ).toThrow(/already optional.*delete the correction/);
     expect(() =>
-      applyMessageEngineCorrections(sound, [
+      applyMessageEngineCorrections(sound, NO_EVIDENCE, [
         { ...requiredPlayId, name: "play_sound", fields: ["delay"] },
       ]),
     ).toThrow(/already required.*delete the correction/);
     expect(() =>
-      applyMessageEngineCorrections(sound, [{ ...addPan, fields: [{ ...pan, name: "gain" }] }]),
+      applyMessageEngineCorrections(sound, NO_EVIDENCE, [
+        { ...addPan, fields: [{ ...pan, name: "gain" }] },
+      ]),
     ).toThrow(/already declares field gain.*delete the correction/);
     expect(() =>
-      applyMessageEngineCorrections(sound, [{ ...addSetPan, name: "play_sound" }]),
+      applyMessageEngineCorrections(sound, NO_EVIDENCE, [{ ...addSetPan, name: "play_sound" }]),
     ).toThrow(/already declares message.*delete the correction/);
   });
 
   test("throws when a correction targets a message or field the catalog lacks", () => {
-    expect(() => applyMessageEngineCorrections({ entries: [] }, [optionalDelay])).toThrow(
-      /no catalog message matches/,
-    );
     expect(() =>
-      applyMessageEngineCorrections(sound, [{ ...optionalDelay, fields: ["speed"] }]),
+      applyMessageEngineCorrections({ entries: [] }, NO_EVIDENCE, [optionalDelay]),
+    ).toThrow(/no catalog message matches/);
+    expect(() =>
+      applyMessageEngineCorrections(sound, NO_EVIDENCE, [{ ...optionalDelay, fields: ["speed"] }]),
     ).toThrow(/no catalog field matches/);
   });
 
@@ -495,7 +516,7 @@ describe("applyMessageEngineCorrections", () => {
     };
 
     test("replaces only the named field's type with its tsType", () => {
-      const out = applyMessageEngineCorrections(collision, [retypeA]);
+      const out = applyMessageEngineCorrections(collision, NO_EVIDENCE, [retypeA]);
       expect(out.entries[0]?.payload.map((field) => [field.name, field.types])).toEqual([
         ["a", [body]],
         ["b", ["table"]],
@@ -519,11 +540,11 @@ describe("applyMessageEngineCorrections", () => {
           },
         ],
       };
-      expect(() => applyMessageEngineCorrections(retyped, [retypeA])).toThrow(
+      expect(() => applyMessageEngineCorrections(retyped, NO_EVIDENCE, [retypeA])).toThrow(
         /now declares physics\.collision_info for field a.*re-verify the correction/,
       );
       expect(() =>
-        applyMessageEngineCorrections(collision, [{ ...retypeA, fields: ["c"] }]),
+        applyMessageEngineCorrections(collision, NO_EVIDENCE, [{ ...retypeA, fields: ["c"] }]),
       ).toThrow(/no catalog field matches/);
     });
   });
@@ -535,13 +556,14 @@ describe("applyMessageEngineCorrections", () => {
     }
     const base = applyMessageFieldCorrections(
       applyMessageDeprecations(parseMessagesDoc(messagesDoc)),
+      EVERY_PIN_HOLDS,
     );
-    expect(() => applyMessageEngineCorrections(base)).not.toThrow();
+    expect(() => applyMessageEngineCorrections(base, EVERY_PIN_HOLDS)).not.toThrow();
   });
 });
 
 describe("message field constant groups", () => {
-  const catalog = applyMessageOverlays(parseMessagesDoc(messagesDoc));
+  const catalog = applyMessageOverlays(parseMessagesDoc(messagesDoc), EVERY_PIN_HOLDS);
   const payloadOf = (emitted: string, name: string): string | undefined =>
     emitted
       .split("\n")
@@ -602,16 +624,61 @@ describe("message field constant groups", () => {
         },
       ],
     };
-    expect(() => applyMessageFieldConstantGroups(retyped, overlay)).toThrow(
+    expect(() => applyMessageFieldConstantGroups(retyped, NO_EVIDENCE, overlay)).toThrow(
       /upstream now declares/,
     );
-    expect(() => applyMessageFieldConstantGroups({ entries: [] }, overlay)).toThrow(
+    expect(() => applyMessageFieldConstantGroups({ entries: [] }, NO_EVIDENCE, overlay)).toThrow(
       /no catalog field/,
     );
   });
 
   test("every committed group names a field of the committed catalog", () => {
     expect(MESSAGE_FIELD_CONSTANT_GROUPS.length).toBeGreaterThan(0);
-    expect(() => applyMessageFieldConstantGroups(parseMessagesDoc(messagesDoc))).not.toThrow();
+    expect(() =>
+      applyMessageFieldConstantGroups(parseMessagesDoc(messagesDoc), EVERY_PIN_HOLDS),
+    ).not.toThrow();
+  });
+});
+
+describe("engine-pinned message gates", () => {
+  const catalog = (): MessageCatalog => parseMessagesDoc(messagesDoc);
+  const fieldOf = (out: MessageCatalog, message: string, field: string) =>
+    out.entries.find((entry) => entry.name === message)?.payload.find((f) => f.name === field);
+  const evidenceOf = (table: string, key: string): ReadonlySet<string> =>
+    new Set([pinEvidenceKey(table, key)]);
+
+  test("a field correction applies only with its ledger line in the evidence", () => {
+    const key = "camera.set_camera:orthographic_projection";
+    const pinned = applyMessageFieldCorrections(
+      catalog(),
+      evidenceOf("MESSAGE_FIELD_CORRECTIONS", key),
+    );
+    expect(fieldOf(pinned, "set_camera", "orthographic_projection")?.types).toEqual(["number"]);
+    const unpinned = applyMessageFieldCorrections(catalog(), NO_EVIDENCE);
+    expect(fieldOf(unpinned, "set_camera", "orthographic_projection")?.types).toEqual(["boolean"]);
+  });
+
+  test("a constant group applies only with its ledger line in the evidence", () => {
+    const key = "model.model_animation_done:playback";
+    const pinned = applyMessageFieldConstantGroups(
+      catalog(),
+      evidenceOf("MESSAGE_FIELD_CONSTANT_GROUPS", key),
+    );
+    expect(fieldOf(pinned, "model_animation_done", "playback")?.group).toBe("go.PLAYBACK");
+    const unpinned = applyMessageFieldConstantGroups(catalog(), NO_EVIDENCE);
+    expect(fieldOf(unpinned, "model_animation_done", "playback")?.group).toBeUndefined();
+  });
+
+  test("an engine correction applies only with its ledger line in the evidence", () => {
+    const names = (out: MessageCatalog) => out.entries.map((entry) => entry.name);
+    const pinned = applyMessageEngineCorrections(
+      catalog(),
+      evidenceOf("MESSAGE_ENGINE_CORRECTIONS", "sound.pause_sound:add-message"),
+    );
+    expect(names(pinned)).toContain("pause_sound");
+    expect(names(pinned)).not.toContain("set_view_projection");
+    expect(names(applyMessageEngineCorrections(catalog(), NO_EVIDENCE))).not.toContain(
+      "pause_sound",
+    );
   });
 });

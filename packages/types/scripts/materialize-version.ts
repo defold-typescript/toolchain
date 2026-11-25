@@ -206,15 +206,20 @@ export async function buildVersionedSurfaceFiles(
   // A generated sibling rather than a `src/*` augmentation, so it falls outside
   // `SRC_AUGMENTATION_MODULES` — but the carried `msg-overloads` and
   // `message-guard` reference `BuiltinMessages`, so a surface without it ships
-  // dangling names. The catalog is version-independent; only a grouped field's
-  // alias follows the target, read from the surface's own modules.
+  // dangling names. The catalog is version-independent; a grouped field's alias
+  // follows the target, read from the surface's own modules, and an
+  // engine-sourced overlay entry follows the target's engine evidence.
   const generated = [
     {
       path: MESSAGES_MANIFEST.outFile,
-      contents: generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
-        importsFrom: surfaceCoreTypesImport(MESSAGES_MANIFEST.outFile),
-        groupSpellings: messageGroupSpellings(modules),
-      }),
+      contents: generateBuiltinMessagesDeclaration(
+        MESSAGES_MANIFEST,
+        opts.emitOptions?.bindingEvidence ?? new Set(),
+        {
+          importsFrom: surfaceCoreTypesImport(MESSAGES_MANIFEST.outFile),
+          groupSpellings: messageGroupSpellings(modules),
+        },
+      ),
     },
   ].filter((file) => kept(file.path));
   files.push(...generated);

@@ -415,8 +415,13 @@ export const MESSAGES_MANIFEST: MessagesManifestEntry = {
   outFile: "builtin-messages.d.ts",
 };
 
-export function builtinMessagesCatalog(entry: MessagesManifestEntry): MessageCatalog {
-  return applyMessageOverlays(parseMessagesDoc(entry.doc));
+// The catalog with its overlays, each engine-sourced entry applied only where
+// the target's `bindingEvidence` shows its pin.
+export function builtinMessagesCatalog(
+  entry: MessagesManifestEntry,
+  bindingEvidence: ReadonlySet<string>,
+): MessageCatalog {
+  return applyMessageOverlays(parseMessagesDoc(entry.doc), bindingEvidence);
 }
 
 // The spelling of each constant group a grouped message field names, as the
@@ -437,9 +442,10 @@ export function messageGroupSpellings(
 
 export function generateBuiltinMessagesDeclaration(
   entry: MessagesManifestEntry,
+  bindingEvidence: ReadonlySet<string>,
   opts: EmitBuiltinMessagesOptions = {},
 ): string {
-  return emitBuiltinMessages(builtinMessagesCatalog(entry), opts);
+  return emitBuiltinMessages(builtinMessagesCatalog(entry, bindingEvidence), opts);
 }
 
 export interface GenerateResult {
@@ -1402,9 +1408,13 @@ export async function regenerate(
   const messagesOut = resolve(generated, MESSAGES_MANIFEST.outFile);
   io.write(
     messagesOut,
-    generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
-      groupSpellings: messageGroupSpellings(MODULE_MANIFEST),
-    }),
+    generateBuiltinMessagesDeclaration(
+      MESSAGES_MANIFEST,
+      defaultBinding.bindingEvidence ?? new Set(),
+      {
+        groupSpellings: messageGroupSpellings(MODULE_MANIFEST),
+      },
+    ),
   );
   io.log(`wrote ${messagesOut}`);
 
@@ -1452,17 +1462,22 @@ export async function regenerate(
   }
   for (const target of versionedTargets) {
     // The catalog is shared, but a grouped field's alias exists only where the
-    // target declares it, so each snapshot carries its own copy for the CLI to
-    // pin in place of the current one.
+    // target declares it, and an engine-sourced overlay entry applies only where
+    // its pin holds, so each snapshot carries its own copy for the CLI to pin in
+    // place of the current one.
     const messagesOut = resolve(versionDirOf(target.id), MESSAGES_MANIFEST.outFile);
     io.write(
       messagesOut,
-      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
-        importsFrom: target.coreTypesImport,
-        groupSpellings: messageGroupSpellings(
-          VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === target.id),
-        ),
-      }),
+      generateBuiltinMessagesDeclaration(
+        MESSAGES_MANIFEST,
+        targetBindingOptions(target).bindingEvidence ?? new Set(),
+        {
+          importsFrom: target.coreTypesImport,
+          groupSpellings: messageGroupSpellings(
+            VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === target.id),
+          ),
+        },
+      ),
     );
     io.log(`wrote ${messagesOut}`);
 

@@ -25,7 +25,15 @@ import {
   splitExampleSources,
   summaryFor,
 } from "./doc-comment";
-import { applyMessageOverlays, parseMessagesDoc } from "./emit-messages";
+import { MESSAGE_ENGINE_CORRECTIONS, parseMessagesDoc } from "./emit-messages";
+import {
+  type BindingPin,
+  type CorrectionPins,
+  type EngineSourcePin,
+  evidencedEntry,
+  pinEvidenceKey,
+  pinnedEntryApplies,
+} from "./engine-pin";
 import { engineTypeName } from "./engine-type-name";
 import type { TranslationStore } from "./example-store";
 import { lookupExampleSegments, translateProseFences } from "./example-store";
@@ -374,22 +382,63 @@ export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: stri
 // FQN-keyed return-type overrides for functions whose doc `returnvalues` are
 // empty yet the engine returns a value. Per-FQN, not a blanket "empty
 // returnvalues -> unknown" rule: most functions with empty returnvalues return
-// nothing, and `void` is correct there.
-export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
+// nothing, and `void` is correct there. `ts` is the emitted return type; an
+// entry carries one of `CorrectionPins`.
+export interface ReturnTypeOverride extends CorrectionPins {
+  readonly ts: string;
+}
+
+export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, ReturnTypeOverride> = new Map<
+  string,
+  ReturnTypeOverride
+>([
   // Upstream documents the returned transaction step in prose only — its
   // `returnvalues` is empty while every sibling `editor.tx.*` builder declares
   // one, and `editor.transact()` takes exactly that.
-  ["editor.tx.add", 'Opaque<"transaction_step">'],
+  [
+    "editor.tx.add",
+    {
+      ts: 'Opaque<"transaction_step">',
+      refDoc: { contains: "Create a transaction step that will add a child item" },
+    },
+  ],
   // The engine binding pushes a value the ref-doc never documents:
   // script_sys.cpp:Sys_Save pushes whether the write succeeded,
   // script_tilemap.cpp:TileMap_SetTile pushes false for an unknown layer or an
   // out-of-range cell, and script_box2d_body_v3.cpp:Body_CreateShape pushes the
   // created shape's info table through PushShapeInfo.
-  ["sys.save", "boolean"],
-  ["tilemap.set_tile", "boolean"],
+  [
+    "sys.save",
+    {
+      ts: "boolean",
+      binding: {
+        file: "script/src/script_sys.cpp",
+        cFunction: "Sys_Save",
+        contains: "lua_pushboolean(L, result); return 1;",
+      },
+    },
+  ],
+  [
+    "tilemap.set_tile",
+    {
+      ts: "boolean",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_tilemap.cpp",
+        cFunction: "TileMap_SetTile",
+        contains: "lua_pushboolean(L, 1); assert(top + 1 == lua_gettop(L)); return 1;",
+      },
+    },
+  ],
   [
     "b2d.body.create_shape",
-    '{ index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }',
+    {
+      ts: '{ index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }',
+      binding: {
+        file: "gamesys/src/gamesys/scripts/box2d/v3/script_box2d_body_v3.cpp",
+        cFunction: "Body_CreateShape",
+        contains: "PushShapeInfo(L, shape, shape_index); return 1;",
+      },
+    },
   ],
 ]);
 
@@ -417,21 +466,6 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // A nil push proves nil-ability and nothing about the base type, so such an
 // entry usually carries `nullable` rather than `ts`; an entry keeping `ts`
 // takes its base from the slot's own prose.
-// The ledger line a pinned entry's evidence is recorded under, `<TABLE>:<key>`,
-// so a key two tables share never vouches for the other table's entry.
-export function pinEvidenceKey(table: string, key: string): string {
-  return `${table}:${key}`;
-}
-
-export interface BindingPin {
-  // Relative to the target's vendored `engine/` tree.
-  readonly file: string;
-  readonly cFunction: string;
-  // Token snippets the function body must contain and must lack; at least one.
-  readonly contains?: string;
-  readonly lacks?: string;
-}
-
 interface ReturnCorrectionBase {
   readonly upstream: readonly string[];
   // A later release's spelling of the same defect; see `correction-pins.ts`.
@@ -1325,8 +1359,9 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
 // had since become right.
 //
 // Demonstrated errors only. A property whose declared type is merely imprecise
-// — every `resource.*` path hash, say — is not a correction candidate.
-export interface PropertyTypeCorrection {
+// — every `resource.*` path hash, say — is not a correction candidate. An entry
+// carries one of `CorrectionPins`.
+export interface PropertyTypeCorrection extends CorrectionPins {
   readonly ts: string;
   readonly upstream: string;
   // A later release's span for the same defect; see `correction-pins.ts`.
@@ -1344,6 +1379,7 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       upstream: "hash",
       reason:
         "a count of animation frames, which the prose confirms; `hash` is a copy-paste of the sibling animation-id spans",
+      refDoc: { contains: "The frame count of the currently playing animation." },
     },
   ],
   [
@@ -1353,6 +1389,18 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       upstream: "number",
       reason:
         "the engine reads a vector3 back from `go.get`, and `go.set` also takes a number, which it applies as a uniform scale",
+      engine: [
+        {
+          file: "gameobject/src/gameobject/gameobject.cpp",
+          contains:
+            "out_value.m_ValuePtr = scale; out_value.m_ElementIds[0] = PROP_SCALE_X; out_value.m_ElementIds[1] = PROP_SCALE_Y; out_value.m_ElementIds[2] = PROP_SCALE_Z;",
+        },
+        {
+          file: "gameobject/src/gameobject/gameobject.cpp",
+          contains:
+            "else if (property_id == PROP_SCALE) { if (value.m_Type == PROPERTY_TYPE_NUMBER) { scale[0] = (float)value.m_Number; scale[1] = scale[0]; scale[2] = scale[0];",
+        },
+      ],
     },
   ],
   [
@@ -1362,6 +1410,12 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       upstream: "number | vector3",
       reason:
         'the engine reads a vector3 back from `go.get`, and `go.set` raises "must be a vmath.vector3" when given a number',
+      engine: [
+        {
+          file: "gamesys/src/gamesys/components/comp_label.cpp",
+          contains: "DM_GAMESYS_PROP_VECTOR3(LABEL_PROP_SCALE, scale, false);",
+        },
+      ],
     },
   ],
   [
@@ -1371,6 +1425,10 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       upstream: "float",
       reason:
         "the prose in the same element says matrix4; every camera property carries the same blanket `float` span",
+      refDoc: {
+        contains:
+          "The calculated projection matrix of the camera. The type of the property is matrix4.",
+      },
     },
   ],
   [
@@ -1380,6 +1438,9 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
       upstream: "float",
       reason:
         "the prose in the same element says matrix4; every camera property carries the same blanket `float` span",
+      refDoc: {
+        contains: "The calculated view matrix of the camera. The type of the property is matrix4.",
+      },
     },
   ],
 ]);
@@ -1403,16 +1464,6 @@ export interface PropertyKeyRange {
   readonly last: number;
   readonly evidence: string;
   readonly engine?: { readonly last: number; readonly pins: readonly EngineSourcePin[] };
-}
-
-// A token snippet the target's vendored engine evidence must contain. With
-// `cFunction` it is matched in that function's body, without it anywhere in
-// the file.
-export interface EngineSourcePin {
-  // Relative to the target's vendored `engine/` tree, as `BindingPin.file` is.
-  readonly file: string;
-  readonly cFunction?: string;
-  readonly contains: string;
 }
 
 const MODEL_TEXTURE_LOOP =
@@ -1880,27 +1931,32 @@ function presenceArms(
 // A rule an engine binding enforces on one parameter that no ref-doc token
 // states, keyed `<fqn>:param:<name>`. Each rewrites the slot's mapped type, so
 // one entry holds on every target whatever token spelling produced that type.
-export type EngineSlotRule =
+// An entry carries one of `CorrectionPins`.
+export type EngineSlotRule = CorrectionPins &
   // `E[]` becomes `[E, ...E[]]`: the binding raises on an empty list.
-  | { readonly kind: "non-empty"; readonly reason: string }
-  // The constants the binding raises on leave the slot's type.
-  | { readonly kind: "excludes"; readonly constants: readonly string[]; readonly reason: string }
-  // With `flag` true the table must carry `fields`, which the binding then reads
-  // without a default.
-  | {
-      readonly kind: "flag-requires";
-      readonly flag: string;
-      readonly fields: readonly string[];
-      readonly reason: string;
-    }
-  // In each call that requires `slot`, this slot is required too and its
-  // top-level union loses `drops`.
-  | {
-      readonly kind: "alongside";
-      readonly slot: string;
-      readonly drops: readonly string[];
-      readonly reason: string;
-    };
+  (
+    | { readonly kind: "non-empty"; readonly reason: string }
+    // The constants the binding raises on leave the slot's type.
+    | { readonly kind: "excludes"; readonly constants: readonly string[]; readonly reason: string }
+    // With `flag` true the table must carry `fields`, which the binding then reads
+    // without a default.
+    | {
+        readonly kind: "flag-requires";
+        readonly flag: string;
+        readonly fields: readonly string[];
+        readonly reason: string;
+      }
+    // In each call that requires `slot`, this slot is required too and its
+    // top-level union loses `drops`.
+    | {
+        readonly kind: "alongside";
+        readonly slot: string;
+        readonly drops: readonly string[];
+        readonly reason: string;
+      }
+  );
+
+const SCRIPT_BUFFER = "gamesys/src/gamesys/scripts/script_buffer.cpp";
 
 export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
   string,
@@ -1912,6 +1968,12 @@ export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
       kind: "non-empty",
       reason:
         'script_buffer.cpp:Create raises "You must specify at least one stream declaration" when the list holds fewer than one entry',
+      binding: {
+        file: SCRIPT_BUFFER,
+        cFunction: "Create",
+        contains:
+          'int num_decl = lua_objlen(L, 2); if( num_decl < 1 ) { return luaL_error(L, "buffer.create: You must specify at least one stream declaration"); }',
+      },
     },
   ],
   [
@@ -1920,6 +1982,11 @@ export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
       kind: "non-empty",
       reason:
         'script_buffer.cpp:SetMetadata raises "invalid metadata" when lua_objlen of values is 0',
+      binding: {
+        file: SCRIPT_BUFFER,
+        cFunction: "SetMetadata",
+        contains: '} else { return DM_LUA_ERROR("invalid metadata"); } return 0;',
+      },
     },
   ],
   [
@@ -1929,6 +1996,12 @@ export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
       constants: ["buffer.VALUE_TYPE_INT64", "buffer.VALUE_TYPE_UINT64"],
       reason:
         'script_buffer.cpp:SetMetadata raises "64 bit integer metadata are not supported." on VALUE_TYPE_UINT64 and VALUE_TYPE_INT64',
+      binding: {
+        file: SCRIPT_BUFFER,
+        cFunction: "SetMetadata",
+        contains:
+          'if (valueType == dmBuffer::VALUE_TYPE_UINT64 || valueType == dmBuffer::VALUE_TYPE_INT64) { return DM_LUA_ERROR("64 bit integer metadata are not supported."); }',
+      },
     },
   ],
   [
@@ -1939,6 +2012,12 @@ export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
       fields: ["filesize"],
       reason:
         "script_resource.cpp:CreateSoundData reads filesize with the no-default CheckFieldValue<int> when partial is true, and CheckValue<int> raises on a non-number",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_resource.cpp",
+        cFunction: "CreateSoundData",
+        contains:
+          'bool partial = CheckFieldValue<bool>(L, -1, "partial", false); if (partial) { file_size = CheckFieldValue<int>(L, -1, "filesize");',
+      },
     },
   ],
   [
@@ -1949,6 +2028,12 @@ export const ENGINE_SLOT_RULES: ReadonlyMap<string, EngineSlotRule> = new Map<
       drops: ["boolean"],
       reason:
         "gameobject_script.cpp:Script_Delete raises on a boolean id with a second argument, and on a nil id once recursive is popped",
+      binding: {
+        file: "gameobject/src/gameobject/gameobject_script.cpp",
+        cFunction: "Script_Delete",
+        contains:
+          'if(lua_isboolean(L, 1)) { if(args > 1) { return luaL_error(L, "go.delete expected one argument when argument #1 is boolean type"); }',
+      },
     },
   ],
 ]);
@@ -2058,19 +2143,22 @@ function engineSlotRuleArms(
   }
 }
 
-// `arms` with every ENGINE_SLOT_RULES entry keyed to `prepared` applied.
-// `bindingsRead` says the emit was given the target's nil-raising slots.
+// `arms` with every ENGINE_SLOT_RULES entry keyed to `prepared` that applies on
+// the target applied. `bindingsRead` says the emit was given the target's
+// nil-raising slots.
 function applyEngineSlotRules(
   prepared: PreparedFunction,
   arms: readonly PreparedFunction[],
   structs: readonly ApiStruct[],
   bindingsRead: boolean,
+  bindingEvidence: ReadonlySet<string>,
 ): PreparedFunction[] {
   const { name, parameters } = prepared.original;
   const prefix = `${name}:param:`;
   let ruled = [...arms];
   for (const [key, rule] of ENGINE_SLOT_RULES) {
     if (!key.startsWith(prefix)) continue;
+    if (!pinnedEntryApplies("ENGINE_SLOT_RULES", key, rule, bindingEvidence)) continue;
     const slot = key.slice(prefix.length);
     const index = parameters.findIndex((p) => p.name === slot);
     if (index === -1) {
@@ -2087,11 +2175,18 @@ function callArms(
   prepared: PreparedFunction,
   nilRaisingSlots: ReadonlyMap<string, readonly number[]> | undefined,
   structs: readonly ApiStruct[],
+  bindingEvidence: ReadonlySet<string>,
 ): PreparedFunction[] {
   const arms = nilRaisingArms(prepared, nilRaisingSlots ?? new Map()).flatMap((arm) =>
     presenceArms(arm, structs),
   );
-  return applyEngineSlotRules(prepared, arms, structs, nilRaisingSlots !== undefined);
+  return applyEngineSlotRules(
+    prepared,
+    arms,
+    structs,
+    nilRaisingSlots !== undefined,
+    bindingEvidence,
+  );
 }
 
 export type ConstantSlotResolution =
@@ -2822,23 +2917,12 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
 // (`tilemap.get_tiles` → `tiles[row][col]`).
 export type NestedMapping = { key: string; value: string };
 
-// Text an element's own ref-doc states, which an entry only makes precise. It
-// holds where a retained target's ref-doc for that element contains it, compared
-// with tags dropped and whitespace collapsed. It classifies the entry and never
-// gates its emit.
-export interface RefDocPin {
-  readonly contains: string;
-}
-
 // A curation applies where the slot declares the prose `table` token, or a later
 // spelling a newer release retypes the same slot to without fixing it
 // (`retypedUpstream`, matched whole): 1.13.2's `table<hash, table<string|hash, any>>`
 // for `collectionfactory.create`'s properties.
 //
-// An entry carries one pin. A `refDoc` pin only classifies it. A `binding` pin,
-// or `engine` pins that must all hold, rest it on the engine source: it then
-// applies only on a target whose vendored source shows the pin (the
-// `EmitOptions.bindingEvidence` keys), see `evidencedTableSlotCuration`.
+// An entry carries one of `CorrectionPins`.
 export type TableSlotCuration =
   // `pairs` emits a `ReadonlyLuaMap`, for a binding that walks the map with
   // lua_next and only reads it: dropping `set` makes the map covariant in its
@@ -2865,12 +2949,10 @@ export type TableSlotCuration =
     // A slot whose faithful shape no field list can carry, such as a union
     // discriminated on `type`. `ts` is emitted verbatim, already mapped.
     | { kind: "verbatim"; ts: string }
-  ) & {
-    readonly retypedUpstream?: readonly string[];
-    readonly refDoc?: RefDocPin;
-    readonly binding?: BindingPin;
-    readonly engine?: readonly EngineSourcePin[];
-  };
+  ) &
+    CorrectionPins & {
+      readonly retypedUpstream?: readonly string[];
+    };
 
 // The interface a module's component properties are declared on; its PROPERTY
 // entries carry its members, so it signs no TYPEDEF of its own.
@@ -4388,19 +4470,6 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
 ]);
 
-// The curation the emitter applies to a slot: an entry with no `binding` or
-// `engine` pin applies everywhere, and a pinned one only where its ledger line
-// is in the target's engine evidence.
-export function evidencedTableSlotCuration(
-  key: string,
-  bindingEvidence: ReadonlySet<string>,
-): TableSlotCuration | undefined {
-  const curation = TABLE_SLOT_CURATIONS.get(key);
-  if (curation === undefined) return undefined;
-  if (curation.binding === undefined && curation.engine === undefined) return curation;
-  return bindingEvidence.has(pinEvidenceKey("TABLE_SLOT_CURATIONS", key)) ? curation : undefined;
-}
-
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
 // for a callback parameter's signature. Each entry carries two forms, chosen by
 // the token the reference gives the slot. `untyped` answers a bare
@@ -4445,7 +4514,8 @@ export function evidencedTableSlotCuration(
 // untyped message is the bare record `window.set_listener`'s untyped `data` is;
 // the typed reference names `collectionproxy.load_data`, so its typed form
 // defers to the reference.
-export interface CallbackSignatureCuration {
+// An entry carries one of `CorrectionPins`.
+export interface CallbackSignatureCuration extends CorrectionPins {
   /** Emitted for a bare `function(...)` token. */
   readonly untyped: string;
   /** Emitted for a typed `fun(...)` token; `null` emits the reference's own signature. */
@@ -4454,11 +4524,25 @@ export interface CallbackSignatureCuration {
   readonly note?: string;
 }
 
-const onBothForms = (signature: string, note?: string): CallbackSignatureCuration => ({
+const onBothForms = (
+  signature: string,
+  pins: CorrectionPins,
+  note?: string,
+): CallbackSignatureCuration => ({
   untyped: signature,
   typed: signature,
+  ...pins,
   ...(note === undefined ? {} : { note }),
 });
+
+// script_model.cpp calls the completion callback with the message id and the
+// message alone.
+const MODEL_ANIMATION_DONE_CALL: BindingPin = {
+  file: "gamesys/src/gamesys/scripts/script_model.cpp",
+  cFunction: "ScriptModelAnimationCallback",
+  contains:
+    "dmScript::PushDDF(L, dmModelDDF::ModelAnimationDone::m_DDFDescriptor, (const char*)&message, false); int ret = dmScript::PCall(L, 3, 0);",
+};
 
 export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignatureCuration> = new Map<
   string,
@@ -4473,18 +4557,26 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
       typed:
         // biome-ignore lint/suspicious/noTemplateCurlyInString: emitted verbatim as a TS template literal type
         "(self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.EventData) => void",
+      refDoc: { contains: "The type of event. Can be one of these:" },
     },
   ],
   [
     "model.play_anim:param:complete_function",
     onBothForms(
       '(self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void',
+      { binding: MODEL_ANIMATION_DONE_CALL },
     ),
   ],
   [
     "sprite.play_flipbook:param:complete_function",
     onBothForms(
       "(self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void",
+      {
+        refDoc: {
+          contains:
+            "number current_tile - the current tile of the sprite. hash id - id of the animation that was completed.",
+        },
+      },
     ),
   ],
   [
@@ -4493,6 +4585,9 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
       untyped:
         "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
       typed: null,
+      refDoc: {
+        contains: "the callback receives proxy_loading, proxy_ready, or proxy_error messages",
+      },
     },
   ],
 ]);
@@ -4511,16 +4606,44 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
 // each `geometries` entry. Injected onto the already-parsed field list (every
 // sibling stays parser-authoritative), so this is a nested-field curation, not a
 // whole-slot object curation.
+const ATLAS_BINDING_FILE = "gamesys/src/gamesys/scripts/script_resource.cpp";
 const ATLAS_GEOMETRY_MEMBERS: readonly TableField[] = [
   { name: "vertices", types: ["table"], numberList: true },
   { name: "uvs", types: ["table"], numberList: true },
   { name: "indices", types: ["table"], numberList: true },
 ];
 
-export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> = new Map([
-  ["resource.set_atlas:param:table:geometries", ATLAS_GEOMETRY_MEMBERS],
-  ["resource.create_atlas:param:table:geometries", ATLAS_GEOMETRY_MEMBERS],
-  ["resource.get_atlas:return:data:geometries", ATLAS_GEOMETRY_MEMBERS],
+// An entry carries one of `CorrectionPins`.
+export interface NestedFieldCuration extends CorrectionPins {
+  readonly fields: readonly TableField[];
+}
+
+// CheckAtlasArguments reads the three arrays from each `geometries` entry, and
+// PushGeometry pushes them onto each geometry it returns.
+const ATLAS_GEOMETRY_INPUT: NestedFieldCuration = {
+  fields: ATLAS_GEOMETRY_MEMBERS,
+  binding: {
+    file: ATLAS_BINDING_FILE,
+    cFunction: "CheckAtlasArguments",
+    contains:
+      'int geometry_index = luaL_checkinteger(L, -2); { lua_getfield(L, -1, "vertices"); luaL_checktype(L, -1, LUA_TTABLE);',
+  },
+};
+
+export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, NestedFieldCuration> = new Map([
+  ["resource.set_atlas:param:table:geometries", ATLAS_GEOMETRY_INPUT],
+  ["resource.create_atlas:param:table:geometries", ATLAS_GEOMETRY_INPUT],
+  [
+    "resource.get_atlas:return:data:geometries",
+    {
+      fields: ATLAS_GEOMETRY_MEMBERS,
+      binding: {
+        file: ATLAS_BINDING_FILE,
+        cFunction: "PushGeometry",
+        contains: 'lua_pushliteral(L, "vertices"); lua_newtable(L);',
+      },
+    },
+  ],
 ]);
 
 // The shader-constant / vertex-attribute `value` field is documented as
@@ -4573,7 +4696,6 @@ const TEXTURE_INFO_FLAGS_BINDING: BindingPin = {
   cFunction: "PushTextureInfo",
   contains: 'lua_pushinteger(L, texture_flags); lua_setfield(L, -2, "flags");',
 };
-const ATLAS_BINDING_FILE = "gamesys/src/gamesys/scripts/script_resource.cpp";
 const ATLAS_INPUT_PLAYBACK_BINDING: BindingPin = {
   file: ATLAS_BINDING_FILE,
   cFunction: "MakeTextureSetFromLua",
@@ -4772,8 +4894,9 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverr
 // upstream documenting a field reds here and the entry is deleted rather than
 // re-pinned.
 //
-// Keyed `<element>:<kind>:<slot>`, the TABLE_SLOT_CURATIONS shape.
-export interface TableFieldAddition {
+// Keyed `<element>:<kind>:<slot>`, the TABLE_SLOT_CURATIONS shape. An entry
+// carries one of `CorrectionPins`.
+export interface TableFieldAddition extends CorrectionPins {
   readonly fields: readonly TableField[];
   readonly evidence: readonly string[];
 }
@@ -4790,6 +4913,7 @@ export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition>
         "the array-texture example on this element creates with `page_count = 5`",
         "resource.get_texture_info documents `page_count` as the texture array's page count",
       ],
+      refDoc: { contains: "page_count = 5" },
     },
   ],
 ]);
@@ -5066,6 +5190,7 @@ export function applyRequiredFieldCorrections(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   fields: readonly TableField[],
+  bindingEvidence: ReadonlySet<string>,
 ): TableField[] {
   if (slotKind !== "param" || slotName === undefined) return [...fields];
   const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
@@ -5081,9 +5206,29 @@ export function applyRequiredFieldCorrections(
     const parent = `${field.name}${field.isList === true ? "[]" : ""}`;
     return { ...own, fields: own.fields.map((child) => mark(child, `${parent}.${child.name}`)) };
   });
-  const stale = [...REQUIRED_FIELD_CORRECTIONS.keys()].filter(
-    (key) => key.startsWith(prefix) && !applied.has(key.slice(prefix.length)),
-  );
+  // A member a nested curation supplies is absent where that curation does not
+  // apply, which leaves its correction moot rather than stale.
+  const unsupplied = (path: string): boolean => {
+    const dot = path.indexOf(".");
+    if (dot === -1) return false;
+    const key = nestedFieldKey(
+      elementName,
+      slotKind,
+      slotName,
+      path.slice(0, dot).replace(/\[\]$/, ""),
+    );
+    const curation = NESTED_FIELD_CURATIONS.get(key);
+    return (
+      curation !== undefined &&
+      !pinnedEntryApplies("NESTED_FIELD_CURATIONS", key, curation, bindingEvidence) &&
+      curation.fields.some((member) => member.name === path.slice(dot + 1))
+    );
+  };
+  const stale = [...REQUIRED_FIELD_CORRECTIONS.keys()].filter((key) => {
+    if (!key.startsWith(prefix)) return false;
+    const path = key.slice(prefix.length);
+    return !applied.has(path) && !unsupplied(path);
+  });
   if (stale.length > 0) {
     throw new Error(
       `required-field correction names no recovered field: ${stale.sort().join(", ")}`,
@@ -5096,8 +5241,9 @@ export function applyRequiredFieldCorrections(
 // the list as `[E, ...E[]]`; `replaces` drops members the binding reads only as
 // one of several alternatives, and `alternatives` restores them as a union the
 // element is intersected with. Keyed `<element>:param:<slot>:<field>` or
-// `<struct>:member:<field>`, the REQUIRED_FIELD_CORRECTIONS shapes.
-export interface ListFieldCorrection {
+// `<struct>:member:<field>`, the REQUIRED_FIELD_CORRECTIONS shapes. An entry
+// carries one of `CorrectionPins`.
+export interface ListFieldCorrection extends CorrectionPins {
   readonly evidence: string;
   readonly replaces?: readonly string[];
   readonly alternatives?: string;
@@ -5106,9 +5252,23 @@ export interface ListFieldCorrection {
 const ATLAS_FRAMES =
   "script_resource.cpp:CheckAtlasArguments reads a non-empty frames table, else both frame_start and frame_end with CheckFieldValue<int>";
 
-const ATLAS_GEOMETRIES: ListFieldCorrection = { evidence: ATLAS_ARGUMENTS };
+const ATLAS_GEOMETRIES: ListFieldCorrection = {
+  evidence: ATLAS_ARGUMENTS,
+  binding: {
+    file: ATLAS_BINDING_FILE,
+    cFunction: "CheckAtlasArguments",
+    contains:
+      "if (num_geometries == 0) { luaL_error(L, \"Atlas requires at least one entry in the 'geometries' table\"); }",
+  },
+};
 const ATLAS_ANIMATIONS: ListFieldCorrection = {
   evidence: `${ATLAS_ARGUMENTS}; ${ATLAS_FRAMES}`,
+  binding: {
+    file: ATLAS_BINDING_FILE,
+    cFunction: "CheckAtlasArguments",
+    contains:
+      "if (num_animations == 0) { luaL_error(L, \"Atlas requires at least one entry in the 'animations' table\"); }",
+  },
   replaces: ["frame_start", "frame_end"],
   alternatives: "{ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }",
 };
@@ -5135,13 +5295,19 @@ export function applyListFieldCorrections(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   fields: readonly TableField[],
+  bindingEvidence: ReadonlySet<string>,
 ): TableField[] {
   if (slotKind !== "param" || slotName === undefined) return [...fields];
   const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
   const applied = new Set<string>();
   const corrected = fields.map((field): TableField => {
     const key = `${prefix}${field.name}`;
-    const correction = LIST_FIELD_CORRECTIONS.get(key);
+    const correction = evidencedEntry(
+      "LIST_FIELD_CORRECTIONS",
+      LIST_FIELD_CORRECTIONS,
+      key,
+      bindingEvidence,
+    );
     if (correction === undefined) return field;
     applied.add(field.name);
     if (field.isList !== true) {
@@ -5163,9 +5329,14 @@ export function applyListFieldCorrections(
       ...(correction.alternatives === undefined ? {} : { alternatives: correction.alternatives }),
     };
   });
-  const stale = [...LIST_FIELD_CORRECTIONS.keys()].filter(
-    (key) => key.startsWith(prefix) && !applied.has(key.slice(prefix.length)),
-  );
+  const stale = [...LIST_FIELD_CORRECTIONS]
+    .filter(
+      ([key, correction]) =>
+        key.startsWith(prefix) &&
+        !applied.has(key.slice(prefix.length)) &&
+        pinnedEntryApplies("LIST_FIELD_CORRECTIONS", key, correction, bindingEvidence),
+    )
+    .map(([key]) => key);
   if (stale.length > 0) {
     throw new Error(`list-field correction names no recovered field: ${stale.sort().join(", ")}`);
   }
@@ -5181,10 +5352,16 @@ export function applyFieldAdditions(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   fields: readonly TableField[],
+  bindingEvidence: ReadonlySet<string>,
 ): TableField[] {
   if (slotKind === undefined || slotName === undefined) return [...fields];
   const key = tableSlotKey(elementName, slotKind, slotName);
-  const addition = TABLE_SLOT_FIELD_ADDITIONS.get(key);
+  const addition = evidencedEntry(
+    "TABLE_SLOT_FIELD_ADDITIONS",
+    TABLE_SLOT_FIELD_ADDITIONS,
+    key,
+    bindingEvidence,
+  );
   if (addition === undefined) return [...fields];
   for (const added of addition.fields) {
     if (fields.some((field) => field.name === added.name)) {
@@ -5572,8 +5749,9 @@ function groupFlattenedTableFields(fields: readonly TableField[]): TableField[] 
 // Each applies only while the typedef still aliases exactly its `upstream` tokens,
 // in order, so a changed upstream typedef is emitted as written rather than
 // shadowed; `typedef-correction-provenance.test.ts` pins every entry against the
-// retained ref-docs. Keyed by the typedef's ref-doc name.
-export interface TypedefAliasCorrection {
+// retained ref-docs. Keyed by the typedef's ref-doc name. An entry carries one
+// of `CorrectionPins`.
+export interface TypedefAliasCorrection extends CorrectionPins {
   readonly upstream: readonly string[];
   readonly ts: string;
   readonly reason: string;
@@ -5598,6 +5776,10 @@ export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrecti
       ts: "{ type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams }",
       reason:
         'render_script.cpp:RenderScript_RenderTarget raises "Invalid render target texture type" on any `type` but graphics.TEXTURE_TYPE_2D and graphics.TEXTURE_TYPE_CUBE_MAP',
+      refDoc: {
+        contains:
+          "Supported values are graphics.TEXTURE_TYPE_2D and graphics.TEXTURE_TYPE_CUBE_MAP.",
+      },
     },
   ],
   [
@@ -5615,6 +5797,11 @@ export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrecti
       ).join(" | "),
       reason:
         'script_bullet3d_shape.cpp:CheckBullet3DShapeDef reads only the fields of the table\'s own `type` and raises "Unsupported shape type" on any other, a mesh included',
+      binding: {
+        file: "gamesys/src/gamesys/scripts/bullet3d/script_bullet3d_shape.cpp",
+        cFunction: "CheckBullet3DShapeDef",
+        contains: '} else { luaL_error(L, "Unsupported shape type %d.", shape_def->m_Type); }',
+      },
     },
   ],
 ]);
@@ -5634,10 +5821,16 @@ function typedefAlias(
   local: string,
   rawMapType: (token: string) => string,
   mapType: DefoldTypeMapper,
+  bindingEvidence: ReadonlySet<string>,
 ): string | null {
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
-  const correction = TYPEDEF_ALIAS_CORRECTIONS.get(typedef.name);
+  const correction = evidencedEntry(
+    "TYPEDEF_ALIAS_CORRECTIONS",
+    TYPEDEF_ALIAS_CORRECTIONS,
+    typedef.name,
+    bindingEvidence,
+  );
   if (
     correction !== undefined &&
     aliasOf.length === correction.upstream.length &&
@@ -5709,7 +5902,7 @@ function collectTypeDeclarations(
     const path = renamedLeaf(local);
     if (skip.has(local) || skip.has(path)) continue;
     const name = path.slice(path.lastIndexOf(".") + 1);
-    const signature = typedefAlias(t, name, rawMapType, mapType);
+    const signature = typedefAlias(t, name, rawMapType, mapType, bindingEvidence);
     if (signature === null) continue;
     out.push({
       name,
@@ -5797,7 +5990,11 @@ function structDeclaration(
     .map(([key, addition]) => ({ ...addition.member, name: key.slice(memberPrefix.length) }));
   const stale = [
     ...REQUIRED_FIELD_CORRECTIONS.keys(),
-    ...LIST_FIELD_CORRECTIONS.keys(),
+    ...[...LIST_FIELD_CORRECTIONS]
+      .filter(([key, list]) =>
+        pinnedEntryApplies("LIST_FIELD_CORRECTIONS", key, list, bindingEvidence),
+      )
+      .map(([key]) => key),
     ...TABLE_FIELD_TYPE_OVERRIDES.keys(),
     ...OPTIONAL_MEMBER_CORRECTIONS.keys(),
   ].filter((key) => key.startsWith(memberPrefix) && !declared.has(key.slice(memberPrefix.length)));
@@ -5806,7 +6003,12 @@ function structDeclaration(
   }
   const members = [...struct.members, ...added].map((member) => {
     const key = memberCorrectionKey(struct.name, member.name);
-    const list = LIST_FIELD_CORRECTIONS.get(key);
+    const list = evidencedEntry(
+      "LIST_FIELD_CORRECTIONS",
+      LIST_FIELD_CORRECTIONS,
+      key,
+      bindingEvidence,
+    );
     const listedRetype = TABLE_FIELD_TYPE_OVERRIDES.get(key);
     const retyped =
       listedRetype?.binding === undefined ||
@@ -6154,7 +6356,13 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   for (const { name, members } of handleInterfaces) {
     lines.push(`${INDENT}${decl}interface ${name} extends NonTable {`);
     for (const { fn, text } of members) {
-      for (const docLine of functionDocLines(fn.original, translations, baseNotes, handleIndent)) {
+      for (const docLine of functionDocLines(
+        fn.original,
+        translations,
+        baseNotes,
+        bindingEvidence,
+        handleIndent,
+      )) {
         lines.push(docLine);
       }
       lines.push(`${handleIndent}${text}`);
@@ -6174,7 +6382,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
     // under the public reserved name.
     const reserved = TS_RESERVED_NAMES.has(v.name);
     const emitName = aliasName(v.name, aliases);
-    const line = emitVariable(v, emitName, mapType);
+    const line = emitVariable(v, emitName, mapType, bindingEvidence);
     if (line !== null) {
       for (const docLine of summaryDocLines(v.original.brief, v.original.description, INDENT)) {
         lines.push(docLine);
@@ -6185,8 +6393,8 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   for (const fn of functions) {
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
-    for (const arm of callArms(fn, nilRaisingSlots, module.structs ?? [])) {
-      for (const docLine of functionDocLines(fn.original, translations, baseNotes))
+    for (const arm of callArms(fn, nilRaisingSlots, module.structs ?? [], bindingEvidence)) {
+      for (const docLine of functionDocLines(fn.original, translations, baseNotes, bindingEvidence))
         lines.push(docLine);
       const line = emitFunction(
         arm,
@@ -6204,7 +6412,7 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
       // The overload documents its own parameters, so its hover names the base
       // of the index it takes. Its examples are the primary signature's.
       const { examples: _examples, ...overloadDoc } = alternative.original;
-      for (const docLine of functionDocLines(overloadDoc, translations, baseNotes))
+      for (const docLine of functionDocLines(overloadDoc, translations, baseNotes, bindingEvidence))
         lines.push(docLine);
       const overload = emitFunction(
         alternative,
@@ -6278,13 +6486,19 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
           lines.push(docLine);
         }
         lines.push(
-          `${bodyIndent}${reserved ? "" : segmentDecl}${emitVariable(v, emitName, mapType)}`,
+          `${bodyIndent}${reserved ? "" : segmentDecl}${emitVariable(v, emitName, mapType, bindingEvidence)}`,
         );
       }
       for (const fn of group.functions) {
         const reserved = TS_RESERVED_NAMES.has(fn.name);
         const emitName = aliasName(fn.name, segmentAliases);
-        for (const docLine of functionDocLines(fn.original, translations, baseNotes, bodyIndent)) {
+        for (const docLine of functionDocLines(
+          fn.original,
+          translations,
+          baseNotes,
+          bindingEvidence,
+          bodyIndent,
+        )) {
           lines.push(docLine);
         }
         lines.push(
@@ -6511,7 +6725,12 @@ export function emitSymbolSignatures(
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
     const slotTypes: Record<string, SlotType> = {};
-    const [first = prepared, ...later] = callArms(prepared, nilRaisingSlots, module.structs ?? []);
+    const [first = prepared, ...later] = callArms(
+      prepared,
+      nilRaisingSlots,
+      module.structs ?? [],
+      bindingEvidence,
+    );
     const primary = emitFunction(
       first,
       emitName(prepared.name),
@@ -6560,7 +6779,7 @@ export function emitSymbolSignatures(
         name: v.original.name,
         signature: "",
       },
-      tsSignature: emitVariable(v, emitName(v.name), mapType),
+      tsSignature: emitVariable(v, emitName(v.name), mapType, bindingEvidence),
       slotTypes: NO_SLOTS,
     });
   }
@@ -6624,7 +6843,7 @@ export function emitSymbolSignatures(
     if (prepared === null) continue;
     out.push({
       identity: { namespace: module.namespace, kind: "VARIABLE", name: v.name, signature: "" },
-      tsSignature: emitVariable(prepared, emitName(prepared.name), mapType),
+      tsSignature: emitVariable(prepared, emitName(prepared.name), mapType, bindingEvidence),
       slotTypes: NO_SLOTS,
     });
   }
@@ -7145,17 +7364,40 @@ function aliasReservedSegments(
 
 // A variable whose ref-doc states its type only in prose, keyed by FQN. Each
 // entry fills a slot upstream left empty; `emit-dts.test.ts` reds once the
-// default target's ref-doc types it.
-export const VARIABLE_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
-  // "A `string`, either:" followed by the four platform ids.
-  ["editor.platform", '"x86_64-win32" | "x86_64-macos" | "arm64-macos" | "x86_64-linux"'],
+// default target's ref-doc types it. `ts` is the emitted type; an entry carries
+// one of `CorrectionPins`.
+export interface VariableTypeOverride extends CorrectionPins {
+  readonly ts: string;
+}
+
+export const VARIABLE_TYPE_OVERRIDES: ReadonlyMap<string, VariableTypeOverride> = new Map([
+  [
+    "editor.platform",
+    {
+      ts: '"x86_64-win32" | "x86_64-macos" | "arm64-macos" | "x86_64-linux"',
+      refDoc: {
+        contains:
+          'A string, either: - "x86_64-win32" - "x86_64-macos" - "arm64-macos" - "x86_64-linux"',
+      },
+    },
+  ],
 ]);
 
-function emitVariable(prepared: PreparedVariable, name: string, mapType: DefoldTypeMapper): string {
+function emitVariable(
+  prepared: PreparedVariable,
+  name: string,
+  mapType: DefoldTypeMapper,
+  bindingEvidence: ReadonlySet<string>,
+): string {
   const ts =
     prepared.original.types.length > 0
       ? unionFromTokens(prepared.original.types, mapType)
-      : (VARIABLE_TYPE_OVERRIDES.get(prepared.original.name) ?? "unknown");
+      : (evidencedEntry(
+          "VARIABLE_TYPE_OVERRIDES",
+          VARIABLE_TYPE_OVERRIDES,
+          prepared.original.name,
+          bindingEvidence,
+        )?.ts ?? "unknown");
   return `const ${name}: ${ts};`;
 }
 
@@ -7296,11 +7538,15 @@ function functionDocLines(
   fn: ApiFunction,
   translations: TranslationStore,
   baseNotes: IndexBaseNoteResolver,
+  bindingEvidence: ReadonlySet<string>,
   indent: string = INDENT,
 ): string[] {
   const params = fn.parameters.map((p, index) => {
-    const curationNote = CALLBACK_SIGNATURE_CURATIONS.get(
+    const curationNote = evidencedEntry(
+      "CALLBACK_SIGNATURE_CURATIONS",
+      CALLBACK_SIGNATURE_CURATIONS,
       tableSlotKey(fn.name, "param", p.name),
+      bindingEvidence,
     )?.note;
     return {
       name: emittedParamName(p, index),
@@ -7313,7 +7559,8 @@ function functionDocLines(
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const sparseNote = SPARSE_ARRAY_RETURNS.get(fn.name)?.note;
   const notedReturns =
-    multiReturnDoc(fn, translations, baseNotes) ?? overrideReturnDoc(fn, baseNotes);
+    multiReturnDoc(fn, translations, baseNotes) ??
+    overrideReturnDoc(fn, baseNotes, bindingEvidence);
   const lua = htmlToCodeText(fn.examples ?? "");
   // Each example resolves by its own segment hash, a single-example element's
   // one segment being the whole blob with no prose. The blob documents its
@@ -7386,8 +7633,18 @@ function multiReturnDoc(
   return [`\`[${names}]\`:`, ...bullets.flat()].join("\n");
 }
 
-function overrideReturnDoc(fn: ApiFunction, baseNotes: IndexBaseNoteResolver): string | undefined {
-  if (fn.returnValues.length > 0 || !RETURN_TYPE_OVERRIDES.has(fn.name)) return undefined;
+function overrideReturnDoc(
+  fn: ApiFunction,
+  baseNotes: IndexBaseNoteResolver,
+  bindingEvidence: ReadonlySet<string>,
+): string | undefined {
+  if (
+    fn.returnValues.length > 0 ||
+    evidencedEntry("RETURN_TYPE_OVERRIDES", RETURN_TYPE_OVERRIDES, fn.name, bindingEvidence) ===
+      undefined
+  ) {
+    return undefined;
+  }
   const notes = baseNotes(fn.name, "return", OVERRIDE_RETURN_SLOT);
   return notes.length > 0 ? notes.join(" ") : undefined;
 }
@@ -7679,8 +7936,13 @@ function emitReturn(
 ): { type: string; trailing: string; slots: EmittedSlot[] } {
   // An authored whole-return override is not a per-slot render, so it reports no
   // slots and leaves the consumer on its token-derived fallback.
-  const override = RETURN_TYPE_OVERRIDES.get(elementName);
-  if (override !== undefined) return { type: override, trailing: "", slots: [] };
+  const override = evidencedEntry(
+    "RETURN_TYPE_OVERRIDES",
+    RETURN_TYPE_OVERRIDES,
+    elementName,
+    bindingEvidence,
+  );
+  if (override !== undefined) return { type: override.ts, trailing: "", slots: [] };
   // Kept beside the override lookup so the two stay visibly distinct: this one
   // contradicts a declared token rather than filling an empty `returnvalues`,
   // and it is a per-slot render, so it reports its slot.
@@ -7815,7 +8077,12 @@ function emitPropertyMembers(
   } else {
     keys.push(TS_IDENTIFIER.test(p.name) ? p.name : JSON.stringify(p.name));
   }
-  const correction = PROPERTY_TYPE_CORRECTIONS.get(`${namespace}.${p.name}`);
+  const correction = evidencedEntry(
+    "PROPERTY_TYPE_CORRECTIONS",
+    PROPERTY_TYPE_CORRECTIONS,
+    `${namespace}.${p.name}`,
+    bindingEvidence,
+  );
   const ts =
     correction !== undefined && pinMatches(p.types, propertyCorrectionPins(correction))
       ? correction.ts
@@ -8034,7 +8301,12 @@ function mapSlotUnion(
     let ts: string;
     const slotCuration =
       slotKind !== undefined && slotName !== undefined
-        ? evidencedTableSlotCuration(tableSlotKey(elementName, slotKind, slotName), bindingEvidence)
+        ? evidencedEntry(
+            "TABLE_SLOT_CURATIONS",
+            TABLE_SLOT_CURATIONS,
+            tableSlotKey(elementName, slotKind, slotName),
+            bindingEvidence,
+          )
         : undefined;
     const lookupReturn =
       slotKind === "return" &&
@@ -8102,6 +8374,7 @@ function mapSlotUnion(
           slotKind,
           slotName,
           curation.fields,
+          bindingEvidence,
         );
         const object = inlineTableType(fields, mapType, optionalFields);
         ts = curation.kind === "array-object" ? `${object}[]` : object;
@@ -8127,8 +8400,20 @@ function mapSlotUnion(
       } else {
         const parsed = parseTableFields(doc, resolver, slotName);
         if (parsed !== null) {
-          const added = applyFieldAdditions(elementName, slotKind, slotName, parsed);
-          const nested = applyNestedFieldCurations(elementName, slotKind, slotName, added);
+          const added = applyFieldAdditions(
+            elementName,
+            slotKind,
+            slotName,
+            parsed,
+            bindingEvidence,
+          );
+          const nested = applyNestedFieldCurations(
+            elementName,
+            slotKind,
+            slotName,
+            added,
+            bindingEvidence,
+          );
           const typed = applyFieldTypeOverrides(
             elementName,
             slotKind,
@@ -8141,8 +8426,15 @@ function mapSlotUnion(
             slotKind,
             slotName,
             applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed),
+            bindingEvidence,
           );
-          const fields = applyListFieldCorrections(elementName, slotKind, slotName, required);
+          const fields = applyListFieldCorrections(
+            elementName,
+            slotKind,
+            slotName,
+            required,
+            bindingEvidence,
+          );
           const object = inlineTableType(fields, mapType, optionalFields);
           ts = isSlotLevelList(doc) ? `${object}[]` : object;
         } else {
@@ -8159,7 +8451,12 @@ function mapSlotUnion(
     } else {
       const curation =
         slotKind !== undefined && slotName !== undefined
-          ? CALLBACK_SIGNATURE_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
+          ? evidencedEntry(
+              "CALLBACK_SIGNATURE_CURATIONS",
+              CALLBACK_SIGNATURE_CURATIONS,
+              tableSlotKey(elementName, slotKind, slotName),
+              bindingEvidence,
+            )
           : undefined;
       const listed =
         curation === undefined && slotKind !== undefined && slotName !== undefined
@@ -8223,17 +8520,21 @@ export function applyNestedFieldCurations(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   fields: readonly TableField[],
+  bindingEvidence: ReadonlySet<string>,
 ): TableField[] {
   if (slotKind === undefined || slotName === undefined) return [...fields];
   return fields.map((field) => {
-    const curated = NESTED_FIELD_CURATIONS.get(
+    const curated = evidencedEntry(
+      "NESTED_FIELD_CURATIONS",
+      NESTED_FIELD_CURATIONS,
       nestedFieldKey(elementName, slotKind, slotName, field.name),
+      bindingEvidence,
     );
     if (curated === undefined) return field;
     // A parsed member list keeps its members; the curation supplies the ones
     // upstream flattened to the slot's top level.
     const parsed = field.fields ?? [];
-    const missing = curated.filter((member) => !parsed.some((p) => p.name === member.name));
+    const missing = curated.fields.filter((member) => !parsed.some((p) => p.name === member.name));
     return { ...field, fields: [...parsed, ...missing], isList: true };
   });
 }
@@ -8374,9 +8675,14 @@ function joinUnionArms(mapped: readonly string[]): string {
   return out.join(" | ");
 }
 
-const BUILTIN_MESSAGE_NAMES: ReadonlySet<string> = new Set(
-  applyMessageOverlays(parseMessagesDoc(messagesDoc)).entries.map((entry) => entry.name),
-);
+// The messages `BuiltinMessages` declares: the reference's own and those the
+// engine overlay adds.
+const BUILTIN_MESSAGE_NAMES: ReadonlySet<string> = new Set([
+  ...parseMessagesDoc(messagesDoc).entries.map((entry) => entry.name),
+  ...MESSAGE_ENGINE_CORRECTIONS.filter((correction) => correction.kind === "add-message").map(
+    (correction) => correction.name,
+  ),
+]);
 const MESSAGE_REFERENCE = /^message\.[a-z_]+\.([a-z_]+)$/;
 
 // The leaf vocabulary the LuaLS grammar resolves an engine type expression

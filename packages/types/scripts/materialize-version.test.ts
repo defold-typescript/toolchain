@@ -629,7 +629,7 @@ describe("buildVersionedSurfaceFiles src augmentation carry", () => {
     const file = files.find((f) => f.path === "builtin-messages.d.ts");
     expect(file === undefined ? "absent" : "present").toBe("present");
     expect(file?.contents).toBe(
-      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, new Set(), {
         importsFrom: "./core-types",
         groupSpellings: messageGroupSpellings(await resolveTargetModules(target)),
       }),

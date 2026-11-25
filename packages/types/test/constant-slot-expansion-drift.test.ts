@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { bindingEvidenceFor } from "../scripts/binding-pin";
 import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import {
   collectConstantFqns,
@@ -24,6 +25,19 @@ const defaultTarget = loadApiTargets().find((candidate) => candidate.default ===
 if (!defaultTarget) throw new Error("api-targets.json: no default target");
 
 const knownConstantFqns = collectConstantFqns();
+
+// The engine evidence regen emits a target's surface with; the extension
+// goldens, which no API target owns, have none.
+const evidenceCache = new Map<string, ReadonlySet<string>>();
+function targetEvidence(id: string): ReadonlySet<string> {
+  let evidence = evidenceCache.get(id);
+  if (evidence === undefined) {
+    const target = loadApiTargets().find((candidate) => candidate.id === id);
+    evidence = target === undefined ? new Set() : bindingEvidenceFor(target);
+    evidenceCache.set(id, evidence);
+  }
+  return evidence;
+}
 
 interface Surface {
   readonly target: string;
@@ -54,7 +68,7 @@ const surfaces: Surface[] = [
   })),
   ...EXTENSION_GOLDEN_MANIFEST.map((entry) => ({ target: EXTENSION_GOLDENS_TARGET, entry })),
 ].map(({ target, entry }) => {
-  const options = { knownConstantFqns, translations: {} };
+  const options = { knownConstantFqns, translations: {}, bindingEvidence: targetEvidence(target) };
   const { contents, dropped } = generateModuleDeclaration(entry, options);
   const module = parseDefoldApiDoc(entry.doc);
   const withheld = module.functions.filter((fn) => dropped.includes(fn.name));

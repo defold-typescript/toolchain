@@ -17,6 +17,15 @@ What changed in each published `defold-typescript` toolchain release.
 > - **An optional engine argument accepts `undefined`**, as `physics.raycast` options do.
 > - **Older pins type Box2D handles, mount names and spawn properties as their engine does** ([pinning](./pinning-defold-target.md)).
 > - **`iap.finish` and `iap.acknowledge` take the listener's transaction.**
+> - **A Defold 1.9.8 pin types built-in messages and `label.scale` from its reference** ([pinning](./pinning-defold-target.md#materializing-the-pinned-surface)).
+
+### Breaking
+
+- **A project pinned to Defold 1.9.8 types these as that release's reference states them**, since the toolchain carries no 1.9.8 engine source to check its engine-sourced fixes against ([pinning](./pinning-defold-target.md#materializing-the-pinned-surface)):
+  - **Physics events**: `collision_event`, `contact_point_event` and `trigger_event` type their `a` and `b` bodies as untyped tables, and `collision_response`, `contact_point_response` and `trigger_response` carry no `group`.
+  - **Sound messages**: `play_sound` has no `pan` or `speed`, `stop_sound` has no `play_id`, and `pause_sound` is not declared.
+  - **Camera and render messages**: `set_camera`'s `orthographic_projection` is a `boolean`, and `set_view_projection` is not declared.
+  - **`label.scale`** is `number | Vector3`.
 
 ### Improved
 

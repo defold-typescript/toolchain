@@ -5,12 +5,12 @@ import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../s
 import { vendoredTargets } from "../scripts/sync-engine-bindings";
 import {
   MISFILED_DECLARATIONS,
-  pinEvidenceKey,
   RETURN_FIELD_OPTIONALITY_CORRECTIONS,
   RETURN_TYPE_CORRECTIONS,
   type ReturnFieldOptionalityCorrection,
   type ReturnTypeCorrection,
 } from "./emit-dts";
+import { pinEvidenceKey } from "./engine-pin";
 import { type ProvenanceSurface, retainedSurfaces } from "./optional-correction-provenance";
 import {
   fieldCorrectionProvenance,
