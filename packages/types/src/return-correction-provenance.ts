@@ -4,7 +4,11 @@
 // the parser discards it.
 
 import { correctionPins, pinMatches } from "./correction-pins";
-import type { ReturnFieldOptionalityCorrection, ReturnTypeCorrection } from "./emit-dts";
+import {
+  pinEvidenceKey,
+  type ReturnFieldOptionalityCorrection,
+  type ReturnTypeCorrection,
+} from "./emit-dts";
 import type { ProvenanceSurface } from "./optional-correction-provenance";
 
 const NAMED_ENTITIES: Record<string, string> = {
@@ -292,7 +296,8 @@ function declaresCorrection(tokens: readonly string[], correction: ReturnTypeCor
 //
 // A binding-pinned entry rests on the engine source rather than the prose, so
 // its prose is never searched. `bindingEvidence` maps each vendored target to
-// the keys whose pin holds there; a target absent from it shows no evidence.
+// the ledger lines whose pin holds there; a target absent from it shows no
+// evidence.
 // A target without the entry's evidence is `unbound` before its tokens are
 // read, because the emitter leaves the entry off there.
 export function returnCorrectionProvenance(
@@ -316,7 +321,9 @@ export function returnCorrectionProvenance(
         let verdict: ReturnVerdict;
         if (
           correction.binding !== undefined &&
-          bindingEvidence.get(surface.target)?.has(key) !== true
+          bindingEvidence
+            .get(surface.target)
+            ?.has(pinEvidenceKey("RETURN_TYPE_CORRECTIONS", key)) !== true
         ) {
           verdict = "unbound";
         } else if (!pinMatches(tokens, pins)) {

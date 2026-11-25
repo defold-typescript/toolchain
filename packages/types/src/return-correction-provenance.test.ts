@@ -5,6 +5,7 @@ import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../s
 import { vendoredTargets } from "../scripts/sync-engine-bindings";
 import {
   MISFILED_DECLARATIONS,
+  pinEvidenceKey,
   RETURN_FIELD_OPTIONALITY_CORRECTIONS,
   RETURN_TYPE_CORRECTIONS,
   type ReturnFieldOptionalityCorrection,
@@ -464,7 +465,7 @@ describe("binding-pinned return correction provenance", () => {
       },
     ],
   ];
-  const holds = new Map([["bound", new Set([CREATE])]]);
+  const holds = new Map([["bound", new Set([pinEvidenceKey("RETURN_TYPE_CORRECTIONS", CREATE)])]]);
 
   function create(types: readonly string[]): FakeElement {
     return {
@@ -559,7 +560,7 @@ describe("binding-pinned return correction provenance", () => {
         },
       ],
     ];
-    const evidence = new Map([["t", new Set([HEADER])]]);
+    const evidence = new Map([["t", new Set([pinEvidenceKey("RETURN_TYPE_CORRECTIONS", HEADER)])]]);
     const returning = (types: readonly string[]) =>
       surface("t", "image", [{ name: HEADER, returnvalues: [{ name: "header", types }] }]);
     expect(
@@ -587,7 +588,9 @@ describe("binding-pinned return correction provenance", () => {
         },
       ],
     ];
-    const evidence = new Map([["t", new Set([RAYCAST])]]);
+    const evidence = new Map([
+      ["t", new Set([pinEvidenceKey("RETURN_TYPE_CORRECTIONS", RAYCAST)])],
+    ]);
     const returning = (types: readonly string[]) =>
       surface("t", "physics", [{ name: RAYCAST, returnvalues: [{ name: "result", types }] }]);
     expect(
