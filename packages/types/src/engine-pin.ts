@@ -7,10 +7,17 @@ export function pinEvidenceKey(table: string, key: string): string {
 export interface BindingPin {
   // Relative to the target's vendored `engine/` tree.
   readonly file: string;
+  // Paths an older release keeps the same binding under; a target that does
+  // not vendor `file` is read at the first of these it vendors.
+  readonly formerFiles?: readonly string[];
   readonly cFunction: string;
   // Token snippets the function body must contain and must lack; at least one.
   readonly contains?: string;
   readonly lacks?: string;
+  // A macro whose `#ifdef` must enclose `contains`; the pin holds only if the
+  // function shows the snippet and, read with that `#ifdef`'s arms skipped, the
+  // function is gone or lacks it.
+  readonly guard?: string;
 }
 
 // A token snippet the target's vendored engine evidence must contain. With

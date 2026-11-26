@@ -209,10 +209,16 @@ interface DirectiveToken {
   readonly directive: string;
 }
 
+const NO_GUARDS: ReadonlySet<string> = new Set();
+
 // Collects `#define`/`#undef` in source order and keeps only the first branch of
-// every `#if` group (the `#else` branch of `#if 0`), so both arms of a platform
-// switch never land in one brace-matched body.
-function readLines(source: string): Array<Token[] | DirectiveToken> {
+// every `#if` group (the `#else` branch of `#if 0`, and of an `#ifdef` naming one
+// of `skippedGuards`), so both arms of a platform switch never land in one
+// brace-matched body.
+function readLines(
+  source: string,
+  skippedGuards: ReadonlySet<string> = NO_GUARDS,
+): Array<Token[] | DirectiveToken> {
   const joined = stripComments(source).replace(/\\\r?\n/g, " ");
   const out: Array<Token[] | DirectiveToken> = [];
   const stack: Array<{ active: boolean; taken: boolean }> = [];
@@ -223,8 +229,10 @@ function readLines(source: string): Array<Token[] | DirectiveToken> {
     if (directive) {
       const [, name, rest] = directive as unknown as [string, string, string];
       if (name === "if" || name === "ifdef" || name === "ifndef") {
-        const zero = name === "if" && rest.trim() === "0";
-        stack.push({ active: !zero, taken: !zero });
+        const skipped =
+          (name === "if" && rest.trim() === "0") ||
+          (name === "ifdef" && skippedGuards.has(rest.trim()));
+        stack.push({ active: !skipped, taken: !skipped });
       } else if (name === "elif" || name === "else") {
         const frame = stack[stack.length - 1];
         if (frame) {
@@ -366,9 +374,9 @@ function mergeStrings(tokens: Token[]): Token[] {
   return out;
 }
 
-function preprocess(source: string): Token[] {
+function preprocess(source: string, skippedGuards: ReadonlySet<string> = NO_GUARDS): Token[] {
   const macros = new Map<string, Macro>();
-  const lines = readLines(source);
+  const lines = readLines(source, skippedGuards);
   const out: Token[] = [];
   let pending: Token[] = [];
   const flush = () => {
@@ -506,8 +514,12 @@ function listCpp(dir: string): string[] {
     .sort();
 }
 
-function loadSource(dir: string, file: string): SourceFile {
-  const tokens = preprocess(readFileSync(join(dir, file), "utf8"));
+function loadSource(
+  dir: string,
+  file: string,
+  skippedGuards: ReadonlySet<string> = NO_GUARDS,
+): SourceFile {
+  const tokens = preprocess(readFileSync(join(dir, file), "utf8"), skippedGuards);
   return {
     file,
     tokens,
@@ -2295,7 +2307,7 @@ function tokenKey(token: Token): string {
 }
 
 // Snippet text tokenized and comment-stripped exactly as a vendored source is,
-// so comparing it with `bindingFunctionTokens` never turns on whitespace.
+// so comparing it with `vendoredFunctionTokens` never turns on whitespace.
 export function cTokenKeys(source: string): string[] {
   return preprocess(source).map(tokenKey);
 }
@@ -2312,8 +2324,9 @@ function vendoredSource(
   root: VendoredRoot,
   file: string,
   where: string,
+  skippedGuards: ReadonlySet<string> = NO_GUARDS,
 ): SourceFile {
-  const cacheKey = `${targetId}\0${root}\0${file}`;
+  const cacheKey = `${targetId}\0${root}\0${file}\0${[...skippedGuards].sort().join(" ")}`;
   let source = vendoredSourceCache.get(cacheKey);
   if (!source) {
     const target = loadApiTargets().find((t) => t.id === targetId);
@@ -2323,7 +2336,7 @@ function vendoredSource(
     }
     const dir = join(VENDORED_ROOTS[root](target), "engine");
     if (!existsSync(join(dir, file))) throw new Error(`${where}: file is not vendored`);
-    source = loadSource(dir, file);
+    source = loadSource(dir, file, skippedGuards);
     vendoredSourceCache.set(cacheKey, source);
   }
   return source;
@@ -2333,17 +2346,40 @@ function bindingFileFunctions(targetId: string, file: string, where: string): CF
   return vendoredSource(targetId, "bindings", file, where).functions;
 }
 
+// The body tokens of the one function named `cFunction`, or undefined when none
+// is; a name defined twice throws as ambiguous.
+function definedBodyTokens(
+  functions: readonly CFunction[],
+  cFunction: string,
+  where: string,
+): string[] | undefined {
+  const named = functions.filter((fn) => fn.name === cFunction);
+  if (named.length > 1) {
+    throw new Error(`${where}: function name is ambiguous (${named.length} definitions)`);
+  }
+  return named[0]?.body.map(tokenKey);
+}
+
 function functionBodyTokens(
   functions: readonly CFunction[],
   cFunction: string,
   where: string,
 ): string[] {
-  const named = functions.filter((fn) => fn.name === cFunction);
-  if (named.length === 0) throw new Error(`${where}: function is not defined in the file`);
-  if (named.length > 1) {
-    throw new Error(`${where}: function name is ambiguous (${named.length} definitions)`);
-  }
-  return (named[0] as CFunction).body.map(tokenKey);
+  const body = definedBodyTokens(functions, cFunction, where);
+  if (body === undefined) throw new Error(`${where}: function is not defined in the file`);
+  return body;
+}
+
+// The body tokens of the C function `cFunction` that the C++ `source` defines,
+// read with the `#ifdef` arms of `skippedGuards` skipped, or undefined when the
+// source so read does not define it. A name defined twice throws as ambiguous.
+export function sourceFunctionTokens(
+  source: string,
+  cFunction: string,
+  skippedGuards: ReadonlySet<string> = NO_GUARDS,
+): string[] | undefined {
+  const functions = findFunctions("", preprocess(source, skippedGuards));
+  return definedBodyTokens(functions, cFunction, cFunction);
 }
 
 // Whether the target vendors `file`. Every binding source a release ships is
@@ -2356,7 +2392,7 @@ export function bindingVendorsFile(targetId: string, file: string): boolean {
 }
 
 // Whether the vendored `file` defines `cFunction` at all. A missing file throws,
-// as for `bindingFunctionTokens`.
+// as for `vendoredFunctionTokens`.
 export function bindingDefinesFunction(targetId: string, file: string, cFunction: string): boolean {
   return bindingFileFunctions(targetId, file, `${targetId}: ${file}:${cFunction}`).some(
     (fn) => fn.name === cFunction,
@@ -2364,21 +2400,30 @@ export function bindingDefinesFunction(targetId: string, file: string, cFunction
 }
 
 // The body tokens of the C function `cFunction` defined in `file` (relative to
-// the target's vendored `engine/` tree). A missing file or function, or a name
-// the file defines twice, throws: none of them is evidence either way.
-export function bindingFunctionTokens(targetId: string, file: string, cFunction: string): string[] {
+// the target's vendored `engine/` tree), read with the `#ifdef` arms of
+// `skippedGuards` skipped, or undefined when the file so read does not define
+// it. A missing file, or a name the file defines twice, throws: neither is
+// evidence either way.
+export function vendoredFunctionTokens(
+  targetId: string,
+  file: string,
+  cFunction: string,
+  skippedGuards: ReadonlySet<string> = NO_GUARDS,
+): string[] | undefined {
   const where = `${targetId}: ${file}:${cFunction}`;
-  return functionBodyTokens(bindingFileFunctions(targetId, file, where), cFunction, where);
+  const { functions } = vendoredSource(targetId, "bindings", file, where, skippedGuards);
+  return definedBodyTokens(functions, cFunction, where);
 }
 
 // The tokens of the whole vendored evidence `file` (relative to the target's
-// evidence `engine/` tree). A missing file throws, as for `bindingFunctionTokens`.
+// evidence `engine/` tree). A missing file throws, as for `vendoredFunctionTokens`.
 export function evidenceFileTokens(targetId: string, file: string): string[] {
   return vendoredSource(targetId, "evidence", file, `${targetId}: ${file}`).tokens.map(tokenKey);
 }
 
-// The body tokens of `cFunction` in the vendored evidence `file`, under the
-// same throw rules as `bindingFunctionTokens`.
+// The body tokens of `cFunction` in the vendored evidence `file`. A missing file
+// or function, or a name the file defines twice, throws: none of them is
+// evidence either way.
 export function evidenceFunctionTokens(
   targetId: string,
   file: string,

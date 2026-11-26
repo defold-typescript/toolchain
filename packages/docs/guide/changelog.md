@@ -25,7 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- Hovering `b2d.body.get_linear_velocity_from_local_point` or `b2d.body.get_linear_velocity_from_world_point` warns that the call always fails under Box2D v2, [compute](/api/compute) that it exists only in an engine built with compute support, and [camera](/api/camera) that a render script must pass a `Url`.
+- Hovering `b2d.body.get_linear_velocity_from_local_point` or `b2d.body.get_linear_velocity_from_world_point` warns that the call always fails under Box2D v2, [compute](/api/compute) that it exists only in an engine built with compute support, and [camera](/api/camera) that a render script names a camera by a `Url`, such as one `camera.get_cameras` returns, or by a full address string such as `"main:/camera#camera"`, never by a hash or a relative address.
 
 ## v0.71.0
 

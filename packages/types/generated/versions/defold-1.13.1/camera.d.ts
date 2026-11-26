@@ -5,7 +5,7 @@ declare global {
   /**
    * Messages to control camera components and camera focus.
    *
-   * In a render script a `Hash` or a relative address resolves under the render script's `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns.
+   * In a render script a `Hash` or a relative address resolves under the render script's `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns, or a full address string with socket, path and component, such as `"main:/camera#camera"`.
    */
   namespace camera {
     /**

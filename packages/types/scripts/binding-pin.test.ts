@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   ENGINE_CAVEAT_NOTES,
   type ParamTypeCorrection,
@@ -16,15 +18,21 @@ import {
 import {
   bindingEvidenceFor,
   bindingPinHolds,
+  bindingPinHoldsInSource,
   enginePinHolds,
   nilRaisingSlotsOf,
   targetBindingOptions,
 } from "./binding-pin";
 import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
 import type { EnginePinnedTable } from "./engine-pinned-tables";
-import { type ApiTarget, loadApiTargets } from "./regen";
+import {
+  type ApiTarget,
+  generateModuleDeclaration,
+  loadApiTargets,
+  loadTargetModules,
+} from "./regen";
 import { REPLACEMENT_TABLES } from "./replacement-pins";
-import { vendoredTargets } from "./sync-engine-bindings";
+import { bindingsDir, vendoredTargets } from "./sync-engine-bindings";
 
 const TARGET = "defold-1.14.0";
 const FACTORY = "gamesys/src/gamesys/scripts/script_factory.cpp";
@@ -124,6 +132,61 @@ function apiTarget(id: string): ApiTarget {
   if (!found) throw new Error(`api-targets.json: no target ${id}`);
   return found;
 }
+
+function defaultTarget(): ApiTarget {
+  const found = loadApiTargets().find((candidate) => candidate.default === true);
+  if (!found) throw new Error("api-targets.json: no default target");
+  return found;
+}
+
+function vendoredBindingText(target: ApiTarget, file: string): string {
+  return readFileSync(join(bindingsDir(target), "engine", file), "utf8");
+}
+
+const COMPUTE_BINDING = "gamesys/src/gamesys/scripts/script_compute.cpp";
+const B2D_V2_FORMER_BODY = "gamesys/src/gamesys/scripts/box2d/script_box2d_body_defold.cpp";
+const B2D_V2_VELOCITY = [
+  "get_linear_velocity_from_local_point",
+  "get_linear_velocity_from_world_point",
+] as const;
+
+function caveatBinding(key: string): BindingPin {
+  const binding = ENGINE_CAVEAT_NOTES.get(key)?.binding;
+  if (!binding) throw new Error(`ENGINE_CAVEAT_NOTES: ${key} has no binding pin`);
+  return binding;
+}
+
+describe("guard pins", () => {
+  test("the compute pin holds only while its registration sits inside its #ifdef guard", () => {
+    const pin = caveatBinding("compute");
+    const source = vendoredBindingText(defaultTarget(), COMPUTE_BINDING);
+    expect(bindingPinHoldsInSource(source, pin)).toBe(true);
+
+    const lines = source.split("\n");
+    const open = lines.findIndex((line) =>
+      /^\s*#\s*ifdef\s+DM_HAVE_PLATFORM_COMPUTE_SUPPORT\b/.test(line),
+    );
+    let close = -1;
+    for (let i = lines.length - 1; i > open && close === -1; i--) {
+      if (/^\s*#\s*endif\b/.test(lines[i] ?? "")) close = i;
+    }
+    expect(open).toBeGreaterThanOrEqual(0);
+    expect(close).toBeGreaterThan(open);
+    const unguarded = lines.filter((_, i) => i !== open && i !== close).join("\n");
+    expect(bindingPinHoldsInSource(unguarded, pin)).toBe(false);
+  });
+
+  test("a pin with a guard and no contains throws, naming the pin", () => {
+    expect(() =>
+      bindingPinHoldsInSource("static int Probe(lua_State* L) { return 0; }", {
+        file: "probe.cpp",
+        cFunction: "Probe",
+        lacks: "return 1;",
+        guard: "PROBE_SUPPORT",
+      }),
+    ).toThrow(/probe\.cpp:Probe/);
+  });
+});
 
 function slot(index: number, extra: Partial<BindingSlot> = {}): BindingSlot {
   return { index, kinds: ["number"], optional: false, fields: [], ...extra };
@@ -315,6 +378,37 @@ describe("engine-pinned correction tables", () => {
     expect(lines.length).toBeGreaterThan(0);
     const holding = bindingEvidenceFor(target);
     expect(lines.filter((line) => !holding.has(line))).toEqual([]);
+  });
+
+  test.each(["defold-1.12.4", defaultTarget().id])(
+    "%s: both Box2D v2 velocity hovers carry the engine caveat note",
+    (id) => {
+      const target = apiTarget(id);
+      const entry = loadTargetModules(target).find((module) => module.namespace === "b2d.body");
+      if (!entry) throw new Error(`${id}: no b2d.body module`);
+      const { contents } = generateModuleDeclaration(entry, targetBindingOptions(target));
+      for (const name of B2D_V2_VELOCITY) {
+        const note = ENGINE_CAVEAT_NOTES.get(`b2d.body.${name}`)?.note;
+        if (!note) throw new Error(`ENGINE_CAVEAT_NOTES: b2d.body.${name} has no note`);
+        const at = contents.indexOf(`function ${name}(`);
+        expect(at).toBeGreaterThan(-1);
+        expect(contents.slice(contents.lastIndexOf("/**", at), at)).toContain(note);
+      }
+    },
+  );
+
+  test("each Box2D v2 velocity pin names 1.12.4's body-slot point read, not the function", () => {
+    const source = vendoredBindingText(apiTarget("defold-1.12.4"), B2D_V2_FORMER_BODY);
+    const fixed = source.replaceAll(
+      "CheckVec2(L, 1, GetPhysicsScale())",
+      "CheckVec2(L, 2, GetPhysicsScale())",
+    );
+    expect(fixed).not.toBe(source);
+    for (const name of B2D_V2_VELOCITY) {
+      const pin = caveatBinding(`b2d.body.${name}`);
+      expect(bindingPinHoldsInSource(source, pin)).toBe(true);
+      expect(bindingPinHoldsInSource(fixed, pin)).toBe(false);
+    }
   });
 
   test.each([

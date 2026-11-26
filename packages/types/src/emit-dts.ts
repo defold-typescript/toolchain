@@ -4766,6 +4766,8 @@ export interface EngineCaveatNote extends CorrectionPins {
 }
 
 const B2D_V2_BODY = "gamesys/src/gamesys/scripts/box2d/v2/script_box2d_body_v2.cpp";
+// Where 1.12.4 keeps the Box2D v2 body binding, before the v2/v3 split.
+const B2D_V2_BODY_FORMER = "gamesys/src/gamesys/scripts/box2d/script_box2d_body_defold.cpp";
 const B2D_V2_POINT_IN_BODY_SLOT =
   "b2Body* body = CheckBody(L, 1); b2Vec2 p = CheckVec2(L, 1, GetPhysicsScale());";
 const B2D_V2_VELOCITY_NOTE =
@@ -4784,6 +4786,7 @@ export const ENGINE_CAVEAT_NOTES: ReadonlyMap<string, EngineCaveatNote> = new Ma
       reason: B2D_V2_VELOCITY_REASON,
       binding: {
         file: B2D_V2_BODY,
+        formerFiles: [B2D_V2_BODY_FORMER],
         cFunction: "Body_GetLinearVelocityFromLocalPoint",
         contains: B2D_V2_POINT_IN_BODY_SLOT,
       },
@@ -4796,6 +4799,7 @@ export const ENGINE_CAVEAT_NOTES: ReadonlyMap<string, EngineCaveatNote> = new Ma
       reason: B2D_V2_VELOCITY_REASON,
       binding: {
         file: B2D_V2_BODY,
+        formerFiles: [B2D_V2_BODY_FORMER],
         cFunction: "Body_GetLinearVelocityFromWorldPoint",
         contains: B2D_V2_POINT_IN_BODY_SLOT,
       },
@@ -4806,18 +4810,19 @@ export const ENGINE_CAVEAT_NOTES: ReadonlyMap<string, EngineCaveatNote> = new Ma
     {
       note: "Defold registers `compute` only in an engine built with compute support; elsewhere the global is `nil`. See [Compute programs](https://defold.com/manuals/compute/).",
       reason:
-        "script_compute.cpp wraps the whole module in #ifdef DM_HAVE_PLATFORM_COMPUTE_SUPPORT; the token reader drops preprocessor lines, so the pin holds the registration the guard encloses",
+        "script_compute.cpp wraps the whole module in #ifdef DM_HAVE_PLATFORM_COMPUTE_SUPPORT; the pin holds only while that guard encloses the registration, so the note drops once the module registers unconditionally",
       binding: {
         file: "gamesys/src/gamesys/scripts/script_compute.cpp",
         cFunction: "LuaInit",
         contains: 'luaL_register(L, "compute", ScriptCompute_methods);',
+        guard: "DM_HAVE_PLATFORM_COMPUTE_SUPPORT",
       },
     },
   ],
   [
     "camera",
     {
-      note: "In a render script a `Hash` or a relative address resolves under the render script's `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns.",
+      note: 'In a render script a `Hash` or a relative address resolves under the render script\'s `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns, or a full address string with socket, path and component, such as `"main:/camera#camera"`.',
       reason: CAMERA_ADDRESS_REASON,
       binding: CAMERA_ADDRESS_BINDING,
     },
