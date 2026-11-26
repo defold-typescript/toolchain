@@ -30,6 +30,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Callbacks on a pinned Defold 1.12.4 to 1.13.1 target type each parameter their docs list** instead of `unknown`, such as `timer.delay`'s `handle`, `sound.play`'s `sender` and `particlefx.play`'s `state`, typed `particlefx.EmitterState` as on newer targets. Where the old docs name the wrong type, the parameter follows the engine: `render.set_listener`'s `event_type` takes the [`render.CONTEXT_EVENT_*`](/api/render) constants, and `gui.play_particlefx`'s `node` and `font.prewarm_text`'s `errstring` may be `undefined`.
+- **A new project lists `bun-types` at 1.4.5**, and `init` and `upgrade` warn when the installed Bun is older ([Test with Bun](./testing.md#bun-and-old-test-folders)).
 
 ### Fixed
 

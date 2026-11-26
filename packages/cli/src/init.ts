@@ -585,7 +585,7 @@ export const TYPESCRIPT_SPEC = "6.0.2";
 // The exact `bun-types` pin a scaffold lists. It moves in lockstep with the
 // repo's own `bun-types` devDependency, which every scaffold `tsc` test runs
 // against; the drift guard in `init.test.ts` fails when the two diverge.
-export const BUN_TYPES_VERSION = "1.4.4";
+export const BUN_TYPES_VERSION = "1.4.5";
 
 // @defold-typescript/types (type-only, for the editor) and @defold-typescript/cli
 // (the local bin the managed `bunx @defold-typescript/cli` mise tasks resolve
