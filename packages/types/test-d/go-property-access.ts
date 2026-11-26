@@ -32,6 +32,22 @@ go.set<sprite.Properties>()("#sprite", "nope", 1);
 // @ts-expect-error cursor is number, not a Hash — value type is gated to P[K]
 go.set<sprite.Properties>()("#sprite", "cursor", hash("x"));
 
+// A key typed as a union of keys takes only a value every one of them accepts:
+// cursor takes a number and scale a vector3, so the union takes neither.
+declare const v3: Vector3;
+const PB = go.PLAYBACK_ONCE_FORWARD;
+const E = go.EASING_LINEAR;
+declare const spriteKey: "cursor" | "scale";
+// @ts-expect-error scale refuses a number
+go.set<sprite.Properties>()("#sprite", spriteKey, 1);
+// @ts-expect-error cursor refuses a vector3
+go.set<sprite.Properties>()("#sprite", spriteKey, v3);
+// @ts-expect-error cursor refuses a vector3 target
+go.animate<sprite.Properties>()("#sprite", spriteKey, PB, v3, E, 1);
+declare const numberKey: "cursor" | "playback_rate";
+go.set<sprite.Properties>()("#sprite", numberKey, 1);
+go.animate<sprite.Properties>()("#sprite", numberKey, PB, 1, E, 1);
+
 // `animation` is READ ONLY: the generated member is `readonly` and the engine
 // refuses the write, so set rejects the key while get still reads it.
 // @ts-expect-error animation is readonly — set accepts only writable keys

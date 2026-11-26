@@ -27,6 +27,18 @@ go.animate(url, "position.x", PB, vmath.vector3(), E, 1);
 // @ts-expect-error euler is a vector3, not a vector4
 go.animate(url, "euler", PB, vmath.vector4(), E, 1);
 
+// A key typed as a union of keys takes only a target every one of them accepts.
+declare const transformKey: "position" | "rotation";
+// @ts-expect-error position refuses a quaternion
+go.animate(url, transformKey, PB, vmath.quat(), E, 1);
+// @ts-expect-error rotation refuses a vector3
+go.animate(url, transformKey, PB, vmath.vector3(), E, 1);
+// @ts-expect-error rotation refuses a vector3, with a delay too
+go.animate(url, transformKey, PB, vmath.vector3(), E, 1, 0.5);
+declare const elementKey: "position.x" | "position.y";
+go.animate(url, elementKey, PB, 10, E, 1);
+go.animate(url, elementKey, PB, 10, E, 1, 0.5);
+
 // A dynamic or hashed key keeps the wide target.
 declare const key: string;
 go.animate(url, key, PB, vmath.quat(), E, 1);

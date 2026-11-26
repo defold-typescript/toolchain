@@ -135,18 +135,42 @@ type AnimatablePropertyName<A extends AddressCatalogShape> = [A["closed"]] exten
 // What go.get returns for key `K` of catalog `C`.
 type PropertyRead<C, K> = [K] extends [keyof C] ? Bounded<C[K], WideValue> : WideValue;
 
-// What go.set takes for key `K` of catalog `C`: nothing for a `readonly` key.
-type PropertyWrite<C, K> = [K] extends [keyof C]
+// A value go.set takes for every key in a union `K` of catalog `P`. Inferring
+// one parameter from the union of each key's setter intersects their value
+// types, where distributing over `K` would accept a value any one key takes. The
+// `infer` constraint keeps the kinds a value may hold readable from the
+// declaration.
+type XyWriteEach<P, K extends keyof P> = (
+  K extends unknown
+    ? (value: XyWrite<P, K>) => void
+    : never
+) extends (value: infer V extends WideValue) => void
+  ? V
+  : never;
+
+// A target go.animate takes for every key in a union `K` of catalog `P`.
+type AnimateTargetEach<P, K extends keyof P> = (
+  K extends unknown
+    ? (to: AnimateTarget<P[K]>) => void
+    : never
+) extends (to: infer V extends WideAnimateTarget) => void
+  ? V
+  : never;
+
+// What go.set takes for key `K` of catalog `C`: nothing for a `readonly` key, and
+// the wide value when `K` holds a key no catalog names. `K` does not distribute
+// inside these branches, so the intersection lives in an alias of its own.
+type PropertyWriteEach<C, K> = [K] extends [keyof C]
   ? [K] extends [WritableKey<C>]
-    ? Bounded<XyWrite<C, K>, WideValue>
+    ? XyWriteEach<C, K & keyof C>
     : never
   : WideValue;
 
 // What go.animate takes for key `K` of catalog `C`: nothing for a key the
 // engine cannot animate.
-type PropertyAnimateTo<C, K> = [K] extends [keyof C]
+type PropertyAnimateToEach<C, K> = [K] extends [keyof C]
   ? [K] extends [AnimatableKey<C>]
-    ? Bounded<AnimateTarget<C[K]>, WideAnimateTarget>
+    ? AnimateTargetEach<C, K & keyof C>
     : never
   : WideAnimateTarget;
 
@@ -232,7 +256,7 @@ declare global {
       url: SceneAddress | Hash | Url,
       property: K,
       playback: go.Playback,
-      to: AnimateTarget<P[K]>,
+      to: AnimateTargetEach<P, K>,
       easing: Vector | go.Easing,
       duration: number,
       ...rest:
@@ -304,7 +328,7 @@ declare global {
       url: R,
       property: K,
       playback: go.Playback,
-      to: PropertyAnimateTo<AddressCatalog<R>["catalog"], K>,
+      to: PropertyAnimateToEach<AddressCatalog<R>["catalog"], K>,
       easing: Vector | go.Easing,
       duration: number,
     ): void;
@@ -373,7 +397,7 @@ declare global {
       url: R,
       property: K,
       playback: go.Playback,
-      to: PropertyAnimateTo<AddressCatalog<R>["catalog"], K>,
+      to: PropertyAnimateToEach<AddressCatalog<R>["catalog"], K>,
       easing: Vector | go.Easing,
       duration: number,
       delay: number,
@@ -465,7 +489,7 @@ declare global {
     function set<P>(): <K extends WritableKey<P>>(
       url: SceneAddress | Hash | Url,
       property: K,
-      value: XyWrite<P, K>,
+      value: XyWriteEach<P, K>,
       ...options: [] | [GoPropertyOptions]
     ) => void;
     // One signature per arity, with the value conditional on the address's
@@ -475,12 +499,12 @@ declare global {
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
       property: K,
-      value: PropertyWrite<AddressCatalog<R>["catalog"], K>,
+      value: PropertyWriteEach<AddressCatalog<R>["catalog"], K>,
     ): void;
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
       property: K,
-      value: PropertyWrite<AddressCatalog<R>["catalog"], K>,
+      value: PropertyWriteEach<AddressCatalog<R>["catalog"], K>,
       options: GoPropertyOptions,
     ): void;
     /**
