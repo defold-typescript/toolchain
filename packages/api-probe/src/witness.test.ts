@@ -282,6 +282,10 @@ describe("option-table forms", () => {
 });
 
 describe("probe exemptions against the generated calls", () => {
+  // Proves each exemption key is in the generated call inventory, nothing more.
+  // An exempted call that is generated but reports no outcome, because the
+  // emitted script leaves it out or dies before it, passes here and fails only
+  // the runtime probe, as `no such probe call`.
   test("every exemption names a call the probe generates on its Box2D pass", () => {
     const generated = new Set(
       generations.flatMap((generation) =>
