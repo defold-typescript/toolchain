@@ -5,6 +5,7 @@ import { transpileProject } from "@defold-typescript/transpiler";
 import { surfaceProgram } from "../../types/scripts/lua-kind";
 import { overlayProgram } from "./call-check";
 import { BOX2D_BACKENDS } from "./contexts";
+import { outcomeKey, readExemptions } from "./exemptions";
 import { describeDiagnostic } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { memberCalls } from "./widening";
@@ -277,5 +278,17 @@ describe("option-table forms", () => {
         "the checker rejects an empty options table:",
       );
     });
+  });
+});
+
+describe("probe exemptions against the generated calls", () => {
+  test("every exemption names a call the probe generates on its Box2D pass", () => {
+    const generated = new Set(
+      generations.flatMap((generation) =>
+        generation.calls.map((call) => outcomeKey(generation.backend, call.name, call.variant)),
+      ),
+    );
+    const orphans = Object.keys(readExemptions()).filter((key) => !generated.has(key));
+    expect(orphans).toEqual([]);
   });
 });
