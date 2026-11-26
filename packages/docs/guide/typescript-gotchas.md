@@ -738,6 +738,60 @@ if (path !== undefined) {
 
 **How we pin this in the type tests.** `packages/types/test-d/userdata-fields.ts` marks `v.length` and `buf.length` as fields and `url.path` and `url.socket` as a `Hash` with `@ts-expect-error`, and compiles `buf.length()` and `url.socket = undefined`. `packages/transpiler/src/vector-math-emit.test.ts` snapshots `v.length()` as `#v` and `v[1] = 2` with its index unchanged.
 
+## `json.encode` writes an empty array as `{}`
+
+**Symptom.** An empty array field comes out of `json.encode` as an empty object:
+
+```ts
+const text = json.encode({ items: [] });
+print(text); // {"items":{}}
+```
+
+**Why.** Lua has one table type, and `[]` and `{}` both compile to `{}`, so an empty array is the same value as an empty object. `json.encode` cannot tell which one you meant, and the `encode_empty_table_as_object` field of `json.EncodeOptions` defaults to `true`, so it writes `{}`. An array with items still encodes as an array. Decoding loses the difference too: `json.decode` returns `unknown`, and `{}` and `[]` decode to the same empty table.
+
+**Typed alternative.** Pass `{ encode_empty_table_as_object: false }` when the receiver expects arrays:
+
+```ts
+const text = json.encode({ items: [] }, { encode_empty_table_as_object: false });
+print(text); // {"items":[]}
+```
+
+The option writes every empty table as `[]`, so an empty field meant as an object becomes `[]` too. When one payload needs both, keep the default and leave an empty array field out until it has items. On the way back in, check a decoded value's shape before you use it as an array. TypeScriptToLua's `Array.isArray` accepts any empty table, so it passes `{}` and `[]` alike:
+
+```ts
+const data = json.decode('{"items":[]}');
+if (typeof data === "object" && data !== null && "items" in data && Array.isArray(data.items)) {
+  print(data.items.length); // 0
+}
+```
+
+## A `LuaMultiReturn` call returns several values, not an array
+
+**Symptom.** `window.get_size` returns `LuaMultiReturn<[number, number]>`, which reads like a two-element array. Passed to `print` as it is, the call compiles but prints a table, not two numbers:
+
+```ts
+print(window.get_size()); // print({window.get_size()}) prints "table: 0x..."
+```
+
+**Why.** A Lua function can return several values at once, and the caller receives them as separate values, not as a table. The typings mark such a return as `LuaMultiReturn`, a tuple type from TypeScriptToLua, and TypeScriptToLua picks the Lua by how you use the call. Each `LuaMultiReturn` form below compiles to the Lua in its comment:
+
+```ts
+const [w, h] = window.get_size(); // local w, h = window.get_size()
+print(w, h);
+
+print(...window.get_size()); // print(window.get_size())
+
+const size = window.get_size(); // local size = {window.get_size()}
+print(size[0], size[1]); // print(size[1], size[2])
+
+const height = window.get_size()[1]; // local height = select(2, window.get_size())
+print(height);
+```
+
+Destructuring and `...` pass the values on, and an index picks one. Any other use of the call as one value, such as storing it or passing it without `...`, packs the values into a new table, which is what `print` received above. Reading `.length` straight off the call fails the build with `The LuaMultiReturn type can only be accessed via an element access expression of a numeric type.`; store the call first.
+
+**Typed alternative.** Destructure the call where you make it, or spread it straight into the next call. Store it only when you want the values as one table.
+
 ## A file-level name can hide a Lua or Defold global
 
 **Symptom.** A file declares a top-level helper named after a Lua global and uses it as intended, yet other code in the same file breaks at runtime:

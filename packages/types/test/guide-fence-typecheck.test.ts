@@ -81,6 +81,36 @@ const SELECTED: readonly FenceSelection[] = [
     kind: "script",
   },
   {
+    page: "typescript-gotchas.md",
+    lead: "**Symptom.** An empty array field comes out of `json.encode`",
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-gotchas.md",
+    lead: "**Typed alternative.** Pass `{ encode_empty_table_as_object: false }`",
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-gotchas.md",
+    lead: "check a decoded value's shape before you use it as an array",
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-gotchas.md",
+    lead: "**Symptom.** `window.get_size` returns `LuaMultiReturn<[number, number]>`",
+    nth: 0,
+    kind: "script",
+  },
+  {
+    page: "typescript-gotchas.md",
+    lead: "Each `LuaMultiReturn` form below compiles to the Lua in its comment",
+    nth: 0,
+    kind: "script",
+  },
+  {
     page: "typescript-vs-lua.md",
     lead: "### Engine indexes use Defold's base",
     nth: 0,
