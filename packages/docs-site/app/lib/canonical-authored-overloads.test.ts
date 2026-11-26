@@ -261,7 +261,7 @@ describe("canonical pages render every authored overload arm", () => {
 
     const vmath = renderedCallForms(await renderedFor(namespaceByName("vmath")));
     const lerpArms = storeFor("vmath")?.["vmath.lerp"]?.signatures ?? [];
-    expect(lerpArms.length).toBe(3);
+    expect(lerpArms.length).toBe(4);
     expect(armsOf(vmath, "vmath.lerp")).toEqual(lerpArms.map(callForm));
   });
 

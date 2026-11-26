@@ -32,7 +32,7 @@ export interface WideningFinding {
   readonly form: string;
   readonly rule: WideningRule;
   // Whether a verdict may record the finding instead of a fix: the open
-  // primitive of an open domain, or arguments that must agree.
+  // primitive of an open domain.
   readonly verdictable: boolean;
   readonly detail: string;
 }
@@ -116,7 +116,6 @@ interface Slot {
   readonly name: string;
   readonly template: string;
   readonly domain: Domain;
-  readonly agreeing: boolean;
 }
 
 function restIndex(signature: ts.Signature): number | undefined {
@@ -309,28 +308,6 @@ function domainOf(declared: readonly (ts.Type | undefined)[], checker: ts.TypeCh
   return domain;
 }
 
-// The type parameter `type` is, or is a member of when it is a union.
-function typeParameterOf(type: ts.Type | undefined): ts.Type | undefined {
-  if (type === undefined) return undefined;
-  if (type.flags & ts.TypeFlags.TypeParameter) return type;
-  return type.isUnion()
-    ? type.types.find((member) => member.flags & ts.TypeFlags.TypeParameter)
-    : undefined;
-}
-
-// Whether argument `index` is typed by a type parameter, alone or in a union,
-// that types another parameter of the same signature too, so the two must agree.
-function isAgreeing(signature: ts.Signature, index: number, checker: ts.TypeChecker): boolean {
-  const own = typeParameterOf(argumentType(signature, index, checker));
-  if (own === undefined) return false;
-  return signature
-    .getParameters()
-    .some(
-      (_, other) =>
-        other !== index && typeParameterOf(argumentType(signature, other, checker)) === own,
-    );
-}
-
 function replaced(text: string, start: number, end: number, value: string): string {
   return `${text.slice(0, start)}${value}${text.slice(end)}`;
 }
@@ -388,7 +365,6 @@ function slotsOf(
         signatures.map((signature) => argumentType(signature, index, checker)),
         checker,
       ),
-      agreeing: isAgreeing(own, index, checker),
     });
     if (!ts.isObjectLiteralExpression(argument)) return;
     for (const property of propertyNames(signatures, index, argument, checker)) {
@@ -420,7 +396,6 @@ function slotsOf(
           signatures.flatMap((signature) => propertyTypes(signature, index, property, checker)),
           checker,
         ),
-        agreeing: false,
       });
     }
   });
@@ -718,7 +693,7 @@ function judge(
     slot: slot.name,
     form: form.label,
     rule,
-    verdictable: (open && rule === "sound") || slot.agreeing,
+    verdictable: open && rule === "sound",
     detail,
   });
   const rejected = members.filter(([, result]) => result.signature === undefined);

@@ -66,6 +66,9 @@ describe("widening findings on a fixture surface", () => {
     "    function widen_progress(o: { progress?: boolean }, cb: (r: { status: number }) => void): void;",
     "    function widen_opt<N extends 1 | 2>(n?: N): number;",
     "    function widen_agree<T extends WidenA | WidenB>(a: T, b: number | T): T;",
+    "    function widen_agree_split<T extends WidenA | WidenB>(a: T, b: number): T;",
+    "    function widen_agree_split(a: WidenA, b: number | WidenA): WidenA;",
+    "    function widen_agree_split(a: WidenB, b: number | WidenB): WidenB;",
     '    function widen_one<K extends "a" | (string & {})>(id: K): K extends "a" ? string : number;',
     "    function widen_omit(a: number): number;",
     "    function widen_omit(a: number, o: { all?: boolean }): string;",
@@ -179,8 +182,14 @@ describe("widening findings on a fixture surface", () => {
     expect(forms("sys.widen_progress", "o.progress")).toContain("undefined");
   });
 
-  test("a union of arguments that must agree is verdictable", () => {
-    expect(findings("sys.widen_agree")).toEqual([["sys.widen_agree required b union sound", true]]);
+  test("a union of arguments that must agree is not verdictable", () => {
+    expect(findings("sys.widen_agree")).toEqual([
+      ["sys.widen_agree required b union sound", false],
+    ]);
+  });
+
+  test("one signature per member clears the finding on arguments that must agree", () => {
+    expect(findings("sys.widen_agree_split")).toEqual([]);
   });
 
   test("an open domain with one literal member is judged against it", () => {

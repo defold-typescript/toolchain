@@ -2789,7 +2789,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
         if (head.name === "vmath.lerp") lerpReturns = sameReturns ? 1 : new Set(returns).size;
       }
     }
-    expect(lerpReturns).toBe(3);
+    expect(lerpReturns).toBe(4);
     expect(counts.differing).toBeGreaterThan(0);
     expect(counts.shared).toBeGreaterThan(0);
   });
