@@ -124,6 +124,35 @@ const SELECTED: readonly FenceSelection[] = [
   },
 ];
 
+/**
+ * A declaration a selected section teaches, checked by assignability. A fence
+ * can keep compiling after the declaration it relies on changes shape, because
+ * an empty interface skips the excess-property check and a destructure types
+ * against `number[]` as readily as against `LuaMultiReturn`.
+ */
+interface DeclarationCheck {
+  readonly kind: string;
+  readonly reason: string;
+  readonly body: string;
+}
+
+const DECLARATION_CHECKS: readonly DeclarationCheck[] = [
+  {
+    kind: "script",
+    reason: 'json.EncodeOptions["encode_empty_table_as_object"] takes false',
+    body: `const emptyAsArray: json.EncodeOptions["encode_empty_table_as_object"] = false;
+void emptyAsArray;
+`,
+  },
+  {
+    kind: "script",
+    reason: "window.get_size returns LuaMultiReturn<[number, number]>",
+    body: `const size: LuaMultiReturn<[number, number]> = window.get_size();
+void size;
+`,
+  },
+];
+
 const surfaces = await exampleSurfaces();
 
 /**
@@ -182,6 +211,13 @@ describe("guide fences presented as working code", () => {
     for (const selection of SELECTED) {
       const [found] = diagnosticsFor(shippedSurface(selection.kind), [selectedFence(selection)]);
       expect(found, `${selection.lead} fence`).toEqual([]);
+    }
+  });
+
+  test("the declarations the selected sections name keep the shape the sections rely on", () => {
+    for (const entry of DECLARATION_CHECKS) {
+      const [found] = diagnosticsFor(shippedSurface(entry.kind), [entry.body]);
+      expect(found, entry.reason).toEqual([]);
     }
   });
 
