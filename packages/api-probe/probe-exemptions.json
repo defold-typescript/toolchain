@@ -69,11 +69,6 @@
     "verdict": "accepted",
     "reason": "the Box2D v2 binding reads reset_mass with lua_toboolean behind lua_gettop and lua_isnil checks, so any non-nil value counts as true"
   },
-  "b2d.get_body:accepted-1-hash@v3": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "b2d.joint.JOINT_TYPE_FILTER:constant": {
     "outcome": "engine-error",
     "verdict": "accepted",
