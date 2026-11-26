@@ -14667,6 +14667,7 @@ types are out of scope here).
 | --- | --- | --- |
 | Description coverage | Most functions/constants carry a summary | Same source, same coverage; every shared symbol documents at least as well |
 | Namespace hover | Module namespaces are not consistently documented | Generated namespaces use Defold module metadata; `(synthesized)` marks fallback prose only when the ref-doc has no module summary |
+| Engine caveats | Not recorded | A function or namespace whose calls the engine makes fail gains a paragraph saying so, such as `compute` existing only in an engine built with compute support, on each Defold version whose engine source still shows the behavior |
 | `@param` style | `@param <name> <desc>` (no separator) | `@param <name> - <desc>` (dash-separated, the JSDoc convention editors render as a definition list) |
 | Description markup | Raw ref-doc text | `htmlToDocText` converts HTML to Markdown: `<code>`→`` `code` ``, `<ul><li>`→`- ` bullets, `<a>`→link text, entities decoded |
 | Multi-line `@param`/`@returns` | Continuation lines escape the ` * ` grid | Every continuation line carries ` * ` (see [the well-formedness gate](#well-formedness)) |

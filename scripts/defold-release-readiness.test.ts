@@ -9,6 +9,7 @@ import {
 import type { ApiPage } from "../packages/docs-render/src/api-surface";
 import type { ApiVersion } from "../packages/docs-render/src/toolchain-surface-loader.ts";
 import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
+import { targetBindingOptions } from "../packages/types/scripts/binding-pin.ts";
 import {
   generateModuleDeclaration,
   loadApiTargets,
@@ -563,7 +564,7 @@ describe("collectTargets — physical committed-surface verification", () => {
       (e) => e.outFile === outFile,
     );
     if (entry === undefined) throw new Error(`module ${outFile} not found`);
-    return generateModuleDeclaration(entry).contents;
+    return generateModuleDeclaration(entry, targetBindingOptions(target)).contents;
   }
 
   function withRoot(
