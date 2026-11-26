@@ -65,6 +65,12 @@
     "annotated": "required",
     "declared": "optional"
   },
+  "runtime:b2d.get_body:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:b2d.get_body:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:b2d.shape.are_contact_events_enabled:arity": {
     "verdict": "accepted",
     "reason": "the declaration adds the `(body, shape_index, ...)` overload: CheckShape (and Shape_IsValid) in script_box2d_shape_v3.cpp read a body and 1-based shape index when slot 1 is not a shape handle; the annotation states that form only in its `shape_id` prose",
@@ -275,6 +281,18 @@
     "annotated": "hash",
     "declared": "hash|string"
   },
+  "runtime:bullet3d.get_collision_object:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:bullet3d.get_collision_object:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:bullet3d.get_rigid_body:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:bullet3d.get_rigid_body:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:camera.get_aspect_ratio:too-loose:1": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:camera.get_aspect_ratio:param:camera",
@@ -401,6 +419,12 @@
     "annotated": "number|url",
     "declared": "hash|number|string|url"
   },
+  "runtime:collectionfactory.create:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionfactory.create:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:collectionfactory.get_status:arity": {
     "verdict": "accepted",
     "reason": "engine binding takes 1..1: GetComponentFromLua resolves a nil url to the calling script component, which fails the collection factory type check; the annotation's `url?` is wrong",
@@ -412,6 +436,12 @@
     "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.get_status:param:url",
     "annotated": "optional",
     "declared": "required"
+  },
+  "runtime:collectionfactory.get_status:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionfactory.get_status:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:collectionfactory.load:arity": {
     "verdict": "accepted",
@@ -431,6 +461,12 @@
     "annotated": "optional",
     "declared": "required"
   },
+  "runtime:collectionfactory.load:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionfactory.load:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:collectionfactory.set_prototype:arity": {
     "verdict": "accepted",
     "reason": "engine binding takes 2..2: a nil url resolves to the calling script component, and `prototype` is read with lua_isnil, which an omitted argument fails, so nil is passed explicitly",
@@ -442,6 +478,12 @@
     "correction": "REQUIRED_SLOT_CORRECTIONS:collectionfactory.set_prototype:param:url",
     "annotated": "optional",
     "declared": "required"
+  },
+  "runtime:collectionfactory.set_prototype:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionfactory.set_prototype:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:collectionfactory.unload:arity": {
     "verdict": "accepted",
@@ -455,11 +497,17 @@
     "annotated": "optional",
     "declared": "required"
   },
+  "runtime:collectionfactory.unload:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionfactory.unload:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:collectionproxy.get_resources:too-loose:1": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:collectionproxy.get_resources:param:collectionproxy",
     "annotated": "url",
-    "declared": "hash|string|url"
+    "declared": "string|url"
   },
   "runtime:collectionproxy.set_collection:arity": {
     "verdict": "accepted",
@@ -473,6 +521,18 @@
     "annotated": "optional",
     "declared": "required"
   },
+  "runtime:collectionproxy.set_collection:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:collectionproxy.set_collection:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:factory.create:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:factory.create:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:factory.get_status:arity": {
     "verdict": "accepted",
     "reason": "engine binding takes 1..1: GetComponentFromLua resolves a nil url to the calling script component, which fails the factory type check; the annotation's `url?` is wrong",
@@ -484,6 +544,12 @@
     "correction": "REQUIRED_SLOT_CORRECTIONS:factory.get_status:param:url",
     "annotated": "optional",
     "declared": "required"
+  },
+  "runtime:factory.get_status:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:factory.get_status:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:factory.load:arity": {
     "verdict": "accepted",
@@ -503,6 +569,12 @@
     "annotated": "optional",
     "declared": "required"
   },
+  "runtime:factory.load:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:factory.load:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:factory.set_prototype:arity": {
     "verdict": "accepted",
     "reason": "engine binding takes 2..2: a nil url resolves to the calling script component, and `prototype` is read with lua_isnil, which an omitted argument fails, so nil is passed explicitly",
@@ -515,6 +587,12 @@
     "annotated": "optional",
     "declared": "required"
   },
+  "runtime:factory.set_prototype:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:factory.set_prototype:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:factory.unload:arity": {
     "verdict": "accepted",
     "reason": "engine binding takes 1..1: GetComponentFromLua resolves a nil url to the calling script component, which fails the factory type check; the annotation's `url?` is wrong",
@@ -526,6 +604,12 @@
     "correction": "REQUIRED_SLOT_CORRECTIONS:factory.unload:param:url",
     "annotated": "optional",
     "declared": "required"
+  },
+  "runtime:factory.unload:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:factory.unload:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:go.cancel_animations:arity": {
     "verdict": "accepted",
@@ -713,11 +797,71 @@
     "annotated": "0..1",
     "declared": "1..1"
   },
+  "runtime:label.get_layout_objects:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:label.get_layout_objects:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:label.get_text:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:label.get_text:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.get_aabb:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_aabb:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.get_blend_weights:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_blend_weights:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.get_go:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_go:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.get_mesh_aabb:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_aabb:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.get_mesh_enabled:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_enabled:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:model.get_mesh_enabled:too-narrow:2": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:model.get_mesh_enabled:param:mesh_id",
     "annotated": "hash|string|url",
     "declared": "hash|string"
+  },
+  "runtime:model.play_anim:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.play_anim:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.set_blend_weights:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.set_blend_weights:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:model.set_mesh_enabled:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:model.set_mesh_enabled:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:model.set_mesh_enabled:too-narrow:2": {
     "verdict": "corrected",
@@ -737,11 +881,65 @@
     "annotated": "vector4",
     "declared": "matrix4|vector4"
   },
+  "runtime:physics.create_joint:too-narrow:2": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.create_joint:param:collisionobject_a",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.create_joint:too-narrow:5": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.create_joint:param:collisionobject_b",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.destroy_joint:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.destroy_joint:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.get_group:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_group:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.get_joint_properties:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_joint_properties:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.get_joint_reaction_force:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_joint_reaction_force:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.get_joint_reaction_torque:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_joint_reaction_torque:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:physics.get_maskbit:too-loose:2": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:physics.get_maskbit:param:group",
     "annotated": "string",
     "declared": "hash|string"
+  },
+  "runtime:physics.get_maskbit:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_maskbit:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.get_shape:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.get_shape:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:physics.set_group:too-loose:2": {
     "verdict": "corrected",
@@ -749,11 +947,59 @@
     "annotated": "string",
     "declared": "hash|string"
   },
+  "runtime:physics.set_group:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_group:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.set_hflip:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_hflip:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.set_joint_properties:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_joint_properties:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
   "runtime:physics.set_maskbit:too-loose:2": {
     "verdict": "corrected",
     "correction": "PARAM_TYPE_CORRECTIONS:physics.set_maskbit:param:group",
     "annotated": "string",
     "declared": "hash|string"
+  },
+  "runtime:physics.set_maskbit:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_maskbit:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.set_shape:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_shape:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.set_vflip:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.set_vflip:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.update_mass:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.update_mass:param:collisionobject",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:physics.wakeup:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:physics.wakeup:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:render.delete_render_target:too-loose:1": {
     "verdict": "accepted",
@@ -1090,6 +1336,42 @@
     "reason": "script_engine.cpp registers {\"set_render_enabled\", EngineSys_SetRenderEnabled}; the ref-doc and annotation name the unregistered set_render_enable, which FUNCTION_NAME_CORRECTIONS (api-doc.ts) renames in the declaration",
     "annotated": "absent",
     "declared": "declared"
+  },
+  "runtime:tilemap.get_bounds:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.get_bounds:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:tilemap.get_tile_info:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.get_tile_info:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:tilemap.get_tile:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.get_tile:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:tilemap.get_tiles:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.get_tiles:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:tilemap.set_tile:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.set_tile:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
+  },
+  "runtime:tilemap.set_visible:too-narrow:1": {
+    "verdict": "corrected",
+    "correction": "PARAM_TYPE_CORRECTIONS:tilemap.set_visible:param:url",
+    "annotated": "hash|string|url",
+    "declared": "string|url"
   },
   "runtime:vmath.vector:arity": {
     "verdict": "accepted",

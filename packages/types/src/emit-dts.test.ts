@@ -3471,9 +3471,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       },
       EVERY_PIN_HOLDS,
     );
-    expect(out).toContain(
-      "function get_resources(collectionproxy: Url | string | Hash): string[];",
-    );
+    expect(out).toContain("function get_resources(collectionproxy: Url | string): string[];");
     expect(out).not.toContain("Record<string | number, unknown>");
   });
 
@@ -4572,9 +4570,10 @@ describe("url-parameter address retyping", () => {
     const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
     // `model.get_mesh_enabled` carries the `string | hash | url` triple on its
     // url slot, and the table does not classify it: the triple alone must not
-    // retype. (`mesh_id` drops `Url` through PARAM_TYPE_CORRECTIONS.)
+    // retype. (`url` drops `Hash` and `mesh_id` drops `Url` through
+    // PARAM_TYPE_CORRECTIONS.)
     expect(signatureLine(out, "function get_mesh_enabled(")).toBe(
-      "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
+      "function get_mesh_enabled(url: string | Url, mesh_id: string | Hash): boolean;",
     );
   });
 
@@ -5219,7 +5218,7 @@ describe("return-side optionality corrections", () => {
 
   test("b2d.get_body carries the prose-documented nil alternative", () => {
     expect(signatureLine(emitDeclarations(b2d, EVERY_PIN_HOLDS), "function get_body(")).toBe(
-      'function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;',
+      'function get_body(url: string | Url): Opaque<"b2Body"> | undefined;',
     );
   });
 
@@ -7246,7 +7245,7 @@ describe("corrections the engine bindings demand", () => {
 
   test("a slot the binding refuses to go without is required", () => {
     expect(line(collectionfactoryDoc, "function load(")).toBe(
-      "function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
+      "function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;",
     );
   });
 

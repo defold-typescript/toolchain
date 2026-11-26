@@ -189,8 +189,16 @@ describe("optionality", () => {
 
   test("dmScript::GetComponentFromLua refuses the calling script's own URL", () => {
     expect(slot(binding("factory", "get_status"), 1)).toMatchObject({
-      kinds: ["hash", "string", "url"],
+      kinds: ["string", "url"],
       optional: false,
+    });
+  });
+
+  test("a component lookup refuses a hash even where dmScript::ResolveURL read the slot first", () => {
+    expect(slot(binding("label", "get_text"), 1)).toMatchObject({ kinds: ["string", "url"] });
+    // ResolveURL alone takes a hash: load posts to the proxy without a lookup.
+    expect(slot(binding("collectionproxy", "load"), 1)).toMatchObject({
+      kinds: ["hash", "string", "url"],
     });
   });
 });
@@ -210,7 +218,7 @@ describe("reads through helpers and locals", () => {
 
   test("a helper handed only out-pointers still reads the caller's literal slots", () => {
     const meshEnabled = binding("model", "get_mesh_enabled");
-    expect(slot(meshEnabled, 1)).toMatchObject({ kinds: ["hash", "string", "url"] });
+    expect(slot(meshEnabled, 1)).toMatchObject({ kinds: ["string", "url"] });
     expect(slot(meshEnabled, 2)).toMatchObject({ kinds: ["hash", "string"] });
   });
 

@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Url } from "../../../src/core-types";
+import type { Opaque, Url } from "../../../src/core-types";
 
 declare global {
   /**
@@ -52,7 +52,7 @@ declare global {
      * @param url - collision object component URL
      * @returns the collision object, or `nil`
      */
-    function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined;
+    function get_collision_object(url: string | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined;
     /**
      * Trigger components are ghost objects, so this function returns `nil` for them.
      * This function raises an error unless the collection uses 3D physics.
@@ -72,7 +72,7 @@ declare global {
      * assert(trigger !== undefined && bullet3d.get_rigid_body("#trigger") === undefined);
      * ```
      */
-    function get_rigid_body(url: string | Hash | Url): Opaque<"btRigidBody"> | undefined;
+    function get_rigid_body(url: string | Url): Opaque<"btRigidBody"> | undefined;
     /**
      * Get the Bullet version
      *

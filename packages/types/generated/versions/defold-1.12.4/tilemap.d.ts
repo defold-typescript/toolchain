@@ -45,7 +45,7 @@ declare global {
      * const [x, y, w, h] = tilemap.get_bounds("/level#tilemap");
      * ```
      */
-    function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;
+    function get_bounds(url: string | Url): LuaMultiReturn<[number, number, number, number]>;
     /**
      * Get the tile set at the specified position in the tilemap.
      * The position is identified by the tile index starting at origin
@@ -66,7 +66,7 @@ declare global {
      * }
      * ```
      */
-    function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;
+    function get_tile(url: string | Url, layer: string | Hash, x: number, y: number): number | undefined;
     /**
      * Get the tile information at the specified position in the tilemap.
      * The position is identified by the tile index starting at origin
@@ -94,7 +94,7 @@ declare global {
      * }
      * ```
      */
-    function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
+    function get_tile_info(url: string | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
     /**
      * Retrieves all the tiles for the specified layer in the tilemap.
      * It returns a table of rows where the keys are the
@@ -118,7 +118,7 @@ declare global {
      * }
      * ```
      */
-    function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
+    function get_tiles(url: string | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
     /**
      * Replace a tile in a tile map with a new tile.
      * The coordinates of the tiles are indexed so that the "first" tile just
@@ -164,7 +164,7 @@ declare global {
      * }
      * ```
      */
-    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;
+    function set_tile(url: string | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;
     /**
      * Sets the visibility of the tilemap layer
      *
@@ -177,7 +177,7 @@ declare global {
      * tilemap.set_visible("/level#tilemap", "foreground", false);
      * ```
      */
-    function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
+    function set_visible(url: string | Url, layer: string | Hash, visible: boolean): void;
     interface Properties {
       /**
        * The material used when rendering the tile map. The type of the property is hash.

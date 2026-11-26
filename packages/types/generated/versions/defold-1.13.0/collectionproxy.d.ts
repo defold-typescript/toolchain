@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Url } from "../../../src/core-types";
+import type { Url } from "../../../src/core-types";
 
 declare global {
   /**
@@ -40,7 +40,7 @@ declare global {
      * }
      * ```
      */
-    function get_resources(collectionproxy: Url | string | Hash): string[];
+    function get_resources(collectionproxy: Url | string): string[];
     /**
      * The collection should be loaded by the collection proxy.
      * Setting the collection to "nil" will revert it back to the original collection.
@@ -64,7 +64,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;
+    function set_collection(url: string | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;
   }
 }
 

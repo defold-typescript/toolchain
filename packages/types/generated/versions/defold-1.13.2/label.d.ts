@@ -70,7 +70,7 @@ declare global {
      * }
      * ```
      */
-    function get_layout_objects(url: string | Hash | Url): label.LayoutObject[];
+    function get_layout_objects(url: string | Url): label.LayoutObject[];
     /**
      * Gets the text from a label component
      * This function is deprecated. Use `go.get("#label", "text")` instead.
@@ -87,7 +87,7 @@ declare global {
      * });
      * ```
      */
-    function get_text(url: string | Hash | Url): string;
+    function get_text(url: string | Url): string;
     /**
      * Sets the text of a label component
      * This function is deprecated. Use `go.set("#label", "text", value)` instead.

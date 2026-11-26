@@ -355,7 +355,7 @@ describe("llms-full ## API serializes the Combined projection", () => {
   test("emits authoritative, declaration-backed signatures (no ref-doc token drift)", () => {
     expect(api).toContain("### compute");
     // the curated shape the drift audit fixed, straight from api-signatures.json
-    expect(api).toContain("set_blend_weights(url: string | Hash | Url, weights?: number[]): void;");
+    expect(api).toContain("set_blend_weights(url: string | Url, weights?: number[]): void;");
   });
 
   test("tags each entry with compact machine-readable availability, only when not all-tracked", () => {

@@ -13,12 +13,14 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Stricter [vmath](/api/vmath) pairs and [union-key writes](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).**
+> - **[Stricter engine arguments](./typescript-gotchas.md)** for vmath pairs, union-key writes and component addresses.
 
 ### Breaking
 
-- **`vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type**, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
-- **`go.set` and `go.animate` with a property key typed as a union of keys take only a value every key accepts**, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion.
+- **Some engine arguments are stricter, so a call the engine rejects or misreads no longer compiles:**
+  - **vmath pairs**: `vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
+  - **Union-key writes**: `go.set` and `go.animate` with a property key typed as a union of keys take only a value every key accepts, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion.
+  - **Component addresses**: functions that act on a component, such as `factory.create`, `label.get_text` and `physics.get_shape`, no longer accept a `Hash`, which always fails there because it carries no `#fragment`; pass the address as a string or `Url` ([URL addressing](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)).
 
 ## v0.71.0
 
