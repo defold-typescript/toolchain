@@ -634,7 +634,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;",
       "collectionproxy\u0000TYPEDEF\u0000LoadData\u0000": "interface LoadData { progress?: number; code?: number; }",
@@ -2409,7 +2409,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;",
       "collectionproxy\u0000TYPEDEF\u0000LoadData\u0000": "interface LoadData { progress?: number; code?: number; }",
@@ -4170,7 +4170,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;",
       "collectionproxy\u0000TYPEDEF\u0000LoadData\u0000": "interface LoadData { progress?: number; code?: number; }",
@@ -5654,7 +5654,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": "function load(url: string | Hash | Url, options: PlainTable | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void;",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
@@ -7013,7 +7013,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "compute\u0000FUNCTION\u0000compute.get_constants\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[];",
       "compute\u0000FUNCTION\u0000compute.get_samplers\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[];",
@@ -8112,7 +8112,7 @@
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_ALREADY_LOADED\u0000": "const RESULT_ALREADY_LOADED: number & { readonly __brand: \"collectionproxy.RESULT_ALREADY_LOADED\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_LOADING\u0000": "const RESULT_LOADING: number & { readonly __brand: \"collectionproxy.RESULT_LOADING\" };",
       "collectionproxy\u0000CONSTANT\u0000collectionproxy.RESULT_NOT_EXCLUDED\u0000": "const RESULT_NOT_EXCLUDED: number & { readonly __brand: \"collectionproxy.RESULT_NOT_EXCLUDED\" };",
-      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | string): string[];",
+      "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\u0000": "const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: \"crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_LANGUAGE\u0000": "const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_LANGUAGE\" };",
@@ -11558,7 +11558,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
@@ -16349,7 +16349,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
@@ -21109,7 +21109,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
@@ -24913,7 +24913,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"function\"],\"isOptional\":false}]->[]": {
@@ -28782,7 +28782,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {
@@ -31466,7 +31466,7 @@
         "param:0:url": { "type": "SceneComponentAddress | Url", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "param:0:collectionproxy": { "type": "Url | string", "optional": false },
+        "param:0:collectionproxy": { "type": "Url | SceneComponentAddress", "optional": false },
         "return:0:resources": { "type": "string[]", "optional": false }
       },
       "collectionproxy\u0000FUNCTION\u0000collectionproxy.set_collection\u0000[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": {

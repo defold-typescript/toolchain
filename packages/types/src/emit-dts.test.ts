@@ -42,6 +42,9 @@ import resource114Doc from "../fixtures/defold-1.14.0/resource_doc.json" with { 
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
+import collectionproxy1141Doc from "../fixtures/defold-1.14.1/collectionproxy_doc.json" with {
+  type: "json",
+};
 import iapDoc from "../fixtures/extension-docs/iap.json" with { type: "json" };
 import pushDoc from "../fixtures/extension-docs/push.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
@@ -98,6 +101,7 @@ import {
   collectHandleMethodGroups,
   constantUnionAlias,
   constantUnionSpelling,
+  correctedParamTypeTokens,
   declaredTypePaths,
   defaultMapType,
   type EmitOptions,
@@ -4524,6 +4528,49 @@ describe("slot-level array-of-object recovery", () => {
   });
 });
 
+describe("correctedParamTypeTokens", () => {
+  test("a binding-pinned addition applies only with the binding's evidence", () => {
+    expect(
+      correctedParamTypeTokens(
+        "collectionproxy.get_resources",
+        "collectionproxy",
+        ["url"],
+        EVERY_PIN_HOLDS.bindingEvidence,
+      ),
+    ).toEqual(["url", "string"]);
+    expect(
+      correctedParamTypeTokens(
+        "collectionproxy.get_resources",
+        "collectionproxy",
+        ["url"],
+        new Set(),
+      ),
+    ).toEqual(["url"]);
+  });
+
+  test("a removal drops the removed token from the ref-doc tokens", () => {
+    expect(
+      correctedParamTypeTokens(
+        "factory.create",
+        "url",
+        ["string", "hash", "url"],
+        EVERY_PIN_HOLDS.bindingEvidence,
+      ),
+    ).toEqual(["string", "url"]);
+  });
+
+  test("a slot with no correction keeps its tokens", () => {
+    expect(
+      correctedParamTypeTokens(
+        "go.get_position",
+        "id",
+        ["string", "hash", "url"],
+        EVERY_PIN_HOLDS.bindingEvidence,
+      ),
+    ).toEqual(["string", "hash", "url"]);
+  });
+});
+
 describe("url-parameter address retyping", () => {
   const committed = urlParameterTable as UrlParameterTable;
 
@@ -4573,6 +4620,17 @@ describe("url-parameter address retyping", () => {
     // entry removes `Hash` from it: both apply to the one slot.
     expect(signatureLine(out, "function create(")).toStartWith(
       "function create(url: SceneComponentAddress | Url, position?: Vector3,",
+    );
+  });
+
+  test("a correction-added string on a classified slot takes the address alias", () => {
+    const module = parseDefoldApiDoc(collectionproxy1141Doc);
+    const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
+    // The ref-doc types `collectionproxy.get_resources#collectionproxy` as `url`
+    // alone; a PARAM_TYPE_CORRECTIONS entry adds the `string` the engine takes,
+    // and the committed table classifies the slot `component`.
+    expect(signatureLine(out, "function get_resources(")).toBe(
+      "function get_resources(collectionproxy: Url | SceneComponentAddress): string[];",
     );
   });
 
