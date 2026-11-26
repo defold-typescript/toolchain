@@ -87,4 +87,22 @@ describe("checkMissingComponentFragments", () => {
       "/spawner",
     ]);
   });
+
+  test("a literal grouped in parentheses is judged at its slot and marked at the literal", () => {
+    for (const source of ['factory.create(("/spawner"));\n', 'factory.create((("/spawner")));\n']) {
+      const findings = findingsOf(source);
+      expect(findings.map((finding) => [finding.call, finding.address])).toEqual([
+        ["factory.create", "/spawner"],
+      ]);
+      expect(findings[0]?.start).toBe(source.indexOf('"/spawner"'));
+      expect(findings[0]?.length).toBe('"/spawner"'.length);
+    }
+  });
+
+  test("grouping keeps an empty literal, a bare '#', a named fragment and a runtime address unreported", () => {
+    for (const address of ["", "#", "/spawner#factory"]) {
+      expect(findingsOf(`factory.create(("${address}"));\n`)).toEqual([]);
+    }
+    expect(findingsOf("declare const where: string;\nfactory.create((where));\n")).toEqual([]);
+  });
 });

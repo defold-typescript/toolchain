@@ -51,7 +51,11 @@ export function checkMissingComponentFragments(input: {
 
     const visit = (node: ts.Node): void => {
       if (ts.isStringLiteralLike(node) && namesNoComponent(node.text)) {
-        const entry = addressEntryOfArgument(checker, table, node);
+        // The slot is held by the outermost group, while the finding stays on
+        // the literal; `as`, `satisfies` and `!` wrappers are left unjudged.
+        let slot: ts.Expression = node;
+        while (ts.isParenthesizedExpression(slot.parent)) slot = slot.parent;
+        const entry = addressEntryOfArgument(checker, table, slot);
         if (entry?.class === "component") {
           findings.push({
             fileName: sourceFile.fileName,
