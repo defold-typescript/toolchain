@@ -8759,6 +8759,42 @@ describe("watch scene-address surface wiring", () => {
     expect(sceneSave?.missingFragmentAddresses).toEqual(expected);
   });
 
+  test("watch --json carries a missing fragment already in the source on its startup build with no scenes", async () => {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", 'factory.create("/spawner");\n');
+    const { io, out } = captureStreams();
+    const { main, component } = crossWorldWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const startup = watchEvents(out()).find((e) => e.event === "build");
+    expect(startup?.missingFragmentAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ]);
+    const message = startup?.missingFragmentAddresses?.[0]?.message ?? "";
+    expect(startup?.warnings?.some((w) => w.includes(message))).toBe(true);
+  });
+
   test("watch prints a rebuild's cross-world address on stderr", async () => {
     scaffoldCrossWorldWatchProject();
     const { io, err } = captureStreams();
