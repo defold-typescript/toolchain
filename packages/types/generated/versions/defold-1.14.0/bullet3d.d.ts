@@ -52,7 +52,7 @@ declare global {
      * @param url - collision object component URL
      * @returns the collision object, or `nil`
      */
-    function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined;
+    function get_collision_object(url: string | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined;
     /**
      * Returns the id of the game object that owns the collision-object component.
      * Accepts both rigid bodies and ghost trigger objects.
@@ -88,7 +88,7 @@ declare global {
      * assert(trigger !== undefined && bullet3d.get_rigid_body("#trigger") === undefined);
      * ```
      */
-    function get_rigid_body(url: string | Hash | Url): Opaque<"btRigidBody"> | undefined;
+    function get_rigid_body(url: string | Url): Opaque<"btRigidBody"> | undefined;
     /**
      * Get the Bullet version
      *

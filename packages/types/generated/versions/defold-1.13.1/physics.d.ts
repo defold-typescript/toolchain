@@ -48,7 +48,7 @@ declare global {
      * See each joint type for possible properties field. The one field that is accepted for all joint types is:
      * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
-    function create_joint(joint_type: number, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
+    function create_joint(joint_type: number, collisionobject_a: string | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Url, position_b: Vector3, properties?: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
     /**
      * Destroy an already physics joint. The joint has to be created before a
      * destroy can be issued.
@@ -57,7 +57,7 @@ declare global {
      * @param collisionobject - collision object where the joint exist
      * @param joint_id - id of the joint
      */
-    function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;
+    function destroy_joint(collisionobject: string | Url, joint_id: string | Hash): void;
     /**
      * Get the gravity in runtime. The gravity returned is not global, it will return
      * the gravity for the collection that the function is called from.
@@ -90,7 +90,7 @@ declare global {
      * }
      * ```
      */
-    function get_group(url: string | Hash | Url): Hash;
+    function get_group(url: string | Url): Hash;
     /**
      * Get a table for properties for a connected joint. The joint has to be created before
      * properties can be retrieved.
@@ -102,7 +102,7 @@ declare global {
      *
      * - boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
      */
-    function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): { collide_connected: boolean };
+    function get_joint_properties(collisionobject: string | Url, joint_id: string | Hash): { collide_connected: boolean };
     /**
      * Get the reaction force for a joint. The joint has to be created before
      * the reaction force can be calculated.
@@ -112,7 +112,7 @@ declare global {
      * @param joint_id - id of the joint
      * @returns reaction force for the joint
      */
-    function get_joint_reaction_force(collisionobject: string | Hash | Url, joint_id: string | Hash): Vector3;
+    function get_joint_reaction_force(collisionobject: string | Url, joint_id: string | Hash): Vector3;
     /**
      * Get the reaction torque for a joint. The joint has to be created before
      * the reaction torque can be calculated.
@@ -122,7 +122,7 @@ declare global {
      * @param joint_id - id of the joint
      * @returns the reaction torque on bodyB in N*m.
      */
-    function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
+    function get_joint_reaction_torque(collisionobject: string | Url, joint_id: string | Hash): number;
     /**
      * Returns true if the specified group is set in the mask of a collision
      * object, false otherwise.
@@ -139,7 +139,7 @@ declare global {
      * }
      * ```
      */
-    function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
+    function get_maskbit(url: string | Url, group: string | Hash): boolean;
     /**
      * Gets collision shape data from a collision object
      *
@@ -181,7 +181,7 @@ declare global {
      * }
      * ```
      */
-    function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
+    function get_shape(url: string | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -402,7 +402,7 @@ declare global {
      * }
      * ```
      */
-    function set_group(url: string | Hash | Url, group: string | Hash): void;
+    function set_group(url: string | Url, group: string | Hash): void;
     /**
      * Flips the collision shapes horizontally for a collision object
      *
@@ -419,7 +419,7 @@ declare global {
      * });
      * ```
      */
-    function set_hflip(url: string | Hash | Url, flip: boolean): void;
+    function set_hflip(url: string | Url, flip: boolean): void;
     /**
      * Updates the properties for an already connected joint. The joint has to be created before
      * properties can be changed.
@@ -430,7 +430,7 @@ declare global {
      * @param properties - joint specific properties table
      * Note: The `collide_connected` field cannot be updated/changed after a connection has been made.
      */
-    function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
+    function set_joint_properties(collisionobject: string | Url, joint_id: string | Hash, properties: { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean }): void;
     /**
      * Sets or clears the masking of a group (maskbit) in a collision object.
      *
@@ -445,7 +445,7 @@ declare global {
      * }
      * ```
      */
-    function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
+    function set_maskbit(url: string | Url, group: string | Hash, maskbit: boolean): void;
     /**
      * Sets collision shape data for a collision object. Please note that updating data in 3D
      * can be quite costly for box and capsules. Because of the physics engine, the cost
@@ -479,7 +479,7 @@ declare global {
      * }
      * ```
      */
-    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
+    function set_shape(url: string | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
     /**
      * Flips the collision shapes vertically for a collision object
      *
@@ -496,7 +496,7 @@ declare global {
      * });
      * ```
      */
-    function set_vflip(url: string | Hash | Url, flip: boolean): void;
+    function set_vflip(url: string | Url, flip: boolean): void;
     /**
      * The function recalculates the density of each shape based on the total area of all shapes and the specified mass, then updates the mass of the body accordingly.
      * Note: Currently only supported in 2D physics.
@@ -508,7 +508,7 @@ declare global {
      * physics.update_mass("#collisionobject", 14);
      * ```
      */
-    function update_mass(collisionobject: string | Hash | Url, mass: number): void;
+    function update_mass(collisionobject: string | Url, mass: number): void;
     /**
      * Collision objects tend to fall asleep when inactive for a small period of time for
      * efficiency reasons. This function wakes them up.
@@ -525,7 +525,7 @@ declare global {
      * });
      * ```
      */
-    function wakeup(url: string | Hash | Url): void;
+    function wakeup(url: string | Url): void;
     interface Properties {
       /**
        * The angular damping value for the collision object. Setting this value alters the damping of

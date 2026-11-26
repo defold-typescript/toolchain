@@ -1,7 +1,5 @@
 /// <reference path="../index.d.ts" />
 
-import type { Hash } from "../src/core-types";
-
 // tilemap.get_tiles returns the layer's tiles as a sparse table of rows: the
 // outer key is a row index, the inner key a column index, the value the tile id
 // (a number). The positions are sparse (offset by tilemap.get_bounds, not a
@@ -10,7 +8,7 @@ import type { Hash } from "../src/core-types";
 // yields the recovered tile id. An unknown layer returns nil, so the table is
 // narrowed first.
 
-declare const url: Hash;
+declare const url: Url;
 
 const tiles = tilemap.get_tiles(url, "layer1");
 if (tiles !== undefined) {

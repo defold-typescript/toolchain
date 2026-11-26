@@ -844,6 +844,144 @@ const CAMERA_SLOT_FUNCTIONS = [
   "world_to_screen",
 ] as const;
 
+// ResolveURL turns a hash into a URL with the hash as its path and no fragment,
+// and GetComponentFromLua raises when no component carries that fragment, so a
+// slot the binding looks a component up by takes a string or a url only.
+function componentSlotHashCorrection(binding: BindingPin): ParamTypeCorrection {
+  const file = binding.file.slice(binding.file.lastIndexOf("/") + 1);
+  return {
+    removes: ["Hash"],
+    upstream: ["string", "hash", "url"],
+    binding,
+    reason: `${file}:${binding.cFunction} resolves the component through ResolveURL, which gives a hash an empty fragment, so no hash names a component`,
+  };
+}
+
+const COMPONENT_LOOKUP_SCRIPTS = "gamesys/src/gamesys/scripts";
+const MODEL_COMPONENT_LOOKUP = "dmGameObject::GetComponentFromLua(L, 1, collection, MODEL_EXT";
+const TILEMAP_COMPONENT_LOOKUP = "dmGameObject::GetComponentFromLua(L, 1, collection, TILE_MAP_EXT";
+const COLLISION_OBJECT_LOOKUP = "GetCollisionObject(L, 1, collection, &comp";
+
+// Each pin is the line that hands the slot's literal index to the lookup, so it
+// names which argument is the component. A collision object goes through the
+// file's GetCollisionObject helper, whose own lookup reads a variable index; a
+// function that returns into a shared reader is pinned at that reader.
+const COMPONENT_SLOT_LOOKUPS: readonly (readonly [
+  file: string,
+  contains: string,
+  slots: readonly (readonly [key: string, cFunction: string])[],
+])[] = [
+  [
+    "box2d/script_box2d.cpp",
+    "GetCollisionObject(L, 1, collection",
+    [["b2d.get_body:param:url", "B2D_GetBody"]],
+  ],
+  [
+    "bullet3d/script_bullet3d.cpp",
+    "GetCollisionObject(L, 1, collection",
+    [
+      ["bullet3d.get_collision_object:param:url", "GetNativeCollisionObject"],
+      ["bullet3d.get_rigid_body:param:url", "GetNativeCollisionObject"],
+    ],
+  ],
+  [
+    "script_collection_factory.cpp",
+    "dmScript::GetComponentFromLua(L, 1, COLLECTION_FACTORY_EXT",
+    [
+      ["collectionfactory.create:param:url", "CollectionFactoryComp_Create"],
+      ["collectionfactory.get_status:param:url", "CollectionFactoryComp_GetStatus"],
+      ["collectionfactory.load:param:url", "CollectionFactoryComp_Load"],
+      ["collectionfactory.set_prototype:param:url", "CollectionFactoryComp_SetPrototype"],
+      ["collectionfactory.unload:param:url", "CollectionFactoryComp_Unload"],
+    ],
+  ],
+  [
+    "script_collectionproxy.cpp",
+    "dmScript::GetComponentFromLua(L, 1, COLLECTION_PROXY_EXT",
+    [["collectionproxy.set_collection:param:url", "CollectionProxy_SetCollection"]],
+  ],
+  [
+    "script_factory.cpp",
+    "dmScript::GetComponentFromLua(L, 1, FACTORY_EXT",
+    [
+      ["factory.create:param:url", "FactoryComp_Create"],
+      ["factory.get_status:param:url", "FactoryComp_GetStatus"],
+      ["factory.load:param:url", "FactoryComp_Load"],
+      ["factory.set_prototype:param:url", "FactoryComp_SetPrototype"],
+      ["factory.unload:param:url", "FactoryComp_Unload"],
+    ],
+  ],
+  [
+    "script_label.cpp",
+    "dmScript::GetComponentFromLua(L, 1, LABEL_EXT",
+    [
+      ["label.get_layout_objects:param:url", "GetLayoutObjects"],
+      ["label.get_text:param:url", "GetText"],
+    ],
+  ],
+  [
+    "script_model.cpp",
+    MODEL_COMPONENT_LOOKUP,
+    [
+      ["model.get_aabb:param:url", "LuaModelComp_GetAabb"],
+      ["model.get_blend_weights:param:url", "LuaModelComp_GetBlendWeights"],
+      ["model.get_go:param:url", "LuaModelComp_GetGO"],
+      ["model.get_mesh_aabb:param:url", "LuaModelComp_GetMeshAabb"],
+      ["model.get_mesh_enabled:param:url", "LuaModelComp_GetSetMeshEnabled_Internal"],
+      ["model.set_blend_weights:param:url", "LuaModelComp_SetBlendWeights"],
+      ["model.set_mesh_enabled:param:url", "LuaModelComp_GetSetMeshEnabled_Internal"],
+    ],
+  ],
+  [
+    "script_model.cpp",
+    "dmScript::GetComponentFromLua(L, 1, MODEL_EXT",
+    [["model.play_anim:param:url", "LuaModelComp_PlayAnim"]],
+  ],
+  [
+    "script_physics.cpp",
+    "GetCollisionObject(L, 2, collection, &comp_a",
+    [["physics.create_joint:param:collisionobject_a", "Physics_CreateJoint"]],
+  ],
+  [
+    "script_physics.cpp",
+    "GetCollisionObject(L, 5, collection, &comp_b",
+    [["physics.create_joint:param:collisionobject_b", "Physics_CreateJoint"]],
+  ],
+  [
+    "script_physics.cpp",
+    COLLISION_OBJECT_LOOKUP,
+    [
+      ["physics.destroy_joint:param:collisionobject", "Physics_DestroyJoint"],
+      ["physics.get_group:param:url", "Physics_GetGroup"],
+      ["physics.get_joint_properties:param:collisionobject", "Physics_GetJointProperties"],
+      ["physics.get_joint_reaction_force:param:collisionobject", "Physics_GetJointReactionForce"],
+      ["physics.get_joint_reaction_torque:param:collisionobject", "Physics_GetJointReactionTorque"],
+      ["physics.get_maskbit:param:url", "Physics_GetMaskBit"],
+      ["physics.get_shape:param:url", "Physics_GetShape"],
+      ["physics.set_group:param:url", "Physics_SetGroup"],
+      ["physics.set_hflip:param:url", "Physics_SetFlipInternal"],
+      ["physics.set_joint_properties:param:collisionobject", "Physics_SetJointProperties"],
+      ["physics.set_maskbit:param:url", "Physics_SetMaskBit"],
+      ["physics.set_shape:param:url", "Physics_SetShape"],
+      ["physics.set_vflip:param:url", "Physics_SetFlipInternal"],
+      ["physics.update_mass:param:collisionobject", "Physics_UpdateMass"],
+      ["physics.wakeup:param:url", "Physics_Wakeup"],
+    ],
+  ],
+  [
+    "script_tilemap.cpp",
+    TILEMAP_COMPONENT_LOOKUP,
+    [
+      ["tilemap.get_bounds:param:url", "TileMap_GetBounds"],
+      ["tilemap.get_tile:param:url", "TileMap_Get"],
+      ["tilemap.get_tile_info:param:url", "TileMap_Get"],
+      ["tilemap.get_tiles:param:url", "TileMap_GetTiles"],
+      ["tilemap.set_tile:param:url", "TileMap_SetTile"],
+      ["tilemap.set_visible:param:url", "TileMap_SetVisible"],
+    ],
+  ],
+];
+
 // Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS, so a
 // same-named slot on another element is untouched.
 export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = new Map<
@@ -949,13 +1087,26 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       },
     },
   ],
+  ...COMPONENT_SLOT_LOOKUPS.flatMap(([file, contains, slots]) =>
+    slots.map(
+      ([key, cFunction]) =>
+        [
+          key,
+          componentSlotHashCorrection({
+            file: `${COMPONENT_LOOKUP_SCRIPTS}/${file}`,
+            cFunction,
+            contains,
+          }),
+        ] as const,
+    ),
+  ),
   [
     "collectionproxy.get_resources:param:collectionproxy",
     {
-      adds: "string | Hash",
+      adds: "string",
       upstream: ["url"],
       reason:
-        "script_collectionproxy.cpp:GetCollectionUrlHashFromCollectionProxy resolves the proxy through ResolveURL, which takes a string or a hash",
+        "script_collectionproxy.cpp:GetCollectionUrlHashFromCollectionProxy resolves the proxy through ResolveURL, which takes a string or a hash but gives a hash an empty fragment, so no hash names the proxy component",
       binding: {
         file: "gamesys/src/gamesys/scripts/script_collectionproxy.cpp",
         cFunction: "GetCollectionUrlHashFromCollectionProxy",

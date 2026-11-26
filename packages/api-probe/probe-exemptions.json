@@ -69,11 +69,6 @@
     "verdict": "accepted",
     "reason": "the Box2D v2 binding reads reset_mass with lua_toboolean behind lua_gettop and lua_isnil checks, so any non-nil value counts as true"
   },
-  "b2d.get_body:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "b2d.get_body:accepted-1-hash@v3": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -449,50 +444,15 @@
     "verdict": "accepted",
     "reason": "no Lua API hands out a render camera handle, so no number names a camera"
   },
-  "collectionfactory.create:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "collectionfactory.get_status:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "collectionfactory.load:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "collectionfactory.load:accepted-1-string": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the positive call's load of the probe's one collection factory is still in flight in this frame, and the binding refuses a second load until it completes"
   },
-  "collectionfactory.set_prototype:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "collectionfactory.set_prototype:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "an earlier probe call started loading the factory, and the engine refuses a prototype change while it loads"
-  },
-  "collectionfactory.unload:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "collectionproxy.get_resources:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "collectionproxy.set_collection:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "compute.get_constants:required": {
     "outcome": "engine-error",
@@ -524,45 +484,20 @@
     "verdict": "accepted",
     "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
   },
-  "factory.create:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "factory.create:negative-4": {
     "outcome": "ok",
     "verdict": "accepted",
     "reason": "the binding reads properties only when lua_istable(L, 4) and ignores any other kind"
-  },
-  "factory.get_status:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "factory.load:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "factory.load:accepted-1-string": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the positive call's load of the probe's one factory is still in flight in this frame, and the binding refuses a second load until it completes"
   },
-  "factory.set_prototype:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "factory.set_prototype:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "an earlier probe call started loading the factory, and the engine refuses a prototype change while it loads"
-  },
-  "factory.unload:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "font.add_font:accepted-2-string": {
     "outcome": "engine-error",
@@ -644,31 +579,6 @@
     "verdict": "accepted",
     "reason": "the witness buffer is not ASTC data, and the probe project ships no .astc file"
   },
-  "label.get_layout_objects:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "label.get_text:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.get_aabb:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.get_blend_weights:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.get_go:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "model.get_go:accepted-2-string": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -678,21 +588,6 @@
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the builtin cube has no bones, so no bone id resolves"
-  },
-  "model.get_mesh_aabb:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.get_mesh_enabled:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.play_anim:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "model.play_anim:negative-5": {
     "outcome": "ok",
@@ -704,105 +599,10 @@
     "verdict": "accepted",
     "reason": "no animation plays on the probe model, and the engine resolves no animation from the id the read returns (its message names the resource '(null)')"
   },
-  "model.set_blend_weights:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "model.set_mesh_enabled:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.create_joint:accepted-2-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.create_joint:accepted-5-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.destroy_joint:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_group:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_joint_properties:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_joint_reaction_force:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_joint_reaction_torque:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_maskbit:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.get_shape:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "physics.raycast:negative-4": {
     "outcome": "ok",
     "verdict": "accepted",
     "reason": "the binding reads options only when lua_istable(L, 4) and ignores any other kind"
-  },
-  "physics.set_group:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.set_hflip:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.set_joint_properties:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.set_maskbit:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.set_shape:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.set_vflip:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.update_mass:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "physics.wakeup:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "profiler.view_recorded_frame:required": {
     "outcome": "engine-error",
@@ -984,40 +784,10 @@
     "verdict": "accepted",
     "reason": "the probe passes enable = false, since enabling throttling would stop the frames the run reports on, and the binding reads cooldown only when enable is true"
   },
-  "tilemap.get_bounds:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "tilemap.get_tile:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "tilemap.get_tile_info:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "tilemap.get_tiles:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
-  "tilemap.set_tile:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
-  },
   "tilemap.set_tile:negative-6": {
     "outcome": "ok",
     "verdict": "accepted",
     "reason": "the binding reads the slot as a transform bitmask only when lua_isnumber(L, 6), else as flip-h through lua_toboolean, which takes any kind"
-  },
-  "tilemap.set_visible:accepted-1-hash": {
-    "outcome": "engine-error",
-    "verdict": "accepted",
-    "reason": "a hash carries only the object's path, and the binding needs the component's fragment, which only a url or its address string names"
   },
   "vmath.matrix4:negative-1": {
     "outcome": "bad-argument",

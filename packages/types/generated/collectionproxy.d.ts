@@ -56,7 +56,7 @@ declare global {
      * }
      * ```
      */
-    function get_resources(collectionproxy: Url | string | Hash): string[];
+    function get_resources(collectionproxy: Url | string): string[];
     /**
      * Loads the collection referenced by a collection proxy. The proxy is also
      * initialized and the callback receives `proxy_loading`, `proxy_ready`, or
@@ -102,7 +102,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
+    function set_collection(url: string | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
   }
 }
 

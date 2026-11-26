@@ -198,13 +198,13 @@ void _boundsW;
 void _boundsH;
 
 const _text: string = label.get_text(msg.url());
-const _textHash: string = label.get_text(go.get_id("score"));
+const _textAddress: string = label.get_text("score#label");
 label.set_text(msg.url(), "score: 0");
 
 // @ts-expect-error label.get_text returns string, not number
 const _badText: number = label.get_text(msg.url());
 void _text;
-void _textHash;
+void _textAddress;
 void _badText;
 
 particlefx.play(msg.url(), () => {});

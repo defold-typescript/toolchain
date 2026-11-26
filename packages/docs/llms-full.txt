@@ -1523,9 +1523,9 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 **Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path)` is a separate runtime trap: the engine accepts no argument, one argument (a string, `Hash`, `Url` or `undefined`), or three arguments, so `msg.url("main", "camera")` is a runtime error. The three-arg form always passes three arguments, and they may be `undefined` — an explicit `undefined` reaches the engine as a passed `nil`, so the call never drops to two arguments, and an `undefined` `socket` addresses the current game world. The engine refuses one combination, a `socket` and `fragment` with an `undefined` `path` (`Can't resolve id with specified socket and fragment.`), and the overloads reject it too. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject the two-arg call at compile time, so the typings are the warning.
 
-**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (a string, `Hash`, `Url` or `undefined`), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose positions may be `undefined` (except `path` beside a `socket` and a `fragment`), an `undefined` `socket` meaning the current world — never the two-arg form.
+**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (a string, `Hash`, `Url` or `undefined`), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose positions may be `undefined` (except `path` beside a `socket` and a `fragment`), an `undefined` `socket` meaning the current world — never the two-arg form. A function that acts on a component (`factory.create`, `label.get_text`, `physics.get_shape`, …) needs the component's `#fragment`, which a `Hash` cannot carry: the engine resolves a hash as an object path with no fragment and raises "The component could not be found". Those slots take a string such as `"/spawner#factory"` or a `Url`, and reject a `Hash`.
 
-**How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads. `msg.url()`, the one-argument string, `Hash`, `Url` and `undefined` forms, and three-argument calls with `undefined` wherever the engine takes `nil` type-check. Both two-argument calls (`msg.url("main", "camera")` and `msg.url(undefined, hash("/door"))`), `msg.url(hash("level1"), undefined, "script")` and `msg.url(42)` carry `@ts-expect-error`, so the runtime-invalid forms are rejected at compile time; widen the overloads to accept one and the expected error vanishes, failing the typecheck gate.
+**How we pin this in the type tests.** `packages/types/test-d/component-slot-hash.ts` asserts that a component slot rejects a `Hash` while a game-object slot such as `go.get_position` keeps it. `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads. `msg.url()`, the one-argument string, `Hash`, `Url` and `undefined` forms, and three-argument calls with `undefined` wherever the engine takes `nil` type-check. Both two-argument calls (`msg.url("main", "camera")` and `msg.url(undefined, hash("/door"))`), `msg.url(hash("level1"), undefined, "script")` and `msg.url(42)` carry `@ts-expect-error`, so the runtime-invalid forms are rejected at compile time; widen the overloads to accept one and the expected error vanishes, failing the typecheck gate.
 
 #### A vector's size is `v.length()`, and `url.path` can be `undefined`
 
@@ -14928,7 +14928,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d
 
-- function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
+- function get_body(url: string | Url): Opaque<"b2Body"> | undefined;
 - function get_gameobject_id(body: Opaque<"b2Body">): Hash | undefined; [since 1.14.0]
 - function get_version(): b2d.VersionInfo; [since 1.13.0]
 - function get_world(): Opaque<"b2World">; [through 1.13.1] [signature transition]
@@ -15345,9 +15345,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d
 
-- function get_collision_object(url: string | Hash | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
+- function get_collision_object(url: string | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
 - function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined; [since 1.14.0]
-- function get_rigid_body(url: string | Hash | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
+- function get_rigid_body(url: string | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
 - function get_version(): bullet3d.VersionInfo; [since 1.13.2]
 - function get_world(): bullet3d.BtDiscreteDynamicsWorld | undefined; [since 1.13.2]
 - type BtCollisionObject = Opaque<"btCollisionObject" | "btRigidBody"> [since 1.13.2]
@@ -15637,11 +15637,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
-- function get_status(url: string | Hash | Url): collectionfactory.Status;
-- function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
-- function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
-- function unload(url: string | Hash | Url): void;
+- function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
+- function get_status(url: string | Url): collectionfactory.Status;
+- function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+- function set_prototype(url: string | Url, prototype: string | undefined): void;
+- function unload(url: string | Url): void;
 - collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
 - collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
 - collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
@@ -15649,9 +15649,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionproxy
 
-- function get_resources(collectionproxy: Url | string | Hash): string[];
+- function get_resources(collectionproxy: Url | string): string[];
 - function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void; [since 1.13.1]
-- function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
+- function set_collection(url: string | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
 - collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
@@ -15700,11 +15700,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### factory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
-- function get_status(url: string | Hash | Url): factory.Status;
-- function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
-- function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
-- function unload(url: string | Hash | Url): void;
+- function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
+- function get_status(url: string | Url): factory.Status;
+- function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+- function set_prototype(url: string | Url, prototype: string | undefined): void;
+- function unload(url: string | Url): void;
 - factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
 - factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
 - factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
@@ -16320,8 +16320,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### label
 
-- function get_layout_objects(url: string | Hash | Url): label.LayoutObject[]; [since 1.13.2]
-- function get_text(url: string | Hash | Url): string; [deprecated since 1.13.2]
+- function get_layout_objects(url: string | Url): label.LayoutObject[]; [since 1.13.2]
+- function get_text(url: string | Url): string; [deprecated since 1.13.2]
 - function set_text(url: string | Hash | Url, text: string | number): void; [deprecated since 1.13.2]
 - color: Vector4
 - font: Hash
@@ -16403,15 +16403,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### model
 
 - function cancel(url: string | Hash | Url): void;
-- function get_aabb(url: string | Hash | Url): model.Aabb;
-- function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.0]
-- function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
-- function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, model.Aabb>;
-- function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
-- function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+- function get_aabb(url: string | Url): model.Aabb;
+- function get_blend_weights(url: string | Url): number[]; [since 1.13.0]
+- function get_go(url: string | Url, bone_id: string | Hash): Hash;
+- function get_mesh_aabb(url: string | Url): LuaMap<Hash, model.Aabb>;
+- function get_mesh_enabled(url: string | Url, mesh_id: string | Hash): boolean;
+- function play_anim(url: string | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
-- function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
+- function set_blend_weights(url: string | Url, weights?: number[]): void; [since 1.13.0]
+- function set_mesh_enabled(url: string | Url, mesh_id: string | Hash, enabled: boolean): void;
 - readonly animation: Hash;
 - cursor: number
 - material: Hash [through 1.12.4]
@@ -16454,15 +16454,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### physics
 
-- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.JointProperties): void;
-- function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;
+- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Url, position_b: Vector3, properties?: physics.JointProperties): void;
+- function destroy_joint(collisionobject: string | Url, joint_id: string | Hash): void;
 - function get_gravity(): Vector3;
-- function get_group(url: string | Hash | Url): Hash;
-- function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
-- function get_joint_reaction_force(collisionobject: string | Hash | Url, joint_id: string | Hash): Vector3;
-- function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
-- function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
-- function get_shape(url: string | Hash | Url, shape: string | Hash): physics.ShapeData;
+- function get_group(url: string | Url): Hash;
+- function get_joint_properties(collisionobject: string | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
+- function get_joint_reaction_force(collisionobject: string | Url, joint_id: string | Hash): Vector3;
+- function get_joint_reaction_torque(collisionobject: string | Url, joint_id: string | Hash): number;
+- function get_maskbit(url: string | Url, group: string | Hash): boolean;
+- function get_shape(url: string | Url, shape: string | Hash): physics.ShapeData;
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean } | undefined): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
@@ -16470,14 +16470,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;
 - function set_gravity(gravity: Vector3): void;
-- function set_group(url: string | Hash | Url, group: string | Hash): void;
-- function set_hflip(url: string | Hash | Url, flip: boolean): void;
-- function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
-- function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
-- function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
-- function set_vflip(url: string | Hash | Url, flip: boolean): void;
-- function update_mass(collisionobject: string | Hash | Url, mass: number): void;
-- function wakeup(url: string | Hash | Url): void;
+- function set_group(url: string | Url, group: string | Hash): void;
+- function set_hflip(url: string | Url, flip: boolean): void;
+- function set_joint_properties(collisionobject: string | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
+- function set_maskbit(url: string | Url, group: string | Hash, maskbit: boolean): void;
+- function set_shape(url: string | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
+- function set_vflip(url: string | Url, flip: boolean): void;
+- function update_mass(collisionobject: string | Url, mass: number): void;
+- function wakeup(url: string | Url): void;
 - physics.JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" }
 - physics.JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" }
 - physics.JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" }
@@ -16861,13 +16861,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### tilemap
 
-- function get_bounds(url: string | Hash | Url): LuaMultiReturn<[number, number, number, number]>;
-- function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number | undefined;
-- function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
-- function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
+- function get_bounds(url: string | Url): LuaMultiReturn<[number, number, number, number]>;
+- function get_tile(url: string | Url, layer: string | Hash, x: number, y: number): number | undefined;
+- function get_tile_info(url: string | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
+- function get_tiles(url: string | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
-- function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
+- function set_tile(url: string | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
+- function set_visible(url: string | Url, layer: string | Hash, visible: boolean): void;
 - tilemap.H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" }
 - tilemap.ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" }
 - tilemap.ROTATE_270: number & { readonly __brand: "tilemap.ROTATE_270" }

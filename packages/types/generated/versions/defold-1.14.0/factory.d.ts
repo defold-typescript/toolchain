@@ -60,7 +60,7 @@ declare global {
      * });
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
+    function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
     /**
      * This returns status of the factory.
      * Calling this function when the factory is not marked as dynamic loading always returns
@@ -69,7 +69,7 @@ declare global {
      * @param url - the factory component to get status from
      * @returns status of the factory component
      */
-    function get_status(url: string | Hash | Url): factory.Status;
+    function get_status(url: string | Url): factory.Status;
     /**
      * Resources are referenced by the factory component until the existing (parent) collection is destroyed or factory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -89,7 +89,7 @@ declare global {
      * factory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+    function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the factory.
      *
@@ -103,7 +103,7 @@ declare global {
      * const id = factory.create("#factory", go.get_world_position(), vmath.quat());
      * ```
      */
-    function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
+    function set_prototype(url: string | Url, prototype: string | undefined): void;
     /**
      * This decreases the reference count for each resource loaded with factory.load. If reference is zero, the resource is destroyed.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -115,7 +115,7 @@ declare global {
      * factory.unload("#factory");
      * ```
      */
-    function unload(url: string | Hash | Url): void;
+    function unload(url: string | Url): void;
   }
 }
 

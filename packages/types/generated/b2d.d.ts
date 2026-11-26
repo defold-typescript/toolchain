@@ -690,7 +690,7 @@ declare global {
      * @param url - the url to the game object collision component
      * @returns the body if successful. Otherwise `nil`.
      */
-    function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
+    function get_body(url: string | Url): Opaque<"b2Body"> | undefined;
     /**
      * Returns the id of the game object that owns the body's collision-object component.
      * Raises a Lua error if the body handle is invalid or its game object has been deleted.

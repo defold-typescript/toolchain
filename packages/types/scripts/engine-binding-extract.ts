@@ -1008,6 +1008,8 @@ interface SlotRead {
   readonly admitsNil?: true;
   // A check that raises on nil, reached when the slot is passed as nil.
   readonly raisesOnNil?: true;
+  // Kinds the read raises on even where another read of the slot takes them.
+  readonly refuses?: readonly LuaKind[];
 }
 
 const NUMERIC_CHECKS = new Set([
@@ -1568,9 +1570,10 @@ function analyzeSlots(
     }
     // Resolves the URL to a component of one type and raises on any other, so
     // the calling script's own URL, which `ResolveURL` substitutes for nil, is
-    // refused: the slot is required.
+    // refused: the slot is required. `ResolveURL` gives a hash no fragment, so
+    // a hash names no component and raises here, whatever read it before.
     if (name === "GetComponentFromLua") {
-      record(["hash", "string", "url"]);
+      record(["string", "url"], { refuses: ["hash"] });
       continue;
     }
     if (name === "lua_type") {
@@ -1992,7 +1995,10 @@ function analyzeFunction(
   for (let slot = 1; slot <= maxSlot; slot++) {
     const reads = bySlot.get(slot) ?? [];
     const manual = reads.find((r) => r.manual)?.manual;
-    const kinds = union(reads.flatMap((r) => r.kinds)).sort() as LuaKind[];
+    const refusedKinds = new Set(reads.flatMap((r) => r.refuses ?? []));
+    const kinds = union(reads.flatMap((r) => r.kinds))
+      .filter((kind) => !refusedKinds.has(kind))
+      .sort() as LuaKind[];
     const byArity = arities !== undefined && slot > (arities[0] as number);
     const decisive = reads.filter((r) => !r.probe);
     // A slot read only behind probes of itself is skipped when absent.

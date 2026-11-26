@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Url } from "../../../src/core-types";
+import type { Opaque, Url } from "../../../src/core-types";
 
 declare global {
   /**
@@ -14,7 +14,7 @@ declare global {
      * @param url - the url to the game object collision component
      * @returns the body if successful. Otherwise `nil`.
      */
-    function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
+    function get_body(url: string | Url): Opaque<"b2Body"> | undefined;
     /**
      * Get the Box2D world from the current collection
      *

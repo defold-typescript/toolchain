@@ -349,7 +349,7 @@ describe("per-slot rendered types travel with the signature", () => {
         slotKey
       ];
     expect(slot("collectionfactory", "collectionfactory.get_status", "param:0:url")).toEqual({
-      type: "string | Hash | Url",
+      type: "string | Url",
       optional: false,
     });
     expect(slot("camera", "camera.get_fov", "param:0:camera")?.optional).toBe(true);

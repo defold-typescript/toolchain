@@ -322,6 +322,7 @@
     "window.set_listener:param:callback"
   ],
   "parameterCorrections": {
+    "b2d.get_body:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "buffer.get_bytes:param:stream_name": { "pins": [["hash"]], "adds": ["string"] },
     "bullet3d.constraint.get_slider_motor:param:motor": {
       "pins": [["string"]],
@@ -332,6 +333,14 @@
       "pins": [["string"]],
       "adds": ["\"linear\"", "\"angular\""],
       "removes": ["string"]
+    },
+    "bullet3d.get_collision_object:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "bullet3d.get_rigid_body:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
     },
     "camera.get_aspect_ratio:param:camera": {
       "pins": [["url", "number", "nil"]],
@@ -417,10 +426,39 @@
       "pins": [["url", "number", "nil"]],
       "adds": ["string", "Hash"]
     },
+    "collectionfactory.create:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "collectionfactory.get_status:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "collectionfactory.load:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "collectionfactory.set_prototype:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "collectionfactory.unload:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
     "collectionproxy.get_resources:param:collectionproxy": {
       "pins": [["url"]],
-      "adds": ["string", "Hash"]
+      "adds": ["string"]
     },
+    "collectionproxy.set_collection:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "factory.create:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "factory.get_status:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "factory.load:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "factory.set_prototype:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "factory.unload:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "go.animate:param:playback": {
       "pins": [
         [
@@ -460,18 +498,84 @@
       "pins": [["constant"], ["gui.ANCHOR"]],
       "replaces": ["Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>"]
     },
+    "label.get_layout_objects:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "label.get_text:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "model.get_aabb:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "model.get_blend_weights:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "model.get_go:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "model.get_mesh_aabb:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "model.get_mesh_enabled:param:mesh_id": {
       "pins": [["string", "hash", "url"]],
       "removes": ["Url"]
+    },
+    "model.get_mesh_enabled:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "model.play_anim:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "model.set_blend_weights:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
     },
     "model.set_mesh_enabled:param:mesh_id": {
       "pins": [["string", "hash", "url"]],
       "removes": ["Url"]
     },
+    "model.set_mesh_enabled:param:url": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
     "particlefx.set_constant:param:value": { "pins": [["vector4"]], "adds": ["Matrix4"] },
+    "physics.create_joint:param:collisionobject_a": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.create_joint:param:collisionobject_b": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.destroy_joint:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.get_group:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.get_joint_properties:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.get_joint_reaction_force:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.get_joint_reaction_torque:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
     "physics.get_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "physics.get_maskbit:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.get_shape:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "physics.set_group:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "physics.set_group:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.set_hflip:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.set_joint_properties:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
     "physics.set_maskbit:param:group": { "pins": [["string"]], "adds": ["Hash"] },
+    "physics.set_maskbit:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.set_shape:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.set_vflip:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "physics.update_mass:param:collisionobject": {
+      "pins": [["string", "hash", "url"]],
+      "removes": ["Hash"]
+    },
+    "physics.wakeup:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "render.disable_state:param:state": {
       "pins": [["graphics.STATE"]],
       "adds": [
@@ -562,10 +666,16 @@
       "pins": [["table"], ["table<any, any>"]],
       "adds": ["readonly unknown[]"]
     },
+    "tilemap.get_bounds:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "tilemap.get_tile_info:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "tilemap.get_tile:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "tilemap.get_tiles:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "tilemap.set_tile:param:transform_bitmask": {
       "pins": [["tilemap.TRANSFORM"]],
       "adds": ["number"]
     },
+    "tilemap.set_tile:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
+    "tilemap.set_visible:param:url": { "pins": [["string", "hash", "url"]], "removes": ["Hash"] },
     "window.set_dim_mode:param:mode": {
       "pins": [["window.DIMMING"]],
       "adds": ["Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>"],

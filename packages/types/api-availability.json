@@ -4218,7 +4218,7 @@
         "namespace": "bullet3d",
         "kind": "FUNCTION",
         "name": "bullet3d.get_collision_object",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\",\"nil\"],\"isOptional\":false}]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btCollisionObject\\\" | \\\"btRigidBody\\\">\",\"nil\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2"]
     },
@@ -4236,7 +4236,7 @@
         "namespace": "bullet3d",
         "kind": "FUNCTION",
         "name": "bullet3d.get_rigid_body",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\",\"nil\"],\"isOptional\":false}]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"btRigidBody\\\">\",\"nil\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2"]
     },
@@ -5057,7 +5057,7 @@
         "namespace": "label",
         "kind": "FUNCTION",
         "name": "label.get_layout_objects",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2"]
     },
@@ -5066,7 +5066,7 @@
         "namespace": "label",
         "kind": "FUNCTION",
         "name": "label.get_text",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2", "1.13.1", "1.13.0", "1.12.4"],
       "deprecatedSince": "1.13.2"
@@ -5396,7 +5396,7 @@
         "namespace": "model",
         "kind": "FUNCTION",
         "name": "model.get_blend_weights",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2", "1.13.1", "1.13.0"]
     },
@@ -5415,7 +5415,7 @@
         "namespace": "model",
         "kind": "FUNCTION",
         "name": "model.set_blend_weights",
-        "signature": "[{\"types\":[\"Hash\",\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
+        "signature": "[{\"types\":[\"Url\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]"
       },
       "availableIn": ["1.14.1", "1.14.0", "1.13.2", "1.13.1", "1.13.0"]
     },
