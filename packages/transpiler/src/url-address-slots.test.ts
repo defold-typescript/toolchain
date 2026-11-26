@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { UrlParameterClass, UrlParameterTable } from "@defold-typescript/types";
+import type {
+  UrlParameterClass,
+  UrlParameterEntry,
+  UrlParameterTable,
+} from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { createTranspileSession } from "./session";
 import {
@@ -513,4 +517,220 @@ describe("isAddressClass", () => {
     expect(isAddressClass("action-id")).toBe(false);
     expect(isAddressClass("none")).toBe(false);
   });
+});
+
+interface ParameterShape {
+  readonly name: string;
+  readonly rest: boolean;
+  readonly optional: boolean;
+}
+
+function parametersOf(signature: ts.Signature): ParameterShape[] {
+  return signature.parameters.map((symbol) => {
+    const declaration = symbol.valueDeclaration as ts.ParameterDeclaration | undefined;
+    return {
+      name: symbol.name,
+      rest: declaration?.dotDotDotToken !== undefined,
+      optional: declaration?.questionToken !== undefined || declaration?.initializer !== undefined,
+    };
+  });
+}
+
+function requiredCount(parameters: readonly ParameterShape[]): number {
+  const firstOptional = parameters.findIndex((parameter) => parameter.rest || parameter.optional);
+  return firstOptional === -1 ? parameters.length : firstOptional;
+}
+
+function nonRestIndexOf(parameters: readonly ParameterShape[], name: string): number {
+  return parameters.findIndex((parameter) => !parameter.rest && parameter.name === name);
+}
+
+interface CallPlan {
+  readonly index: number;
+  readonly arity: number;
+  readonly companionIndex?: number;
+}
+
+// The shortest call that reaches the entry's slot (and its companion), read off
+// the callee's signatures in declaration order — the order overload resolution
+// tries them. Taking the minimum over every signature long enough, not only the
+// ones naming the slot, is what makes a shorter overload that names it
+// differently red instead of being stepped over for a longer one.
+function planCall(
+  entry: UrlParameterEntry,
+  signatures: readonly ts.Signature[],
+): CallPlan | string {
+  const shapes = signatures.map(parametersOf);
+  const declaring = shapes.find((parameters) => nonRestIndexOf(parameters, entry.parameter) !== -1);
+  if (!declaring) return `no signature declares parameter ${entry.parameter}`;
+  const index = nonRestIndexOf(declaring, entry.parameter);
+  let companionIndex: number | undefined;
+  if (entry.addressParameter !== undefined) {
+    companionIndex = nonRestIndexOf(declaring, entry.addressParameter);
+    if (companionIndex === -1) {
+      return `the signature declaring ${entry.parameter} declares no companion ${entry.addressParameter}`;
+    }
+  }
+  const reach = Math.max(index, companionIndex ?? -1);
+  let arity = Number.POSITIVE_INFINITY;
+  for (const parameters of shapes) {
+    if (parameters.filter((parameter) => !parameter.rest).length <= reach) continue;
+    arity = Math.min(arity, Math.max(reach + 1, requiredCount(parameters)));
+  }
+  return companionIndex === undefined ? { index, arity } : { index, arity, companionIndex };
+}
+
+interface EntryCall {
+  readonly entry: UrlParameterEntry;
+  readonly text: string;
+  readonly textStart: number;
+  readonly addressText?: string;
+}
+
+interface GeneratedEntryCalls {
+  readonly program: ts.Program;
+  readonly calls: readonly EntryCall[];
+  readonly failures: readonly string[];
+}
+
+function labelOf(entry: UrlParameterEntry): string {
+  return `${entry.fqn}#${entry.parameter}`;
+}
+
+let generatedEntryCalls: GeneratedEntryCalls | undefined;
+
+// One call per committed table entry, built from the table and the declarations
+// the resolver reads. A probe pass reads each callee's signatures; a second pass
+// writes every call into one `main.ts`, with `never` in each position the slot
+// does not need, so no overload is ruled out and TypeScript picks the first
+// applicable one as it would for a user's call.
+function generateEntryCalls(): GeneratedEntryCalls {
+  if (generatedEntryCalls) return generatedEntryCalls;
+  const session = createTranspileSession();
+  const failures: string[] = [];
+
+  const fqns = [...new Set(TABLE.map((entry) => entry.fqn))];
+  session.update({ "main.ts": fqns.map((fqn) => `${fqn};\n`).join("") });
+  const probe = session.getProgram();
+  const probeFile = probe?.getSourceFile("main.ts");
+  if (!probe || !probeFile) throw new Error("the probe pass produced no program");
+  const checker = probe.getTypeChecker();
+  const signaturesOf = new Map<string, readonly ts.Signature[]>();
+  fqns.forEach((fqn, i) => {
+    const expression = (probeFile.statements[i] as ts.ExpressionStatement | undefined)?.expression;
+    signaturesOf.set(
+      fqn,
+      expression ? checker.getTypeAtLocation(expression).getCallSignatures() : [],
+    );
+  });
+
+  let source = "declare const ARG: never;\n";
+  const calls: EntryCall[] = [];
+  TABLE.forEach((entry, k) => {
+    const plan = planCall(entry, signaturesOf.get(entry.fqn) ?? []);
+    if (typeof plan === "string") {
+      failures.push(`${labelOf(entry)}: ${plan}`);
+      return;
+    }
+    const text = `e${k}`;
+    const addressText = plan.companionIndex === undefined ? undefined : `#c${k}`;
+    let call = `${entry.fqn}(`;
+    let literalOffset = -1;
+    for (let i = 0; i < plan.arity; i++) {
+      if (i > 0) call += ", ";
+      if (i === plan.index) {
+        literalOffset = call.length + 1;
+        call += `"${text}"`;
+      } else if (i === plan.companionIndex) {
+        call += `"${addressText}"`;
+      } else {
+        call += "ARG";
+      }
+    }
+    call += ")";
+    const compared = entry.comparedParameter;
+    const head =
+      compared === undefined
+        ? ""
+        : `export function probe${k}(${compared}: unknown) {\n  if (${compared} === `;
+    const tail = compared === undefined ? ";\n" : ") {}\n}\n";
+    calls.push({
+      entry,
+      text,
+      textStart: source.length + head.length + literalOffset,
+      ...(addressText === undefined ? {} : { addressText }),
+    });
+    source += `${head}${call}${tail}`;
+  });
+
+  session.update({ "main.ts": source });
+  const program = session.getProgram();
+  if (!program) throw new Error("the calls pass produced no program");
+  generatedEntryCalls = { program, calls, failures };
+  return generatedEntryCalls;
+}
+
+function diagnosticLine(diagnostic: ts.Diagnostic): string {
+  const message =
+    typeof diagnostic.messageText === "string"
+      ? diagnostic.messageText
+      : diagnostic.messageText.messageText;
+  return `${diagnostic.start ?? -1}: ${message}`;
+}
+
+// Every entry is reached by the shortest call that reaches its slot, with
+// `never` filler in the other positions. That is a limit, not a proof for every
+// call: a longer call with concrete argument types can still select another
+// overload. Whether the table holds the right entries is the drift test's
+// question (`packages/types/test/url-parameter-drift.test.ts`), not this one's.
+describe("every committed table entry", () => {
+  test("resolves at its generated literal as its own class", () => {
+    const { program, calls, failures } = generateEntryCalls();
+    const mismatches = [...failures];
+    for (const call of calls) {
+      const resolveAgainst = (table: UrlParameterTable) =>
+        resolveClassifiedSlotAtPosition({
+          program,
+          table,
+          fileName: "main.ts",
+          position: call.textStart,
+        });
+      const slot = resolveAgainst(TABLE);
+      const label = labelOf(call.entry);
+      if (!slot) {
+        mismatches.push(`${label}: resolved nothing`);
+        continue;
+      }
+      // Class alone cannot tell `go.set_parent#parent_id` from its `id`
+      // sibling: both are `game-object`. A table holding only this entry
+      // resolves only if the slot is keyed to this entry's own parameter.
+      if (!resolveAgainst([call.entry])) {
+        mismatches.push(`${label}: resolved through another entry`);
+      }
+      if (slot.class !== call.entry.class) {
+        mismatches.push(`${label}: class ${slot.class}, expected ${call.entry.class}`);
+      }
+      if (slot.text !== call.text) {
+        mismatches.push(`${label}: text ${slot.text}, expected ${call.text}`);
+      }
+      if (slot.textStart !== call.textStart) {
+        mismatches.push(`${label}: textStart ${slot.textStart}, expected ${call.textStart}`);
+      }
+      if (call.addressText !== undefined && slot.addressText !== call.addressText) {
+        mismatches.push(`${label}: addressText ${slot.addressText}, expected ${call.addressText}`);
+      }
+    }
+    expect(mismatches).toEqual([]);
+  }, 30_000);
+
+  test("the generated calls compile cleanly, so each lands on a well-typed overload", () => {
+    const { program } = generateEntryCalls();
+    const sourceFile = program.getSourceFile("main.ts");
+    expect(sourceFile).toBeDefined();
+    const diagnostics = [
+      ...program.getSyntacticDiagnostics(sourceFile),
+      ...program.getSemanticDiagnostics(sourceFile),
+    ].map(diagnosticLine);
+    expect(diagnostics).toEqual([]);
+  }, 30_000);
 });
