@@ -71,6 +71,14 @@ describe("checkMissingComponentFragments", () => {
     expect(findings[0]?.start).toBe(source.indexOf('"/b"'));
   });
 
+  test("a collection proxy's resources lookup is a component slot", () => {
+    const findings = findingsOf('collectionproxy.get_resources("/loader");\n');
+    expect(findings.map((finding) => [finding.call, finding.address])).toEqual([
+      ["collectionproxy.get_resources", "/loader"],
+    ]);
+    expect(findingsOf('collectionproxy.get_resources("/loader#proxy");\n')).toEqual([]);
+  });
+
   test("a game-object slot and an either slot are not reported", () => {
     expect(findingsOf('go.get_position("/player");\n')).toEqual([]);
     expect(findingsOf('msg.post("/player", "hi");\n')).toEqual([]);

@@ -178,11 +178,18 @@ describe("parameterTypesSatisfyClass", () => {
     expect(parameterTypesSatisfyClass(["number"], "action-id")).toBe(false);
   });
 
-  test("an address class needs the whole triple", () => {
-    for (const addressClass of ["game-object", "component", "either"] as const) {
+  test("a game-object or either class needs the whole triple", () => {
+    for (const addressClass of ["game-object", "either"] as const) {
       expect(parameterTypesSatisfyClass(["string", "hash", "url"], addressClass)).toBe(true);
-      expect(parameterTypesSatisfyClass(["string", "hash"], addressClass)).toBe(false);
+      expect(parameterTypesSatisfyClass(["string", "url"], addressClass)).toBe(false);
     }
+  });
+
+  test("a component class needs a string and a url, but no hash", () => {
+    expect(parameterTypesSatisfyClass(["string", "url"], "component")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string", "hash", "url"], "component")).toBe(true);
+    expect(parameterTypesSatisfyClass(["hash", "url"], "component")).toBe(false);
+    expect(parameterTypesSatisfyClass(["string", "hash"], "component")).toBe(false);
   });
 
   test("matches ref-doc type tokens case-insensitively", () => {

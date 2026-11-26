@@ -56,7 +56,7 @@ declare global {
      * }
      * ```
      */
-    function get_resources(collectionproxy: Url | string): string[];
+    function get_resources(collectionproxy: Url | SceneComponentAddress): string[];
     /**
      * Loads the collection referenced by a collection proxy. The proxy is also
      * initialized and the callback receives `proxy_loading`, `proxy_ready`, or

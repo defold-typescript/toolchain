@@ -240,6 +240,14 @@
     "evidence": "the collection proxy component"
   },
   {
+    "fqn": "collectionproxy.get_resources",
+    "parameter": "collectionproxy",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collectionproxy to check for resources"
+  },
+  {
     "fqn": "factory.create",
     "parameter": "url",
     "class": "component",

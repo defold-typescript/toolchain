@@ -251,8 +251,9 @@ every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
 
 A full build also warns when an address literal at a slot that looks up one
 component names no `#fragment`. `factory.create`, `collectionfactory.load`,
-`label.get_text`, `model.play_anim`, `physics.set_group`, `tilemap.get_tile` and
-the other calls that act on one component resolve their address to that
+`collectionproxy.get_resources`, `label.get_text`, `model.play_anim`,
+`physics.set_group`, `tilemap.get_tile` and the other calls that act on one
+component resolve their address to that
 component, so `factory.create("/spawner")`, `factory.create(".")`,
 `factory.create("/spawner#")` and `factory.create("main:/spawner")` all raise at
 runtime. An empty `""` or a lone `"#"` names the calling script itself and is

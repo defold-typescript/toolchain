@@ -111,10 +111,12 @@ const ADDRESS_TYPES = ["string", "hash", "url"] as const;
 // The type shape a class needs its slot to carry. A classification is a judgment
 // about prose, but it is still refutable by the signature: nothing that cannot
 // hold a `url` can be an address, and nothing that cannot hold a `string` can
-// name a node.
+// name a node. The floor is checked against the slot's corrected types, not the
+// ref-doc's: a component slot refuses a hash, because the engine resolves a hash
+// to a url with no fragment, so its floor is a string and a url.
 export const REQUIRED_TYPES: Record<Exclude<UrlParameterClass, "none">, readonly string[]> = {
   "game-object": ADDRESS_TYPES,
-  component: ADDRESS_TYPES,
+  component: ["string", "url"],
   either: ADDRESS_TYPES,
   "gui-node": ["string", "hash"],
   animation: ["string", "hash"],

@@ -982,9 +982,18 @@ const COMPONENT_SLOT_LOOKUPS: readonly (readonly [
   ],
 ];
 
-export const COMPONENT_SLOT_KEYS: readonly string[] = COMPONENT_SLOT_LOOKUPS.flatMap(
-  ([, , slots]) => slots.map(([key]) => key),
-);
+// The proxy slot the engine resolves through GetCollectionUrlHashFromCollectionProxy,
+// which looks the component up in the caller's collection. The ref-doc types it
+// `url` alone, so its correction adds `string` rather than removing `Hash`.
+const COLLECTIONPROXY_RESOURCES_SLOT = "collectionproxy.get_resources:param:collectionproxy";
+
+// Every slot whose binding-pinned PARAM_TYPE_CORRECTIONS entry resolves a
+// component, whether the correction removes `Hash` from the address triple or
+// adds the `string` a `url`-only slot omits.
+export const COMPONENT_SLOT_KEYS: readonly string[] = [
+  ...COMPONENT_SLOT_LOOKUPS.flatMap(([, , slots]) => slots.map(([key]) => key)),
+  COLLECTIONPROXY_RESOURCES_SLOT,
+];
 
 // Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS, so a
 // same-named slot on another element is untouched.
@@ -1105,7 +1114,7 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     ),
   ),
   [
-    "collectionproxy.get_resources:param:collectionproxy",
+    COLLECTIONPROXY_RESOURCES_SLOT,
     {
       adds: "string",
       upstream: ["url"],
@@ -7987,6 +7996,52 @@ function addressMapType(mapType: DefoldTypeMapper, alias: string): DefoldTypeMap
   return (token, position) => (token === "string" ? alias : mapType(token, position));
 }
 
+// The slot's PARAM_TYPE_CORRECTIONS entry when it applies to the ref-doc tokens
+// this target declares: its pins match, and a binding-pinned entry has its
+// binding's evidence. The emitter and the URL-parameter class gate both ask this,
+// so the gate judges the slot the emitter writes.
+function activeParamTypeCorrection(
+  elementName: string,
+  name: string,
+  types: readonly string[],
+  bindingEvidence: ReadonlySet<string>,
+): ParamTypeCorrection | undefined {
+  const key = tableSlotKey(elementName, "param", name);
+  const correction = PARAM_TYPE_CORRECTIONS.get(key);
+  if (
+    correction === undefined ||
+    !pinMatches(types, correctionPins(correction)) ||
+    (correction.binding !== undefined &&
+      !bindingEvidence.has(pinEvidenceKey("PARAM_TYPE_CORRECTIONS", key)))
+  ) {
+    return undefined;
+  }
+  return correction;
+}
+
+// A parameter's ref-doc type tokens with its applicable PARAM_TYPE_CORRECTIONS
+// entry folded in, lowercased the way the ref-doc writes them.
+export function correctedParamTypeTokens(
+  elementName: string,
+  name: string,
+  types: readonly string[],
+  bindingEvidence: ReadonlySet<string>,
+): readonly string[] {
+  const correction = activeParamTypeCorrection(elementName, name, types, bindingEvidence);
+  if (correction === undefined) return types;
+  if (correction.ts !== undefined) {
+    return unionMembers(correction.ts).map((member) => member.toLowerCase());
+  }
+  const removed = new Set((correction.removes ?? []).map((token) => token.toLowerCase()));
+  const kept = types.filter((token) => !removed.has(token.toLowerCase()));
+  if (correction.adds === undefined) return kept;
+  const present = new Set(kept.map((token) => token.toLowerCase()));
+  const added = unionMembers(correction.adds)
+    .map((member) => member.toLowerCase())
+    .filter((member) => !present.has(member));
+  return [...kept, ...added];
+}
+
 // The mapped slot type of a parameter, without the name, `?` or `| undefined`
 // decoration — so a parameter folded into a rest element union contributes its
 // type alone.
@@ -8023,23 +8078,20 @@ function parameterType(
           p.fields,
         )
       : "unknown";
-  const key = tableSlotKey(elementName, "param", p.name);
-  const correction = PARAM_TYPE_CORRECTIONS.get(key);
-  if (
-    correction === undefined ||
-    !pinMatches(p.types, correctionPins(correction)) ||
-    (correction.binding !== undefined &&
-      !bindingEvidence.has(pinEvidenceKey("PARAM_TYPE_CORRECTIONS", key)))
-  ) {
-    return mapped;
-  }
+  const correction = activeParamTypeCorrection(elementName, p.name, p.types, bindingEvidence);
+  if (correction === undefined) return mapped;
   if (correction.ts !== undefined) return correction.ts;
   const kept =
     correction.removes === undefined ? mapped : withoutUnionMembers(mapped, correction.removes);
   if (correction.adds === undefined) return kept;
-  if (kept === "") return correction.adds;
+  // An added `string` on a classified address slot is the same scene-derived
+  // alias a ref-doc `string` maps to.
+  const adds = unionMembers(correction.adds).map((member) =>
+    alias !== undefined && member === "string" ? alias : member,
+  );
+  if (kept === "") return adds.join(" | ");
   const present = new Set(unionMembers(kept));
-  const added = unionMembers(correction.adds).filter((member) => !present.has(member));
+  const added = adds.filter((member) => !present.has(member));
   return added.length === 0 ? kept : `${kept} | ${added.join(" | ")}`;
 }
 

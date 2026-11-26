@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { bindingEvidenceFor } from "../scripts/binding-pin";
 import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { COMPONENT_SLOT_KEYS } from "../src/emit-dts";
+import { COMPONENT_SLOT_KEYS, correctedParamTypeTokens } from "../src/emit-dts";
 import {
   collectParameterSlots,
   parameterTypesSatisfyClass,
@@ -34,6 +35,14 @@ const sources: UrlParameterSource[] = loadTargetModules(target).map((entry) => (
 const slots = new Map<string, UrlParameterSlot>(
   collectParameterSlots(sources).map((slot) => [`${slot.fqn}#${slot.parameter}`, slot]),
 );
+
+// The class floor is judged against what the emitter writes for the slot, so a
+// correction that removes `Hash` from a component slot, or adds the `string` the
+// ref-doc omits, counts. Every other assertion reads the ref-doc tokens.
+const evidence = bindingEvidenceFor(target);
+function correctedTypes(slot: UrlParameterSlot): readonly string[] {
+  return correctedParamTypeTokens(slot.fqn, slot.parameter, slot.types, evidence);
+}
 
 const skippedFqns = new Set(
   target.modules.flatMap((module) =>
@@ -86,14 +95,15 @@ describe("url-parameters.json generated entries", () => {
     expect(missing).toEqual([]);
   });
 
-  test("every entry's class is one the slot's declared types can carry", () => {
+  test("every entry's class is one the slot's corrected types can carry", () => {
     const mismatched: string[] = [];
     for (const entry of generated) {
       const key = `${entry.fqn}#${entry.parameter}`;
       const slot = slots.get(key);
       if (!slot) continue;
-      if (!parameterTypesSatisfyClass(slot.types, entry.class)) {
-        mismatched.push(`${key}: ${entry.class} on ${JSON.stringify(slot.types)}`);
+      const types = correctedTypes(slot);
+      if (!parameterTypesSatisfyClass(types, entry.class)) {
+        mismatched.push(`${key}: ${entry.class} on ${JSON.stringify(types)}`);
       }
     }
     expect(mismatched).toEqual([]);
@@ -146,9 +156,10 @@ describe("url-parameters.json generated entries", () => {
         continue;
       }
       if (entry.addressParameter !== undefined) {
-        if (!parameterTypesSatisfyClass(companion.types, "component")) {
+        const companionTypes = correctedTypes(companion);
+        if (!parameterTypesSatisfyClass(companionTypes, "component")) {
           unresolved.push(
-            `${key}: ${companionName} is ${JSON.stringify(companion.types)}, which cannot address a component`,
+            `${key}: ${companionName} is ${JSON.stringify(companionTypes)}, which cannot address a component`,
           );
         }
         continue;
