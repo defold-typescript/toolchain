@@ -120,6 +120,9 @@ const ATLAS_POSITION = ATLAS_SOURCE.indexOf('""') + 1;
 const FONT_SOURCE = 'go.property("my_font", resource.font(""));\n';
 const FONT_POSITION = FONT_SOURCE.indexOf('""') + 1;
 
+const RENDER_TARGET_SOURCE = 'go.property("my_rt", resource.render_target(""));\n';
+const RENDER_TARGET_POSITION = RENDER_TARGET_SOURCE.indexOf('""') + 1;
+
 // Two resources of different kinds, so a slot that offered both would be
 // visible. The values are never read: a path is the whole suggestion.
 const RESOURCE_DOCUMENTS: Record<string, string> = {
@@ -819,6 +822,16 @@ describe("tstl-plugin", () => {
     });
     const result = service.getCompletionsAtPosition("main.ts", FONT_POSITION, undefined);
     expect(result?.entries.map((e) => e.name)).toEqual(["/ui/icons.font"]);
+  });
+
+  test("a render target caret offers the project's render targets and nothing else", () => {
+    const service = completionProxy({
+      source: RENDER_TARGET_SOURCE,
+      base: undefined,
+      documents: { "main/hero.atlas": "", "render/scene.render_target": "" },
+    });
+    const result = service.getCompletionsAtPosition("main.ts", RENDER_TARGET_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["/render/scene.render_target"]);
   });
 
   test("a resource caret with no base result still offers the project's files", () => {

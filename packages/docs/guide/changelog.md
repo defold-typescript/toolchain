@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **Callbacks on Defold 1.12.4 to 1.13.1 type their documented parameters** ([pinning](./pinning-defold-target.md)).
-> - **An optional engine argument accepts `undefined`**, as `physics.raycast` options do.
-> - **Older pins type Box2D handles, mount names, spawn properties and joint properties as their engine does** ([pinning](./pinning-defold-target.md)).
-> - **`iap.finish` and `iap.acknowledge` take the listener's transaction.**
+> - **Pins to Defold 1.12.4 to 1.13.1 type callbacks, Box2D handles, spawn and joint properties as their docs and engine do** ([pinning](./pinning-defold-target.md)).
 > - **A Defold 1.9.8 pin types built-in messages and `label.scale` from its reference** ([pinning](./pinning-defold-target.md#materializing-the-pinned-surface)).
+> - **An optional engine argument accepts `undefined`**, as `physics.raycast` options do.
+> - **`iap.finish` and `iap.acknowledge` take the listener's transaction.**
+> - **`resource.render_target` completes the project's `.render_target` files** ([completions](./transpile-diagnostics.md#resource-path-completions-inside-the-goproperty-resource-constructors)).
 
 ### Breaking
 
@@ -44,6 +44,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Spawn properties** of `factory.create` and `collectionfactory.create` are a `PlainTable` before 1.13.2, since those engines spawn the object with no properties when a value is a string.
   - **Joint properties** of `physics.create_joint` and `physics.set_joint_properties` take every joint-type field the engine reads, such as `length`, `frequency`, `motor_speed` and `local_axis_a`, as 1.13.2's `physics.JointProperties` does.
 - **`iap.finish` and `iap.acknowledge`** take the transaction the `iap.set_listener` callback receives, so a listener passes it on as it is.
+- **`resource.render_target`** offers the project's `.render_target` files when the caret sits inside its argument, as the other `go.property` resource constructors offer their own kind ([completions](./transpile-diagnostics.md#resource-path-completions-inside-the-goproperty-resource-constructors)).
 
 ## v0.70.0
 

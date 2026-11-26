@@ -59,6 +59,19 @@ const configReaderSlots = [...documentedSlots.values()]
   .map((slot) => `${slot.fqn}#${slot.parameter}`)
   .sort();
 
+// The `go.property` resource constructors are named by the description every
+// one of them opens with, read off the same ref-doc the config readers are, so a
+// constructor a later Defold adds joins the expected set unclassified and reds.
+const RESOURCE_CONSTRUCTOR_DESCRIPTION = "Constructor-like function";
+const resourceConstructorSlots = sources
+  .flatMap(({ module }) => module.functions)
+  .filter(
+    (fn) =>
+      fn.name.startsWith("resource.") && fn.description.includes(RESOURCE_CONSTRUCTOR_DESCRIPTION),
+  )
+  .map((fn) => `${fn.name}#path`)
+  .sort();
+
 const ADDRESS_CLASSES = new Set<UrlParameterEntry["class"]>(["game-object", "component", "either"]);
 
 const generated = table.filter((entry) => entry.source === "generated");
@@ -151,18 +164,18 @@ describe("url-parameters.json generated entries", () => {
     expect(unresolved).toEqual([]);
   });
 
-  test("the resource-path class is recorded against exactly the six constructors", () => {
+  test("the resource-path class covers every go.property resource constructor the ref-doc declares", () => {
+    // Guard against an upstream rewording that stops the shape matching and turns
+    // this into a comparison of two empty sets.
+    expect(resourceConstructorSlots.length).toBeGreaterThan(0);
     const resourcePaths = table
       .filter((entry) => entry.class === "resource-path")
-      .map((entry) => `${entry.fqn}#${entry.parameter}`);
-    expect(resourcePaths).toEqual([
-      "resource.atlas#path",
-      "resource.buffer#path",
-      "resource.font#path",
-      "resource.material#path",
-      "resource.texture#path",
-      "resource.tile_source#path",
-    ]);
+      .map((entry) => `${entry.fqn}#${entry.parameter}`)
+      .sort();
+    expect(resourcePaths).toEqual(resourceConstructorSlots);
+    for (const key of resourceConstructorSlots) {
+      expect(documentedSlots.has(key)).toBe(true);
+    }
   });
 
   test("the config-key class covers every config reader the ref-doc declares", () => {
