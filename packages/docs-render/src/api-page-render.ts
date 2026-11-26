@@ -1155,17 +1155,35 @@ export interface SymbolLinkOptions extends SymbolIndexOptions {
   current?: ApiPage;
 }
 
-// A prose linkifier over a single surface's pages. `buildSymbolIndex` keys every
-// member to its page route — which already carries the loader's version prefix
-// (`/api/<version>/<namespace>`) for a non-default surface — so cross-links are
-// version-correct without any per-call prefixing. `symbolLinkifier` itself
+// A prose linkifier factory over a single surface's pages. `buildSymbolIndex`
+// keys every member to its page route — which already carries the loader's
+// version prefix (`/api/<version>/<namespace>`) for a non-default surface — so
+// cross-links are version-correct without any per-call prefixing. The index over
+// `pages` is built once; each call lays `current`'s own keys over a copy of it,
+// so one page's keys never reach another page's links. `symbolLinkifier` itself
 // drops bare-namespace keys, leaving only qualified member mentions linked.
+export function apiLinkifier(
+  pages: ApiPage[],
+  options: SymbolIndexOptions = {},
+): (current?: ApiPage) => SymbolLinker {
+  const base = new Map(
+    Object.entries(buildSymbolIndex(pages, options)).map(([k, v]) => [k, v.route] as const),
+  );
+  return (current) => {
+    const registry = new Map(base);
+    if (current) {
+      for (const [key, entry] of Object.entries(buildSymbolIndex([current]))) {
+        registry.set(key, entry.route);
+      }
+    }
+    return symbolLinkifier(registry);
+  };
+}
+
+// One prose linkifier, for a caller that renders a single page.
 export function apiLinkify(pages: ApiPage[], options: SymbolLinkOptions = {}): SymbolLinker {
   const { current, ...indexOptions } = options;
-  const index = buildSymbolIndex(pages, indexOptions);
-  if (current) Object.assign(index, buildSymbolIndex([current]));
-  const registry = new Map(Object.entries(index).map(([k, v]) => [k, v.route] as const));
-  return symbolLinkifier(registry);
+  return apiLinkifier(pages, indexOptions)(current);
 }
 
 // A page's types under the qualified spelling a signature uses
@@ -1203,27 +1221,17 @@ function qualifiedTypeLinks(page: ApiPage): Map<string, string> {
 // A library page keys its qualified types by the namespace it documents
 // (`symbolNamespace`). Under `ambiguous: "drop"` a qualified name that several
 // alias pages declare is left out, and `page`'s own qualified types are laid
-// back over the result, so the name links only from a page that declares it.
-export function apiSignatureSymbolLinks(
+// back over a copy of the result, so the name links only from a page that
+// declares it.
+//
+// Everything that does not depend on `page` — the alias map, the global-type
+// routes and the `Opaque` route — is built once; each call does only its own
+// page's work, so one factory serves every page of a surface.
+export function apiSignatureSymbolLinker(
   pages: ApiPage[],
-  page?: ApiPage,
   aliasPages: ApiPage[] = pages,
   options: SymbolIndexOptions = {},
-): Map<string, SignatureSymbolTarget> {
-  const links = new Map<string, SignatureSymbolTarget>();
-  if (page) {
-    const { types, shapes } = groupTypeSymbols(
-      apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
-    );
-    const anchors = memberAnchors(page);
-    for (const row of types) {
-      const anchor = anchors.get(`type:${row.name}`);
-      if (anchor) links.set(row.name, `${page.route}#${anchor}`);
-    }
-    for (const shape of shapes) {
-      links.set(shape.label, { route: page.route, heading: typeShapeHeading(page, shape.label) });
-    }
-  }
+): (page?: ApiPage) => Map<string, SignatureSymbolTarget> {
   // A constant-union alias is spelled qualified in every signature that takes it
   // (`gui.Easing`, `graphics.State`), which is also how the symbol index keys it.
   // Keying the qualified name off every alias page rather than the current page
@@ -1238,32 +1246,64 @@ export function apiSignatureSymbolLinks(
   // its version prefix, so scoping the source keeps an alias link inside the
   // release the reader opened without any per-call prefixing. On the canonical
   // route the two collections are the same object.
-  const qualifiedTypes = new Map<string, string>();
+  const aliasTypes = new Map<string, string>();
   const shared = new Set<string>();
   for (const p of aliasPages) {
     for (const [qualified, route] of qualifiedTypeLinks(p)) {
-      if (qualifiedTypes.has(qualified)) shared.add(qualified);
-      qualifiedTypes.set(qualified, route);
+      if (aliasTypes.has(qualified)) shared.add(qualified);
+      aliasTypes.set(qualified, route);
     }
   }
   if (options.ambiguous === "drop") {
-    for (const qualified of shared) qualifiedTypes.delete(qualified);
+    for (const qualified of shared) aliasTypes.delete(qualified);
   }
-  if (page) {
-    for (const [qualified, route] of qualifiedTypeLinks(page)) qualifiedTypes.set(qualified, route);
-  }
-  for (const [qualified, route] of qualifiedTypes) links.set(qualified, route);
-  if (page?.category === "library") {
-    // The core types live in the toolchain docs. A page's own type of the same
-    // name keeps its link.
-    for (const p of pages) {
-      if (p.category === "global-type" && !links.has(p.namespace)) links.set(p.namespace, p.route);
+  const globalTypes = pages
+    .filter((p) => p.category === "global-type")
+    .map((p) => [p.namespace, p.route] as const);
+  const opaqueRoute = buildSymbolIndex(pages).Opaque?.route;
+
+  return (page) => {
+    const links = new Map<string, SignatureSymbolTarget>();
+    if (page) {
+      const { types, shapes } = groupTypeSymbols(
+        apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
+      );
+      const anchors = memberAnchors(page);
+      for (const row of types) {
+        const anchor = anchors.get(`type:${row.name}`);
+        if (anchor) links.set(row.name, `${page.route}#${anchor}`);
+      }
+      for (const shape of shapes) {
+        links.set(shape.label, { route: page.route, heading: typeShapeHeading(page, shape.label) });
+      }
     }
+    const qualifiedTypes = new Map(aliasTypes);
+    if (page) {
+      for (const [qualified, route] of qualifiedTypeLinks(page))
+        qualifiedTypes.set(qualified, route);
+    }
+    for (const [qualified, route] of qualifiedTypes) links.set(qualified, route);
+    if (page?.category === "library") {
+      // The core types live in the toolchain docs. A page's own type of the same
+      // name keeps its link.
+      for (const [namespace, route] of globalTypes) {
+        if (!links.has(namespace)) links.set(namespace, route);
+      }
+      return links;
+    }
+    if (opaqueRoute) links.set("Opaque", opaqueRoute);
     return links;
-  }
-  const route = buildSymbolIndex(pages).Opaque?.route;
-  if (route) links.set("Opaque", route);
-  return links;
+  };
+}
+
+// One page's signature link map, for a caller that renders a single page.
+export function apiSignatureSymbolLinks(
+  pages: ApiPage[],
+  page?: ApiPage,
+  aliasPages: ApiPage[] = pages,
+  options: SymbolIndexOptions = {},
+): Map<string, SignatureSymbolTarget> {
+  return apiSignatureSymbolLinker(pages, aliasPages, options)(page);
 }
 
 // A replacement-link resolver scoped to one surface's pages. `buildSymbolIndex`
