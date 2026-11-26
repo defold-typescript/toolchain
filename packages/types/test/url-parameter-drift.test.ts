@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
+import { COMPONENT_SLOT_KEYS } from "../src/emit-dts";
 import {
   collectParameterSlots,
   parameterTypesSatisfyClass,
@@ -336,6 +337,18 @@ describe("url-parameters.json generated entries", () => {
       .map((entry) => `${entry.fqn}#${entry.parameter}`);
     expect(crossWorld).toContain("msg.post#receiver");
     expect(crossWorld).not.toContain("go.get_position#id");
+  });
+
+  test("the component class covers exactly the slots the component-lookup corrections pin", () => {
+    const component = table.filter((entry) => entry.class === "component");
+    expect(component.map((entry) => `${entry.fqn}:param:${entry.parameter}`).sort()).toEqual(
+      [...COMPONENT_SLOT_KEYS].sort(),
+    );
+    expect(
+      component
+        .filter((entry) => entry.socketScope !== "same-world")
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
   });
 
   test("no entry names a function the target hands to the authored overloads", () => {

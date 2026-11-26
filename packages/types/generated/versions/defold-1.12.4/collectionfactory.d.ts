@@ -85,7 +85,7 @@ declare global {
      * }
      * ```
      */
-    function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
+    function create(url: SceneComponentAddress | Url, position?: Vector3, rotation?: Quaternion, properties?: PlainTable, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.
@@ -97,7 +97,7 @@ declare global {
      * - `collectionfactory.STATUS_LOADING`
      * - `collectionfactory.STATUS_LOADED`
      */
-    function get_status(url: string | Url): collectionfactory.Status;
+    function get_status(url: SceneComponentAddress | Url): collectionfactory.Status;
     /**
      * Resources loaded are referenced by the collection factory component until the existing (parent) collection is destroyed or collectionfactory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -117,7 +117,7 @@ declare global {
      * collectionfactory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+    function load(url: SceneComponentAddress | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
     /**
      * Changes the prototype for the collection factory.
      * Setting the prototype to "nil" will revert back to the original prototype.
@@ -132,7 +132,7 @@ declare global {
      * const ids = collectionfactory.create("#factory", go.get_world_position(), vmath.quat());
      * ```
      */
-    function set_prototype(url: string | Url, prototype: string | undefined): void;
+    function set_prototype(url: SceneComponentAddress | Url, prototype: string | undefined): void;
     /**
      * This decreases the reference count for each resource loaded with collectionfactory.load. If reference is zero, the resource is destroyed.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -144,7 +144,7 @@ declare global {
      * collectionfactory.unload("#factory");
      * ```
      */
-    function unload(url: string | Url): void;
+    function unload(url: SceneComponentAddress | Url): void;
   }
 }
 

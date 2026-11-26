@@ -1490,6 +1490,62 @@ describe("dispatch", () => {
     expect(err()).not.toContain("mylevel");
   });
 
+  type MissingFragmentJson = {
+    ok?: boolean;
+    warnings?: readonly string[];
+    missingFragmentAddresses?: readonly {
+      file: string;
+      call: string;
+      address: string;
+      message: string;
+    }[];
+  };
+
+  test("build --json reports a component literal naming no fragment with no scenes", async () => {
+    scaffoldBuildProject();
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'factory.create("/spawner");\n');
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as MissingFragmentJson;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.missingFragmentAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ]);
+    const message = parsed.missingFragmentAddresses?.[0]?.message ?? "";
+    expect(parsed.warnings?.some((w) => w.includes(message))).toBe(true);
+  });
+
+  test("build --json omits missingFragmentAddresses when every literal names its component", async () => {
+    scaffoldBuildProject();
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'factory.create("/spawner#factory");\n');
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(Object.hasOwn(JSON.parse(out()) as object, "missingFragmentAddresses")).toBe(false);
+  });
+
+  test("a component literal naming no fragment reaches stderr from the ordinary build branch", async () => {
+    scaffoldBuildProject();
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'factory.create("/spawner");\n');
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("src/main.ts");
+    expect(err()).toContain('"/spawner"');
+  });
+
   test("a cross-world address reaches stderr from the ref-doc-surface branch", async () => {
     scaffoldCrossWorldBuild("mylevel:/enemy");
     writeFileSync(
@@ -8562,6 +8618,12 @@ describe("watch scene-address surface wiring", () => {
       socket: string;
       message: string;
     }[];
+    missingFragmentAddresses?: readonly {
+      file: string;
+      call: string;
+      address: string;
+      message: string;
+    }[];
   };
 
   function watchEvents(text: string): CrossWorldEvent[] {
@@ -8648,6 +8710,53 @@ describe("watch scene-address surface wiring", () => {
       },
     ]);
     expect(events.some((e) => e.event === "rebuild")).toBe(false);
+  });
+
+  test("watch --json carries a missing fragment on a rebuild and on a later scene save", async () => {
+    scaffoldCrossWorldWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerMain, triggerScene } = crossWorldWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    const startup = watchEvents(out()).find((e) => e.event === "build");
+    expect(Object.hasOwn(startup as object, "missingFragmentAddresses")).toBe(false);
+
+    write("src/main.ts", 'factory.create("/spawner");\n');
+    triggerMain();
+    await handle.waitForIdle();
+
+    writeLevel("mylevel");
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const expected = [
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ];
+    const events = watchEvents(out());
+    const rebuild = events.find((e) => e.event === "rebuild");
+    expect(rebuild?.missingFragmentAddresses).toEqual(expected);
+    const message = rebuild?.missingFragmentAddresses?.[0]?.message ?? "";
+    expect(rebuild?.warnings?.some((w) => w.includes(message))).toBe(true);
+    const sceneSave = events.filter((e) => e.event === "sceneTypes").at(-1);
+    expect(sceneSave?.missingFragmentAddresses).toEqual(expected);
   });
 
   test("watch prints a rebuild's cross-world address on stderr", async () => {

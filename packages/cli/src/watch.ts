@@ -303,8 +303,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings, unreachableAddresses, crossWorldAddresses, removed } =
-        session.buildAll();
+      const {
+        written,
+        warnings,
+        unreachableAddresses,
+        crossWorldAddresses,
+        missingFragmentAddresses,
+        removed,
+      } = session.buildAll();
       outputCurrent = true;
       if (opts.json) {
         stdout.write(
@@ -314,6 +320,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
             warnings,
             ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
             ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
+            ...(missingFragmentAddresses.length > 0 ? { missingFragmentAddresses } : {}),
           }),
         );
       } else {
@@ -782,10 +789,13 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings, unreachableAddresses, crossWorldAddresses } = session.applyEvents(
-        changed,
-        removed,
-      );
+      const {
+        written,
+        warnings,
+        unreachableAddresses,
+        crossWorldAddresses,
+        missingFragmentAddresses,
+      } = session.applyEvents(changed, removed);
       outputCurrent = true;
       if (opts.json) {
         stdout.write(
@@ -797,6 +807,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
             warnings,
             ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
             ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
+            ...(missingFragmentAddresses.length > 0 ? { missingFragmentAddresses } : {}),
           }),
         );
       } else {
@@ -1031,6 +1042,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
                       : {}),
                     ...(findings.crossWorldAddresses.length > 0
                       ? { crossWorldAddresses: findings.crossWorldAddresses }
+                      : {}),
+                    ...(findings.missingFragmentAddresses.length > 0
+                      ? { missingFragmentAddresses: findings.missingFragmentAddresses }
                       : {}),
                   }
                 : {}),

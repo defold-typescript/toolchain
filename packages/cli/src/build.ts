@@ -56,7 +56,9 @@ import { mergeTextPropertyFailures } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
+  type MissingFragmentEntry,
   scanCrossWorldAddresses,
+  scanMissingComponentFragments,
   scanUrlFragmentReachability,
   type UnreachableAddressEntry,
 } from "./url-reachability-scan";
@@ -114,6 +116,8 @@ export interface RunBuildResult {
   readonly unreachableAddresses: UnreachableAddressEntry[];
   /** The foreign-world addresses `warnings` also names in prose. */
   readonly crossWorldAddresses: CrossWorldAddressEntry[];
+  /** The component-slot literals naming no `#fragment` that `warnings` also names in prose. */
+  readonly missingFragmentAddresses: MissingFragmentEntry[];
   /**
    * Every output whose Lua requires the lualib bundle, sorted, whether or not
    * this run rewrote it.
@@ -137,6 +141,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       warnings: [],
       unreachableAddresses: [],
       crossWorldAddresses: [],
+      missingFragmentAddresses: [],
       lualibRequiredBy: [],
       removed: [],
     };
@@ -410,18 +415,23 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     scriptWorlds && program
       ? scanCrossWorldAddresses({ program, worldsOf: scriptWorlds, table: loadUrlParameterTable() })
       : { warnings: [], entries: [] };
+  const missingFragment = program
+    ? scanMissingComponentFragments({ program, table: loadUrlParameterTable() })
+    : { warnings: [], entries: [] };
   const warnings = [
     ...formatTranspileWarnings(result.diagnostics),
     ...scanOrphanOutputs(cwd, sources, config),
     ...scanSceneResourceRefs(cwd),
     ...reachability.warnings,
     ...crossWorld.warnings,
+    ...missingFragment.warnings,
   ];
   return {
     written: written.sort(),
     warnings,
     unreachableAddresses: reachability.entries,
     crossWorldAddresses: crossWorld.entries,
+    missingFragmentAddresses: missingFragment.entries,
     lualibRequiredBy: lualibRequiredBy.sort(),
     removed,
   };

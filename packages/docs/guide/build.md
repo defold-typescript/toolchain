@@ -249,6 +249,20 @@ could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
 every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
 [which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
 
+A full build also warns when an address literal at a slot that looks up one
+component names no `#fragment`. `factory.create`, `collectionfactory.load`,
+`label.get_text`, `model.play_anim`, `physics.set_group`, `tilemap.get_tile` and
+the other calls that act on one component resolve their address to that
+component, so `factory.create("/spawner")`, `factory.create(".")`,
+`factory.create("/spawner#")` and `factory.create("main:/spawner")` all raise at
+runtime. An empty `""` or a lone `"#"` names the calling script itself and is
+not reported. The warning names the call and the address. The check reads only
+the literal, so it runs in a project with no scenes, and it skips an address
+settled at runtime: a variable, a substituted template, a `msg.url(...)` call.
+These slots are also covered by the `#fragment` and world checks above.
+[`watch`](./watch.md) reports it on every rebuild and every `.go`/`.collection`
+save.
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).
@@ -390,8 +404,8 @@ renamed, and hot-reloading as it does for any other source.
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array, the `lualibRequiredBy` list of outputs that require
   `lualib_bundle`, the `removed` list of runtime files the build deleted, and,
-  when either address check found any, a structured
-  `unreachableAddresses` and `crossWorldAddresses` array) for agents and
+  when an address check found any, a structured `unreachableAddresses`,
+  `crossWorldAddresses` or `missingFragmentAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 

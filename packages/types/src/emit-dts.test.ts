@@ -4566,15 +4566,26 @@ describe("url-parameter address retyping", () => {
     expect(signatureLine(out, "function get_scale(")).toContain("id?: string | Hash | Url");
   });
 
+  test("a classified component slot takes the component alias and keeps Hash dropped", () => {
+    const module = parseDefoldApiDoc(factory114Doc);
+    const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
+    // `factory.create#url` is classified `component`, and a PARAM_TYPE_CORRECTIONS
+    // entry removes `Hash` from it: both apply to the one slot.
+    expect(signatureLine(out, "function create(")).toStartWith(
+      "function create(url: SceneComponentAddress | Url, position?: Vector3,",
+    );
+  });
+
   test("a triple-typed slot the committed table leaves unclassified keeps its string member", () => {
     const module = parseDefoldApiDoc(modelDoc);
     const out = emitDeclarations(module, { ...EVERY_PIN_HOLDS, urlParameters: committed });
     // `model.get_mesh_enabled` carries the `string | hash | url` triple on its
-    // url slot, and the table does not classify it: the triple alone must not
-    // retype. (`url` drops `Hash` and `mesh_id` drops `Url` through
+    // mesh_id slot, and the table does not classify it: the triple alone must
+    // not retype. Its `url` slot is classified `component`, so the same line
+    // shows both outcomes. (`url` drops `Hash` and `mesh_id` drops `Url` through
     // PARAM_TYPE_CORRECTIONS.)
     expect(signatureLine(out, "function get_mesh_enabled(")).toBe(
-      "function get_mesh_enabled(url: string | Url, mesh_id: string | Hash): boolean;",
+      "function get_mesh_enabled(url: SceneComponentAddress | Url, mesh_id: string | Hash): boolean;",
     );
   });
 

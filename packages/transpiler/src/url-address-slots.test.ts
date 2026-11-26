@@ -72,6 +72,7 @@ const CLASS_POSITIVES: ReadonlyArray<{
   class: UrlParameterClass;
 }> = [
   { source: 'go.get_position("/player");\n', literal: '"/player"', class: "game-object" },
+  { source: 'factory.create("#factory");\n', literal: '"#factory"', class: "component" },
   { source: 'msg.post("#sprite", "hello");\n', literal: '"#sprite"', class: "either" },
   { source: 'gui.get_node("score");\n', literal: '"score"', class: "gui-node" },
   { source: 'sprite.play_flipbook("#sprite", "wa");\n', literal: '"wa"', class: "animation" },

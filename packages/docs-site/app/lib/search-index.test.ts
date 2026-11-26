@@ -407,7 +407,7 @@ describe("combinedSearchRecords", () => {
   test("sources text from the projection's authoritative signatures", () => {
     // the declaration-backed, drift-free shape — not the ref-doc token form
     expect(memberRecord("model.set_blend_weights").text).toContain(
-      "set_blend_weights(url: string | Url, weights?: number[])",
+      "set_blend_weights(url: SceneComponentAddress | Url, weights?: number[])",
     );
     expect(pageText("model")).not.toContain("set_blend_weights(");
   });
@@ -456,7 +456,7 @@ describe("per-version search reads the pages its version route renders", () => {
     const factoryPage = pages.find((page) => page.namespace === "factory");
     if (!factoryPage) throw new Error("factory page missing from the 1.13.1 window");
     const factory = memberText("defold-1.13.1", factoryPage, "function", "factory.get_status");
-    expect(factory).toContain("factory.get_status(url: string | Url)");
+    expect(factory).toContain("factory.get_status(url: SceneComponentAddress | Url)");
     expect(factory).not.toContain("factory.get_status(url?:");
 
     const resource = pages.find((page) => page.namespace === "resource");

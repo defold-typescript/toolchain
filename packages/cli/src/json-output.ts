@@ -6,7 +6,11 @@ import type { LibraryDocNotice, LibraryProblem } from "./library/library-check";
 import type { FailedReview, ReviewedLibrary } from "./library/library-review";
 import type { LibraryStatus } from "./library/library-status";
 import type { UpdatedLibrary } from "./library/library-update";
-import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
+import type {
+  CrossWorldAddressEntry,
+  MissingFragmentEntry,
+  UnreachableAddressEntry,
+} from "./url-reachability-scan";
 import type { WallCheckResult } from "./wall-check";
 
 export type CliCommand =
@@ -127,6 +131,9 @@ export interface RenderResultInput {
   // The structured half of the cross-world address findings, under the identical
   // absent-versus-empty contract as `unreachableAddresses` above.
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
+  // The structured half of the component-slot literals naming no `#fragment`,
+  // absent rather than empty when there is nothing to report.
+  readonly missingFragmentAddresses?: readonly MissingFragmentEntry[];
   // Every output whose Lua requires the lualib bundle. Unlike the address
   // findings above it has no suppressed state, so `build` always sends it and
   // an empty array means nothing requires the bundle.
@@ -280,10 +287,14 @@ export function renderResult(input: RenderResultInput): string {
     "crossWorldAddresses" in input
       ? { ...withUnreachable, crossWorldAddresses: input.crossWorldAddresses }
       : withUnreachable;
+  const withMissingFragment =
+    "missingFragmentAddresses" in input
+      ? { ...withCrossWorld, missingFragmentAddresses: input.missingFragmentAddresses }
+      : withCrossWorld;
   const withLualib =
     "lualibRequiredBy" in input
-      ? { ...withCrossWorld, lualibRequiredBy: input.lualibRequiredBy }
-      : withCrossWorld;
+      ? { ...withMissingFragment, lualibRequiredBy: input.lualibRequiredBy }
+      : withMissingFragment;
   const withRuntimeRemoved =
     "removed" in input ? { ...withLualib, removed: input.removed } : withLualib;
   const withPinMismatch =
@@ -367,6 +378,7 @@ export interface RenderWatchEventInput {
   readonly warnings?: readonly string[];
   readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
+  readonly missingFragmentAddresses?: readonly MissingFragmentEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   readonly editor?: string;
@@ -399,8 +411,14 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
     "crossWorldAddresses" in input
       ? { ...withUnreachable, crossWorldAddresses: input.crossWorldAddresses }
       : withUnreachable;
+  const withMissingFragment =
+    "missingFragmentAddresses" in input
+      ? { ...withCrossWorld, missingFragmentAddresses: input.missingFragmentAddresses }
+      : withCrossWorld;
   const withPinMismatch =
-    "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
+    "pinMismatch" in input
+      ? { ...withMissingFragment, pinMismatch: input.pinMismatch }
+      : withMissingFragment;
   const withUpstream =
     "upstreamRelease" in input
       ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }

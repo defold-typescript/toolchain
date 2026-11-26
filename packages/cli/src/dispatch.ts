@@ -1447,10 +1447,20 @@ function dispatchCommand(
           materializedDir: string | null,
           findings: Pick<
             RunBuildResult,
-            "unreachableAddresses" | "crossWorldAddresses" | "lualibRequiredBy" | "removed"
+            | "unreachableAddresses"
+            | "crossWorldAddresses"
+            | "missingFragmentAddresses"
+            | "lualibRequiredBy"
+            | "removed"
           >,
         ): Promise<number> => {
-          const { unreachableAddresses, crossWorldAddresses, lualibRequiredBy, removed } = findings;
+          const {
+            unreachableAddresses,
+            crossWorldAddresses,
+            missingFragmentAddresses,
+            lualibRequiredBy,
+            removed,
+          } = findings;
           ensureMaterializedReference(cwd, materializedDir);
           // Posted only once every output is on disk: the editor compiles what
           // this run wrote, never the previous run's Lua. `run` builds before it
@@ -1473,6 +1483,7 @@ function dispatchCommand(
                 // separates the two.
                 ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
                 ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
+                ...(missingFragmentAddresses.length > 0 ? { missingFragmentAddresses } : {}),
                 lualibRequiredBy,
                 removed,
                 defoldVersion: head.version,

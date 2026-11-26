@@ -982,6 +982,10 @@ const COMPONENT_SLOT_LOOKUPS: readonly (readonly [
   ],
 ];
 
+export const COMPONENT_SLOT_KEYS: readonly string[] = COMPONENT_SLOT_LOOKUPS.flatMap(
+  ([, , slots]) => slots.map(([key]) => key),
+);
+
 // Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS, so a
 // same-named slot on another element is untouched.
 export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = new Map<

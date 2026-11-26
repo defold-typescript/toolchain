@@ -61,7 +61,9 @@ import { mergeTextPropertyFailures } from "./text-property-gate";
 import { loadUrlParameterTable } from "./url-parameter-table";
 import {
   type CrossWorldAddressEntry,
+  type MissingFragmentEntry,
   scanCrossWorldAddresses,
+  scanMissingComponentFragments,
   scanUrlFragmentReachability,
   type UnreachableAddressEntry,
 } from "./url-reachability-scan";
@@ -109,6 +111,8 @@ export interface BuildResult {
   readonly unreachableAddresses: UnreachableAddressEntry[];
   /** The foreign-world addresses `warnings` also names in prose. */
   readonly crossWorldAddresses: CrossWorldAddressEntry[];
+  /** The component-slot literals naming no `#fragment` that `warnings` also names in prose. */
+  readonly missingFragmentAddresses: MissingFragmentEntry[];
   /** The runtime files this build deleted, sorted; only `buildAll` deletes any. */
   readonly removed: string[];
 }
@@ -123,7 +127,7 @@ export interface BuildSession {
    */
   rescanReachability(): Pick<
     BuildResult,
-    "warnings" | "unreachableAddresses" | "crossWorldAddresses"
+    "warnings" | "unreachableAddresses" | "crossWorldAddresses" | "missingFragmentAddresses"
   >;
   /**
    * Whether `rel` is a path this session writes or has written: a runtime
@@ -206,6 +210,16 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       return { warnings: [], entries: [] };
     }
     return scanCrossWorldAddresses({ program, worldsOf, table: loadUrlParameterTable() });
+  }
+
+  // Gated on the program alone: the check reads no scene, so a project without
+  // any still gets it.
+  function scanMissingFragment(): { warnings: string[]; entries: MissingFragmentEntry[] } {
+    const program = session.getProgram();
+    if (!program) {
+      return { warnings: [], entries: [] };
+    }
+    return scanMissingComponentFragments({ program, table: loadUrlParameterTable() });
   }
 
   function pruneOutputs(rel: string, keep: readonly string[] = []): void {
@@ -428,6 +442,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         warnings: [],
         unreachableAddresses: [],
         crossWorldAddresses: [],
+        missingFragmentAddresses: [],
         removed: [],
       };
     }
@@ -458,6 +473,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     ]);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
+    const missingFragment = scanMissingFragment();
     return {
       written: built.written,
       warnings: [
@@ -466,9 +482,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         ...scanSceneResourceRefs(cwd),
         ...reachability.warnings,
         ...crossWorld.warnings,
+        ...missingFragment.warnings,
       ],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
+      missingFragmentAddresses: missingFragment.entries,
       removed,
     };
   }
@@ -501,29 +519,34 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const built = writeOutputs(result, sourceChanged, true);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
+    const missingFragment = scanMissingFragment();
     return {
       written: built.written,
       warnings: [
         ...formatTranspileWarnings(result.diagnostics),
         ...reachability.warnings,
         ...crossWorld.warnings,
+        ...missingFragment.warnings,
       ],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
+      missingFragmentAddresses: missingFragment.entries,
       removed: [],
     };
   }
 
   function rescanReachability(): Pick<
     BuildResult,
-    "warnings" | "unreachableAddresses" | "crossWorldAddresses"
+    "warnings" | "unreachableAddresses" | "crossWorldAddresses" | "missingFragmentAddresses"
   > {
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
+    const missingFragment = scanMissingFragment();
     return {
-      warnings: [...reachability.warnings, ...crossWorld.warnings],
+      warnings: [...reachability.warnings, ...crossWorld.warnings, ...missingFragment.warnings],
       unreachableAddresses: reachability.entries,
       crossWorldAddresses: crossWorld.entries,
+      missingFragmentAddresses: missingFragment.entries,
     };
   }
 

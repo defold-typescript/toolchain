@@ -787,6 +787,34 @@ describe("createBuildSession", () => {
     expect(rescanned.warnings.some((w) => w.includes("sprite"))).toBe(true);
     expect(existsSync(path.join(cwd, mainOutput))).toBe(false);
   });
+
+  test("every pass reports a component literal naming no fragment, with no scene options", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", 'factory.create("/spawner");\n');
+    writeIn(cwd, "src/b.ts", "export const b = 1;\n");
+    const expected = [
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ];
+
+    const session = createBuildSession({ cwd });
+    const built = session.buildAll();
+    expect(built.missingFragmentAddresses).toEqual(expected);
+    expect(built.warnings).toContain(`src/main.ts: ${built.missingFragmentAddresses[0]?.message}`);
+
+    writeIn(cwd, "src/b.ts", "export const b = 2;\n");
+    const rebuilt = session.applyEvents(["src/b.ts"], []);
+    expect(rebuilt.missingFragmentAddresses).toEqual(expected);
+    expect(rebuilt.warnings.some((w) => w.includes("/spawner"))).toBe(true);
+
+    const rescanned = session.rescanReachability();
+    expect(rescanned.missingFragmentAddresses).toEqual(expected);
+    expect(rescanned.warnings.some((w) => w.includes("/spawner"))).toBe(true);
+  });
   describe("unresolvable requires", () => {
     const SHARED_SCRIPT =
       'import { defineScript } from "@defold-typescript/types";\nexport const shared = 7;\nexport default defineScript({ init() {} });\n';

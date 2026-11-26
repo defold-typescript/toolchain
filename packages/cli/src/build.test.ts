@@ -2950,6 +2950,47 @@ describe("runBuild reports addresses naming a foreign world", () => {
   });
 });
 
+describe("runBuild reports component literals naming no fragment", () => {
+  // No scene at all: the check reads only the literal and the slot's class.
+  function scaffoldFactoryProject(address: string): void {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("game.project", "[project]\n");
+    writeFile(
+      "src/main.ts",
+      'import { defineScript } from "@defold-typescript/types";\n' +
+        `export default defineScript({ init() { factory.create("${address}"); } });\n`,
+    );
+  }
+
+  test("a project with no scenes reports the literal as a warning and a structured entry", () => {
+    scaffoldFactoryProject("/spawner");
+
+    const result = runBuild({ cwd });
+
+    expect(result.missingFragmentAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ]);
+    expect(result.warnings).toContain(
+      `src/main.ts: ${result.missingFragmentAddresses[0]?.message}`,
+    );
+    expect(result.written).toContain("src/main.ts.script");
+  });
+
+  test("a literal naming its component reports nothing", () => {
+    scaffoldFactoryProject("/spawner#factory");
+
+    const result = runBuild({ cwd });
+
+    expect(result.missingFragmentAddresses).toEqual([]);
+    expect(result.warnings.some((w) => w.includes("/spawner"))).toBe(false);
+  });
+});
+
 describe('package.json "global-shadows"', () => {
   // One file-level shadow (`next`, line 1 column 10) beside names that hide a
   // global only inside a function or sit on the module table.
