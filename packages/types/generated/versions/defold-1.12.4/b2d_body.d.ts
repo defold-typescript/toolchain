@@ -115,6 +115,8 @@ declare global {
     /**
      * Get the world velocity of a local point.
      *
+     * Under Box2D v2 the engine reads the point from the body's argument slot, so every call raises "vector3 expected". The call works under Box2D v3.
+     *
      * @param body - body
      * @param local_point - a point in local coordinates.
      * @returns the world velocity of a point.
@@ -122,6 +124,8 @@ declare global {
     function get_linear_velocity_from_local_point(body: Opaque<"b2Body">, local_point: Vector3): Vector3;
     /**
      * Get the world linear velocity of a world point attached to this body.
+     *
+     * Under Box2D v2 the engine reads the point from the body's argument slot, so every call raises "vector3 expected". The call works under Box2D v3.
      *
      * @param body - body
      * @param world_point - a point in world coordinates.
