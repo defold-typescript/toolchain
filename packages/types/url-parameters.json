@@ -273,6 +273,14 @@
     "evidence": "optional resource path string to the resource"
   },
   {
+    "fqn": "resource.render_target",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".render_target"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
     "fqn": "resource.texture",
     "parameter": "path",
     "class": "resource-path",
