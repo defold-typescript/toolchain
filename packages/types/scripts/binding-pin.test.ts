@@ -23,7 +23,11 @@ import {
   nilRaisingSlotsOf,
   targetBindingOptions,
 } from "./binding-pin";
-import type { BindingFunction, BindingSlot } from "./engine-binding-extract";
+import {
+  type BindingFunction,
+  type BindingSlot,
+  readBindingsForTarget,
+} from "./engine-binding-extract";
 import type { EnginePinnedTable } from "./engine-pinned-tables";
 import {
   type ApiTarget,
@@ -174,6 +178,13 @@ describe("guard pins", () => {
     expect(close).toBeGreaterThan(open);
     const unguarded = lines.filter((_, i) => i !== open && i !== close).join("\n");
     expect(bindingPinHoldsInSource(unguarded, pin)).toBe(false);
+  });
+
+  test("a guard pin holds only for the macro it names, not a prefix of it", () => {
+    const pin = caveatBinding("compute");
+    const target = defaultTarget().id;
+    expect(bindingPinHolds(target, pin)).toBe(true);
+    expect(bindingPinHolds(target, { ...pin, guard: "DM_HAVE_PLATFORM_COMPUTE" })).toBe(false);
   });
 
   test("a pin with a guard and no contains throws, naming the pin", () => {
@@ -397,19 +408,33 @@ describe("engine-pinned correction tables", () => {
     },
   );
 
-  test("each Box2D v2 velocity pin names 1.12.4's body-slot point read, not the function", () => {
-    const source = vendoredBindingText(apiTarget("defold-1.12.4"), B2D_V2_FORMER_BODY);
-    const fixed = source.replaceAll(
-      "CheckVec2(L, 1, GetPhysicsScale())",
-      "CheckVec2(L, 2, GetPhysicsScale())",
-    );
-    expect(fixed).not.toBe(source);
-    for (const name of B2D_V2_VELOCITY) {
-      const pin = caveatBinding(`b2d.body.${name}`);
-      expect(bindingPinHoldsInSource(source, pin)).toBe(true);
-      expect(bindingPinHoldsInSource(fixed, pin)).toBe(false);
-    }
-  });
+  test.each(B2D_V2_VELOCITY)(
+    "1.12.4: the %s pin rests on its own function's body-slot point read",
+    (name) => {
+      const cFunction = readBindingsForTarget("defold-1.12.4").functions.find(
+        (fn) => fn.namespace === "b2d.body" && fn.name === name && fn.file === B2D_V2_FORMER_BODY,
+      )?.cFunction;
+      if (!cFunction)
+        throw new Error(`defold-1.12.4: no b2d.body.${name} in ${B2D_V2_FORMER_BODY}`);
+      const source = vendoredBindingText(apiTarget("defold-1.12.4"), B2D_V2_FORMER_BODY);
+      const header = source.indexOf(`static int ${cFunction}(`);
+      expect(header).toBeGreaterThan(-1);
+      const bodySlotRead = "CheckVec2(L, 1, GetPhysicsScale())";
+      const at = source.indexOf(bodySlotRead, header);
+      expect(at).toBeGreaterThan(-1);
+      const fixed = `${source.slice(0, at)}CheckVec2(L, 2, GetPhysicsScale())${source.slice(at + bodySlotRead.length)}`;
+      expect(fixed).not.toBe(source);
+
+      const own = caveatBinding(`b2d.body.${name}`);
+      const other = caveatBinding(
+        `b2d.body.${B2D_V2_VELOCITY.find((candidate) => candidate !== name)}`,
+      );
+      expect(bindingPinHoldsInSource(source, own)).toBe(true);
+      expect(bindingPinHoldsInSource(source, other)).toBe(true);
+      expect(bindingPinHoldsInSource(fixed, own)).toBe(false);
+      expect(bindingPinHoldsInSource(fixed, other)).toBe(true);
+    },
+  );
 
   test.each([
     "PROPERTY_TYPE_CORRECTIONS",
