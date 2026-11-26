@@ -103,7 +103,9 @@ const GO_CONTEXT: ProbeContext = { kind: "go", url: "GO" };
 const CONTEXTS: Readonly<Record<string, ProbeContext>> = {
   gui: { kind: "gui", url: "GUI" },
   render: { kind: "render", url: "CAMERA" },
-  // Registered in the render script's Lua state only.
+  // The probe calls camera functions from the render script. From Defold 1.14.0
+  // every script shares one Lua state; before it, `script.shared_state` decides
+  // whether other scripts see the module.
   camera: { kind: "render", url: "CAMERA" },
   collectionfactory: { kind: "go", url: "COLLECTIONFACTORY" },
   collectionproxy: { kind: "go", url: "PROXY" },

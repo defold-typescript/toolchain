@@ -4,6 +4,8 @@ import type { Hash, Matrix4, Vector3, Vector4 } from "../../../src/core-types";
 declare global {
   /**
    * Functions for interacting with compute programs.
+   *
+   * Defold registers `compute` only in an engine built with compute support; elsewhere the global is `nil`. See [Compute programs](https://defold.com/manuals/compute/).
    */
   namespace compute {
     /**

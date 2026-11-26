@@ -101,6 +101,7 @@ import {
   declaredTypePaths,
   defaultMapType,
   type EmitOptions,
+  ENGINE_CAVEAT_NOTES,
   emitDeclarations,
   emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
@@ -9109,5 +9110,35 @@ describe("engine-pinned correction gates", () => {
     expect(
       applyNestedFieldCurations("resource.set_atlas", "param", "table", parsed, new Set()),
     ).toEqual(parsed);
+  });
+
+  test("an engine caveat note follows a function's summary only with its ledger line in the evidence", () => {
+    const body = parseDefoldApiDoc(b2dBody113Doc);
+    const key = "b2d.body.get_linear_velocity_from_local_point";
+    const note = ENGINE_CAVEAT_NOTES.get(key)?.note;
+    if (note === undefined) throw new Error(`ENGINE_CAVEAT_NOTES: no ${key}`);
+    const signature = "function get_linear_velocity_from_local_point(";
+    const pinned = jsdocBefore(
+      emitDeclarations(body, evidenceOf("ENGINE_CAVEAT_NOTES", key)),
+      signature,
+    );
+    expect(pinned).toContain(
+      `   * Get the world velocity of a local point.\n   *\n   * ${note}\n   *\n   * @param`,
+    );
+    expect(jsdocBefore(emitDeclarations(body, NONE), signature)).not.toContain(note);
+  });
+
+  test("an engine caveat note follows a namespace's summary only with its ledger line in the evidence", () => {
+    const camera = parseDefoldApiDoc(camera113Doc);
+    const note = ENGINE_CAVEAT_NOTES.get("camera")?.note;
+    if (note === undefined) throw new Error("ENGINE_CAVEAT_NOTES: no camera");
+    const pinned = jsdocBefore(
+      emitDeclarations(camera, evidenceOf("ENGINE_CAVEAT_NOTES", "camera")),
+      "declare namespace camera {",
+    );
+    expect(pinned).toEndWith(`\n *\n * ${note}\n */`);
+    expect(jsdocBefore(emitDeclarations(camera, NONE), "declare namespace camera {")).not.toContain(
+      note,
+    );
   });
 });

@@ -192,7 +192,7 @@
   "camera.get_aspect_ratio:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_auto_aspect_ratio:accepted-1-hash": {
     "outcome": "engine-error",
@@ -207,7 +207,7 @@
   "camera.get_auto_aspect_ratio:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_enabled:accepted-1-hash": {
     "outcome": "engine-error",
@@ -222,7 +222,7 @@
   "camera.get_enabled:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_far_z:accepted-1-hash": {
     "outcome": "engine-error",
@@ -237,7 +237,7 @@
   "camera.get_far_z:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_fov:accepted-1-hash": {
     "outcome": "engine-error",
@@ -252,7 +252,7 @@
   "camera.get_fov:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_near_z:accepted-1-hash": {
     "outcome": "engine-error",
@@ -267,7 +267,7 @@
   "camera.get_near_z:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_orthographic_auto_zoom:accepted-1-hash": {
     "outcome": "engine-error",
@@ -282,7 +282,7 @@
   "camera.get_orthographic_auto_zoom:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_orthographic_mode:accepted-1-hash": {
     "outcome": "engine-error",
@@ -297,7 +297,7 @@
   "camera.get_orthographic_mode:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_orthographic_zoom:accepted-1-hash": {
     "outcome": "engine-error",
@@ -312,7 +312,7 @@
   "camera.get_orthographic_zoom:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_projection:accepted-1-hash": {
     "outcome": "engine-error",
@@ -327,7 +327,7 @@
   "camera.get_projection:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.get_view:accepted-1-hash": {
     "outcome": "engine-error",
@@ -342,7 +342,7 @@
   "camera.get_view:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
-    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+    "reason": "a nil camera resolves to the calling script's own url, and the render script the probe calls it from has no camera component (from Defold 1.14.0 every script shares one Lua state; before it script.shared_state decides)"
   },
   "camera.screen_to_world:accepted-2-hash": {
     "outcome": "engine-error",

@@ -4756,6 +4756,74 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, CallbackSignature
   ],
 ]);
 
+// A paragraph a function's or namespace's doc comment gains, keyed by the
+// function's full name or the namespace. Admitted only for an engine behavior
+// that makes a declared call fail, resting on a `binding` or `engine` pin, so a
+// target whose engine source no longer shows the behavior drops the note.
+export interface EngineCaveatNote extends CorrectionPins {
+  readonly note: string;
+  readonly reason: string;
+}
+
+const B2D_V2_BODY = "gamesys/src/gamesys/scripts/box2d/v2/script_box2d_body_v2.cpp";
+const B2D_V2_POINT_IN_BODY_SLOT =
+  "b2Body* body = CheckBody(L, 1); b2Vec2 p = CheckVec2(L, 1, GetPhysicsScale());";
+const B2D_V2_VELOCITY_NOTE =
+  'Under Box2D v2 the engine reads the point from the body\'s argument slot, so every call raises "vector3 expected". The call works under Box2D v3.';
+const B2D_V2_VELOCITY_REASON =
+  "the Box2D v2 binding reads the body and the point both from slot 1 (defold/defold#11017 fixed the other bindings only)";
+
+export const ENGINE_CAVEAT_NOTES: ReadonlyMap<string, EngineCaveatNote> = new Map<
+  string,
+  EngineCaveatNote
+>([
+  [
+    "b2d.body.get_linear_velocity_from_local_point",
+    {
+      note: B2D_V2_VELOCITY_NOTE,
+      reason: B2D_V2_VELOCITY_REASON,
+      binding: {
+        file: B2D_V2_BODY,
+        cFunction: "Body_GetLinearVelocityFromLocalPoint",
+        contains: B2D_V2_POINT_IN_BODY_SLOT,
+      },
+    },
+  ],
+  [
+    "b2d.body.get_linear_velocity_from_world_point",
+    {
+      note: B2D_V2_VELOCITY_NOTE,
+      reason: B2D_V2_VELOCITY_REASON,
+      binding: {
+        file: B2D_V2_BODY,
+        cFunction: "Body_GetLinearVelocityFromWorldPoint",
+        contains: B2D_V2_POINT_IN_BODY_SLOT,
+      },
+    },
+  ],
+  [
+    "compute",
+    {
+      note: "Defold registers `compute` only in an engine built with compute support; elsewhere the global is `nil`. See [Compute programs](https://defold.com/manuals/compute/).",
+      reason:
+        "script_compute.cpp wraps the whole module in #ifdef DM_HAVE_PLATFORM_COMPUTE_SUPPORT; the token reader drops preprocessor lines, so the pin holds the registration the guard encloses",
+      binding: {
+        file: "gamesys/src/gamesys/scripts/script_compute.cpp",
+        cFunction: "LuaInit",
+        contains: 'luaL_register(L, "compute", ScriptCompute_methods);',
+      },
+    },
+  ],
+  [
+    "camera",
+    {
+      note: "In a render script a `Hash` or a relative address resolves under the render script's `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns.",
+      reason: CAMERA_ADDRESS_REASON,
+      binding: CAMERA_ADDRESS_BINDING,
+    },
+  ],
+]);
+
 // resource.set_atlas's `table` param and resource.get_atlas's `data` return are
 // flattened `<li><dl>` field lists whose `geometries` header is followed by the
 // `table`-typed siblings `vertices`/`uvs`/`indices` — the grouping heuristic
@@ -6488,7 +6556,9 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   const decl = hasAliases ? "export " : "";
 
   const lines: string[] = [];
-  for (const docLine of namespaceDocLines(module, translations)) lines.push(docLine);
+  for (const docLine of namespaceDocLines(module, translations, bindingEvidence)) {
+    lines.push(docLine);
+  }
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const declaration of typeDeclarations) lines.push(...declaration.lines(INDENT, decl));
@@ -7745,10 +7815,14 @@ function functionDocLines(
         ? { examples: [{ text: lua, lang: "lua" }] }
         : {};
   const parts: DocCommentParts = {
-    summary: translateProseFences(
-      htmlToDocText(summaryFor(fn.brief, fn.description)),
+    summary: withEngineCaveat(
+      translateProseFences(
+        htmlToDocText(summaryFor(fn.brief, fn.description)),
+        fn.name,
+        translations,
+      ),
       fn.name,
-      translations,
+      bindingEvidence,
     ),
     params,
     ...(onlyReturn
@@ -7822,13 +7896,37 @@ function summaryDocLines(brief: string, description: string, indent: string): st
   return indentDocLines({ summary: htmlToDocText(summaryFor(brief, description)) }, indent);
 }
 
-function namespaceDocLines(module: ApiModule, translations: TranslationStore): string[] {
+function namespaceDocLines(
+  module: ApiModule,
+  translations: TranslationStore,
+  bindingEvidence: ReadonlySet<string>,
+): string[] {
   const official = summaryFor(module.brief, module.description).trim();
   const summary =
     official.length > 0
       ? translateProseFences(htmlToDocText(official), module.namespace, translations)
       : `(synthesized)\nDefold \`${module.namespace}\` API namespace.`;
-  return indentDocLines({ summary }, "");
+  return indentDocLines(
+    { summary: withEngineCaveat(summary, module.namespace, bindingEvidence) },
+    "",
+  );
+}
+
+// The summary followed, as its own paragraph, by the ENGINE_CAVEAT_NOTES note
+// that applies to `key` on the target whose engine evidence is `bindingEvidence`.
+function withEngineCaveat(
+  summary: string,
+  key: string,
+  bindingEvidence: ReadonlySet<string>,
+): string {
+  const note = evidencedEntry(
+    "ENGINE_CAVEAT_NOTES",
+    ENGINE_CAVEAT_NOTES,
+    key,
+    bindingEvidence,
+  )?.note;
+  if (note === undefined) return summary;
+  return summary.trim() === "" ? note : `${summary.trimEnd()}\n\n${note}`;
 }
 
 function indentDocLines(parts: DocCommentParts, indent: string): string[] {

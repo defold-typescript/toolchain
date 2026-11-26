@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  ENGINE_CAVEAT_NOTES,
   type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
@@ -304,6 +305,17 @@ describe("bindingEvidenceFor", () => {
 
 describe("engine-pinned correction tables", () => {
   const evidence = bindingEvidenceFor(apiTarget("defold-1.14.1"));
+
+  test("every engine caveat note holds on the default target", () => {
+    const target = loadApiTargets().find((candidate) => candidate.default === true);
+    if (!target) throw new Error("api-targets.json: no default target");
+    const lines = [...ENGINE_CAVEAT_NOTES.keys()].map((key) =>
+      pinEvidenceKey("ENGINE_CAVEAT_NOTES", key),
+    );
+    expect(lines.length).toBeGreaterThan(0);
+    const holding = bindingEvidenceFor(target);
+    expect(lines.filter((line) => !holding.has(line))).toEqual([]);
+  });
 
   test.each([
     "PROPERTY_TYPE_CORRECTIONS",

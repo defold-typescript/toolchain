@@ -4,6 +4,8 @@ import type { Hash, Matrix4, Url, Vector3 } from "../src/core-types";
 declare global {
   /**
    * Messages to control camera components and camera focus.
+   *
+   * In a render script a `Hash` or a relative address resolves under the render script's `@render:` socket, where no camera exists, so pass a `Url`, such as one `camera.get_cameras` returns.
    */
   namespace camera {
     type OrthoMode = typeof camera.ORTHO_MODE_AUTO_COVER | typeof camera.ORTHO_MODE_AUTO_FIT | typeof camera.ORTHO_MODE_FIXED;
