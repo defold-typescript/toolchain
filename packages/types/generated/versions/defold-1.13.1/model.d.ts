@@ -24,7 +24,7 @@ declare global {
      * model.get_aabb("#empty"); // => { min = vmath.vector3(0, 0, 0), max = vmath.vector3(0, 0, 0) }
      * ```
      */
-    function get_aabb(url: string | Url): { min: Vector3; max: Vector3 };
+    function get_aabb(url: SceneComponentAddress | Url): { min: Vector3; max: Vector3 };
     /**
      * Returns a table of numbers with one entry per morph target on the first mesh of the model that has morph targets.
      * Values reflect the rig state at call time (after animation, and any active script override from model.set_blend_weights).
@@ -43,7 +43,7 @@ declare global {
      * model.set_blend_weights("#model", w);
      * ```
      */
-    function get_blend_weights(url: string | Url): number[];
+    function get_blend_weights(url: SceneComponentAddress | Url): number[];
     /**
      * Gets the id of the game object that corresponds to a model skeleton bone.
      * The returned game object can be used for parenting and transform queries.
@@ -66,7 +66,7 @@ declare global {
      * });
      * ```
      */
-    function get_go(url: string | Url, bone_id: string | Hash): Hash;
+    function get_go(url: SceneComponentAddress | Url, bone_id: string | Hash): Hash;
     /**
      * Get AABB of all meshes.
      * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
@@ -78,7 +78,7 @@ declare global {
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
      * ```
      */
-    function get_mesh_aabb(url: string | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
+    function get_mesh_aabb(url: SceneComponentAddress | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
     /**
      * Get the enabled state of a mesh
      *
@@ -101,7 +101,7 @@ declare global {
      * });
      * ```
      */
-    function get_mesh_enabled(url: string | Url, mesh_id: string | Hash): boolean;
+    function get_mesh_enabled(url: SceneComponentAddress | Url, mesh_id: string | Hash): boolean;
     /**
      * Plays an animation on a model component with specified playback
      * mode and parameters.
@@ -174,7 +174,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Url, anim_id: string | Hash, playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+    function play_anim(url: SceneComponentAddress | Url, anim_id: string | Hash, playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
     /**
      * Resets a shader constant for a model component.
      * The constant must be defined in the material assigned to the model.
@@ -206,7 +206,7 @@ declare global {
      * model.set_blend_weights("#model"); // clear script override
      * ```
      */
-    function set_blend_weights(url: string | Url, weights?: number[]): void;
+    function set_blend_weights(url: SceneComponentAddress | Url, weights?: number[]): void;
     /**
      * Enable or disable visibility of a mesh
      *
@@ -223,7 +223,7 @@ declare global {
      * });
      * ```
      */
-    function set_mesh_enabled(url: string | Url, mesh_id: string | Hash, enabled: boolean): void;
+    function set_mesh_enabled(url: SceneComponentAddress | Url, mesh_id: string | Hash, enabled: boolean): void;
     interface Properties {
       /**
        * The current animation set on the component. The type of the property is hash.

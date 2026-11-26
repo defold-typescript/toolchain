@@ -64,7 +64,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;
+    function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number | undefined]>;
   }
 }
 

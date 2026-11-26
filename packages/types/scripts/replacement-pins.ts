@@ -151,6 +151,10 @@ export const UNPINNED_TABLES: ReadonlyMap<string, string> = new Map([
   ["DOC_CORRECTIONS", "replaces doc text"],
   ["ARBITRARY_TABLE_SLOTS", "tells the audit a slot's emitted Record is faithful"],
   ["ARBITRARY_TABLE_SLOT_KEYS", "tells the audit a slot's emitted Record is faithful"],
+  [
+    "COMPONENT_SLOT_KEYS",
+    "lists the slots whose PARAM_TYPE_CORRECTIONS entries the binding pins, correcting nothing itself",
+  ],
   ["MAPPING_TABLE_SLOTS", "types the key and value the slot's own prose names"],
   ["HOMOGENEOUS_ARRAY_SLOTS", "types the element the slot's own prose or example names"],
   ["FIRST_SLOT_ALTERNATIVES", "adds the overload the slot's own doc names, checked at emit time"],

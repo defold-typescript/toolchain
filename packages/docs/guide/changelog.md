@@ -15,6 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[Stricter engine arguments](./typescript-gotchas.md)** for vmath pairs, union-key writes and component addresses.
 > - **Engine caveats on hover** for [compute](/api/compute), [camera](/api/camera) and Box2D v2 velocity.
+> - **[Missing `#fragment` warning](./build.md)** for a component address such as `factory.create("/spawner")`.
 
 ### Breaking
 
@@ -26,6 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - Hovering `b2d.body.get_linear_velocity_from_local_point` or `b2d.body.get_linear_velocity_from_world_point` warns that the call always fails under Box2D v2, [compute](/api/compute) that it exists only in an engine built with compute support, and [camera](/api/camera) that a render script names a camera by a `Url`, such as one `camera.get_cameras` returns, or by a full address string such as `"main:/camera#camera"`, never by a hash or a relative address.
+- `build` and `watch` warn when an address literal at a function that acts on one component names no `#fragment`, such as `factory.create("/spawner")`, which raises at runtime, and `--json` lists each one under `missingFragmentAddresses` ([build](./build.md)). The unknown-`#fragment` and cross-world warnings and the editor's component address completions cover these slots too.
 
 ## v0.71.0
 

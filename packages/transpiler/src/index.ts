@@ -150,3 +150,5 @@ export type {
   UrlFragmentReport,
 } from "./url-fragment-reachability";
 export { checkUrlFragmentReachability } from "./url-fragment-reachability";
+export type { MissingFragmentFinding } from "./url-missing-fragment";
+export { checkMissingComponentFragments } from "./url-missing-fragment";

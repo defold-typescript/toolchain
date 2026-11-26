@@ -21,7 +21,7 @@ declare global {
      * });
      * ```
      */
-    function get_text(url: string | Url): string;
+    function get_text(url: SceneComponentAddress | Url): string;
     /**
      * Sets the text of a label component
      * This method uses the message passing that means the value will be set after `dispatch messages` step.

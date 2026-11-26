@@ -7,7 +7,11 @@ import {
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { loadUrlParameterTable } from "./url-parameter-table";
-import { scanCrossWorldAddresses, scanUrlFragmentReachability } from "./url-reachability-scan";
+import {
+  scanCrossWorldAddresses,
+  scanMissingComponentFragments,
+  scanUrlFragmentReachability,
+} from "./url-reachability-scan";
 
 const TABLE: UrlParameterTable = loadUrlParameterTable();
 
@@ -215,5 +219,33 @@ describe("scanCrossWorldAddresses", () => {
     expect(fragment.entries).toEqual([]);
     expect(fragment.warnings[0]).toContain("did not run");
     expect(cross.entries).toHaveLength(1);
+  });
+});
+
+describe("scanMissingComponentFragments", () => {
+  test("the scan renders each finding once as prose and once structured, with no scenes", () => {
+    const { warnings, entries } = scanMissingComponentFragments({
+      program: programFor("src/main.ts", 'factory.create("/spawner");\n'),
+      table: TABLE,
+    });
+
+    expect(entries).toEqual([
+      {
+        file: "src/main.ts",
+        call: "factory.create",
+        address: "/spawner",
+        message: expect.stringContaining("/spawner") as unknown as string,
+      },
+    ]);
+    expect(warnings).toEqual([`src/main.ts: ${entries[0]?.message}`]);
+  });
+
+  test("a literal naming its component warns nothing", () => {
+    expect(
+      scanMissingComponentFragments({
+        program: programFor("src/main.ts", 'factory.create("/spawner#factory");\n'),
+        table: TABLE,
+      }),
+    ).toEqual({ warnings: [], entries: [] });
   });
 });

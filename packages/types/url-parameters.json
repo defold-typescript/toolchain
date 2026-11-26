@@ -168,6 +168,382 @@
     "evidence": "url of the game object which coordinate system convert to"
   },
   {
+    "fqn": "b2d.get_body",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the url to the game object collision component"
+  },
+  {
+    "fqn": "bullet3d.get_collision_object",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object component URL"
+  },
+  {
+    "fqn": "bullet3d.get_rigid_body",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object component URL"
+  },
+  {
+    "fqn": "collectionfactory.create",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection factory component to be used"
+  },
+  {
+    "fqn": "collectionfactory.get_status",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection factory component to get status from"
+  },
+  {
+    "fqn": "collectionfactory.load",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection factory component to load"
+  },
+  {
+    "fqn": "collectionfactory.set_prototype",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection factory component"
+  },
+  {
+    "fqn": "collectionfactory.unload",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection factory component to unload"
+  },
+  {
+    "fqn": "collectionproxy.set_collection",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collection proxy component"
+  },
+  {
+    "fqn": "factory.create",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the factory that should create a game object."
+  },
+  {
+    "fqn": "factory.get_status",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the factory component to get status from"
+  },
+  {
+    "fqn": "factory.load",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the factory component to load"
+  },
+  {
+    "fqn": "factory.set_prototype",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the factory component"
+  },
+  {
+    "fqn": "factory.unload",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the factory component to unload"
+  },
+  {
+    "fqn": "label.get_layout_objects",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the label to inspect"
+  },
+  {
+    "fqn": "label.get_text",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the label to get the text from"
+  },
+  {
+    "fqn": "model.get_aabb",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model"
+  },
+  {
+    "fqn": "model.get_blend_weights",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model component"
+  },
+  {
+    "fqn": "model.get_go",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model to query"
+  },
+  {
+    "fqn": "model.get_mesh_aabb",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model"
+  },
+  {
+    "fqn": "model.get_mesh_enabled",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model"
+  },
+  {
+    "fqn": "model.play_anim",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model for which to play the animation"
+  },
+  {
+    "fqn": "model.set_blend_weights",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model component"
+  },
+  {
+    "fqn": "model.set_mesh_enabled",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the model"
+  },
+  {
+    "fqn": "physics.create_joint",
+    "parameter": "collisionobject_a",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "first collision object"
+  },
+  {
+    "fqn": "physics.create_joint",
+    "parameter": "collisionobject_b",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "second collision object"
+  },
+  {
+    "fqn": "physics.destroy_joint",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object where the joint exist"
+  },
+  {
+    "fqn": "physics.get_group",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object to return the group of."
+  },
+  {
+    "fqn": "physics.get_joint_properties",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object where the joint exist"
+  },
+  {
+    "fqn": "physics.get_joint_reaction_force",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object where the joint exist"
+  },
+  {
+    "fqn": "physics.get_joint_reaction_torque",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object where the joint exist"
+  },
+  {
+    "fqn": "physics.get_maskbit",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object to check the mask of."
+  },
+  {
+    "fqn": "physics.get_shape",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object."
+  },
+  {
+    "fqn": "physics.set_group",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object affected."
+  },
+  {
+    "fqn": "physics.set_hflip",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object that should flip its shapes"
+  },
+  {
+    "fqn": "physics.set_joint_properties",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "collision object where the joint exist"
+  },
+  {
+    "fqn": "physics.set_maskbit",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object to change the mask of."
+  },
+  {
+    "fqn": "physics.set_shape",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object."
+  },
+  {
+    "fqn": "physics.set_vflip",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object that should flip its shapes"
+  },
+  {
+    "fqn": "physics.update_mass",
+    "parameter": "collisionobject",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object whose mass needs to be updated."
+  },
+  {
+    "fqn": "physics.wakeup",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the collision object to wake."
+  },
+  {
+    "fqn": "tilemap.get_bounds",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tile map"
+  },
+  {
+    "fqn": "tilemap.get_tile_info",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tile map"
+  },
+  {
+    "fqn": "tilemap.get_tile",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tile map"
+  },
+  {
+    "fqn": "tilemap.get_tiles",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tilemap"
+  },
+  {
+    "fqn": "tilemap.set_tile",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tile map"
+  },
+  {
+    "fqn": "tilemap.set_visible",
+    "parameter": "url",
+    "class": "component",
+    "socketScope": "same-world",
+    "source": "generated",
+    "evidence": "the tile map"
+  },
+  {
     "fqn": "go.animate",
     "parameter": "url",
     "class": "either",

@@ -1523,7 +1523,7 @@ msg.post("#health", "damage", { amount: 10 }); // sibling component on the same 
 
 **Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path)` is a separate runtime trap: the engine accepts no argument, one argument (a string, `Hash`, `Url` or `undefined`), or three arguments, so `msg.url("main", "camera")` is a runtime error. The three-arg form always passes three arguments, and they may be `undefined` — an explicit `undefined` reaches the engine as a passed `nil`, so the call never drops to two arguments, and an `undefined` `socket` addresses the current game world. The engine refuses one combination, a `socket` and `fragment` with an `undefined` `path` (`Can't resolve id with specified socket and fragment.`), and the overloads reject it too. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject the two-arg call at compile time, so the typings are the warning.
 
-**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (a string, `Hash`, `Url` or `undefined`), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose positions may be `undefined` (except `path` beside a `socket` and a `fragment`), an `undefined` `socket` meaning the current world — never the two-arg form. A function that acts on a component (`factory.create`, `label.get_text`, `physics.get_shape`, …) needs the component's `#fragment`, which a `Hash` cannot carry: the engine resolves a hash as an object path with no fragment and raises "The component could not be found". Those slots take a string such as `"/spawner#factory"` or a `Url`, and reject a `Hash`.
+**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (a string, `Hash`, `Url` or `undefined`), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose positions may be `undefined` (except `path` beside a `socket` and a `fragment`), an `undefined` `socket` meaning the current world — never the two-arg form. A function that acts on a component (`factory.create`, `label.get_text`, `physics.get_shape`, …) needs the component's `#fragment`, which a `Hash` cannot carry: the engine resolves a hash as an object path with no fragment and raises "The component could not be found". Those slots take a string such as `"/spawner#factory"` or a `Url`, and reject a `Hash`. A string literal there that names no `#fragment`, such as `"/spawner"`, still compiles, so [`build`](./build.md) and `watch` warn about it.
 
 **How we pin this in the type tests.** `packages/types/test-d/component-slot-hash.ts` asserts that a component slot rejects a `Hash` while a game-object slot such as `go.get_position` keeps it. `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads. `msg.url()`, the one-argument string, `Hash`, `Url` and `undefined` forms, and three-argument calls with `undefined` wherever the engine takes `nil` type-check. Both two-argument calls (`msg.url("main", "camera")` and `msg.url(undefined, hash("/door"))`), `msg.url(hash("level1"), undefined, "script")` and `msg.url(42)` carry `@ts-expect-error`, so the runtime-invalid forms are rejected at compile time; widen the overloads to accept one and the expected error vanishes, failing the typecheck gate.
 
@@ -8220,6 +8220,20 @@ could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
 every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
 [which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
 
+A full build also warns when an address literal at a slot that looks up one
+component names no `#fragment`. `factory.create`, `collectionfactory.load`,
+`label.get_text`, `model.play_anim`, `physics.set_group`, `tilemap.get_tile` and
+the other calls that act on one component resolve their address to that
+component, so `factory.create("/spawner")`, `factory.create(".")`,
+`factory.create("/spawner#")` and `factory.create("main:/spawner")` all raise at
+runtime. An empty `""` or a lone `"#"` names the calling script itself and is
+not reported. The warning names the call and the address. The check reads only
+the literal, so it runs in a project with no scenes, and it skips an address
+settled at runtime: a variable, a substituted template, a `msg.url(...)` call.
+These slots are also covered by the `#fragment` and world checks above.
+[`watch`](./watch.md) reports it on every rebuild and every `.go`/`.collection`
+save.
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).
@@ -8361,8 +8375,8 @@ renamed, and hot-reloading as it does for any other source.
 - `--json` — emit the build result as a single JSON object (including the
   `warnings` array, the `lualibRequiredBy` list of outputs that require
   `lualib_bundle`, the `removed` list of runtime files the build deleted, and,
-  when either address check found any, a structured
-  `unreachableAddresses` and `crossWorldAddresses` array) for agents and
+  when an address check found any, a structured `unreachableAddresses`,
+  `crossWorldAddresses` or `missingFragmentAddresses` array) for agents and
   scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 
@@ -10900,11 +10914,12 @@ bunx @defold-typescript/cli build --json
 
 A failure flips `ok` to `false` and carries an `error` string instead of
 `written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
-lines, the scene-resource-mismatch lines, the unreachable-address lines and the
-cross-world-address lines (empty when there are none). Optional fields
-(`defoldVersion`, `defoldChannel`, `apiSurface`, `materializedSurface`,
-`unreachableAddresses`, `crossWorldAddresses`, `editorCompile`, `editorRun`, …) appear only
-when they apply.
+lines, the scene-resource-mismatch lines, the unreachable-address lines, the
+cross-world-address lines and the missing-fragment lines (empty when there are
+none). Optional fields (`defoldVersion`, `defoldChannel`, `apiSurface`,
+`materializedSurface`, `unreachableAddresses`, `crossWorldAddresses`,
+`missingFragmentAddresses`, `editorCompile`, `editorRun`, …) appear only when
+they apply.
 
 `unreachableAddresses` is the structured half of the unreachable-address
 findings, so you never parse the English `warnings` line to learn which file and
@@ -10943,6 +10958,21 @@ against, because the project's scenes host no script the walk could resolve.
 There is no suppression line for this check; its silence *is* per file, so an
 absent field means only that no finding survived that per-file honesty rule.
 
+`missingFragmentAddresses` is the structured half of the missing-fragment
+findings — an address literal naming no `#fragment` at a slot that looks up one
+component, such as `factory.create` (see [build](./build.md)):
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":[...],
+#  "warnings":["src/main.ts: `factory.create` resolves \"/spawner\" to a component, but the address names no #fragment, …"],
+#  "missingFragmentAddresses":[{"file":"src/main.ts","call":"factory.create","address":"/spawner","message":"`factory.create` resolves \"/spawner\" to a component, …"}]}
+```
+
+The field is omitted — never `[]` — when nothing was found. The check reads no
+scene and has no suppressed state, so an absent field means no literal at those
+slots lacks a fragment.
+
 `lualibRequiredBy` lists the outputs whose Lua requires the TypeScript runtime
 helper bundle (`lualib_bundle`), sorted and project-relative: scripts, modules,
 companions, the timers runtime and bundled library modules. A project that
@@ -10978,14 +11008,15 @@ bunx @defold-typescript/cli watch --json
 ```
 
 `build`, `rebuild`, and `sceneTypes` events carry `warnings` and the same
-optional `unreachableAddresses` and `crossWorldAddresses` arrays, under the
-identical absent-versus-empty rule, so a watching agent sees an address break on
-the edit that broke it —
+optional `unreachableAddresses`, `crossWorldAddresses` and
+`missingFragmentAddresses` arrays, under the identical absent-versus-empty rule,
+so a watching agent sees an address break on the edit that broke it —
 including a `.go`/`.collection` save that broke it, which emits `sceneTypes`
 alone and no `rebuild`. The first `build` event of a session is the exception,
 and so is the `sceneTypes` event that follows it: both run before or as part of
 the scene walk, so the check starts from the first `rebuild` or the first
-`sceneTypes` a scene save produces.
+`sceneTypes` a scene save produces. The missing-fragment check reads no scene, so
+the first `build` event already carries it.
 
 A `resolve` event is emitted whenever a `game.project` save or a Defold library
 fetch (a rewritten `.internal/lib/dependencies.json`) re-resolves the
@@ -11362,6 +11393,10 @@ never fixes any of them for you:
   resolves in the caller's own world (every handle-resolving `go.*` call),
   repeated as structured entries in `crossWorldAddresses`. Either address it
   through `msg.post`/`msg.url` or drop the socket.
+- **Missing fragments** — an address literal naming no `#fragment` at a slot
+  that looks up one component (`factory.create`, `label.get_text`,
+  `physics.set_group`, …), repeated as structured entries in
+  `missingFragmentAddresses`. Add the component's `#fragment`.
 
 #### Scaffold a project
 
@@ -14983,7 +15018,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d
 
-- function get_body(url: string | Url): Opaque<"b2Body"> | undefined;
+- function get_body(url: SceneComponentAddress | Url): Opaque<"b2Body"> | undefined;
 - function get_gameobject_id(body: Opaque<"b2Body">): Hash | undefined; [since 1.14.0]
 - function get_version(): b2d.VersionInfo; [since 1.13.0]
 - function get_world(): Opaque<"b2World">; [through 1.13.1] [signature transition]
@@ -15400,9 +15435,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### bullet3d
 
-- function get_collision_object(url: string | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
+- function get_collision_object(url: SceneComponentAddress | Url): Opaque<"btCollisionObject" | "btRigidBody"> | undefined; [since 1.13.2]
 - function get_gameobject_id(object: Opaque<"btCollisionObject" | "btRigidBody">): Hash | undefined; [since 1.14.0]
-- function get_rigid_body(url: string | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
+- function get_rigid_body(url: SceneComponentAddress | Url): Opaque<"btRigidBody"> | undefined; [since 1.13.2]
 - function get_version(): bullet3d.VersionInfo; [since 1.13.2]
 - function get_world(): bullet3d.BtDiscreteDynamicsWorld | undefined; [since 1.13.2]
 - type BtCollisionObject = Opaque<"btCollisionObject" | "btRigidBody"> [since 1.13.2]
@@ -15692,11 +15727,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
-- function get_status(url: string | Url): collectionfactory.Status;
-- function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
-- function set_prototype(url: string | Url, prototype: string | undefined): void;
-- function unload(url: string | Url): void;
+- function create(url: SceneComponentAddress | Url, position?: Vector3, rotation?: Quaternion, properties?: ReadonlyLuaMap<Hash, LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never })>, scale?: number | Vector3): LuaMap<Hash, Hash> & { get: LuaTableGetMethod<string, Hash | undefined> };
+- function get_status(url: SceneComponentAddress | Url): collectionfactory.Status;
+- function load(url: SceneComponentAddress | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+- function set_prototype(url: SceneComponentAddress | Url, prototype: string | undefined): void;
+- function unload(url: SceneComponentAddress | Url): void;
 - collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
 - collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
 - collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
@@ -15706,7 +15741,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function get_resources(collectionproxy: Url | string): string[];
 - function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.LoadData, sender: Url) => void): void; [since 1.13.1]
-- function set_collection(url: string | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
+- function set_collection(url: SceneComponentAddress | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
 - collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
@@ -15755,11 +15790,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### factory
 
-- function create(url: string | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
-- function get_status(url: string | Url): factory.Status;
-- function load(url: string | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
-- function set_prototype(url: string | Url, prototype: string | undefined): void;
-- function unload(url: string | Url): void;
+- function create(url: SceneComponentAddress | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaPairsIterable<string, number | boolean | string | Hash | Url | Vector3 | Vector4 | Quaternion> | (PlainTable & { readonly __tstlIterable?: never }), scale?: number | Vector3): Hash | undefined;
+- function get_status(url: SceneComponentAddress | Url): factory.Status;
+- function load(url: SceneComponentAddress | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
+- function set_prototype(url: SceneComponentAddress | Url, prototype: string | undefined): void;
+- function unload(url: SceneComponentAddress | Url): void;
 - factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
 - factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
 - factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
@@ -16375,8 +16410,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### label
 
-- function get_layout_objects(url: string | Url): label.LayoutObject[]; [since 1.13.2]
-- function get_text(url: string | Url): string; [deprecated since 1.13.2]
+- function get_layout_objects(url: SceneComponentAddress | Url): label.LayoutObject[]; [since 1.13.2]
+- function get_text(url: SceneComponentAddress | Url): string; [deprecated since 1.13.2]
 - function set_text(url: string | Hash | Url, text: string | number): void; [deprecated since 1.13.2]
 - color: Vector4
 - font: Hash
@@ -16458,15 +16493,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### model
 
 - function cancel(url: string | Hash | Url): void;
-- function get_aabb(url: string | Url): model.Aabb;
-- function get_blend_weights(url: string | Url): number[]; [since 1.13.0]
-- function get_go(url: string | Url, bone_id: string | Hash): Hash;
-- function get_mesh_aabb(url: string | Url): LuaMap<Hash, model.Aabb>;
-- function get_mesh_enabled(url: string | Url, mesh_id: string | Hash): boolean;
-- function play_anim(url: string | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+- function get_aabb(url: SceneComponentAddress | Url): model.Aabb;
+- function get_blend_weights(url: SceneComponentAddress | Url): number[]; [since 1.13.0]
+- function get_go(url: SceneComponentAddress | Url, bone_id: string | Hash): Hash;
+- function get_mesh_aabb(url: SceneComponentAddress | Url): LuaMap<Hash, model.Aabb>;
+- function get_mesh_enabled(url: SceneComponentAddress | Url, mesh_id: string | Hash): boolean;
+- function play_anim(url: SceneComponentAddress | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_blend_weights(url: string | Url, weights?: number[]): void; [since 1.13.0]
-- function set_mesh_enabled(url: string | Url, mesh_id: string | Hash, enabled: boolean): void;
+- function set_blend_weights(url: SceneComponentAddress | Url, weights?: number[]): void; [since 1.13.0]
+- function set_mesh_enabled(url: SceneComponentAddress | Url, mesh_id: string | Hash, enabled: boolean): void;
 - readonly animation: Hash;
 - cursor: number
 - material: Hash [through 1.12.4]
@@ -16509,15 +16544,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### physics
 
-- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Url, position_b: Vector3, properties?: physics.JointProperties): void;
-- function destroy_joint(collisionobject: string | Url, joint_id: string | Hash): void;
+- function create_joint(joint_type: physics.JointType, collisionobject_a: SceneComponentAddress | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: SceneComponentAddress | Url, position_b: Vector3, properties?: physics.JointProperties): void;
+- function destroy_joint(collisionobject: SceneComponentAddress | Url, joint_id: string | Hash): void;
 - function get_gravity(): Vector3;
-- function get_group(url: string | Url): Hash;
-- function get_joint_properties(collisionobject: string | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
-- function get_joint_reaction_force(collisionobject: string | Url, joint_id: string | Hash): Vector3;
-- function get_joint_reaction_torque(collisionobject: string | Url, joint_id: string | Hash): number;
-- function get_maskbit(url: string | Url, group: string | Hash): boolean;
-- function get_shape(url: string | Url, shape: string | Hash): physics.ShapeData;
+- function get_group(url: SceneComponentAddress | Url): Hash;
+- function get_joint_properties(collisionobject: SceneComponentAddress | Url, joint_id: string | Hash): physics.JointPropertiesInfo;
+- function get_joint_reaction_force(collisionobject: SceneComponentAddress | Url, joint_id: string | Hash): Vector3;
+- function get_joint_reaction_torque(collisionobject: SceneComponentAddress | Url, joint_id: string | Hash): number;
+- function get_maskbit(url: SceneComponentAddress | Url, group: string | Hash): boolean;
+- function get_shape(url: SceneComponentAddress | Url, shape: string | Hash): physics.ShapeData;
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[]): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | undefined
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean }): Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
 - physics.raycast(from: Vector3, to: Vector3, groups: Hash[], options: { all?: boolean } | undefined): Omit<BuiltinMessages["ray_cast_response"], "request_id"> | Omit<BuiltinMessages["ray_cast_response"], "request_id">[] | undefined
@@ -16525,14 +16560,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id: number): void;
 - function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;
 - function set_gravity(gravity: Vector3): void;
-- function set_group(url: string | Url, group: string | Hash): void;
-- function set_hflip(url: string | Url, flip: boolean): void;
-- function set_joint_properties(collisionobject: string | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
-- function set_maskbit(url: string | Url, group: string | Hash, maskbit: boolean): void;
-- function set_shape(url: string | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
-- function set_vflip(url: string | Url, flip: boolean): void;
-- function update_mass(collisionobject: string | Url, mass: number): void;
-- function wakeup(url: string | Url): void;
+- function set_group(url: SceneComponentAddress | Url, group: string | Hash): void;
+- function set_hflip(url: SceneComponentAddress | Url, flip: boolean): void;
+- function set_joint_properties(collisionobject: SceneComponentAddress | Url, joint_id: string | Hash, properties: physics.JointProperties): void;
+- function set_maskbit(url: SceneComponentAddress | Url, group: string | Hash, maskbit: boolean): void;
+- function set_shape(url: SceneComponentAddress | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
+- function set_vflip(url: SceneComponentAddress | Url, flip: boolean): void;
+- function update_mass(collisionobject: SceneComponentAddress | Url, mass: number): void;
+- function wakeup(url: SceneComponentAddress | Url): void;
 - physics.JOINT_TYPE_FIXED: number & { readonly __brand: "physics.JOINT_TYPE_FIXED" }
 - physics.JOINT_TYPE_HINGE: number & { readonly __brand: "physics.JOINT_TYPE_HINGE" }
 - physics.JOINT_TYPE_SLIDER: number & { readonly __brand: "physics.JOINT_TYPE_SLIDER" }
@@ -16916,13 +16951,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### tilemap
 
-- function get_bounds(url: string | Url): LuaMultiReturn<[number, number, number, number]>;
-- function get_tile(url: string | Url, layer: string | Hash, x: number, y: number): number | undefined;
-- function get_tile_info(url: string | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
-- function get_tiles(url: string | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
+- function get_bounds(url: SceneComponentAddress | Url): LuaMultiReturn<[number, number, number, number]>;
+- function get_tile(url: SceneComponentAddress | Url, layer: string | Hash, x: number, y: number): number | undefined;
+- function get_tile_info(url: SceneComponentAddress | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
+- function get_tiles(url: SceneComponentAddress | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>> | undefined;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_tile(url: string | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
-- function set_visible(url: string | Url, layer: string | Hash, visible: boolean): void;
+- function set_tile(url: SceneComponentAddress | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
+- function set_visible(url: SceneComponentAddress | Url, layer: string | Hash, visible: boolean): void;
 - tilemap.H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" }
 - tilemap.ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" }
 - tilemap.ROTATE_270: number & { readonly __brand: "tilemap.ROTATE_270" }

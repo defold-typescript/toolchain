@@ -1,5 +1,6 @@
 import {
   checkCrossWorldAddresses,
+  checkMissingComponentFragments,
   checkUrlFragmentReachability,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -91,6 +92,37 @@ export function scanCrossWorldAddresses(input: {
       file: finding.fileName,
       address: finding.address,
       socket: finding.socket,
+      message: finding.message,
+    })),
+  };
+}
+
+/** One component-slot literal naming no component, for a consumer that would otherwise parse the prose. */
+export interface MissingFragmentEntry {
+  readonly file: string;
+  readonly call: string;
+  readonly address: string;
+  readonly message: string;
+}
+
+export interface MissingFragmentScan {
+  readonly warnings: string[];
+  readonly entries: MissingFragmentEntry[];
+}
+
+// Render the missing-fragment check the way the other two scans render theirs.
+// It reads no scene, so nothing about the project's scenes can silence it.
+export function scanMissingComponentFragments(input: {
+  program: ts.Program;
+  table: UrlParameterTable;
+}): MissingFragmentScan {
+  const findings = checkMissingComponentFragments(input);
+  return {
+    warnings: findings.map((finding) => `${finding.fileName}: ${finding.message}`),
+    entries: findings.map((finding) => ({
+      file: finding.fileName,
+      call: finding.call,
+      address: finding.address,
       message: finding.message,
     })),
   };
