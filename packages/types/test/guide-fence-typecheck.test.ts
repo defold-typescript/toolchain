@@ -128,12 +128,28 @@ const SELECTED: readonly FenceSelection[] = [
  * A declaration a selected section teaches, checked by assignability. A fence
  * can keep compiling after the declaration it relies on changes shape, because
  * an empty interface skips the excess-property check and a destructure types
- * against `number[]` as readily as against `LuaMultiReturn`.
+ * against `number[]` as readily as against `LuaMultiReturn`. Every assignment
+ * accepts `any`, so the multi-return check also rejects an `any` return.
  */
 interface DeclarationCheck {
   readonly kind: string;
   readonly reason: string;
   readonly body: string;
+}
+
+/**
+ * The `window.get_size` check with `call` in place of the real call, so the
+ * self-test can feed it stand-in return types. `size` is the inferred call
+ * result, so the assignability check and the `any` check read the same type.
+ */
+function getSizeCheck(call: string): string {
+  return `type IsAny<T> = 0 extends 1 & T ? true : false;
+const size = ${call};
+const multi: LuaMultiReturn<[number, number]> = size;
+const sizeIsAny: IsAny<typeof size> = false;
+void multi;
+void sizeIsAny;
+`;
 }
 
 const DECLARATION_CHECKS: readonly DeclarationCheck[] = [
@@ -146,10 +162,8 @@ void emptyAsArray;
   },
   {
     kind: "script",
-    reason: "window.get_size returns LuaMultiReturn<[number, number]>",
-    body: `const size: LuaMultiReturn<[number, number]> = window.get_size();
-void size;
-`,
+    reason: "window.get_size returns LuaMultiReturn<[number, number]>, not any",
+    body: getSizeCheck("window.get_size()"),
   },
 ];
 
@@ -219,6 +233,19 @@ describe("guide fences presented as working code", () => {
       const [found] = diagnosticsFor(shippedSurface(entry.kind), [entry.body]);
       expect(found, entry.reason).toEqual([]);
     }
+  });
+
+  test("the window.get_size check rejects any, number[] and an unbranded tuple, and accepts a labeled branded tuple", () => {
+    const rejected = ["(undefined as any)", "([] as number[])", "([0, 0] as [number, number])"];
+    const accepted = "(undefined as unknown as LuaMultiReturn<[width: number, height: number]>)";
+    const found = diagnosticsFor(
+      shippedSurface("script"),
+      [...rejected, accepted].map((call) => getSizeCheck(call)),
+    );
+    rejected.forEach((call, i) => {
+      expect(found[i]?.length ?? 0, `${call} is rejected`).toBeGreaterThan(0);
+    });
+    expect(found[rejected.length], `${accepted} is accepted`).toEqual([]);
   });
 
   test("the gate can fail: a fence naming an unshipped type reports a diagnostic", () => {
