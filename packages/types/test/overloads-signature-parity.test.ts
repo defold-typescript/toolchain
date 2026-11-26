@@ -523,7 +523,7 @@ describe("curried and multi-paragraph overload rendering", () => {
 
   test("go.set's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.set"]?.[0]).toBe(
-      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWrite<P, K>, ...options: [] | [GoPropertyOptions]) => void",
+      "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWriteEach<P, K>, ...options: [] | [GoPropertyOptions]) => void",
     );
   });
 

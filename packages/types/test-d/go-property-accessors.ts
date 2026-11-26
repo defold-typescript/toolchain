@@ -51,6 +51,25 @@ declare const dynamicKey: string;
 go.set(url, dynamicKey, true);
 go.set(url, hash("tint"), vmath.vector4());
 
+// A key typed as a union of keys takes only a value every one of them accepts:
+// position takes a vector3 and rotation a quaternion, so the union takes neither.
+declare const transformKey: "position" | "rotation";
+declare const quat: Quaternion;
+// @ts-expect-error rotation refuses a vector3
+go.set(url, transformKey, v3);
+// @ts-expect-error position refuses a quaternion
+go.set(url, transformKey, quat);
+// @ts-expect-error position refuses a quaternion, with options too
+go.set(url, transformKey, quat, { index: 1 });
+declare const elementKey: "position.x" | "position.y";
+go.set(url, elementKey, 1);
+const _transformRead: Vector3 | Quaternion = go.get(url, transformKey);
+void _transformRead;
+
+// A union that holds a key no catalog names keeps the wide value.
+declare const mixedKey: "position" | Hash;
+go.set(url, mixedKey, true);
+
 // @ts-expect-error position is Vector3, not assignable to Quaternion
 const _wrong: Quaternion = go.get(url, "position");
 void _wrong;

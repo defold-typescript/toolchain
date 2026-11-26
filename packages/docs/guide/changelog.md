@@ -13,11 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[vmath](/api/vmath) pairs take one vector type.**
+> - **Stricter [vmath](/api/vmath) pairs and [union-key writes](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace).**
 
 ### Breaking
 
 - **`vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type**, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
+- **`go.set` and `go.animate` with a property key typed as a union of keys take only a value every key accepts**, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion.
 
 ## v0.71.0
 
