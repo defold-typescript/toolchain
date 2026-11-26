@@ -23,7 +23,9 @@ import {
 
 const SITE_DIR = join(import.meta.dir, "../..");
 const TYPES_DIR = join(SITE_DIR, "node_modules/@defold-typescript/types");
-const LINKS_TIMEOUT_MS = 600_000;
+// The sweep renders every library page in series: 3 to 6 minutes on a Linux or
+// Windows runner, and past 10 on a slow macOS one.
+const LINKS_TIMEOUT_MS = 1_200_000;
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
