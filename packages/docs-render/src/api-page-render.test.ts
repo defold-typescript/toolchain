@@ -3,7 +3,13 @@ import type { ApiFunction, ApiModule } from "@defold-typescript/types";
 import type { Element, Nodes } from "hast";
 import { toHtml } from "hast-util-to-html";
 import type { PhrasingContent } from "mdast";
-import { apiLinkify, apiSignatureSymbolLinks, renderApiPage } from "./api-page-render";
+import {
+  apiLinkifier,
+  apiLinkify,
+  apiSignatureSymbolLinker,
+  apiSignatureSymbolLinks,
+  renderApiPage,
+} from "./api-page-render";
 import type { ApiPage, LibraryMeta } from "./api-surface";
 import { hastHeadings } from "./headings";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
@@ -259,6 +265,27 @@ describe("library member symbol keys", () => {
   test("under drop a qualified type two pages declare links only from a page that declares it", () => {
     const links = (current: ApiPage) =>
       apiSignatureSymbolLinks(shared, current, shared, { ambiguous: "drop" });
+    expect(links(rng).get("rnd.State")).toBe(anchored(rng, "type:State"));
+    expect(links(random).get("rnd.State")).toBe(anchored(random, "type:State"));
+    expect(links(other).has("rnd.State")).toBe(false);
+  });
+
+  test("one prose linker serves many pages, each page's own keys staying on that page", () => {
+    const text = "Call rnd.range here.";
+    const linkify = apiLinkifier(shared, { ambiguous: "drop" });
+    const linkedTo = (href: string): [string, string?][] => [
+      ["Call "],
+      ["rnd.range", href],
+      [" here."],
+    ];
+    expect(linked(linkify(rng)(text))).toEqual(linkedTo(anchored(rng, "function:rnd.range")));
+    expect(linked(linkify(random)(text))).toEqual(linkedTo(anchored(random, "function:rnd.range")));
+    expect(linked(linkify(other)(text))).toEqual([[text]]);
+    expect(linked(linkify()(text))).toEqual([[text]]);
+  });
+
+  test("one signature linker serves many pages, each page's own types staying on that page", () => {
+    const links = apiSignatureSymbolLinker(shared, shared, { ambiguous: "drop" });
     expect(links(rng).get("rnd.State")).toBe(anchored(rng, "type:State"));
     expect(links(random).get("rnd.State")).toBe(anchored(random, "type:State"));
     expect(links(other).has("rnd.State")).toBe(false);

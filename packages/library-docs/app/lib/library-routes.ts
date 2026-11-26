@@ -1,8 +1,4 @@
-import {
-  apiLinkify,
-  apiSignatureSymbolLinks,
-  renderApiPage,
-} from "@defold-typescript/docs-render/api-page-render";
+import { renderApiPage } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
   type DocsMarkdown,
@@ -11,7 +7,7 @@ import {
 } from "@defold-typescript/docs-render/docs-markdown";
 import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
-import { apiPages, libraryOrigins, linkPages, untypedListings } from "./api-content";
+import { apiPages, libraryLinkers, libraryOrigins, untypedListings } from "./api-content";
 import type { LibraryDirs } from "./api-surface-loader";
 import { guides, processGuide } from "./guides";
 import { listingPageMarkdown } from "./listing-page";
@@ -141,16 +137,16 @@ export async function renderLibraryApiPage(
   const page = apiPages(dirs).find((entry) => entry.route === route);
   if (!page) return undefined;
 
-  const links = linkPages(dirs);
+  const { linkify, signatureLinks } = libraryLinkers(dirs);
   const lineage = libraryLineage(page.namespace, libraryOrigins(dirs));
   // A name several libraries (or a library and the engine) declare links only on
   // a page that declares it, to that page's own heading.
   const body = await renderApiPage(
     page,
-    apiLinkify(links, { current: page, ambiguous: "drop" }),
+    linkify(page),
     // The heading is the styled path, so the page body omits its H1.
     { omitHeading: true },
-    { signatureSymbolLinks: apiSignatureSymbolLinks(links, page, links, { ambiguous: "drop" }) },
+    { signatureSymbolLinks: signatureLinks(page) },
   );
   return {
     title: `${page.module.namespace} API`,

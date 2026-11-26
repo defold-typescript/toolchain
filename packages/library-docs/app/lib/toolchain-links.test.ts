@@ -23,9 +23,6 @@ import {
 
 const SITE_DIR = join(import.meta.dir, "../..");
 const TYPES_DIR = join(SITE_DIR, "node_modules/@defold-typescript/types");
-// The sweep renders every library page in series: 3 to 6 minutes on a Linux or
-// Windows runner, and past 10 on a slow macOS one.
-const LINKS_TIMEOUT_MS = 1_200_000;
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -86,56 +83,61 @@ describe("toolchainPages", () => {
   });
 });
 
+// Each library page is its own test, so no test needs a custom timeout. The time
+// the whole sweep takes is guarded by the per-`dirs` reuse test in
+// `api-content.test.ts`, not by a time budget: without that reuse every page
+// rebuilds the link indexes and the sweep grows with the square of the page count.
 describe("toolchain member links on library pages", () => {
-  test(
-    "every toolchain member link on a library page lands on a heading",
-    async () => {
-      const REAL_DIRS = siteDirs(SITE_DIR);
-      const linkPattern = new RegExp(
-        `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
-        "g",
-      );
-      const holders = new Map<string, Set<string>>();
-      for (const page of apiPages(REAL_DIRS)) {
-        const [host = "", owner = "", repo = "", leaf = ""] = page.route.split("/").slice(2);
-        const rendered = await renderLibraryApiPage(
-          { host, owner, repo, namespace: leaf },
-          REAL_DIRS,
-        );
-        expect({ route: page.route, rendered: rendered !== undefined }).toEqual({
-          route: page.route,
-          rendered: true,
-        });
-        const html = rendered ? toHtml(rendered.page.hast) : "";
-        for (const [, namespace, id] of html.matchAll(linkPattern)) {
-          const key = `${namespace}#${id}`;
-          const pagesHolding = holders.get(key) ?? new Set<string>();
-          pagesHolding.add(page.namespace);
-          holders.set(key, pagesHolding);
-        }
-      }
-      expect(holders.size).toBeGreaterThan(0);
-
-      // The heading ids each linked toolchain page renders.
-      const toolchainIds = new Map<string, Set<string>>();
-      const missing: string[] = [];
-      for (const [key, pagesHolding] of holders) {
-        const [namespace = "", id = ""] = key.split("#");
-        if (!toolchainIds.has(namespace)) {
-          const rendered = await renderCanonicalApiPage(namespace, TYPES_DIR);
-          toolchainIds.set(
-            namespace,
-            new Set(rendered ? hastHeadings(rendered.hast).map((heading) => heading.id) : []),
-          );
-        }
-        if (!toolchainIds.get(namespace)?.has(id)) {
-          missing.push(`${key} (on ${[...pagesHolding].sort().join(", ")})`);
-        }
-      }
-      expect(missing).toEqual([]);
-    },
-    LINKS_TIMEOUT_MS,
+  const REAL_DIRS = siteDirs(SITE_DIR);
+  const routes = apiPages(REAL_DIRS).map((page) => page.route);
+  const linkPattern = new RegExp(
+    `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
+    "g",
   );
+
+  // The heading ids each toolchain page renders, each namespace rendered once
+  // across every page's test.
+  const toolchainIds = new Map<string, Promise<Set<string>>>();
+  const headingIds = (namespace: string): Promise<Set<string>> => {
+    let ids = toolchainIds.get(namespace);
+    if (!ids) {
+      ids = renderCanonicalApiPage(namespace, TYPES_DIR).then(
+        (rendered) =>
+          new Set(rendered ? hastHeadings(rendered.hast).map((heading) => heading.id) : []),
+      );
+      toolchainIds.set(namespace, ids);
+    }
+    return ids;
+  };
+
+  // A library page's toolchain member links as `<namespace>#<id>`, each once.
+  const toolchainLinks = async (route: string): Promise<string[]> => {
+    const [host = "", owner = "", repo = "", namespace = ""] = route.split("/").slice(2);
+    const rendered = await renderLibraryApiPage({ host, owner, repo, namespace }, REAL_DIRS);
+    if (!rendered) throw new Error(`${route} renders no page`);
+    const html = toHtml(rendered.page.hast);
+    return [...new Set([...html.matchAll(linkPattern)].map(([, ns, id]) => `${ns}#${id}`))];
+  };
+
+  test.each(routes)("%s: every toolchain member link lands on a heading", async (route) => {
+    const missing: string[] = [];
+    for (const key of await toolchainLinks(route)) {
+      const [namespace = "", id = ""] = key.split("#");
+      if (!(await headingIds(namespace)).has(id)) missing.push(key);
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("some library page carries a toolchain member link", async () => {
+    let linked: string | undefined;
+    for (const route of routes) {
+      if ((await toolchainLinks(route)).length > 0) {
+        linked = route;
+        break;
+      }
+    }
+    expect(linked).toBeDefined();
+  });
 });
 
 describe("links back to the toolchain docs", () => {

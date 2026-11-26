@@ -1,6 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  apiLinkifier,
+  apiSignatureSymbolLinker,
+} from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import type { SignatureSymbolTarget } from "@defold-typescript/docs-render/signature-brand-links";
+import type { SymbolLinker } from "@defold-typescript/docs-render/symbol-linkify";
 import {
   defoldListingsFromManifest,
   type LibraryDirs,
@@ -33,21 +39,62 @@ export function siteDirs(root: string = process.cwd()): LibraryDirs {
   };
 }
 
-let realPages: ApiPage[] | undefined;
+let buildDirs: LibraryDirs | undefined;
 
-// Memoized for the real dirs because the renderer reads it once per page and the
-// inputs are fixed for a build; explicit dirs drive deterministic tests.
-export function apiPages(dirs?: LibraryDirs): ApiPage[] {
-  if (dirs) return loadLibraryPageSources(dirs).map((source) => source.page);
-  if (!realPages) realPages = loadLibraryPageSources(siteDirs()).map((source) => source.page);
-  return realPages;
+// The build's dirs, read once so every caller that passes none shares one cache
+// entry below.
+function defaultDirs(): LibraryDirs {
+  buildDirs ??= siteDirs();
+  return buildDirs;
+}
+
+function perDirs<T>(cache: WeakMap<LibraryDirs, T>, dirs: LibraryDirs, build: () => T): T {
+  const hit = cache.get(dirs);
+  if (hit !== undefined) return hit;
+  const value = build();
+  cache.set(dirs, value);
+  return value;
+}
+
+const pagesByDirs = new WeakMap<LibraryDirs, ApiPage[]>();
+const linkPagesByDirs = new WeakMap<LibraryDirs, ApiPage[]>();
+const linkersByDirs = new WeakMap<LibraryDirs, LibraryLinkers>();
+
+// Memoized per `dirs` object because the renderer reads it once per page and the
+// inputs are fixed for a build. A fixture test therefore builds one `dirs` object
+// per folder and writes nothing into that folder after reading it.
+export function apiPages(dirs: LibraryDirs = defaultDirs()): ApiPage[] {
+  return perDirs(pagesByDirs, dirs, () =>
+    loadLibraryPageSources(dirs).map((source) => source.page),
+  );
 }
 
 // What the link registries read: the library pages plus the link-only toolchain ones.
-export function linkPages(dirs: LibraryDirs = siteDirs()): ApiPage[] {
-  const typesDir = dirs.typesDir;
-  if (typesDir === undefined) return apiPages(dirs);
-  return withToolchainLinks(apiPages(dirs), typesDir);
+export function linkPages(dirs: LibraryDirs = defaultDirs()): ApiPage[] {
+  return perDirs(linkPagesByDirs, dirs, () => {
+    const typesDir = dirs.typesDir;
+    if (typesDir === undefined) return apiPages(dirs);
+    return withToolchainLinks(apiPages(dirs), typesDir);
+  });
+}
+
+export interface LibraryLinkers {
+  linkify: (page?: ApiPage) => SymbolLinker;
+  signatureLinks: (page?: ApiPage) => Map<string, SignatureSymbolTarget>;
+}
+
+// A library page's prose linker and signature link map over the link set, the
+// page-independent half built once per `dirs` object. A name several libraries
+// (or a library and the engine) declare is dropped from the shared half, so it
+// links only on a page that declares it.
+export function libraryLinkers(dirs: LibraryDirs = defaultDirs()): LibraryLinkers {
+  return perDirs(linkersByDirs, dirs, () => {
+    const links = linkPages(dirs);
+    return {
+      linkify: apiLinkifier(links, { ambiguous: "drop" }),
+      signatureLinks: apiSignatureSymbolLinker(links, links, { ambiguous: "drop" }),
+    };
+  });
 }
 
 // Namespace -> GitHub `<owner>/<repo>` origin, the lineage the Libraries tree,
