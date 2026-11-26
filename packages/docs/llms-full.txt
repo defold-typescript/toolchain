@@ -16899,16 +16899,20 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### vmath
 
-- vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T
+- vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number, max: number): T
+- vmath.clamp(value: Vector3, min: number | Vector3, max: number | Vector3): Vector3
+- vmath.clamp(value: Vector4, min: number | Vector4, max: number | Vector4): Vector4
 - function conj(q1: Quaternion): Quaternion;
 - function cross(v1: Vector3, v2: Vector3): Vector3;
-- vmath.dot<T extends Vector3 | Vector4>(v1: T, v2: T): number
+- vmath.dot(v1: Vector3, v2: Vector3): number
+- vmath.dot(v1: Vector4, v2: Vector4): number
 - vmath.euler_to_quat(v: Vector3): Quaternion
 - vmath.euler_to_quat(x: number, y: number, z: number): Quaternion
 - function inv(m1: Matrix4): Matrix4;
 - function length(v: Vector3 | Vector4 | Quaternion): number;
 - function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
-- vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
+- vmath.lerp(t: number, v1: Vector3, v2: Vector3): Vector3
+- vmath.lerp(t: number, v1: Vector4, v2: Vector4): Vector4
 - vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - vmath.lerp(t: number, n1: number, n2: number): number
 - function matrix4(): Matrix4;
@@ -16927,7 +16931,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function matrix4_scale(scale: number): Matrix4;
 - function matrix4_scale(scale: Vector3): Matrix4;
 - function matrix4_translation(position: Vector3 | Vector4): Matrix4;
-- vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T
+- vmath.mul_per_elem(v1: Vector3, v2: Vector3): Vector3
+- vmath.mul_per_elem(v1: Vector4, v2: Vector4): Vector4
 - vmath.normalize<T extends Vector3 | Vector4 | Quaternion>(v1: T): T
 - function ortho_inv(m1: Matrix4): Matrix4;
 - function project(v1: Vector3, v2: Vector3): number;
@@ -16943,7 +16948,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function quat_rotation_z(angle: number): Quaternion;
 - function quat_to_euler(q: Quaternion): LuaMultiReturn<[number, number, number]>;
 - function rotate(q: Quaternion, v1: Vector3): Vector3;
-- vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
+- vmath.slerp(t: number, v1: Vector3, v2: Vector3): Vector3
+- vmath.slerp(t: number, v1: Vector4, v2: Vector4): Vector4
 - vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - vmath.vector(): Vector
 - vmath.vector(t: number[]): Vector

@@ -14,11 +14,29 @@ declare global {
      * @param max - Max value(s) border
      * @returns Clamped value or vector
      */
-    function clamp<T extends number | Vector3 | Vector4>(
-      value: T,
-      min: number | T,
-      max: number | T,
-    ): T;
+    function clamp<T extends number | Vector3 | Vector4>(value: T, min: number, max: number): T;
+    /**
+     * Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type
+     * return new vector3|vector4 with clamped value at every vector's element.
+     * Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element
+     *
+     * @param value - Input value or vector of values
+     * @param min - Min value(s) border
+     * @param max - Max value(s) border
+     * @returns Clamped value or vector
+     */
+    function clamp(value: Vector3, min: number | Vector3, max: number | Vector3): Vector3;
+    /**
+     * Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type
+     * return new vector3|vector4 with clamped value at every vector's element.
+     * Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element
+     *
+     * @param value - Input value or vector of values
+     * @param min - Min value(s) border
+     * @param max - Max value(s) border
+     * @returns Clamped value or vector
+     */
+    function clamp(value: Vector4, min: number | Vector4, max: number | Vector4): Vector4;
     /**
      * Linearly interpolate between two vectors. The function
      * treats the vectors as positions and interpolates between
@@ -31,7 +49,20 @@ declare global {
      * @param v2 - vector to lerp to
      * @returns the lerped vector
      */
-    function lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T;
+    function lerp(t: number, v1: Vector3, v2: Vector3): Vector3;
+    /**
+     * Linearly interpolate between two vectors. The function
+     * treats the vectors as positions and interpolates between
+     * the positions in a straight line. Lerp is useful to describe
+     * transitions from one place to another over time.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param v1 - vector to lerp from
+     * @param v2 - vector to lerp to
+     * @returns the lerped vector
+     */
+    function lerp(t: number, v1: Vector4, v2: Vector4): Vector4;
     /**
      * Linearly interpolate between two quaternions. Linear
      * interpolation of rotations are only useful for small
@@ -84,7 +115,17 @@ declare global {
      * @param v2 - second vector
      * @returns multiplied vector
      */
-    function mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T;
+    function mul_per_elem(v1: Vector3, v2: Vector3): Vector3;
+    /**
+     * Performs an element wise multiplication between two vectors of the same type
+     * The returned value is a vector defined as (e.g. for a vector3):
+     * `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns multiplied vector
+     */
+    function mul_per_elem(v1: Vector4, v2: Vector4): Vector4;
     /**
      * The returned value is a scalar defined as:
      * `P ⋅ Q = |P| |Q| cos θ`
@@ -110,7 +151,33 @@ declare global {
      * }
      * ```
      */
-    function dot<T extends Vector3 | Vector4>(v1: T, v2: T): number;
+    function dot(v1: Vector3, v2: Vector3): number;
+    /**
+     * The returned value is a scalar defined as:
+     * `P ⋅ Q = |P| |Q| cos θ`
+     * where θ is the angle between the vectors P and Q.
+     *
+     * - If the dot product is positive then the angle between the vectors is below 90 degrees.
+     * - If the dot product is zero the vectors are perpendicular (at right-angles to each other).
+     * - If the dot product is negative then the angle between the vectors is more than 90 degrees.
+     *
+     * Both vectors must have the same type: a vector3 paired with a vector4 raises.
+     *
+     * @param v1 - first vector
+     * @param v2 - second vector
+     * @returns dot product
+     * @example
+     * ```ts
+     * const vector1 = vmath.vector3(1, 0, 0);
+     * const vector2 = vmath.vector3(0, 1, 0);
+     *
+     * if (vmath.dot(vector1, vector2) === 0) {
+     *   // The two vectors are perpendicular (at right-angles to each other)
+     *   // ...
+     * }
+     * ```
+     */
+    function dot(v1: Vector4, v2: Vector4): number;
     /**
      * Normalizes a vector, i.e. returns a new vector with the same
      * direction as the input vector, but with length 1.
@@ -136,7 +203,23 @@ declare global {
      * @param v2 - vector to slerp to
      * @returns the slerped vector
      */
-    function slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T;
+    function slerp(t: number, v1: Vector3, v2: Vector3): Vector3;
+    /**
+     * Spherically interpolates between two vectors. The difference to
+     * lerp is that slerp treats the vectors as directions instead of
+     * positions in space.
+     * The direction of the returned vector is interpolated by the angle
+     * and the magnitude is interpolated between the magnitudes of the
+     * from and to vectors.
+     * Slerp is computationally more expensive than lerp.
+     * The function does not clamp t between 0 and 1.
+     *
+     * @param t - interpolation parameter, 0-1
+     * @param v1 - vector to slerp from
+     * @param v2 - vector to slerp to
+     * @returns the slerped vector
+     */
+    function slerp(t: number, v1: Vector4, v2: Vector4): Vector4;
     /**
      * Slerp travels the torque-minimal path maintaining constant
      * velocity, which means it travels along the straightest path along

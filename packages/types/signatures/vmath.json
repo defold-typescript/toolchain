@@ -1,9 +1,13 @@
 {
   "vmath.clamp": {
     "signatures": [
-      "vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number | T, max: number | T): T"
+      "vmath.clamp<T extends number | Vector3 | Vector4>(value: T, min: number, max: number): T",
+      "vmath.clamp(value: Vector3, min: number | Vector3, max: number | Vector3): Vector3",
+      "vmath.clamp(value: Vector4, min: number | Vector4, max: number | Vector4): Vector4"
     ],
     "docs": [
+      "Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type return new vector3|vector4 with clamped value at every vector's element. Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element",
+      "Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type return new vector3|vector4 with clamped value at every vector's element. Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element",
       "Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type return new vector3|vector4 with clamped value at every vector's element. Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element"
     ]
   },
@@ -19,11 +23,13 @@
   },
   "vmath.lerp": {
     "signatures": [
-      "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+      "vmath.lerp(t: number, v1: Vector3, v2: Vector3): Vector3",
+      "vmath.lerp(t: number, v1: Vector4, v2: Vector4): Vector4",
       "vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion",
       "vmath.lerp(t: number, n1: number, n2: number): number"
     ],
     "docs": [
+      "Linearly interpolate between two vectors. The function treats the vectors as positions and interpolates between the positions in a straight line. Lerp is useful to describe transitions from one place to another over time. The function does not clamp t between 0 and 1.",
       "Linearly interpolate between two vectors. The function treats the vectors as positions and interpolates between the positions in a straight line. Lerp is useful to describe transitions from one place to another over time. The function does not clamp t between 0 and 1.",
       "Linearly interpolate between two quaternions. Linear interpolation of rotations are only useful for small rotations. For interpolations of arbitrary rotations, vmath.slerp yields much better results. The function does not clamp t between 0 and 1.",
       "Linearly interpolate between two values. Lerp is useful to describe transitions from one value to another over time. The function does not clamp t between 0 and 1."
@@ -31,17 +37,23 @@
   },
   "vmath.slerp": {
     "signatures": [
-      "vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
+      "vmath.slerp(t: number, v1: Vector3, v2: Vector3): Vector3",
+      "vmath.slerp(t: number, v1: Vector4, v2: Vector4): Vector4",
       "vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion"
     ],
     "docs": [
+      "Spherically interpolates between two vectors. The difference to lerp is that slerp treats the vectors as directions instead of positions in space. The direction of the returned vector is interpolated by the angle and the magnitude is interpolated between the magnitudes of the from and to vectors. Slerp is computationally more expensive than lerp. The function does not clamp t between 0 and 1.",
       "Spherically interpolates between two vectors. The difference to lerp is that slerp treats the vectors as directions instead of positions in space. The direction of the returned vector is interpolated by the angle and the magnitude is interpolated between the magnitudes of the from and to vectors. Slerp is computationally more expensive than lerp. The function does not clamp t between 0 and 1.",
       "Slerp travels the torque-minimal path maintaining constant velocity, which means it travels along the straightest path along the rounded surface of a sphere. Slerp is useful for interpolation of rotations. The function does not clamp t between 0 and 1."
     ]
   },
   "vmath.mul_per_elem": {
-    "signatures": ["vmath.mul_per_elem<T extends Vector3 | Vector4>(v1: T, v2: T): T"],
+    "signatures": [
+      "vmath.mul_per_elem(v1: Vector3, v2: Vector3): Vector3",
+      "vmath.mul_per_elem(v1: Vector4, v2: Vector4): Vector4"
+    ],
     "docs": [
+      "Performs an element wise multiplication between two vectors of the same type The returned value is a vector defined as (e.g. for a vector3): `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`",
       "Performs an element wise multiplication between two vectors of the same type The returned value is a vector defined as (e.g. for a vector3): `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`"
     ]
   },
@@ -52,8 +64,12 @@
     ]
   },
   "vmath.dot": {
-    "signatures": ["vmath.dot<T extends Vector3 | Vector4>(v1: T, v2: T): number"],
+    "signatures": [
+      "vmath.dot(v1: Vector3, v2: Vector3): number",
+      "vmath.dot(v1: Vector4, v2: Vector4): number"
+    ],
     "docs": [
+      "The returned value is a scalar defined as: `P ⋅ Q = |P| |Q| cos θ` where θ is the angle between the vectors P and Q.\n\n- If the dot product is positive then the angle between the vectors is below 90 degrees.\n- If the dot product is zero the vectors are perpendicular (at right-angles to each other).\n- If the dot product is negative then the angle between the vectors is more than 90 degrees.\n\nBoth vectors must have the same type: a vector3 paired with a vector4 raises.",
       "The returned value is a scalar defined as: `P ⋅ Q = |P| |Q| cos θ` where θ is the angle between the vectors P and Q.\n\n- If the dot product is positive then the angle between the vectors is below 90 degrees.\n- If the dot product is zero the vectors are perpendicular (at right-angles to each other).\n- If the dot product is negative then the angle between the vectors is more than 90 degrees.\n\nBoth vectors must have the same type: a vector3 paired with a vector4 raises."
     ]
   },

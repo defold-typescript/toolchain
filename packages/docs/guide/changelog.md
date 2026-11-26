@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.72.0
+
+> Summary:
+>
+> - **[vmath](/api/vmath) pairs take one vector type.**
+
+### Breaking
+
+- **`vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type**, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
+
 ## v0.71.0
 
 > Summary:
