@@ -150,6 +150,10 @@ go.animate("", "tint", PB, vmath.vector4(), E, 1);
 go.animate(asUrl, "tint", PB, vmath.vector4(), E, 1);
 go.animate(asHash, "tint", PB, vmath.vector4(), E, 1);
 go.animate(asString, "tint", PB, vmath.vector4(), E, 1);
+// Only "" and "#" are the calling script, so a hash still names its key on any
+// other unlinked fragment.
+// @ts-expect-error rotation is a quaternion, by hash too
+go.set("/nowhere#x", hash("rotation"), 1);
 
 // An address with no `#` is a game object, whose only properties are its transform.
 const ownPosition = go.get(".", "position");
