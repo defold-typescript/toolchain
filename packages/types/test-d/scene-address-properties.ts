@@ -154,6 +154,10 @@ go.animate(asString, "tint", PB, vmath.vector4(), E, 1);
 // other unlinked fragment.
 // @ts-expect-error rotation is a quaternion, by hash too
 go.set("/nowhere#x", hash("rotation"), 1);
+go.set("/nowhere#x", hash("rotation"), vmath.quat());
+// @ts-expect-error rotation is a quaternion, by hash too
+go.set("#x", hash("rotation"), 1);
+go.set("#x", hash("rotation"), vmath.quat());
 
 // An address with no `#` is a game object, whose only properties are its transform.
 const ownPosition = go.get(".", "position");
