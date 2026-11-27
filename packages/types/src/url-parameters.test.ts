@@ -181,7 +181,9 @@ describe("parameterTypesSatisfyClass", () => {
   test("a game-object or either class needs the whole triple", () => {
     for (const addressClass of ["game-object", "either"] as const) {
       expect(parameterTypesSatisfyClass(["string", "hash", "url"], addressClass)).toBe(true);
+      expect(parameterTypesSatisfyClass(["hash", "url"], addressClass)).toBe(false);
       expect(parameterTypesSatisfyClass(["string", "url"], addressClass)).toBe(false);
+      expect(parameterTypesSatisfyClass(["string", "hash"], addressClass)).toBe(false);
     }
   });
 
