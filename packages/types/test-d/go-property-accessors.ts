@@ -84,6 +84,14 @@ go.set(url, ROTATION, quat);
 // @ts-expect-error rotation refuses a vector3
 go.set(url, ROTATION, v3);
 
+// The calling script holds only what it declares, so a hash written there names
+// no transform key; "." is the game object, whose rotation is a quaternion.
+go.set("#", ROTATION, 1);
+go.set("", ROTATION, 1);
+// @ts-expect-error the game object's rotation refuses a number
+go.set(".", ROTATION, 1);
+go.set(".", ROTATION, quat);
+
 // A name the catalog does not list, or a bare hash, adds no constraint beside a
 // listed key.
 declare const openKey: "position" | "tint" | Hash;

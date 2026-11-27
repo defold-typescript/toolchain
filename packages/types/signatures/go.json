@@ -2,8 +2,8 @@
   "go.animate": {
     "signatures": [
       "go.animate<P>(): <K extends AnimatableKey<P>>(url: SceneAddress | Hash | Url, property: K, playback: go.Playback, to: AnimateTargetEach<P, K>, easing: Vector | go.Easing, duration: number, ...rest: [] | [delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void]) => void",
-      "go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateToEach<AddressCatalog<R>[\"catalog\"], K>, easing: Vector | go.Easing, duration: number): void",
-      "go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateToEach<AddressCatalog<R>[\"catalog\"], K>, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void"
+      "go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateToEach<AddressCatalog<R>, K>, easing: Vector | go.Easing, duration: number): void",
+      "go.animate<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, playback: go.Playback, to: PropertyAnimateToEach<AddressCatalog<R>, K>, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void"
     ],
     "docs": [
       "This is only supported for numerical properties. If the node property is already being animated, that animation will be canceled and replaced by the new one. If a `complete_function` (lua function) is specified, that function will be called when the animation has completed. By starting a new animation in that function, several animations can be sequenced together. See the examples for more information. If you call `go.animate()` from a game object's `final()` function, any passed `complete_function` will be ignored and never called upon animation completion. See the properties guide for which properties can be animated and the animation guide for how them.",
@@ -30,8 +30,8 @@
   "go.set": {
     "signatures": [
       "go.set<P>(): <K extends WritableKey<P>>(url: SceneAddress | Hash | Url, property: K, value: XyWriteEach<P, K>, ...options: [] | [GoPropertyOptions]) => void",
-      "go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWriteEach<AddressCatalog<R>[\"catalog\"], K>): void",
-      "go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWriteEach<AddressCatalog<R>[\"catalog\"], K>, options: GoPropertyOptions): void"
+      "go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWriteEach<AddressCatalog<R>, K>): void",
+      "go.set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(url: R, property: K, value: PropertyWriteEach<AddressCatalog<R>, K>, options: GoPropertyOptions): void"
     ],
     "docs": [
       "sets a named property of the specified game object or component, or a material constant",
