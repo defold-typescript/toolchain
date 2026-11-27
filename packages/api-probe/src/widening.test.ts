@@ -45,6 +45,15 @@ describe("widening findings on a fixture surface", () => {
     "declare global {",
     '  interface WidenA { readonly kind: "a" }',
     '  interface WidenB { readonly kind: "b" }',
+    // Non-distributive, so a key's declared constraint names no literal key.
+    '  type WidenCatalogOf<R> = [R] extends ["x"]',
+    "    ? { a: number; b: WidenA }",
+    "    : { a: number; b: WidenA; c: WidenB };",
+    "  type WidenWriteEach<P, K extends keyof P> = (",
+    "    K extends unknown ? (value: P[K]) => void : never",
+    "  ) extends (value: infer V extends number | WidenA | WidenB) => void",
+    "    ? V",
+    "    : never;",
     "  namespace sys {",
     '    function widen_payload<K extends "a" | "b" | (string & {})>(',
     "      id: K,",
@@ -97,6 +106,16 @@ describe("widening findings on a fixture surface", () => {
     "    function widen_arity(): number;",
     "    function widen_arity(a?: string): number;",
     "    function widen_arity(a: number, b: number): number;",
+    '    function widen_write<R extends "x" | "y", K extends keyof WidenCatalogOf<R> & string>(',
+    "      addr: R,",
+    "      key: K,",
+    "      value: WidenCatalogOf<R>[K],",
+    "    ): void;",
+    '    function widen_write_each<R extends "x" | "y", K extends keyof WidenCatalogOf<R> & string>(',
+    "      addr: R,",
+    "      key: K,",
+    "      value: WidenWriteEach<WidenCatalogOf<R>, K>,",
+    "    ): void;",
     "  }",
     "}",
   ].join("\n");
@@ -196,6 +215,21 @@ describe("widening findings on a fixture surface", () => {
     expect(findings("sys.widen_one")).toEqual([["sys.widen_one required id base sound", true]]);
     const [finding] = widening.findings.filter((entry) => entry.fn === "sys.widen_one");
     expect(finding?.detail).toContain('member "a" returns string');
+  });
+
+  test("a value typed as the union over a union key is unsound at the key", () => {
+    expect(findings("sys.widen_write")).toEqual([
+      ["sys.widen_write required key union sound", false],
+    ]);
+  });
+
+  test("a value every key of a union key accepts is no finding at the key", () => {
+    expect(findings("sys.widen_write_each")).toEqual([]);
+    expect(
+      widening.checked
+        .filter((entry) => entry.fn === "sys.widen_write_each" && entry.slot === "key")
+        .flatMap((entry) => entry.forms),
+    ).toContain("union");
   });
 
   test("every fixture function gets a base call", () => {
@@ -332,6 +366,27 @@ describe("widening findings on the shipped surface", () => {
     expect(nilHandling?.("sys.get_config_int", 2)).toBe("raises");
     expect(nilHandling?.("physics.raycast", 9)).toBeUndefined();
     expect(nilHandling?.("sys.no_such_function", 1)).toBeUndefined();
+  });
+
+  test("go.set and go.animate key slots are checked with the keys their address's catalog names", () => {
+    const target = probeTarget();
+    const program = surfaceProgram(target);
+    const surface = engineSurface(program, target);
+    const names = new Set(["go.set", "go.animate"]);
+    const widening = wideningFindings(program, {
+      ...surface,
+      functions: new Map([...surface.functions].filter(([fn]) => names.has(fn))),
+      calls: surface.calls.filter((call) => names.has(call.name)),
+    });
+    for (const fn of names) {
+      const forms = widening.checked
+        .filter(
+          (entry) =>
+            entry.fn === fn && entry.variant === "overload1-required" && entry.slot === "property",
+        )
+        .flatMap((entry) => entry.forms);
+      expect(forms).toEqual(expect.arrayContaining(['"position"', '"rotation"', "union"]));
+    }
   });
 
   test(

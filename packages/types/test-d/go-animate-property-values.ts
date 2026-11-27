@@ -38,6 +38,11 @@ go.animate(url, transformKey, PB, vmath.vector3(), E, 1, 0.5);
 declare const elementKey: "position.x" | "position.y";
 go.animate(url, elementKey, PB, 10, E, 1);
 go.animate(url, elementKey, PB, 10, E, 1, 0.5);
+// A union that also holds a hash takes only a target its catalog keys accept.
+declare const hashedKey: "rotation" | Hash;
+go.animate(url, hashedKey, PB, vmath.quat(), E, 1);
+// @ts-expect-error rotation refuses a vector3
+go.animate(url, hashedKey, PB, vmath.vector3(), E, 1);
 
 // A dynamic or hashed key keeps the wide target.
 declare const key: string;

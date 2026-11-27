@@ -66,8 +66,10 @@ go.set(url, elementKey, 1);
 const _transformRead: Vector3 | Quaternion = go.get(url, transformKey);
 void _transformRead;
 
-// A union that holds a key no catalog names keeps the wide value.
+// A union that also holds a hash takes only what its catalog keys accept.
 declare const mixedKey: "position" | Hash;
+go.set(url, mixedKey, v3);
+// @ts-expect-error position refuses a boolean
 go.set(url, mixedKey, true);
 
 // @ts-expect-error position is Vector3, not assignable to Quaternion
