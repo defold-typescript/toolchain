@@ -300,11 +300,23 @@ function split(type: ts.Type, checker: ts.TypeChecker, domain: Domain, depth = 0
   }
 }
 
-function domainOf(declared: readonly (ts.Type | undefined)[], checker: ts.TypeChecker): Domain {
+// A type with the checker that made it, which alone may read it.
+interface CheckedType {
+  readonly type: ts.Type;
+  readonly checker: ts.TypeChecker;
+}
+
+// The members of the declared types, then those of `instantiated`.
+function domainOf(
+  declared: readonly (ts.Type | undefined)[],
+  checker: ts.TypeChecker,
+  instantiated?: CheckedType,
+): Domain {
   const domain: Domain = { members: [], open: new Set() };
   for (const type of declared) {
     if (type !== undefined) split(type, checker, domain);
   }
+  if (instantiated !== undefined) split(instantiated.type, instantiated.checker, domain);
   return domain;
 }
 
@@ -337,18 +349,96 @@ function parsedCall(
   };
 }
 
+// The signature a base call's variant names.
+function ownSignature(
+  call: BaseCall,
+  signatures: readonly ts.Signature[],
+): ts.Signature | undefined {
+  const overload = /^overload(\d+)-/.exec(call.variant)?.[1];
+  return signatures[overload === undefined ? 0 : Number(overload) - 1];
+}
+
+// The signatures the gate judges a function by: not one that only applies a
+// type argument, such as `go.get<P>()`.
+function judgedSignatures(symbol: ts.Symbol, checker: ts.TypeChecker): ts.Signature[] {
+  return checker
+    .getTypeOfSymbol(symbol)
+    .getCallSignatures()
+    .filter((signature) => !isTypeApplication(signature));
+}
+
+const UNRESOLVED = "__unresolved";
+
+// The type each base call's own signature gives an argument it declares as a
+// type parameter, instantiated from the call's other arguments, by the slot's
+// template. The argument is replaced by an `unknown` value, which fails the
+// parameter's constraint, so the checker reports the call against that
+// constraint as the other arguments instantiate it: `go.set`'s key, against the
+// keys of the catalog its address resolves to, where the declared constraint
+// keeps none. A call the checker reports against another overload gives
+// nothing.
+function instantiatedDomains(
+  surface: WideningSurface,
+  checker: ts.TypeChecker,
+  program: ts.Program,
+): ReadonlyMap<string, CheckedType> {
+  const planned: {
+    readonly template: string;
+    readonly call: string;
+    readonly index: number;
+    readonly declaration: ts.SignatureDeclaration;
+  }[] = [];
+  for (const call of surface.calls) {
+    const symbol = surface.functions.get(call.name);
+    const own =
+      symbol === undefined ? undefined : ownSignature(call, judgedSignatures(symbol, checker));
+    const declaration = own?.getDeclaration();
+    const parsed = parsedCall(call);
+    if (own === undefined || declaration === undefined || parsed === undefined) continue;
+    parsed.target.arguments.forEach((argument, index) => {
+      const declared = argumentType(own, index, checker);
+      if (declared === undefined || !(declared.flags & ts.TypeFlags.TypeParameter)) return;
+      const start = argument.getStart(parsed.source);
+      planned.push({
+        template: replaced(call.call, start, argument.end, PLACEHOLDER),
+        call: replaced(call.call, start, argument.end, UNRESOLVED),
+        index,
+        declaration,
+      });
+    });
+  }
+  const domains = new Map<string, CheckedType>();
+  if (planned.length === 0) return domains;
+  const checked = checkCalls(
+    program,
+    planned.map((entry) => entry.call),
+    [`declare const ${UNRESOLVED}: unknown;`],
+    surface.prelude ?? [],
+  );
+  planned.forEach((entry, i) => {
+    const result = checked.calls[i];
+    const resolved = result?.candidate ?? result?.signature;
+    if (resolved === undefined || resolved.getDeclaration() !== entry.declaration) return;
+    const type = argumentType(resolved, entry.index, checked.checker);
+    if (type !== undefined) domains.set(entry.template, { type, checker: checked.checker });
+  });
+  return domains;
+}
+
 // Each argument of the call to `call.name` and each property of a table
-// argument, with the base call's text that puts a widened value there.
+// argument, with the base call's text that puts a widened value there. An
+// argument's domain holds what its signatures declare and what `instantiated`
+// holds for its template.
 function slotsOf(
   call: BaseCall,
   signatures: readonly ts.Signature[],
   checker: ts.TypeChecker,
+  instantiated: ReadonlyMap<string, CheckedType>,
 ): Slot[] {
   const parsed = parsedCall(call);
   if (parsed === undefined) return [];
   const { source, target } = parsed;
-  const overload = /^overload(\d+)-/.exec(call.variant)?.[1];
-  const own = signatures[overload === undefined ? 0 : Number(overload) - 1];
+  const own = ownSignature(call, signatures);
   if (own === undefined) return [];
   const text = call.call;
   const slots: Slot[] = [];
@@ -356,14 +446,16 @@ function slotsOf(
     const params = own.getParameters();
     const param = params[Math.min(index, params.length - 1)];
     const name = param?.name ?? `arg${index + 1}`;
+    const template = replaced(text, argument.getStart(source), argument.end, PLACEHOLDER);
     slots.push({
       fn: call.name,
       variant: call.variant,
       name,
-      template: replaced(text, argument.getStart(source), argument.end, PLACEHOLDER),
+      template,
       domain: domainOf(
         signatures.map((signature) => argumentType(signature, index, checker)),
         checker,
+        instantiated.get(template),
       ),
     });
     if (!ts.isObjectLiteralExpression(argument)) return;
@@ -814,8 +906,10 @@ export function engineSurface(
 // branching functions no base call reaches.
 function branchingSlots(
   surface: WideningSurface,
-  checker: ts.TypeChecker,
+  program: ts.Program,
 ): { slots: Slot[]; omitted: OmittedSlot[]; unchecked: UncheckedEntry[] } {
+  const checker = program.getTypeChecker();
+  const instantiated = instantiatedDomains(surface, checker, program);
   const callsByName = new Map<string, BaseCall[]>();
   for (const call of surface.calls) {
     const own = callsByName.get(call.name) ?? [];
@@ -826,10 +920,7 @@ function branchingSlots(
   const slots: Slot[] = [];
   const omitted: OmittedSlot[] = [];
   for (const [fqn, symbol] of surface.functions) {
-    const signatures = checker
-      .getTypeOfSymbol(symbol)
-      .getCallSignatures()
-      .filter((signature) => !isTypeApplication(signature));
+    const signatures = judgedSignatures(symbol, checker);
     const branching =
       signatures.length > 1 ||
       signatures.some((signature) => (signature.getTypeParameters()?.length ?? 0) > 0);
@@ -848,7 +939,7 @@ function branchingSlots(
     }
     const templates = new Set<string>();
     for (const call of calls) {
-      for (const declaredSlot of slotsOf(call, signatures, checker)) {
+      for (const declaredSlot of slotsOf(call, signatures, checker, instantiated)) {
         if (templates.has(declaredSlot.template)) continue;
         templates.add(declaredSlot.template);
         const literals = surface.literals?.get(`${fqn} ${declaredSlot.name}`);
@@ -896,7 +987,7 @@ export function memberCalls(
   program: ts.Program,
   surface: WideningSurface = engineSurface(program),
 ): MemberCall[] {
-  const { slots } = branchingSlots(surface, program.getTypeChecker());
+  const { slots } = branchingSlots(surface, program);
   const planned = slots.flatMap((slot) =>
     slot.domain.members.filter(isLiteralValue).map((member) => ({
       name: slot.fn,
@@ -927,9 +1018,8 @@ export function wideningFindings(
   program: ts.Program,
   surface: WideningSurface = engineSurface(program),
 ): Widening {
-  const checker = program.getTypeChecker();
   const prelude = surface.prelude ?? [];
-  const { slots, omitted, unchecked } = branchingSlots(surface, checker);
+  const { slots, omitted, unchecked } = branchingSlots(surface, program);
   const plan = new Map(slots.map((slot) => [slot, formsOf(slot.domain)] as const));
   const omittedKey = (slot: OmittedSlot) =>
     `${slot.fn} ${slot.variant} ${slot.index} ${OMITTED} unchecked`;

@@ -157,22 +157,32 @@ type AnimateTargetEach<P, K extends keyof P> = (
   ? V
   : never;
 
+// The keys a key union `K` names by string. A hash beside them is read as one of
+// them, so `"position" | Hash` takes what `"position"` takes; a hash alone names
+// none.
+type NamedKeys<K> = Exclude<K, Hash>;
+
 // What go.set takes for key `K` of catalog `C`: nothing for a `readonly` key, and
-// the wide value when `K` holds a key no catalog names. `K` does not distribute
-// inside these branches, so the intersection lives in an alias of its own.
-type PropertyWriteEach<C, K> = [K] extends [keyof C]
-  ? [K] extends [WritableKey<C>]
-    ? XyWriteEach<C, K & keyof C>
-    : never
-  : WideValue;
+// the wide value when `K` names no key or a key no catalog names. `K` does not
+// distribute inside these branches, so the intersection lives in an alias of its
+// own.
+type PropertyWriteEach<C, K> = [NamedKeys<K>] extends [never]
+  ? WideValue
+  : [NamedKeys<K>] extends [keyof C]
+    ? [NamedKeys<K>] extends [WritableKey<C>]
+      ? XyWriteEach<C, NamedKeys<K> & keyof C>
+      : never
+    : WideValue;
 
 // What go.animate takes for key `K` of catalog `C`: nothing for a key the
 // engine cannot animate.
-type PropertyAnimateToEach<C, K> = [K] extends [keyof C]
-  ? [K] extends [AnimatableKey<C>]
-    ? AnimateTargetEach<C, K & keyof C>
-    : never
-  : WideAnimateTarget;
+type PropertyAnimateToEach<C, K> = [NamedKeys<K>] extends [never]
+  ? WideAnimateTarget
+  : [NamedKeys<K>] extends [keyof C]
+    ? [NamedKeys<K>] extends [AnimatableKey<C>]
+      ? AnimateTargetEach<C, NamedKeys<K> & keyof C>
+      : never
+    : WideAnimateTarget;
 
 declare global {
   namespace go {
