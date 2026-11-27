@@ -43,8 +43,23 @@ declare const hashedKey: "rotation" | Hash;
 go.animate(url, hashedKey, PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation refuses a vector3
 go.animate(url, hashedKey, PB, vmath.vector3(), E, 1);
+// A hash of a key's name counts as that key, beside a string key or alone.
+declare const hashedPair: "position" | Hash<"rotation">;
+// @ts-expect-error rotation refuses a vector3
+go.animate(url, hashedPair, PB, vmath.vector3(), E, 1);
+// @ts-expect-error position refuses a quaternion
+go.animate(url, hashedPair, PB, vmath.quat(), E, 1);
+go.animate(url, hash("rotation"), PB, vmath.quat(), E, 1);
+// @ts-expect-error rotation refuses a vector3
+go.animate(url, hash("rotation"), PB, vmath.vector3(), E, 1);
+// A name the catalog does not list adds no constraint beside a listed key.
+declare const openPair: "position" | "tint";
+go.animate(url, openPair, PB, vmath.vector3(), E, 1);
+// @ts-expect-error position refuses a quaternion
+go.animate(url, openPair, PB, vmath.quat(), E, 1);
 
-// A dynamic or hashed key keeps the wide target.
+// A dynamic key, or a hash of a name the catalog does not list, keeps the wide
+// target.
 declare const key: string;
 go.animate(url, key, PB, vmath.quat(), E, 1);
 go.animate(url, hash("tint"), PB, vmath.vector4(1, 0, 0, 1), E, 1);

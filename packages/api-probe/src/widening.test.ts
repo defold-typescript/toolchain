@@ -116,6 +116,7 @@ describe("widening findings on a fixture surface", () => {
     "      key: K,",
     "      value: WidenWriteEach<WidenCatalogOf<R>, K>,",
     "    ): void;",
+    "    function widen_wrap(result: void): void;",
     "  }",
     "}",
   ].join("\n");
@@ -219,6 +220,19 @@ describe("widening findings on a fixture surface", () => {
 
   test("a value typed as the union over a union key is unsound at the key", () => {
     expect(findings("sys.widen_write")).toEqual([
+      ["sys.widen_write required key union sound", false],
+    ]);
+  });
+
+  test("a union key is judged through a call that wraps the base call", () => {
+    const own = surface.calls.filter((call) => call.name === "sys.widen_write");
+    expect(own.length).toBeGreaterThan(0);
+    const wrapped = wideningFindings(program, {
+      ...surface,
+      functions: new Map([...surface.functions].filter(([fn]) => fn === "sys.widen_write")),
+      calls: own.map((call) => ({ ...call, call: `sys.widen_wrap(${call.call})` })),
+    });
+    expect(findingsOf(wrapped, "sys.widen_write")).toEqual([
       ["sys.widen_write required key union sound", false],
     ]);
   });

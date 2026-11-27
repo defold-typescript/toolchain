@@ -200,11 +200,11 @@ declare const HashSource: unique symbol;
  * same thing, so a `Hash` is safe to compare, store, and use as a table key.
  *
  * The `S` parameter records the string `hash()` was called with, so a tool can
- * *read* an address back out of `const SPRITE = hash("#sprite")`. It is not a
- * checked constraint: it defaults to `string`, so every bare `Hash` keeps
- * meaning what it always did, and its phantom member is optional, so `Hash` and
- * `Hash<"#sprite">` stay assignable to each other in both directions. Nothing
- * that compiles without it stops compiling with it.
+ * *read* an address back out of `const SPRITE = hash("#sprite")`. `go.set` and
+ * `go.animate` read a property key's name from it, so `hash("rotation")` takes
+ * what `"rotation"` takes. `S` defaults to `string`, and a bare `Hash` names
+ * nothing, so it keeps the wide value. Its phantom member is optional, so `Hash`
+ * and `Hash<"#sprite">` stay assignable to each other in both directions.
  */
 export interface Hash<S extends string = string> extends NonTable {
   readonly [HashBrand]: "Hash";

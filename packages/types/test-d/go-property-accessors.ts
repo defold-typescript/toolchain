@@ -49,6 +49,7 @@ go.set(url, "scale.xy", v3);
 
 declare const dynamicKey: string;
 go.set(url, dynamicKey, true);
+go.set(url, someHash, true);
 go.set(url, hash("tint"), vmath.vector4());
 
 // A key typed as a union of keys takes only a value every one of them accepts:
@@ -71,6 +72,24 @@ declare const mixedKey: "position" | Hash;
 go.set(url, mixedKey, v3);
 // @ts-expect-error position refuses a boolean
 go.set(url, mixedKey, true);
+
+// A hash of a key's name counts as that key, beside a string key or alone.
+declare const hashedPair: "position" | Hash<"rotation">;
+// @ts-expect-error rotation refuses a vector3
+go.set(url, hashedPair, v3);
+// @ts-expect-error position refuses a quaternion
+go.set(url, hashedPair, quat);
+const ROTATION = hash("rotation");
+go.set(url, ROTATION, quat);
+// @ts-expect-error rotation refuses a vector3
+go.set(url, ROTATION, v3);
+
+// A name the catalog does not list, or a bare hash, adds no constraint beside a
+// listed key.
+declare const openKey: "position" | "tint" | Hash;
+go.set(url, openKey, v3);
+// @ts-expect-error position refuses a boolean
+go.set(url, openKey, true);
 
 // @ts-expect-error position is Vector3, not assignable to Quaternion
 const _wrong: Quaternion = go.get(url, "position");

@@ -369,14 +369,26 @@ function judgedSignatures(symbol: ts.Symbol, checker: ts.TypeChecker): ts.Signat
 
 const UNRESOLVED = "__unresolved";
 
+// The call in `node` that takes the `__unresolved` placeholder at `index`.
+function placeholderOwner(node: ts.Node, index: number): ts.CallExpression | undefined {
+  if (ts.isCallExpression(node)) {
+    const argument = node.arguments[index];
+    if (argument !== undefined && ts.isIdentifier(argument) && argument.text === UNRESOLVED) {
+      return node;
+    }
+  }
+  return ts.forEachChild(node, (child) => placeholderOwner(child, index));
+}
+
 // The type each base call's own signature gives an argument it declares as a
 // type parameter, instantiated from the call's other arguments, by the slot's
 // template. The argument is replaced by an `unknown` value, which fails the
 // parameter's constraint, so the checker reports the call against that
 // constraint as the other arguments instantiate it: `go.set`'s key, against the
 // keys of the catalog its address resolves to, where the declared constraint
-// keeps none. A call the checker reports against another overload gives
-// nothing.
+// keeps none. The call that takes the placeholder is resolved, not a call that
+// wraps it, such as a system factory call around an ECS filter. A call the
+// checker reports against another overload gives nothing.
 function instantiatedDomains(
   surface: WideningSurface,
   checker: ts.TypeChecker,
@@ -416,8 +428,9 @@ function instantiatedDomains(
     surface.prelude ?? [],
   );
   planned.forEach((entry, i) => {
-    const result = checked.calls[i];
-    const resolved = result?.candidate ?? result?.signature;
+    const expression = checked.calls[i]?.expression;
+    const owner = expression === undefined ? undefined : placeholderOwner(expression, entry.index);
+    const resolved = owner === undefined ? undefined : checked.checker.getResolvedSignature(owner);
     if (resolved === undefined || resolved.getDeclaration() !== entry.declaration) return;
     const type = argumentType(resolved, entry.index, checked.checker);
     if (type !== undefined) domains.set(entry.template, { type, checker: checked.checker });
