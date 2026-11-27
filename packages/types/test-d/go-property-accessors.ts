@@ -91,6 +91,10 @@ go.set("", ROTATION, 1);
 // @ts-expect-error the game object's rotation refuses a number
 go.set(".", ROTATION, 1);
 go.set(".", ROTATION, quat);
+// Beside a hash, only the string key constrains a write to the calling script.
+go.set("#", hashedPair, v3);
+// @ts-expect-error position refuses a quaternion
+go.set("#", hashedPair, quat);
 
 // A name the catalog does not list, or a bare hash, adds no constraint beside a
 // listed key.
