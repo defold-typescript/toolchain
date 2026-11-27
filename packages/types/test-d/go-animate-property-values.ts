@@ -52,6 +52,11 @@ go.animate(url, hashedPair, PB, vmath.quat(), E, 1);
 go.animate(url, hash("rotation"), PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation refuses a vector3
 go.animate(url, hash("rotation"), PB, vmath.vector3(), E, 1);
+// A hash written to the calling script names no transform key; "." is the game
+// object.
+go.animate("#", hash("rotation"), PB, 1, E, 1);
+// @ts-expect-error the game object's rotation refuses a number
+go.animate(".", hash("rotation"), PB, 1, E, 1);
 // A name the catalog does not list adds no constraint beside a listed key.
 declare const openPair: "position" | "tint";
 go.animate(url, openPair, PB, vmath.vector3(), E, 1);

@@ -46,6 +46,8 @@ go.get("/props#enemy", "sped");
 go.get("/props#enemy", "position");
 // @ts-expect-error speed is a number
 go.set("/props#enemy", "speed", "fast");
+// @ts-expect-error speed is a number, by hash too
+go.set("/props#enemy", hash("speed"), "fast");
 // @ts-expect-error alive is a boolean
 go.set("/props#enemy", "alive", 1);
 // @ts-expect-error tag is a Hash, which the engine cannot animate

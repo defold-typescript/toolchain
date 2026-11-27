@@ -77,15 +77,22 @@ type ScriptCatalog<P> = P & {
 // the Lua annotation diff reads its declared kinds from.
 type Bounded<T, B> = T extends infer V extends B ? V : never;
 
-// The property catalog an address reads, and whether a key outside it is an
-// engine error (`closed`) or may still name a material constant (open).
+// The property catalog an address reads, whether a key outside it is an
+// engine error (`closed`) or may still name a material constant (open), and
+// whether a hash of a key's name names that key (`byHash`).
 interface AddressCatalogShape {
   catalog: object;
   closed: boolean;
+  byHash: boolean;
 }
 
 // An address no catalog is known for: the transform keys, and any other key.
-type Unlinked = { catalog: go.Properties; closed: false };
+type Unlinked = { catalog: go.Properties; closed: false; byHash: true };
+
+// The calling script. comp_script.cpp `CompScriptSetProperty` sets whatever the
+// script declares, at the declared type, so a hash names none of the transform
+// keys; a string key keeps reading `go.Properties` as every unlinked address does.
+type CallingScript = { catalog: go.Properties; closed: false; byHash: false };
 
 // The catalog of what a `SceneComponentAddresses` value names: a registered
 // component kind, or the default export of a linked script. comp_script.cpp
@@ -93,29 +100,32 @@ type Unlinked = { catalog: go.Properties; closed: false };
 // script's catalog is closed; a built-in kind also reads its material's
 // constants by name, so its catalog stays open. `true` names neither.
 type ComponentCatalog<V> = [V] extends [keyof SceneComponentCatalogs]
-  ? { catalog: SceneComponentCatalogs[V]; closed: false }
+  ? { catalog: SceneComponentCatalogs[V]; closed: false; byHash: true }
   : [V] extends [true]
     ? Unlinked
     : [V] extends [{ properties?: infer P }]
-      ? { catalog: ScriptCatalog<NonNullable<P>>; closed: true }
+      ? { catalog: ScriptCatalog<NonNullable<P>>; closed: true; byHash: true }
       : Unlinked;
 
 // The catalog a literal address reads. One the scene types name reads its
 // component's catalog. Any other literal with no `#` resolves to fragment 0 —
 // script_msg.cpp `ResolveURL` — so it is a game object, whose only properties
 // are its transform (gameobject.cpp `GetProperty` for component id 0). `""` and
-// `"#"` resolve to the calling script, and a wide string or a non-string
-// address could be anything, so those stay unlinked. The `& keyof` index is
-// `R` itself in that branch; spelled out, it keeps the nested conditionals
-// within the depth TypeScript resolves a signature's constraint to.
+// `"#"` resolve to the calling script (`ResolveURL` copies the default URL) and
+// read `CallingScript`. A wide string, another literal with a `#`, or a
+// non-string address could be anything, so those stay unlinked. The `& keyof`
+// index is `R` itself in that branch; spelled out, it keeps the nested
+// conditionals within the depth TypeScript resolves a signature's constraint to.
 type AddressCatalog<R> = [R] extends [keyof SceneComponentAddresses]
   ? ComponentCatalog<SceneComponentAddresses[R & keyof SceneComponentAddresses]>
   : [R] extends [string]
     ? string extends R
       ? Unlinked
       : [Extract<R, "" | `${string}#${string}`>] extends [never]
-        ? { catalog: go.Properties; closed: true }
-        : Unlinked
+        ? { catalog: go.Properties; closed: true; byHash: true }
+        : [R] extends ["" | "#"]
+          ? CallingScript
+          : Unlinked
     : Unlinked;
 
 // The keys an address takes: its catalog's keys or a hash, plus any other
@@ -157,33 +167,39 @@ type AnimateTargetEach<P, K extends keyof P> = (
   ? V
   : never;
 
-// The names each member of a key union `K` gives: a string key its own, and a
-// hash the string `hash()` was called with. A bare `Hash` names nothing.
-type KeyNames<K> = K extends Hash<infer S> ? (string extends S ? never : S) : K;
+// The names each member of a key union `K` gives: a string key its own, and,
+// when `ByHash` is true, a hash the string `hash()` was called with. A bare
+// `Hash` names nothing, and no hash names anything when `ByHash` is false.
+type KeyNames<K, ByHash> =
+  K extends Hash<infer S> ? ([ByHash] extends [true] ? (string extends S ? never : S) : never) : K;
 
-// The keys of catalog `C` a key union `K` names, by string or by hash, so
-// `"position" | Hash<"rotation">` names both. A dynamic string, a bare `Hash` and
-// a name the catalog does not list name none. `Extract` filters member by
-// member, where `& keyof C` would let a wide `string` name every key.
-type NamedKeys<C, K> = Extract<KeyNames<K>, keyof C>;
+// The keys of address shape `A`'s catalog a key union `K` names, by string or,
+// where `A` reads hashes, by hash, so `"position" | Hash<"rotation">` names both
+// on a game object. A dynamic string, a bare `Hash`, a name the catalog does not
+// list and a hash written to the calling script name none. `Extract` filters
+// member by member, where `& keyof` would let a wide `string` name every key.
+type NamedKeys<A extends AddressCatalogShape, K> = Extract<
+  KeyNames<K, A["byHash"]>,
+  keyof A["catalog"]
+>;
 
-// What go.set takes for key `K` of catalog `C`: a value every key `K` names
-// takes, nothing when one of them is `readonly`, and the wide value when `K`
-// names none. `K` does not distribute inside these branches, so the intersection
-// lives in an alias of its own.
-type PropertyWriteEach<C, K> = [NamedKeys<C, K>] extends [never]
+// What go.set takes for key `K` of address shape `A`: a value every key `K`
+// names takes, nothing when one of them is `readonly`, and the wide value when
+// `K` names none. `K` does not distribute inside these branches, so the
+// intersection lives in an alias of its own.
+type PropertyWriteEach<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
   ? WideValue
-  : [NamedKeys<C, K>] extends [WritableKey<C>]
-    ? XyWriteEach<C, NamedKeys<C, K>>
+  : [NamedKeys<A, K>] extends [WritableKey<A["catalog"]>]
+    ? XyWriteEach<A["catalog"], NamedKeys<A, K>>
     : never;
 
-// What go.animate takes for key `K` of catalog `C`: a target every key `K` names
-// takes, nothing when the engine cannot animate one of them, and the wide target
-// when `K` names none.
-type PropertyAnimateToEach<C, K> = [NamedKeys<C, K>] extends [never]
+// What go.animate takes for key `K` of address shape `A`: a target every key `K`
+// names takes, nothing when the engine cannot animate one of them, and the wide
+// target when `K` names none.
+type PropertyAnimateToEach<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
   ? WideAnimateTarget
-  : [NamedKeys<C, K>] extends [AnimatableKey<C>]
-    ? AnimateTargetEach<C, NamedKeys<C, K>>
+  : [NamedKeys<A, K>] extends [AnimatableKey<A["catalog"]>]
+    ? AnimateTargetEach<A["catalog"], NamedKeys<A, K>>
     : never;
 
 declare global {
@@ -340,7 +356,7 @@ declare global {
       url: R,
       property: K,
       playback: go.Playback,
-      to: PropertyAnimateToEach<AddressCatalog<R>["catalog"], K>,
+      to: PropertyAnimateToEach<AddressCatalog<R>, K>,
       easing: Vector | go.Easing,
       duration: number,
     ): void;
@@ -409,7 +425,7 @@ declare global {
       url: R,
       property: K,
       playback: go.Playback,
-      to: PropertyAnimateToEach<AddressCatalog<R>["catalog"], K>,
+      to: PropertyAnimateToEach<AddressCatalog<R>, K>,
       easing: Vector | go.Easing,
       duration: number,
       delay: number,
@@ -511,12 +527,12 @@ declare global {
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
       property: K,
-      value: PropertyWriteEach<AddressCatalog<R>["catalog"], K>,
+      value: PropertyWriteEach<AddressCatalog<R>, K>,
     ): void;
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
       property: K,
-      value: PropertyWriteEach<AddressCatalog<R>["catalog"], K>,
+      value: PropertyWriteEach<AddressCatalog<R>, K>,
       options: GoPropertyOptions,
     ): void;
     /**
