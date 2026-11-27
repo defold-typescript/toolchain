@@ -84,6 +84,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---@field setSystemIndex fun(self: world)
 ---@field entitiesToChange entity[]
 ---@field entitiesToRemove entity[]
+---@field entitiesToChangeSpare entity[]|nil Emptied queue reused by the next manageEntities pass
+---@field entitiesToRemoveSpare entity[]|nil Emptied queue reused by the next manageEntities pass
 ---@field systemsToChange system[]
 ---@field systemsToAdd system[]
 ---@field systemsToRemove system[]
@@ -845,8 +847,12 @@ function tiny_manageEntities(world)
 		return
 	end
 
-	world.entitiesToChange = {}
-	world.entitiesToRemove = {}
+	-- Callbacks below queue into another pair of lists for the next pass. Reuse the
+	-- pair emptied by the previous pass; a nested refresh finds none and allocates
+	world.entitiesToChange = world.entitiesToChangeSpare or {}
+	world.entitiesToRemove = world.entitiesToRemoveSpare or {}
+	world.entitiesToChangeSpare = nil
+	world.entitiesToRemoveSpare = nil
 
 	local entities = world.entities
 	local systems = world.systems
@@ -933,6 +939,10 @@ function tiny_manageEntities(world)
 			end
 		end
 	end
+
+	-- Every slot was cleared above, nothing else holds these lists
+	world.entitiesToChangeSpare = e2c
+	world.entitiesToRemoveSpare = e2r
 end
 
 --- Manages Entities and Systems marked for deletion or addition. Call this

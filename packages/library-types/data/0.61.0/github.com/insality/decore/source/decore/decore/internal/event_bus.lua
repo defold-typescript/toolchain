@@ -62,6 +62,16 @@ function M.get_or_create_stash(self, event_name)
 end
 
 
+---@param map table
+---@return table map The same table, now empty
+function M.clear_map(map)
+	for key in pairs(map) do
+		map[key] = nil
+	end
+	return map
+end
+
+
 ---@param data any
 ---@return any|nil
 function M.decode_data(data)
@@ -157,14 +167,21 @@ function M:clear_events()
 end
 
 
+---Promote the stash to events. Runs every frame, so the previous frame's outer
+---maps are cleared and reused as the next stash instead of allocating new ones.
+---The per event lists inside are never reused: get_events and process hand them out.
 function M:stash_to_events()
+	local events = self.events
+	local event_entities = self.event_entities
+	local events_by_entity = self.events_by_entity
+
 	self.events = self.stash
 	self.event_entities = self.stash_entities
 	self.events_by_entity = self.stash_by_entity
 
-	self.stash = {}
-	self.stash_entities = {}
-	self.stash_by_entity = {}
+	self.stash = M.clear_map(events)
+	self.stash_entities = M.clear_map(event_entities)
+	self.stash_by_entity = M.clear_map(events_by_entity)
 end
 
 
