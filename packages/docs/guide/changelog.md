@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Stricter engine arguments](./typescript-gotchas.md)** for vmath pairs, union-key writes and component addresses.
+> - **[Stricter engine arguments](./typescript-gotchas.md)** for vmath pairs, property keys named by a union or a hash, and component addresses.
 > - **Engine caveats on hover** for [compute](/api/compute), [camera](/api/camera) and Box2D v2 velocity.
 > - **[Missing `#fragment` warning](./build.md)** for a component address such as `factory.create("/spawner")`.
 
@@ -21,7 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **Some engine arguments are stricter, so a call the engine rejects or misreads no longer compiles:**
   - **vmath pairs**: `vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
-  - **Union-key writes**: `go.set` and `go.animate` with a property key typed as a union of keys take only a value every key accepts, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion, and a `"position" | Hash` key takes only what `"position"` accepts.
+  - **Property-key writes**: `go.set` and `go.animate` take only a value every catalog key their key names accepts, by string or by hash, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion and `hash("rotation")` takes only a quaternion. A dynamic string, a bare `Hash` or a name the catalog does not list adds no constraint.
   - **Component addresses**: functions that act on a component, such as `factory.create`, `label.get_text` and `physics.get_shape`, no longer accept a `Hash`, which always fails there because it carries no `#fragment`; pass the address as a string or `Url` ([URL addressing](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)).
 
 ### Improved

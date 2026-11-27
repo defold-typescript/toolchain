@@ -5,12 +5,13 @@ import { PROBE_URLS } from "./contexts";
 // What the checker makes of one probe call: the errors it reports on the call,
 // and the signature it resolves the call to when there are none, with the type
 // argument each `__capture(value)` inside the call resolves to, in source order.
-// A call with errors keeps the signature the checker reports them against as
-// its `candidate`, so `signature` is set only for a call that compiles.
+// `expression` is the statement's call in the checked program, kept for a call
+// with errors too, so a reader can resolve a call nested inside it; `signature`
+// is set only for a call that compiles.
 export interface CheckedCall {
   readonly errors: readonly string[];
   readonly signature?: ts.Signature;
-  readonly candidate?: ts.Signature;
+  readonly expression?: ts.CallExpression;
   readonly captures?: readonly ts.Type[];
 }
 
@@ -130,16 +131,13 @@ export function checkCalls(
           : undefined;
       const failed = errors[i] ?? [];
       if (expression === undefined || !ts.isCallExpression(expression)) return { errors: failed };
-      if (failed.length > 0) {
-        const candidate = checker.getResolvedSignature(expression);
-        return candidate === undefined ? { errors: failed } : { errors: failed, candidate };
-      }
+      if (failed.length > 0) return { errors: failed, expression };
       const signature = checker.getResolvedSignature(expression);
-      if (signature === undefined) return { errors: failed };
+      if (signature === undefined) return { errors: failed, expression };
       const captures = capturesIn(expression, checker);
       return captures.length > 0
-        ? { errors: failed, signature, captures }
-        : { errors: failed, signature };
+        ? { errors: failed, signature, expression, captures }
+        : { errors: failed, signature, expression };
     }),
     declarations: declared,
   };
