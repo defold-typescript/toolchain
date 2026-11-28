@@ -2,7 +2,7 @@
 import type { Hash, Opaque, Url, Vector3, Vector4 } from "../src/core-types";
 
 declare const node: Opaque<"node">;
-declare const url: string | Hash | Url;
+declare const url: string | Url;
 declare const key: Hash;
 declare const value: Vector3 | Vector4;
 
@@ -17,7 +17,9 @@ gui.set(node, hash("tint"), value, { key });
 // @ts-expect-error bogus is not a recovered field of the gui.set options table
 gui.set(node, hash("tint"), value, { bogus: true });
 
-const _position: Vector3 = go.get(url, "position", { key });
+// An address that may name any component takes every recovered option, and
+// reads the wide value.
+const _position = go.get(url, "position", { key });
 void _position;
 
 // @ts-expect-error bogus is not a recovered field of the go.get options table

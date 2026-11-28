@@ -77,22 +77,22 @@ type ScriptCatalog<P> = P & {
 // the Lua annotation diff reads its declared kinds from.
 type Bounded<T, B> = T extends infer V extends B ? V : never;
 
-// The property catalog an address reads, whether a key outside it is an
-// engine error (`closed`) or may still name a material constant (open), and
-// whether a hash of a key's name names that key (`byHash`).
+// The property catalog an address reads, and whether a key outside it is an
+// engine error (`closed`) or may still name a material constant (open).
 interface AddressCatalogShape {
   catalog: object;
   closed: boolean;
-  byHash: boolean;
 }
 
-// An address no catalog is known for: the transform keys, and any other key.
-type Unlinked = { catalog: go.Properties; closed: false; byHash: true };
+// A game object, whose only properties are its transform (gameobject.cpp
+// `GetProperty` for component id 0).
+type GameObject = { catalog: go.Properties; closed: true };
 
-// The calling script. comp_script.cpp `CompScriptSetProperty` sets whatever the
-// script declares, at the declared type, so a hash names none of the transform
-// keys; a string key keeps reading `go.Properties` as every unlinked address does.
-type CallingScript = { catalog: go.Properties; closed: false; byHash: false };
+// An address that may name any component, or the calling script, whose
+// properties no scene entry records: comp_script.cpp `CompScriptSetProperty`
+// sets whatever a script declares, at the declared type. It names no key, so
+// every key reads and writes the wide value.
+type Opaque = { catalog: Record<never, never>; closed: false };
 
 // The catalog of what a `SceneComponentAddresses` value names: a registered
 // component kind, or the default export of a linked script. comp_script.cpp
@@ -100,50 +100,72 @@ type CallingScript = { catalog: go.Properties; closed: false; byHash: false };
 // script's catalog is closed; a built-in kind also reads its material's
 // constants by name, so its catalog stays open. `true` names neither.
 type ComponentCatalog<V> = [V] extends [keyof SceneComponentCatalogs]
-  ? { catalog: SceneComponentCatalogs[V]; closed: false; byHash: true }
+  ? { catalog: SceneComponentCatalogs[V]; closed: false }
   : [V] extends [true]
-    ? Unlinked
+    ? Opaque
     : [V] extends [{ properties?: infer P }]
-      ? { catalog: ScriptCatalog<NonNullable<P>>; closed: true; byHash: true }
-      : Unlinked;
+      ? { catalog: ScriptCatalog<NonNullable<P>>; closed: true }
+      : Opaque;
 
-// The catalog a literal address reads. One the scene types name reads its
-// component's catalog. Any other literal with no `#` resolves to fragment 0 —
-// script_msg.cpp `ResolveURL` — so it is a game object, whose only properties
-// are its transform (gameobject.cpp `GetProperty` for component id 0). `""` and
-// `"#"` resolve to the calling script (`ResolveURL` copies the default URL) and
-// read `CallingScript`. A wide string, another literal with a `#`, or a
-// non-string address could be anything, so those stay unlinked. The `& keyof`
-// index is `R` itself in that branch; spelled out, it keeps the nested
-// conditionals within the depth TypeScript resolves a signature's constraint to.
-type AddressCatalog<R> = [R] extends [keyof SceneComponentAddresses]
-  ? ComponentCatalog<SceneComponentAddresses[R & keyof SceneComponentAddresses]>
-  : [R] extends [string]
-    ? string extends R
-      ? Unlinked
-      : [Extract<R, "" | `${string}#${string}`>] extends [never]
-        ? { catalog: go.Properties; closed: true; byHash: true }
-        : [R] extends ["" | "#"]
-          ? CallingScript
-          : Unlinked
-    : Unlinked;
+// The catalog each member of an address union `R` reads. One the scene types
+// name reads its component's catalog. Any other literal with no `#` resolves to
+// fragment 0 — script_msg.cpp `ResolveURL` — and so does a hash, whose
+// `ResolveURL` branch sets `m_Fragment = 0`: both are game objects. `""` and
+// `"#"` resolve to the calling script (`ResolveURL` copies the default URL),
+// another literal with a `#` names a component, and a wide string or a `Url`
+// may name either, so those read `Opaque`. The `& keyof` index is `R` itself in
+// that branch; spelled out, it keeps the nested conditionals within the depth
+// TypeScript resolves a signature's constraint to. An `any` address may be
+// anything, so it reads `Opaque` too.
+type AddressCatalog<R> = 0 extends 1 & R
+  ? Opaque
+  : R extends keyof SceneComponentAddresses
+    ? ComponentCatalog<SceneComponentAddresses[R & keyof SceneComponentAddresses]>
+    : R extends Hash
+      ? GameObject
+      : R extends string
+        ? string extends R
+          ? Opaque
+          : R extends "" | `${string}#${string}`
+            ? Opaque
+            : GameObject
+        : Opaque;
 
-// The keys an address takes: its catalog's keys or a hash, plus any other
-// string when the catalog is open.
-type PropertyName<A extends AddressCatalogShape> = [A["closed"]] extends [true]
-  ? (keyof A["catalog"] & string) | Hash
-  : (keyof A["catalog"] & string) | (string & {}) | Hash;
+// The string keys each member of address shape union `A` lists: every key its
+// catalog names, or only those go.animate can tween when `Animatable` is true.
+type CatalogKeys<A extends AddressCatalogShape, Animatable> = A extends unknown
+  ? ([Animatable] extends [true] ? AnimatableKey<A["catalog"]> : keyof A["catalog"]) & string
+  : never;
+
+// The string keys every member of `A` lists. Inferring one parameter from the
+// union of each member's function intersects their key sets, as `XyWriteEach`
+// does for values.
+type SharedKeys<A extends AddressCatalogShape, Animatable> = (
+  A extends unknown
+    ? (key: CatalogKeys<A, Animatable>) => void
+    : never
+) extends (key: infer K extends string) => void
+  ? K
+  : never;
+
+// The keys an address shape union `A` takes. An open member takes any string,
+// so a closed member alone constrains the key: with one, only a key every closed
+// member lists; with none, any member's key or any other string. A hash is
+// always taken.
+type ShapeKeys<A extends AddressCatalogShape, Animatable> = [Extract<A, { closed: true }>] extends [
+  never,
+]
+  ? CatalogKeys<A, Animatable> | (string & {}) | Hash
+  : SharedKeys<Extract<A, { closed: true }>, Animatable> | Hash;
+
+// The keys an address takes.
+type PropertyName<A extends AddressCatalogShape> = ShapeKeys<A, false>;
 
 // The keys go.cancel_animations takes: gameobject_script.cpp
 // `Script_CancelAnimations` raises for a key the address does not have and for
 // one whose value is not numerical, so a catalog offers only its animatable
 // keys, plus any other string when it is open.
-type AnimatablePropertyName<A extends AddressCatalogShape> = [A["closed"]] extends [true]
-  ? (AnimatableKey<A["catalog"]> & string) | Hash
-  : (AnimatableKey<A["catalog"]> & string) | (string & {}) | Hash;
-
-// What go.get returns for key `K` of catalog `C`.
-type PropertyRead<C, K> = [K] extends [keyof C] ? Bounded<C[K], WideValue> : WideValue;
+type AnimatablePropertyName<A extends AddressCatalogShape> = ShapeKeys<A, true>;
 
 // A value go.set takes for every key in a union `K` of catalog `P`. Inferring
 // one parameter from the union of each key's setter intersects their value
@@ -167,40 +189,105 @@ type AnimateTargetEach<P, K extends keyof P> = (
   ? V
   : never;
 
-// The names each member of a key union `K` gives: a string key its own, and,
-// when `ByHash` is true, a hash the string `hash()` was called with. A bare
-// `Hash` names nothing, and no hash names anything when `ByHash` is false.
-type KeyNames<K, ByHash> =
-  K extends Hash<infer S> ? ([ByHash] extends [true] ? (string extends S ? never : S) : never) : K;
+// The names each member of a key union `K` gives: a string key its own, and a
+// hash the string `hash()` was called with. A bare `Hash` names nothing.
+type KeyNames<K> = K extends Hash<infer S> ? (string extends S ? never : S) : K;
 
-// The keys of address shape `A`'s catalog a key union `K` names, by string or,
-// where `A` reads hashes, by hash, so `"position" | Hash<"rotation">` names both
-// on a game object. A dynamic string, a bare `Hash`, a name the catalog does not
-// list and a hash written to the calling script name none. `Extract` filters
-// member by member, where `& keyof` would let a wide `string` name every key.
-type NamedKeys<A extends AddressCatalogShape, K> = Extract<
-  KeyNames<K, A["byHash"]>,
-  keyof A["catalog"]
->;
+// The keys of address shape `A`'s catalog a key union `K` names, by string or
+// by hash, so `"position" | Hash<"rotation">` names both on a game object. A
+// dynamic string, a bare `Hash` and a name the catalog does not list name none.
+// `Extract` filters member by member, where `& keyof` would let a wide `string`
+// name every key.
+type NamedKeys<A extends AddressCatalogShape, K> = Extract<KeyNames<K>, keyof A["catalog"]>;
 
-// What go.set takes for key `K` of address shape `A`: a value every key `K`
-// names takes, nothing when one of them is `readonly`, and the wide value when
-// `K` names none. `K` does not distribute inside these branches, so the
-// intersection lives in an alias of its own.
-type PropertyWriteEach<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
-  ? WideValue
+// The literal hashes in key union `K` that name no key every closed member of
+// `A` lists, among its animatable keys when `Animatable` is true. An open member
+// may hold any key, so with no closed member there are none.
+type UnlistedHashes<A extends AddressCatalogShape, K, Animatable> = [
+  Extract<A, { closed: true }>,
+] extends [never]
+  ? never
+  : K extends Hash<infer S>
+    ? string extends S
+      ? never
+      : S extends SharedKeys<Extract<A, { closed: true }>, Animatable>
+        ? never
+        : K
+    : never;
+
+// `unknown` when key union `K` holds no hash a closed member of `A` refuses, and
+// `never` when it does. Intersected into a `property` parameter, it refuses such
+// a hash, which the key constraint cannot: `Hash<S>` is assignable to `Hash`.
+type ListedHashes<A extends AddressCatalogShape, K, Animatable> = [
+  UnlistedHashes<A, K, Animatable>,
+] extends [never]
+  ? unknown
+  : never;
+
+// What one address shape `A` returns for key `K`: the entries the members of `K`
+// name, and the wide value when one of them names none.
+type ShapeRead<A extends AddressCatalogShape, K> = K extends unknown
+  ? [NamedKeys<A, K>] extends [never]
+    ? WideValue
+    : Bounded<A["catalog"][NamedKeys<A, K>], WideValue>
+  : never;
+
+// What go.get returns for key `K` of address shape union `A`: what any member
+// returns.
+type PropertyRead<A extends AddressCatalogShape, K> = A extends unknown ? ShapeRead<A, K> : never;
+
+// The options go.get takes on address shape union `A`. gameobject_script_util.cpp
+// `CheckGetPropertyResult` raises for `index` on a property that is not an
+// array and for `key` on one that is not a hashtable, which no transform or
+// script property is, so a closed member takes only `keys`; an open catalog may
+// still name a material constant array.
+type GetOptions<A extends AddressCatalogShape> = [Extract<A, { closed: true }>] extends [never]
+  ? go.GoPropertyOptions
+  : { index?: undefined; key?: undefined; keys?: (Hash | string)[] };
+
+// What one address shape `A` constrains a go.set value to for key `K`: a value
+// every key `K` names takes, nothing when one of them is `readonly`, and no
+// constraint when `K` names none. `K` does not distribute inside these
+// branches, so the intersection lives in an alias of its own.
+type ShapeWrite<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
+  ? unknown
   : [NamedKeys<A, K>] extends [WritableKey<A["catalog"]>]
     ? XyWriteEach<A["catalog"], NamedKeys<A, K>>
     : never;
 
-// What go.animate takes for key `K` of address shape `A`: a target every key `K`
-// names takes, nothing when the engine cannot animate one of them, and the wide
-// target when `K` names none.
-type PropertyAnimateToEach<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
-  ? WideAnimateTarget
+// What go.set takes for key `K` of address shape union `A`: a value every
+// member takes, and the wide value when no member names `K`. A member that names
+// no key adds no constraint, so it never widens another member's.
+type PropertyWriteEach<A extends AddressCatalogShape, K> = (
+  A extends unknown
+    ? (value: ShapeWrite<A, K>) => void
+    : never
+) extends (value: infer V) => void
+  ? unknown extends V
+    ? WideValue
+    : Bounded<V, WideValue>
+  : never;
+
+// What one address shape `A` constrains a go.animate target to for key `K`: a
+// target every key `K` names takes, nothing when the engine cannot animate one
+// of them, and no constraint when `K` names none.
+type ShapeAnimateTo<A extends AddressCatalogShape, K> = [NamedKeys<A, K>] extends [never]
+  ? unknown
   : [NamedKeys<A, K>] extends [AnimatableKey<A["catalog"]>]
     ? AnimateTargetEach<A["catalog"], NamedKeys<A, K>>
     : never;
+
+// What go.animate takes for key `K` of address shape union `A`: a target every
+// member takes, and the wide target when no member names `K`.
+type PropertyAnimateToEach<A extends AddressCatalogShape, K> = (
+  A extends unknown
+    ? (to: ShapeAnimateTo<A, K>) => void
+    : never
+) extends (to: infer V) => void
+  ? unknown extends V
+    ? WideAnimateTarget
+    : Bounded<V, WideAnimateTarget>
+  : never;
 
 declare global {
   namespace go {
@@ -354,7 +441,7 @@ declare global {
       K extends PropertyName<AddressCatalog<R>>,
     >(
       url: R,
-      property: K,
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
       playback: go.Playback,
       to: PropertyAnimateToEach<AddressCatalog<R>, K>,
       easing: Vector | go.Easing,
@@ -423,7 +510,7 @@ declare global {
       K extends PropertyName<AddressCatalog<R>>,
     >(
       url: R,
-      property: K,
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
       playback: go.Playback,
       to: PropertyAnimateToEach<AddressCatalog<R>, K>,
       easing: Vector | go.Easing,
@@ -456,7 +543,7 @@ declare global {
     function cancel_animations<
       R extends SceneAddress | Hash | Url,
       K extends AnimatablePropertyName<AddressCatalog<R>>,
-    >(url?: R, property?: K): void;
+    >(url?: R, property?: K & ListedHashes<AddressCatalog<R>, K, true>): void;
     /**
      * gets a named property of the specified game object or component
      *
@@ -487,13 +574,13 @@ declare global {
     // reads its catalogued type, and a key no catalog names reads the wide value.
     function get<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
-      property: K,
-    ): PropertyRead<AddressCatalog<R>["catalog"], K>;
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
+    ): PropertyRead<AddressCatalog<R>, K>;
     function get<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
-      property: K,
-      options: GoPropertyOptions,
-    ): PropertyRead<AddressCatalog<R>["catalog"], K>;
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
+      options: GetOptions<AddressCatalog<R>>,
+    ): PropertyRead<AddressCatalog<R>, K>;
     /**
      * sets a named property of the specified game object or component, or a material constant
      *
@@ -526,12 +613,12 @@ declare global {
     // union.
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
-      property: K,
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
       value: PropertyWriteEach<AddressCatalog<R>, K>,
     ): void;
     function set<R extends SceneAddress | Hash | Url, K extends PropertyName<AddressCatalog<R>>>(
       url: R,
-      property: K,
+      property: K & ListedHashes<AddressCatalog<R>, K, false>,
       value: PropertyWriteEach<AddressCatalog<R>, K>,
       options: GoPropertyOptions,
     ): void;

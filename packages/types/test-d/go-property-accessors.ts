@@ -5,17 +5,18 @@ declare const url: string;
 declare const someHash: Hash;
 declare const v3: Vector3;
 
-// Narrow: a known property key resolves to its real type from go.Properties.
-const _pos: Vector3 = go.get(url, "position");
-const _rot: Quaternion = go.get(url, "rotation");
+// Narrow: a known property key of a game object resolves to its real type from
+// go.Properties.
+const _pos: Vector3 = go.get(".", "position");
+const _rot: Quaternion = go.get(".", "rotation");
 // The engine reads scale back as a vector3 and takes a number for a uniform one.
-const _scale: number | Vector3 = go.get(url, "scale");
+const _scale: number | Vector3 = go.get(".", "scale");
 void _pos;
 void _rot;
 void _scale;
 
-go.set(url, "euler", v3);
-go.set(url, "scale", 2);
+go.set(".", "euler", v3);
+go.set(".", "scale", 2);
 
 // A label's scale is read back as a vector3 and refuses a number on write.
 const _labelScale: Vector3 = go.get<label.Properties>()(url, "scale");
@@ -32,20 +33,20 @@ go.set<label.Properties>()(url, "text", "Hello");
 // A known transform key takes only its catalogued value: the wide value union
 // is reserved for dynamic and hashed keys, so a known key cannot fall through.
 // @ts-expect-error wrong value type for a known property
-go.set(url, "position", { x: 1, y: 2 });
+go.set(".", "position", { x: 1, y: 2 });
 // @ts-expect-error position is a vector3, not a quaternion
-go.set(url, "position", vmath.quat());
+go.set(".", "position", vmath.quat());
 // @ts-expect-error position is a vector3, not a boolean
-go.set(url, "position", true);
+go.set(".", "position", true);
 // @ts-expect-error position is a vector3, not text
-go.set(url, "position", "oops");
+go.set(".", "position", "oops");
 // @ts-expect-error position.x is one float
-go.set(url, "position.x", vmath.vector3());
+go.set(".", "position.x", vmath.vector3());
 
 // The engine reads scale.xy back as a vector3 but sets it from a number too,
 // applying the number to x and y.
-go.set(url, "scale.xy", 2);
-go.set(url, "scale.xy", v3);
+go.set(".", "scale.xy", 2);
+go.set(".", "scale.xy", v3);
 
 declare const dynamicKey: string;
 go.set(url, dynamicKey, true);
@@ -57,58 +58,53 @@ go.set(url, hash("tint"), vmath.vector4());
 declare const transformKey: "position" | "rotation";
 declare const quat: Quaternion;
 // @ts-expect-error rotation refuses a vector3
-go.set(url, transformKey, v3);
+go.set(".", transformKey, v3);
 // @ts-expect-error position refuses a quaternion
-go.set(url, transformKey, quat);
+go.set(".", transformKey, quat);
 // @ts-expect-error position refuses a quaternion, with options too
-go.set(url, transformKey, quat, { index: 1 });
+go.set(".", transformKey, quat, { index: 1 });
 declare const elementKey: "position.x" | "position.y";
-go.set(url, elementKey, 1);
-const _transformRead: Vector3 | Quaternion = go.get(url, transformKey);
+go.set(".", elementKey, 1);
+const _transformRead: Vector3 | Quaternion = go.get(".", transformKey);
 void _transformRead;
 
 // A union that also holds a hash takes only what its catalog keys accept.
 declare const mixedKey: "position" | Hash;
-go.set(url, mixedKey, v3);
+go.set(".", mixedKey, v3);
 // @ts-expect-error position refuses a boolean
-go.set(url, mixedKey, true);
+go.set(".", mixedKey, true);
 
 // A hash of a key's name counts as that key, beside a string key or alone.
 declare const hashedPair: "position" | Hash<"rotation">;
 // @ts-expect-error rotation refuses a vector3
-go.set(url, hashedPair, v3);
+go.set(".", hashedPair, v3);
 // @ts-expect-error position refuses a quaternion
-go.set(url, hashedPair, quat);
+go.set(".", hashedPair, quat);
 const ROTATION = hash("rotation");
-go.set(url, ROTATION, quat);
+go.set(".", ROTATION, quat);
 // @ts-expect-error rotation refuses a vector3
-go.set(url, ROTATION, v3);
+go.set(".", ROTATION, v3);
 
-// The calling script holds only what it declares, so a hash written there names
-// no transform key; "." is the game object, whose rotation is a quaternion.
+// The calling script holds only what it declares, which the types do not know,
+// so a hash written there names no transform key; "." is the game object, whose
+// rotation is a quaternion.
 go.set("#", ROTATION, 1);
 go.set("", ROTATION, 1);
 // @ts-expect-error the game object's rotation refuses a number
 go.set(".", ROTATION, 1);
 go.set(".", ROTATION, quat);
-// Beside a hash, only the string key constrains a write to the calling script.
+// Beside a hash, a string key does not constrain a write to the calling script
+// either.
 go.set("#", hashedPair, v3);
-// @ts-expect-error position refuses a quaternion
 go.set("#", hashedPair, quat);
 
-// A name the catalog does not list, or a bare hash, adds no constraint beside a
-// listed key.
-declare const openKey: "position" | "tint" | Hash;
-go.set(url, openKey, v3);
-// @ts-expect-error position refuses a boolean
-go.set(url, openKey, true);
-
 // @ts-expect-error position is Vector3, not assignable to Quaternion
-const _wrong: Quaternion = go.get(url, "position");
+const _wrong: Quaternion = go.get(".", "position");
 void _wrong;
 
-// Fallback: hashed and dynamic-string access keep the wide doc union, so the
-// calls type-check and cross-component / runtime access is unchanged.
+// Fallback: hashed and dynamic-string access on an address that may name any
+// component keep the wide doc union, so the calls type-check and cross-component
+// / runtime access is unchanged.
 const _dynByHash = go.get(url, someHash);
 const _dynByName = go.get(url, "my_dynamic_prop");
 void _dynByHash;

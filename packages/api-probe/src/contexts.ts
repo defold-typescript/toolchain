@@ -338,8 +338,12 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "sprite.play_flipbook:2": 'hash("anim")',
   "go.delete:1": "VICTIM",
   "go.get:2": '"position"',
+  // `GO`'s path, as a literal the types read as a game object: a `Url` names no
+  // catalog, so the keys these slots take would go unchecked.
+  "go.set:1": '"main:/probe"',
   "go.set:2": '"position"',
   "go.set:3": "vmath.vector3(1, 1, 1)",
+  "go.animate:1": '"main:/probe"',
   "go.animate:2": '"position"',
   "go.cancel_animations:2": '"position"',
   "gui.animate:2": '"position"',

@@ -78,6 +78,16 @@ go.set("/props#sprite", "playback_rate", vmath.vector3());
 go.animate("/props#sprite", "image", PB, 2, E, 1);
 go.cancel_animations("/props#sprite", "tint");
 go.cancel_animations("/props#sprite", "anything");
+// A name the catalog does not list, or a bare hash, adds no constraint beside a
+// listed key.
+declare const openKey: "playback_rate" | "outline_color" | Hash;
+go.set("/props#sprite", openKey, 2);
+// @ts-expect-error playback_rate refuses a boolean
+go.set("/props#sprite", openKey, true);
+declare const openPair: "playback_rate" | "outline_color";
+go.animate("/props#sprite", openPair, PB, 2, E, 1);
+// @ts-expect-error playback_rate refuses a vector4
+go.animate("/props#sprite", openPair, PB, vmath.vector4(), E, 1);
 const velocity = go.get("/props#body", "linear_velocity");
 const _velocity: Equal<typeof velocity, Vector3> = true;
 // @ts-expect-error mass is read-only
@@ -109,17 +119,19 @@ const _tileSource: Equal<typeof tileSource, Hash> = true;
 const hudMaterial = go.get("/props#hud", "material");
 const _hudMaterial: Equal<typeof hudMaterial, Hash> = true;
 
-// An address with no catalog behaves as it does with no scene types at all.
+// An address with no catalog may name any component, or the calling script,
+// so every key reads the same wide value a key no catalog names does, the
+// transform keys included.
 declare const asUrl: Url;
 declare const asHash: Hash;
 declare const asString: string;
+const wideRead = go.get(asString, "anything");
 const legacyPosition = go.get("/props#legacy", "position");
 const uiPosition = go.get("/props#ui", "position");
 const nowherePosition = go.get("/nowhere#x", "position");
 const selfPosition = go.get("#", "position");
 const emptyPosition = go.get("", "position");
 const urlPosition = go.get(asUrl, "position");
-const hashPosition = go.get(asHash, "position");
 const stringPosition = go.get(asString, "position");
 const _unlinkedPositions: Equal<
   [
@@ -129,10 +141,17 @@ const _unlinkedPositions: Equal<
     typeof selfPosition,
     typeof emptyPosition,
     typeof urlPosition,
-    typeof hashPosition,
     typeof stringPosition,
   ],
-  [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3]
+  [
+    typeof wideRead,
+    typeof wideRead,
+    typeof wideRead,
+    typeof wideRead,
+    typeof wideRead,
+    typeof wideRead,
+    typeof wideRead,
+  ]
 > = true;
 go.set("/props#legacy", "anything", 1);
 go.set("/props#ui", "anything", 1);
@@ -140,7 +159,6 @@ go.set("/nowhere#x", "anything", 1);
 go.set("#", "anything", 1);
 go.set("", "anything", 1);
 go.set(asUrl, "anything", 1);
-go.set(asHash, "anything", 1);
 go.set(asString, "anything", 1);
 go.animate("/props#legacy", "tint", PB, vmath.vector4(), E, 1);
 go.animate("/props#ui", "tint", PB, vmath.vector4(), E, 1);
@@ -148,21 +166,26 @@ go.animate("/nowhere#x", "tint", PB, vmath.vector4(), E, 1);
 go.animate("#", "tint", PB, vmath.vector4(), E, 1);
 go.animate("", "tint", PB, vmath.vector4(), E, 1);
 go.animate(asUrl, "tint", PB, vmath.vector4(), E, 1);
-go.animate(asHash, "tint", PB, vmath.vector4(), E, 1);
 go.animate(asString, "tint", PB, vmath.vector4(), E, 1);
-// Only "" and "#" are the calling script, so a hash still names its key on any
-// other unlinked fragment.
-// @ts-expect-error rotation is a quaternion, by hash too
+// An unlinked fragment names a component whose properties no scene entry
+// records, so a hash of a transform key takes any value there.
 go.set("/nowhere#x", hash("rotation"), 1);
 go.set("/nowhere#x", hash("rotation"), vmath.quat());
-// @ts-expect-error rotation is a quaternion, by hash too
 go.set("#x", hash("rotation"), 1);
 go.set("#x", hash("rotation"), vmath.quat());
 
-// An address with no `#` is a game object, whose only properties are its transform.
+// An address with no `#` and a hash id are game objects, whose only properties
+// are their transform.
 const ownPosition = go.get(".", "position");
 const _ownPosition: Equal<typeof ownPosition, Vector3> = true;
+const hashPosition = go.get(asHash, "position");
+const _hashPosition: Equal<typeof hashPosition, Vector3> = true;
 go.set("/props", "position.x", 1);
+// @ts-expect-error a game object has no `anything`
+go.set(asHash, "anything", 1);
+// @ts-expect-error a game object has no tint
+go.animate(asHash, "tint", PB, vmath.vector4(), E, 1);
+// @ts-expect-error a game object has no tint, by hash either
 go.get(".", hash("tint"));
 // @ts-expect-error a game object has no tint
 go.animate(".", "tint", PB, vmath.vector4(), E, 1);
@@ -190,4 +213,5 @@ void [
   _hudMaterial,
   _unlinkedPositions,
   _ownPosition,
+  _hashPosition,
 ];

@@ -6,67 +6,62 @@ declare const url: Url;
 const PB = go.PLAYBACK_ONCE_FORWARD;
 const E = go.EASING_LINEAR;
 
-// A transform key takes what the engine's Animate accepts for it: a value of
-// the property's own type, or a number, which fills every component of a vector.
-go.animate(url, "position", PB, vmath.vector3(1, 2, 3), E, 1);
-go.animate(url, "position", PB, 100, E, 1);
-go.animate(url, "position.x", PB, 10, E, 1);
-go.animate(url, "rotation", PB, vmath.quat(), E, 1);
-go.animate(url, "scale", PB, 2, E, 1);
-go.animate(url, "position", PB, vmath.vector3(), E, 1, 0.5, (_self, _url, property) => {
+// A transform key of a game object takes what the engine's Animate accepts for
+// it: a value of the property's own type, or a number, which fills every
+// component of a vector.
+go.animate(".", "position", PB, vmath.vector3(1, 2, 3), E, 1);
+go.animate(".", "position", PB, 100, E, 1);
+go.animate(".", "position.x", PB, 10, E, 1);
+go.animate(".", "rotation", PB, vmath.quat(), E, 1);
+go.animate(".", "scale", PB, 2, E, 1);
+go.animate(".", "position", PB, vmath.vector3(), E, 1, 0.5, (_self, _url, property) => {
   const _id: Hash = property;
   void _id;
 });
 
 // @ts-expect-error position is a vector3; a quaternion is a type mismatch
-go.animate(url, "position", PB, vmath.quat(), E, 1);
+go.animate(".", "position", PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation takes only a quaternion; a number does not fill one
-go.animate(url, "rotation", PB, 1, E, 1);
+go.animate(".", "rotation", PB, 1, E, 1);
 // @ts-expect-error position.x is one float
-go.animate(url, "position.x", PB, vmath.vector3(), E, 1);
+go.animate(".", "position.x", PB, vmath.vector3(), E, 1);
 // @ts-expect-error euler is a vector3, not a vector4
-go.animate(url, "euler", PB, vmath.vector4(), E, 1);
+go.animate(".", "euler", PB, vmath.vector4(), E, 1);
 
 // A key typed as a union of keys takes only a target every one of them accepts.
 declare const transformKey: "position" | "rotation";
 // @ts-expect-error position refuses a quaternion
-go.animate(url, transformKey, PB, vmath.quat(), E, 1);
+go.animate(".", transformKey, PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation refuses a vector3
-go.animate(url, transformKey, PB, vmath.vector3(), E, 1);
+go.animate(".", transformKey, PB, vmath.vector3(), E, 1);
 // @ts-expect-error rotation refuses a vector3, with a delay too
-go.animate(url, transformKey, PB, vmath.vector3(), E, 1, 0.5);
+go.animate(".", transformKey, PB, vmath.vector3(), E, 1, 0.5);
 declare const elementKey: "position.x" | "position.y";
-go.animate(url, elementKey, PB, 10, E, 1);
-go.animate(url, elementKey, PB, 10, E, 1, 0.5);
+go.animate(".", elementKey, PB, 10, E, 1);
+go.animate(".", elementKey, PB, 10, E, 1, 0.5);
 // A union that also holds a hash takes only a target its catalog keys accept.
 declare const hashedKey: "rotation" | Hash;
-go.animate(url, hashedKey, PB, vmath.quat(), E, 1);
+go.animate(".", hashedKey, PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation refuses a vector3
-go.animate(url, hashedKey, PB, vmath.vector3(), E, 1);
+go.animate(".", hashedKey, PB, vmath.vector3(), E, 1);
 // A hash of a key's name counts as that key, beside a string key or alone.
 declare const hashedPair: "position" | Hash<"rotation">;
 // @ts-expect-error rotation refuses a vector3
-go.animate(url, hashedPair, PB, vmath.vector3(), E, 1);
+go.animate(".", hashedPair, PB, vmath.vector3(), E, 1);
 // @ts-expect-error position refuses a quaternion
-go.animate(url, hashedPair, PB, vmath.quat(), E, 1);
-go.animate(url, hash("rotation"), PB, vmath.quat(), E, 1);
+go.animate(".", hashedPair, PB, vmath.quat(), E, 1);
+go.animate(".", hash("rotation"), PB, vmath.quat(), E, 1);
 // @ts-expect-error rotation refuses a vector3
-go.animate(url, hash("rotation"), PB, vmath.vector3(), E, 1);
-// A hash written to the calling script names no transform key; "." is the game
-// object.
+go.animate(".", hash("rotation"), PB, vmath.vector3(), E, 1);
+// The calling script holds only what it declares, which the types do not know,
+// so a hash animated there names no transform key; "." is the game object.
 go.animate("#", hash("rotation"), PB, 1, E, 1);
 // @ts-expect-error the game object's rotation refuses a number
 go.animate(".", hash("rotation"), PB, 1, E, 1);
-// Beside a hash, only the string key constrains an animation of the calling
-// script.
+// Beside a hash, a string key does not constrain an animation of the calling
+// script either.
 go.animate("#", hashedPair, PB, vmath.vector3(), E, 1);
-// @ts-expect-error position refuses a quaternion
 go.animate("#", hashedPair, PB, vmath.quat(), E, 1);
-// A name the catalog does not list adds no constraint beside a listed key.
-declare const openPair: "position" | "tint";
-go.animate(url, openPair, PB, vmath.vector3(), E, 1);
-// @ts-expect-error position refuses a quaternion
-go.animate(url, openPair, PB, vmath.quat(), E, 1);
 
 // A dynamic key, or a hash of a name the catalog does not list, keeps the wide
 // target.

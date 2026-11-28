@@ -2676,8 +2676,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
     const go = pageFor("go");
     const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
     const typed = toHtml(overloadForms(get)[2] ?? { type: "root", children: [] });
-    expect(typed).toContain(`<li>${nameCode("options")}:${G}${typeCode("GoPropertyOptions")}`);
-    expect(typed).toContain(`${G}${typeCode('PropertyRead<AddressCatalog<R>["catalog"], K>')}`);
+    expect(typed).toContain(
+      `<li>${nameCode("options")}:${G}${typeCode("GetOptions<AddressCatalog<R>>")}`,
+    );
+    expect(typed).toContain(`${G}${typeCode("PropertyRead<AddressCatalog<R>, K>")}`);
   });
 
   test("overloads that coexist keep each form's own example under that form", async () => {

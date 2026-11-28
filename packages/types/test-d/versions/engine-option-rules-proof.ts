@@ -31,8 +31,10 @@ buffer.set_metadata(buf, id, [], buffer.VALUE_TYPE_FLOAT32);
 // @ts-expect-error 64-bit metadata raises
 buffer.set_metadata(buf, id, [1], buffer.VALUE_TYPE_INT64);
 
-go.get(id, "p", { index: 1, key: undefined });
+// A Url may name any component, so its catalog is open and takes every option.
+declare const target: ReturnType<typeof msg.url>;
+go.get(target, "p", { index: 1, key: undefined });
 // @ts-expect-error the options table names at most one of index, key and keys
-go.get(id, "p", { index: 1, key: "k" });
+go.get(target, "p", { index: 1, key: "k" });
 // @ts-expect-error the options table names at most one of index, key and keys
-go.set(id, "p", 1, { key: "k", keys: ["e"] });
+go.set(target, "p", 1, { key: "k", keys: ["e"] });

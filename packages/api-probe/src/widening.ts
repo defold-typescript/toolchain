@@ -147,9 +147,24 @@ function argumentType(
   return param === undefined ? undefined : checker.getTypeOfSymbol(param);
 }
 
+// The type parameter a slot declares: the slot's own type, or the one type
+// parameter of an intersection whose other members are conditional checks that
+// only refuse some of its values, such as `go.set`'s
+// `K & ListedHashes<AddressCatalog<R>, K, false>`.
+function slotParameter(type: ts.Type): ts.Type | undefined {
+  if (type.flags & ts.TypeFlags.TypeParameter) return type;
+  if (!type.isIntersection()) return undefined;
+  const parameters = type.types.filter((member) => member.flags & ts.TypeFlags.TypeParameter);
+  const checks = type.types.every(
+    (member) => member.flags & (ts.TypeFlags.TypeParameter | ts.TypeFlags.Conditional),
+  );
+  return parameters.length === 1 && checks ? parameters[0] : undefined;
+}
+
 function constrained(type: ts.Type): ts.Type {
-  if (!(type.flags & ts.TypeFlags.TypeParameter)) return type;
-  return type.getConstraint() ?? type;
+  const parameter = slotParameter(type);
+  if (parameter === undefined) return type;
+  return parameter.getConstraint() ?? parameter;
 }
 
 // Each constituent of a type parameter's declared constraint, read from its
@@ -251,8 +266,9 @@ function addMember(domain: Domain, member: Member): void {
 function split(type: ts.Type, checker: ts.TypeChecker, domain: Domain, depth = 0): void {
   if (depth > 8) return;
   const flags = type.flags;
-  if (flags & ts.TypeFlags.TypeParameter) {
-    for (const part of constraintParts(type, checker)) split(part, checker, domain, depth + 1);
+  const parameter = slotParameter(type);
+  if (parameter !== undefined) {
+    for (const part of constraintParts(parameter, checker)) split(part, checker, domain, depth + 1);
     return;
   }
   if (
@@ -409,7 +425,7 @@ function instantiatedDomains(
     if (own === undefined || declaration === undefined || parsed === undefined) continue;
     parsed.target.arguments.forEach((argument, index) => {
       const declared = argumentType(own, index, checker);
-      if (declared === undefined || !(declared.flags & ts.TypeFlags.TypeParameter)) return;
+      if (declared === undefined || slotParameter(declared) === undefined) return;
       const start = argument.getStart(parsed.source);
       planned.push({
         template: replaced(call.call, start, argument.end, PLACEHOLDER),
@@ -568,7 +584,7 @@ function omittedForm(
     if (!admits(signature, index + 1, checker)) continue;
     const declared = argumentType(signature, index, checker);
     if (declared === undefined) continue;
-    const type = checker.getBaseConstraintOfType(declared) ?? declared;
+    const type = checker.getBaseConstraintOfType(slotParameter(declared) ?? declared) ?? declared;
     for (const part of type.isUnion() ? type.types : [type]) {
       texts.add(checker.typeToString(part, undefined, TYPE_TEXT));
     }

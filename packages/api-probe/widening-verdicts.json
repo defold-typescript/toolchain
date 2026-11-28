@@ -1,11 +1,6 @@
 {
   "msg.post overload1-required message_id base sound": "A plain string id stays open for custom and receiver-declared messages, so its payload stays optional though some built-in ids require one.",
   "msg.post overload2-optional message_id base sound": "A plain string id stays open for custom and receiver-declared messages, so it accepts the empty payload some built-in ids refuse.",
-  "go.set overload1-required property base sound": "An address with no closed catalog reads a plain string key as any property, a material constant included, so the value it takes stays wide.",
-  "go.set overload2-required property base sound": "An address with no closed catalog reads a plain string key as any property, a material constant included, so the value it takes stays wide.",
-  "go.animate overload1-required property base sound": "An address with no closed catalog reads a plain string key as any property, a material constant included, so the target it takes stays wide.",
-  "go.animate overload2-required property base sound": "An address with no closed catalog reads a plain string key as any property, a material constant included, so the target it takes stays wide.",
-  "go.animate overload2-optional property base sound": "An address with no closed catalog reads a plain string key as any property, a material constant included, so the target it takes stays wide.",
   "bullet3d.constraint.create_cone_twist unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
   "bullet3d.constraint.create_generic_6dof unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
   "bullet3d.constraint.create_hinge unchecked": "The probe has no witness for a bullet3d rigid body handle, so no base call reaches this constructor.",
