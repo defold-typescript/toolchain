@@ -18,10 +18,11 @@ void _cursor;
 // @ts-expect-error key not in sprite.Properties
 go.get<sprite.Properties>()("#sprite", "nope");
 
-// Transform default (bare direct call, keyed to go.Properties) stays intact.
-const _pos: Vector3 = go.get("#go", "position");
+// Transform default (bare direct call on a game object, keyed to go.Properties)
+// stays intact.
+const _pos: Vector3 = go.get("/go", "position");
 void _pos;
-go.set("#go", "position", vmath.vector3());
+go.set("/go", "position", vmath.vector3());
 
 // set keyed to the component: a valid write checks, with the value gated to P[K].
 go.set<sprite.Properties>()("#sprite", "playback_rate", 2);

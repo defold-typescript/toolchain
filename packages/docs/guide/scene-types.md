@@ -120,9 +120,9 @@ address:
   the `gui` namespace loads, so in a directory [walled](./wall.md) to the script
   surface a gui address takes the wide value. Any other key, such as a material
   constant, takes the wide value.
-- **A literal with no `#`**, such as `"."` or `"/player"`, is a game object. Its
-  only properties are its transform, `go.Properties`, so any other key is a
-  compile error.
+- **A literal with no `#`**, such as `"."` or `"/player"`, and a `Hash` id such
+  as `go.get_id()` are game objects. Their only properties are their transform,
+  `go.Properties`, so any other key is a compile error.
 
 ```ts
 // src/wave.ts declares defineScript({ properties: { delay: 2 }, ... })
@@ -133,12 +133,15 @@ go.set("/logic#sprite", "tint", vmath.vector4()); // a material constant: wide v
 go.get(".", "delay");                             // error: a game object has no script property
 ```
 
-`""` and `"#"` resolve to the calling script, so they stay untyped. So do an
-address whose kind has no catalog, such as a script outside your program
-(`"script"`) or a native extension's component, a `string` variable, a `Url` and
-a `Hash`. A key passed as `hash("delay")` is accepted on every address and reads
-the wide value. An extension registers its own kind by augmenting the global
-`SceneComponentCatalogs` interface.
+`""` and `"#"` resolve to the calling script, whose properties the types do not
+know, so every key reads and writes the wide value there, the transform keys
+included. So does any address that may name a component the scenes do not
+link: a fragment they do not declare, a component whose kind has no catalog,
+such as a script outside your program (`"script"`) or a native extension's
+component, a `string` variable and a `Url`. A key passed as `hash("delay")`
+names `"delay"`: it reads and writes that key's type, and a closed catalog
+refuses a hash of a name it does not list. An extension registers its own kind
+by augmenting the global `SceneComponentCatalogs` interface.
 
 ## Which world an address resolves in
 

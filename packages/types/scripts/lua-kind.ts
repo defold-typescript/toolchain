@@ -66,14 +66,20 @@ function collectKinds(type: ts.Type, checker: ts.TypeChecker, out: Set<LuaKind>)
     // A branded primitive (`number & { __brand }`) is its primitive, and a
     // branded handle is its handle; only a plain object intersection is a table.
     // An `object` member (`PlainTable`'s `object & { ... }`) only narrows to
-    // non-primitives, so the remaining members carry the kind.
+    // non-primitives, so the remaining members carry the kind. A member with no
+    // kind of its own, such as a check `K & ListedHashes<A, K>` whose constraint
+    // is `unknown`, narrows nothing either.
     const shaped = type.types.filter((member) => !(member.flags & ts.TypeFlags.NonPrimitive));
-    const members = shaped.map((member) => {
+    const members = shaped.flatMap((member) => {
       const kinds = new Set<LuaKind>();
-      return collectKinds(member, checker, kinds) ? kinds : undefined;
+      return collectKinds(member, checker, kinds) ? [kinds] : [];
     });
-    if (members.some((kinds) => kinds === undefined)) return false;
-    const all = members.flatMap((kinds) => [...(kinds as Set<LuaKind>)]);
+    if (members.length === 0) return false;
+    if (members.length === 1) {
+      for (const kind of members[0] as Set<LuaKind>) out.add(kind);
+      return true;
+    }
+    const all = members.flatMap((kinds) => [...kinds]);
     const primitives = all.filter((kind) => PRIMITIVE_KINDS.has(kind));
     const handles = all.filter((kind) => kind !== "table" && kind !== "function");
     const chosen =
