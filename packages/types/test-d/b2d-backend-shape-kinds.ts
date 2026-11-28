@@ -72,3 +72,50 @@ for (const shape of [box, polygon, circle, capsule, chain] as const) {
   b2d.world.cast_shape(world, shape, east);
   b2d.world.overlap_shape(world, shape);
 }
+
+// Each backend's PushShape writes a box as a polygon with `vertices`, and only the
+// kinds it builds.
+const read2 = b2d.fixture.get_shape(body, 1);
+// @ts-expect-error a box reads back as a polygon
+const _box2 = read2.type === b2d.shape.SHAPE_TYPE_BOX;
+switch (read2.type) {
+  // @ts-expect-error a box reads back as a polygon
+  case b2d.shape.SHAPE_TYPE_BOX:
+  // @ts-expect-error v2 writes an edge as SHAPE_TYPE_EDGE
+  case b2d.shape.SHAPE_TYPE_SEGMENT:
+  case b2d.shape.SHAPE_TYPE_CIRCLE:
+  case b2d.shape.SHAPE_TYPE_EDGE:
+  case b2d.shape.SHAPE_TYPE_POLYGON:
+  case b2d.shape.SHAPE_TYPE_CHAIN:
+    break;
+}
+// @ts-expect-error the engine writes no hx
+const _hx2 = read2.hx;
+if ("vertices" in read2) {
+  const _vertices2: Vector3[] = read2.vertices;
+}
+b2d.fixture.set_shape(body, 1, read2);
+
+for (const read3 of [b2d.shape.get_shape(shapeId), b2d.shape.get_shape(body, 1)]) {
+  // @ts-expect-error a box reads back as a polygon
+  const _box3 = read3.type === b2d.shape.SHAPE_TYPE_BOX;
+  // @ts-expect-error v3 writes both segment kinds as SHAPE_TYPE_SEGMENT
+  const _edge3 = read3.type === b2d.shape.SHAPE_TYPE_EDGE;
+  switch (read3.type) {
+    // @ts-expect-error a box reads back as a polygon
+    case b2d.shape.SHAPE_TYPE_BOX:
+    // @ts-expect-error v3 writes both segment kinds as SHAPE_TYPE_SEGMENT
+    case b2d.shape.SHAPE_TYPE_EDGE:
+    // @ts-expect-error v3 writes a chain as its segments
+    case b2d.shape.SHAPE_TYPE_CHAIN:
+    case b2d.shape.SHAPE_TYPE_CIRCLE:
+    case b2d.shape.SHAPE_TYPE_CAPSULE:
+    case b2d.shape.SHAPE_TYPE_SEGMENT:
+    case b2d.shape.SHAPE_TYPE_POLYGON:
+      break;
+  }
+  if ("v1" in read3) {
+    const _ghost3: Vector3 | undefined = read3.v0;
+  }
+  b2d.shape.set_shape(shapeId, read3);
+}

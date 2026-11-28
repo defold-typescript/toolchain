@@ -54,7 +54,7 @@ declare global {
      * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns the shape definition, suitable for reuse in b2d.body.create_fixture
      */
-    function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.Definition;
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     /**
      * Get the fixture type.
      *
