@@ -3165,29 +3165,6 @@ function handleTypedefNames(namespace: string, receivers: Iterable<string>): Set
 // name fields in running text, not a machine-readable `<dl>`). Reused across the
 // b2d submodule curations below so a single shape is defined once.
 //
-// The shape table is a discriminated union of circle/edge/polygon/box/chain
-// forms, plus the Box2D v3 capsule, keyed by `type` (a b2d.shape.SHAPE_TYPE_*
-// constant); every kind-specific field is optional because only one form's
-// fields are present per value. The capsule's `center1`/`center2` come from
-// script_box2d_shape_v3.cpp, which reads them; the ref-doc prose never names them.
-const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
-  { name: "type", types: ["number"] },
-  { name: "radius", types: ["number"], optional: true },
-  { name: "center", types: ["vector3"], optional: true },
-  { name: "v0", types: ["vector3"], optional: true },
-  { name: "v1", types: ["vector3"], optional: true },
-  { name: "v2", types: ["vector3"], optional: true },
-  { name: "v3", types: ["vector3"], optional: true },
-  { name: "vertices", types: ["table"], tsType: "Vector3[]", optional: true },
-  { name: "hx", types: ["number"], optional: true },
-  { name: "hy", types: ["number"], optional: true },
-  { name: "angle", types: ["number"], optional: true },
-  { name: "loop", types: ["boolean"], optional: true },
-  { name: "prev_vertex", types: ["vector3"], optional: true },
-  { name: "next_vertex", types: ["vector3"], optional: true },
-  { name: "center1", types: ["vector3"], optional: true },
-  { name: "center2", types: ["vector3"], optional: true },
-];
 // The shape table a Box2D binding reads, one arm per `type`. CheckShapeDef
 // (v2/script_box2d_shape_v2.cpp, v3/script_box2d_shape_v3.cpp) raises without
 // `type` and without the fields that type reads with luaL_checknumber or
@@ -3233,6 +3210,30 @@ const B2D_V3_SHAPE_TS = [
   B2D_CIRCLE_ARM,
   B2D_CAPSULE_ARM,
   B2D_V3_SEGMENT_ARM,
+].join(" | ");
+// The shape table a Box2D getter returns, one arm per kind that backend's
+// PushShape (v2/script_box2d_fixture_v2.cpp, v3/script_box2d_shape_v3.cpp)
+// writes, keyed by `type`, the one b2d.shape.SHAPE_TYPE_* constant it pushes.
+// Neither writes `hx`, `hy` or `angle`, so a box reads back as the polygon arm.
+// v3 writes a segment and a chain segment as SHAPE_TYPE_SEGMENT, the chain
+// segment with its ghost vertices, so one arm covers both. The capsule's
+// `center1`/`center2` come from script_box2d_shape_v3.cpp; the ref-doc prose
+// never names them.
+const B2D_READ_POLYGON_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON; vertices: Vector3[] }`;
+const B2D_READ_CIRCLE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 }`;
+const B2D_READ_CHAIN_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }`;
+const B2D_READ_SEGMENT_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`;
+const B2D_V2_READ_SHAPE_TS = [
+  B2D_READ_POLYGON_ARM,
+  B2D_READ_CIRCLE_ARM,
+  B2D_V2_EDGE_ARM,
+  B2D_READ_CHAIN_ARM,
+].join(" | ");
+const B2D_V3_READ_SHAPE_TS = [
+  B2D_READ_POLYGON_ARM,
+  B2D_READ_CIRCLE_ARM,
+  B2D_CAPSULE_ARM,
+  B2D_READ_SEGMENT_ARM,
 ].join(" | ");
 const B2D_SCRIPTS = "gamesys/src/gamesys/scripts/box2d";
 // The v2 CheckShapeDef's edge arm, which reads the ghost vertices.
@@ -4148,13 +4149,14 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.fixture.get_shape:return:shape",
     {
-      kind: "object",
-      fields: B2D_SHAPE_TABLE_FIELDS,
+      kind: "verbatim",
+      ts: B2D_V2_READ_SHAPE_TS,
+      retypedUpstream: ["b2d.shape.definition"],
       binding: {
         file: `${B2D_SCRIPTS}/v2/script_box2d_fixture_v2.cpp`,
         cFunction: "PushShape",
         contains:
-          'lua_pushboolean(L, is_loop); lua_setfield(L, -2, "loop"); PushVertices(L, chain->m_vertices, is_loop ? chain->m_count - 1 : chain->m_count); lua_setfield(L, -2, "vertices");',
+          'lua_pushinteger(L, b2Shape::e_polygon); lua_setfield(L, -2, "type"); PushVertices(L, polygon->m_verticesOriginal, polygon->m_vertexCount); lua_setfield(L, -2, "vertices");',
       },
     },
   ],
@@ -4171,13 +4173,14 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   [
     "b2d.shape.get_shape:return:shape",
     {
-      kind: "object",
-      fields: B2D_SHAPE_TABLE_FIELDS,
+      kind: "verbatim",
+      ts: B2D_V3_READ_SHAPE_TS,
+      retypedUpstream: ["b2d.shape.definition"],
       binding: {
         file: `${B2D_SCRIPTS}/v3/script_box2d_shape_v3.cpp`,
         cFunction: "PushShape",
         contains:
-          'dmScript::PushVector3(L, FromB2(capsule.center1, GetInvPhysicsScale())); lua_setfield(L, -2, "center1"); dmScript::PushVector3(L, FromB2(capsule.center2, GetInvPhysicsScale())); lua_setfield(L, -2, "center2");',
+          'b2Polygon polygon = b2Shape_GetPolygon(shape_id); lua_pushinteger(L, b2_polygonShape); lua_setfield(L, -2, "type");',
       },
     },
   ],

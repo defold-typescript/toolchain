@@ -13,16 +13,17 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Stricter engine arguments](./typescript-gotchas.md)** for vmath pairs, property keys named by a union or a hash, and component addresses.
+> - **[Stricter engine types](./typescript-gotchas.md)** for vmath pairs, property keys named by a union or a hash, component addresses, and the Box2D shapes `b2d.shape.get_shape` and `b2d.fixture.get_shape` return.
 > - **Engine caveats on hover** for [compute](/api/compute), [camera](/api/camera) and Box2D v2 velocity.
 > - **[Missing `#fragment` warning](./build.md)** for a component address such as `factory.create("/spawner")`.
 
 ### Breaking
 
-- **Some engine arguments are stricter, so a call the engine rejects or misreads no longer compiles:**
+- **Some engine arguments and results are stricter, so code the engine rejects or misreads no longer compiles:**
   - **vmath pairs**: `vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
   - **Property-key writes**: `go.set` and `go.animate` take only a value that every catalog key named by their key accepts, by string or by hash, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion, and `hash("rotation")` written to a game object takes only a quaternion. A dynamic string, a bare `Hash`, a name the catalog does not list, or a hash written to the calling script (`"#"` or `""`) adds no constraint.
   - **Component addresses**: functions that act on a component, such as `factory.create`, `label.get_text` and `physics.get_shape`, no longer accept a `Hash`, which always fails there because it carries no `#fragment`; pass the address as a string or `Url` ([URL addressing](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)).
+  - **Box2D shape reads**: `b2d.shape.get_shape` and `b2d.fixture.get_shape` return the shapes the engine writes, so a box reads back as a polygon with `vertices`, comparing its `type` to `b2d.shape.SHAPE_TYPE_BOX` (or `b2d.shape.SHAPE_TYPE_EDGE` under Box2D v3) does not compile, and the result passes straight back to `b2d.shape.set_shape` or `b2d.fixture.set_shape`.
 
 ### Improved
 

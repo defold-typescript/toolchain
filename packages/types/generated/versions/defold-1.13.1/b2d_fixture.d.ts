@@ -58,7 +58,7 @@ declare global {
      * polygon shapes use `vertices`, and chain shapes use `vertices`, `loop`, optional `prev_vertex`, and `next_vertex`.
      * Any angle values are in radians.
      */
-    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     /**
      * Get the fixture type.
      *

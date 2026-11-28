@@ -288,7 +288,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
+    function get_shape(shape_id: Opaque<"b2Shape">): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 };
     /**
      * Get a shape's geometry.
      *
@@ -296,7 +296,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
+    function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 };
     /**
      * Get the world owning a shape.
      *

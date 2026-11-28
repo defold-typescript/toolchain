@@ -924,6 +924,8 @@ if (object !== undefined) {
 
 `packages/types/test-d/bullet3d-engine-rules.ts` pins this: `set_shape` rejects the unchecked result and accepts it inside the `"dimensions" in data` check.
 
+`b2d.shape.get_shape` and `b2d.fixture.get_shape` key each arm by the one constant the engine writes. A box reads back as a polygon with `vertices`, because `b2d.shape.SHAPE_TYPE_BOX` holds the polygon's value; under Box2D v3, `b2d.shape.SHAPE_TYPE_EDGE` likewise holds the segment's. Comparing a read shape's `type` to either is a TS error, so check a field such as `"vertices" in shape` instead. The result passes straight back to `set_shape`. `packages/types/test-d/b2d-backend-shape-kinds.ts` pins this.
+
 **A slot the reference types as a bare `constant` takes the constants its documentation names.** Many parameters and getter returns (`gui.set_pivot`, `gui.animate`'s easing and playback, `render.enable_state`, `window.set_dim_mode`, `sys.get_connectivity`, …) carry no constant list in their ref-doc type, only in their prose — a `gui.PIVOT_*` list, or "one of the `gui.EASING_*` constants". The generated typings read that prose, so each such slot is the union of the named constants' brands. A constant from another family, or a generic `Opaque<"constant">`, is rejected:
 
 ```ts
@@ -15161,7 +15163,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.Filter; [since 1.13.0]
 - function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.Definition; [since 1.13.0]
+- function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
 - function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.ShapeType; [since 1.13.0]
 - function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.0]
 - function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.0]
@@ -15344,8 +15346,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): b2d.ShapeInfo[]; [since 1.13.0]
 - function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): b2d.ShapeInfo[];
-- function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.Definition; [since 1.13.0]
-- function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.Definition;
+- function get_shape(shape_id: Opaque<"b2Shape">): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }; [since 1.13.0]
+- function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: typeof b2d.shape.SHAPE_TYPE_POLYGON; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 };
 - function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
 - function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
