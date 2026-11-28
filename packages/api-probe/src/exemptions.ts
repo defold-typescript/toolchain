@@ -323,7 +323,7 @@ export function evaluateProbe(
         const problems =
           call?.returns === undefined
             ? []
-            : returnMismatches(call.returns, outcome.returns ?? [], outcome.fields);
+            : returnMismatches(call.returns, outcome.returns ?? [], outcome.fields, outcome.arms);
         if (problems.length === 0) {
           if (exemption) failures.stale.push(`${key}: now ends ok; delete the exemption`);
           continue;

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
+import ts from "typescript";
 import { surfaceProgram } from "../../types/scripts/lua-kind";
 import { overlayProgram } from "./call-check";
 import { BOX2D_BACKENDS } from "./contexts";
@@ -27,6 +28,61 @@ const generations: ProbeGeneration[] = BOX2D_BACKENDS.map((backend) =>
 const [v2] = generations as [ProbeGeneration, ProbeGeneration];
 const MEMBER = "member ";
 
+// Every `probe(<name>, ...)` call in the generated files: its variant and the
+// source text of each argument.
+function probeStatements(
+  files: Readonly<Record<string, string>>,
+  name: string,
+): { variant: string; args: (ts.Expression | undefined)[] }[] {
+  return Object.values(files).flatMap((source) => {
+    const file = ts.createSourceFile("probe.ts", source, ts.ScriptTarget.Latest, true);
+    const found: { variant: string; args: (ts.Expression | undefined)[] }[] = [];
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "probe" &&
+        node.arguments[0]?.getText(file) === JSON.stringify(name)
+      ) {
+        found.push({
+          variant: JSON.parse(node.arguments[1]?.getText(file) ?? "null"),
+          args: [...node.arguments],
+        });
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(file);
+    return found;
+  });
+}
+
+// The `{ position, field, arms }` entries of a generated discriminant list, as
+// source text.
+function discriminantEntries(
+  list: ts.Expression | undefined,
+): { position: string | undefined; field: string | undefined; arms: string[] }[] {
+  if (list === undefined || !ts.isArrayLiteralExpression(list)) return [];
+  return list.elements.map((element) => {
+    if (!ts.isObjectLiteralExpression(element))
+      return { position: undefined, field: undefined, arms: [] };
+    const text = (key: string) => {
+      const property = element.properties.find(
+        (p): p is ts.PropertyAssignment => ts.isPropertyAssignment(p) && p.name.getText() === key,
+      );
+      return property?.initializer;
+    };
+    const arms = text("arms");
+    return {
+      position: text("position")?.getText(),
+      field: text("field")?.getText(),
+      arms:
+        arms !== undefined && ts.isArrayLiteralExpression(arms)
+          ? arms.elements.map((e) => e.getText())
+          : [],
+    };
+  });
+}
+
 describe("witness generation", () => {
   test("sprite.play_flipbook gets a required-slot call and a full call per arm", () => {
     const calls = v2.calls.filter(
@@ -44,6 +100,58 @@ describe("witness generation", () => {
     expect(go).toContain(
       'probe("sprite.play_flipbook", "overload1-required", () => sprite.play_flipbook(SPRITE, hash("anim")));',
     );
+  });
+
+  test("a union keyed on branded constants passes each arm's constant to the runtime in arm order", () => {
+    const shape = (kind: string) => `b2d.shape.SHAPE_TYPE_${kind}`;
+    const cases = [
+      {
+        generation: v2,
+        name: "b2d.fixture.get_shape",
+        arms: {
+          "type,vertices": shape("POLYGON"),
+          "center,radius,type": shape("CIRCLE"),
+          "type,v0,v1,v2,v3": shape("EDGE"),
+          "loop,next_vertex,prev_vertex,type,vertices": shape("CHAIN"),
+        },
+      },
+      {
+        generation: generations[1],
+        name: "b2d.shape.get_shape",
+        arms: {
+          "type,vertices": shape("POLYGON"),
+          "center,radius,type": shape("CIRCLE"),
+          "center1,center2,radius,type": shape("CAPSULE"),
+          "type,v0,v1,v2,v3": shape("SEGMENT"),
+        },
+      },
+    ];
+    for (const { generation, name, arms } of cases) {
+      const calls = (generation?.calls ?? []).filter(
+        (call) => call.name === name && call.returns !== undefined,
+      );
+      const variants = calls.map((call) => call.variant).sort();
+      const statements = probeStatements(generation?.files ?? {}, name).filter(({ variant }) =>
+        variants.includes(variant),
+      );
+      expect(calls.length).toBeGreaterThan(0);
+      expect(statements.map(({ variant }) => variant).sort()).toEqual(variants);
+      for (const { variant, args } of statements) {
+        const declared = calls.find((call) => call.variant === variant)?.returns?.shapes?.[0];
+        if (declared === undefined || !("arms" in declared)) {
+          throw new Error(`${name} ${variant} declares no union`);
+        }
+        const [entry, ...others] = discriminantEntries(args[3]);
+        expect(others).toEqual([]);
+        expect([entry?.position, entry?.field]).toEqual(["1", '"type"']);
+        const paired = declared.arms.map((arm, i) => [
+          Object.keys(arm.fields).sort().join(","),
+          entry?.arms[i],
+        ]);
+        expect(Object.fromEntries(paired)).toEqual(arms);
+        expect(entry?.arms.length).toBe(declared.arms.length);
+      }
+    }
   });
 
   test("render state toggles keep a positive call and never pass the alpha-test state Metal rejects", () => {

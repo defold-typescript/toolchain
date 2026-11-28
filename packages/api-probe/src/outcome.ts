@@ -12,6 +12,9 @@ export interface ProbeOutcome {
   // The kinds held at each path inside the tables an ok call returned, from
   // its `RETF` lines: `1.version`, `1[number].name`.
   readonly fields?: Readonly<Record<string, readonly string[]>>;
+  // The 1-based arm each discriminated returned position selected, or `none`
+  // when its constant matched no arm, from its `RETA` lines.
+  readonly arms?: Readonly<Record<number, number | "none">>;
 }
 
 const MARKER = "PROBE\t";
@@ -64,18 +67,20 @@ export function parseProbeLine(line: string): ProbeOutcome | undefined {
 
 const RETURN = /\bRET\t([^\t]+)\t([^\t]+)\t(\d+)\t(\w+)/;
 const RETURN_FIELD = /\bRETF\t([^\t]+)\t([^\t]+)\t([^\t]+)\t(\w+)/;
+const RETURN_ARM = /\bRETA\t([^\t]+)\t([^\t]+)\t(\d+)\t(\d+|none)\b/;
 const POST = /\bPOST\t([^\t]+)\t([^\t]+)\t(\d+)/;
 const POSTS_DONE = /\bPOSTS_DONE\b/;
 const ENGINE_ERROR = /\bERROR:/;
 
-// Every `PROBE` line of an engine log, each ok one carrying the `RET` and
-// `RETF` lines the runtime printed for it just before. A message the go script posted fails
+// Every `PROBE` line of an engine log, each ok one carrying the `RET`, `RETF`
+// and `RETA` lines the runtime printed for it just before. A message the go script posted fails
 // on the first `ERROR:` line logged between its `POST` line and the next one:
 // the engine reports a message it cannot deliver or decode while dispatching,
 // after `msg.post` returned.
 export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
   const pending = new Map<string, string[]>();
   const pendingFields = new Map<string, Record<string, Set<string>>>();
+  const pendingArms = new Map<string, Record<number, number | "none">>();
   const outcomes: ProbeOutcome[] = [];
   const posted = new Map<string, string>();
   let window: { key: string; frame: string } | undefined;
@@ -98,8 +103,10 @@ export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
       const key = `${outcome.name}\t${outcome.variant}`;
       const returns = pending.get(key);
       const fields = pendingFields.get(key) ?? {};
+      const arms = pendingArms.get(key);
       pending.delete(key);
       pendingFields.delete(key);
+      pendingArms.delete(key);
       outcomes.push(
         outcome.outcome === "ok"
           ? {
@@ -108,9 +115,25 @@ export function parseProbeLog(lines: readonly string[]): ProbeOutcome[] {
               fields: Object.fromEntries(
                 Object.entries(fields).map(([path, kinds]) => [path, [...kinds].sort()]),
               ),
+              ...(arms === undefined ? {} : { arms }),
             }
           : outcome,
       );
+      continue;
+    }
+    const arm = RETURN_ARM.exec(line);
+    if (arm) {
+      const [, name, variant, position, selected] = arm as unknown as [
+        string,
+        string,
+        string,
+        string,
+        string,
+      ];
+      const key = `${name}\t${variant}`;
+      const arms = pendingArms.get(key) ?? {};
+      arms[Number(position)] = selected === "none" ? "none" : Number(selected);
+      pendingArms.set(key, arms);
       continue;
     }
     const field = RETURN_FIELD.exec(line);

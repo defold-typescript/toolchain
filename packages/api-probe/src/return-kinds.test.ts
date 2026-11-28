@@ -1,9 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { type Exemption, evaluateProbe } from "./exemptions";
 import { returnMismatches } from "./return-kinds";
+import type { DeclaredShape, TableShape } from "./table-shapes";
 import { type DeclaredReturns, generateProbes, type ProbeCall } from "./witness";
 
 const v2 = generateProbes(undefined, "v2");
+
+function table(shape: DeclaredShape | undefined): TableShape {
+  if (shape === undefined || "arms" in shape) throw new Error("no single declared table");
+  return shape;
+}
 
 function optionForm(name: string, variant: string): ProbeCall {
   const call = v2.calls.find((c) => c.name === name && c.variant === variant);
@@ -16,6 +22,7 @@ function evaluateReturns(
   returns: readonly string[],
   exemptions: Record<string, Exemption> = {},
   fields?: Record<string, string[]>,
+  arms?: Record<number, number | "none">,
 ) {
   return evaluateProbe(
     [
@@ -30,6 +37,7 @@ function evaluateReturns(
             message: "",
             returns,
             ...(fields === undefined ? {} : { fields }),
+            ...(arms === undefined ? {} : { arms }),
           },
         ],
       },
@@ -135,9 +143,9 @@ describe("Box2D world queries under each backend", () => {
       ["overload2-required", expect.stringMatching(/^b2d\.world\.cast_ray<"v3">\(/)],
       ["overload2-optional", expect.stringMatching(/^b2d\.world\.cast_ray<"v3">\(/)],
     ]);
-    const hit = v3Calls[0]?.returns?.shapes?.[0]?.index?.value.shape;
-    expect(hit?.fields.fixture).toBeUndefined();
-    expect(hit?.fields.shape?.shape?.fields.material).toEqual({ kinds: ["number"] });
+    const hit = table(table(v3Calls[0]?.returns?.shapes?.[0]).index?.value.shape);
+    expect(hit.fields.fixture).toBeUndefined();
+    expect(table(hit.fields.shape?.shape).fields.material).toEqual({ kinds: ["number"] });
   });
 
   test("an option form on the v3 pass resolves the v3 overload", () => {
@@ -149,7 +157,7 @@ describe("Box2D world queries under each backend", () => {
       ["options-empty", expect.stringMatching(/^b2d\.world\.cast_ray_closest<"v3">\(/)],
     ]);
     for (const form of forms) {
-      expect(form.returns?.shapes?.[0]?.fields.shape?.shape?.fields.material).toEqual({
+      expect(table(table(form.returns?.shapes?.[0]).fields.shape?.shape).fields.material).toEqual({
         kinds: ["number"],
       });
     }
@@ -159,8 +167,7 @@ describe("Box2D world queries under each backend", () => {
 describe("returned table fields under the probe gate", () => {
   const call = v2.calls.find((c) => c.name === "sys.get_engine_info" && c.witness === undefined);
   if (call === undefined) throw new Error("no positive call to sys.get_engine_info");
-  const shape = call.returns?.shapes?.[0];
-  if (shape === undefined) throw new Error("sys.get_engine_info declares no table shape");
+  const shape = table(call.returns?.shapes?.[0]);
   const key = `${call.name}:${call.variant}`;
   const withoutVersion = Object.fromEntries(
     Object.entries(shape.fields).flatMap(([name, field]) =>
@@ -181,5 +188,58 @@ describe("returned table fields under the probe gate", () => {
     const cleared = evaluateReturns(call, ["table"], { [key]: accepted }, withoutVersion);
     expect(cleared.returnKinds).toEqual([]);
     expect(cleared.stale).toEqual([]);
+  });
+});
+
+describe("a returned union judged by the arm its discriminant selects", () => {
+  const circle: TableShape = {
+    fields: {
+      type: { kinds: ["number"] },
+      radius: { kinds: ["number"] },
+      center: { kinds: ["vector3"] },
+    },
+  };
+  const polygon: TableShape = {
+    fields: { type: { kinds: ["number"] }, vertices: { kinds: ["table"] } },
+  };
+  const declared: DeclaredReturns = {
+    kinds: [["table"]],
+    shapes: [{ arms: [circle, polygon] }],
+    discriminants: [
+      { field: "type", constants: ["b2d.shape.SHAPE_TYPE_CIRCLE", "b2d.shape.SHAPE_TYPE_POLYGON"] },
+    ],
+    variadic: false,
+  };
+  const polygonFields = { "1.type": ["number"], "1.vertices": ["table"] };
+
+  test("a reported arm is the only arm compared", () => {
+    expect(returnMismatches(declared, ["table"], polygonFields)).toEqual([]);
+    expect(returnMismatches(declared, ["table"], polygonFields, { 1: 1 })).toEqual([
+      "value 1 field radius is absent, declared number",
+      "value 1 field center is absent, declared vector3",
+      "value 1 field vertices is undeclared",
+    ]);
+    expect(returnMismatches(declared, ["table"], polygonFields, { 1: 2 })).toEqual([]);
+  });
+
+  test("a discriminant that matches no constant fails on its field", () => {
+    expect(returnMismatches(declared, ["table"], polygonFields, { 1: "none" })).toEqual([
+      "value 1 field type matches no declared arm",
+    ]);
+  });
+
+  test("the probe gate passes each outcome's arms to the comparison", () => {
+    const call: ProbeCall = {
+      name: "b2d.shape.get_shape",
+      variant: "required",
+      kind: "go",
+      call: "b2d.shape.get_shape(SHAPE)",
+      returns: declared,
+    };
+    expect(evaluateReturns(call, ["table"], {}, polygonFields, { 1: 1 }).returnKinds).toEqual([
+      "b2d.shape.get_shape:required: value 1 field radius is absent, declared number",
+      "b2d.shape.get_shape:required: value 1 field center is absent, declared vector3",
+      "b2d.shape.get_shape:required: value 1 field vertices is undeclared",
+    ]);
   });
 });

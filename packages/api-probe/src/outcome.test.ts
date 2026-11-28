@@ -97,6 +97,27 @@ describe("parseProbeLog", () => {
     ]);
   });
 
+  test("a RETA line sets the arm a returned position matched, or records that none did", () => {
+    const outcomes = parseProbeLog([
+      "DEBUG:SCRIPT: RET\tf\tv\t1\ttable",
+      "DEBUG:SCRIPT: RETF\tf\tv\t1.type\tnumber",
+      "DEBUG:SCRIPT: RETA\tf\tv\t1\t2",
+      "DEBUG:SCRIPT: PROBE\tf\tv\tok\t",
+      "DEBUG:SCRIPT: RET\tg\tv\t1\ttable",
+      "DEBUG:SCRIPT: RET\tg\tv\t2\ttable",
+      "DEBUG:SCRIPT: RETA\tg\tv\t2\tnone",
+      "DEBUG:SCRIPT: PROBE\tg\tv\tok\t",
+      "DEBUG:SCRIPT: RETA\th\tv\t1\t1",
+      "DEBUG:SCRIPT: PROBE\th\tv\terr\tboom",
+    ]);
+    expect(outcomes.map((o) => [o.name, o.arms])).toEqual([
+      ["f", { 1: 2 }],
+      ["g", { 2: "none" }],
+      ["h", undefined],
+    ]);
+    expect(outcomes[0]?.fields).toEqual({ "1.type": ["number"] });
+  });
+
   test("a RETF line attaches only to the call that printed it, and never to a raised one", () => {
     const outcomes = parseProbeLog([
       "DEBUG:SCRIPT: RETF\tother\tv\t1.version\tstring",

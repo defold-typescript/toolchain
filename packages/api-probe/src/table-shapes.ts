@@ -15,9 +15,21 @@ export interface DeclaredField {
 
 // The keys a declared table names, and what it holds under every other key of
 // the index kind.
-export interface DeclaredShape {
+export interface TableShape {
   readonly fields: Readonly<Record<string, DeclaredField>>;
   readonly index?: { readonly key: DeclaredKinds; readonly value: DeclaredField };
+}
+
+// A table one of several declared tables describes, in the order the union
+// lists them: a value must match one arm in full.
+export interface UnionShape {
+  readonly arms: readonly TableShape[];
+}
+
+export type DeclaredShape = TableShape | UnionShape;
+
+export function shapeArms(shape: DeclaredShape): readonly TableShape[] {
+  return "arms" in shape ? shape.arms : [shape];
 }
 
 // What the engine reported for each path inside an ok call's returned tables:
@@ -82,8 +94,10 @@ function unionFields(all: readonly DeclaredField[]): DeclaredField {
 
 const ABSENT: DeclaredField = { kinds: ["nil"] };
 
-// A field is required only when every shape requires it.
-function unionShapes(shapes: readonly DeclaredShape[]): DeclaredShape {
+// What any of the shapes may hold, their arms included: a field is required
+// only when every shape requires it.
+function unionShapes(all: readonly DeclaredShape[]): TableShape {
+  const shapes = all.flatMap(shapeArms);
   const names = new Set(shapes.flatMap((shape) => Object.keys(shape.fields)));
   const fields: Record<string, DeclaredField> = {};
   for (const name of [...names].sort()) {
@@ -101,7 +115,7 @@ function unionShapes(shapes: readonly DeclaredShape[]): DeclaredShape {
 }
 
 // A field is required when any member of the intersection requires it.
-function intersectShapes(shapes: readonly DeclaredShape[]): DeclaredShape {
+function intersectShapes(shapes: readonly TableShape[]): TableShape {
   const names = new Set(shapes.flatMap((shape) => Object.keys(shape.fields)));
   const fields: Record<string, DeclaredField> = {};
   for (const name of [...names].sort()) {
@@ -109,7 +123,8 @@ function intersectShapes(shapes: readonly DeclaredShape[]): DeclaredShape {
       const field = shape.fields[name];
       return field === undefined ? [] : [field];
     });
-    const merged = unionFields(all);
+    // One member's field keeps the arms of its shape.
+    const merged = all.length === 1 ? (all[0] as DeclaredField) : unionFields(all);
     const required = all.some((field) => field.kinds !== "any" && !field.kinds.includes("nil"));
     fields[name] =
       required && merged.kinds !== "any"
@@ -145,7 +160,7 @@ function objectShape(
   type: ts.Type,
   checker: ts.TypeChecker,
   depth: number,
-): DeclaredShape | undefined {
+): TableShape | undefined {
   const extension = extensionTable(type);
   if (extension !== undefined) {
     const [key, value] = checker.getTypeArguments(type as ts.TypeReference);
@@ -190,11 +205,7 @@ function objectShape(
   return index === undefined ? { fields } : { fields, index };
 }
 
-function tableShape(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  depth: number,
-): DeclaredShape | undefined {
+function tableShape(type: ts.Type, checker: ts.TypeChecker, depth: number): TableShape | undefined {
   if (!type.isIntersection()) return objectShape(type, checker, depth);
   const shapes = type.types
     .filter((member) => member.flags & ts.TypeFlags.Object)
@@ -215,27 +226,71 @@ function constituents(type: ts.Type, checker: ts.TypeChecker): ts.Type[] {
 }
 
 // The keys and values a declared type says its table holds, read from the
-// constituents that are Lua tables. `undefined` when none names a key or an
-// index (`object`, `{}`), or when one of several does not: that table is not
-// compared.
+// constituents that are Lua tables, one arm each when there are several.
+// `undefined` when none names a key or an index (`object`, `{}`), or when one
+// of several does not: that table is not compared.
 export function declaredShape(
   type: ts.Type,
   checker: ts.TypeChecker,
   depth = 0,
 ): DeclaredShape | undefined {
   if (depth >= SHAPE_DEPTH) return undefined;
-  const tables = constituents(type, checker).filter((member) => {
-    const kinds = kindsOf(member, checker);
-    return kinds !== "any" && kinds.length === 1 && kinds[0] === "table";
-  });
+  const tables = tableConstituents(type, checker);
   if (tables.length === 0) return undefined;
-  const shapes: DeclaredShape[] = [];
+  const shapes: TableShape[] = [];
   for (const table of tables) {
     const shape = tableShape(table, checker, depth);
     if (shape === undefined) return undefined;
     shapes.push(shape);
   }
-  return unionShapes(shapes);
+  return shapes.length === 1 ? shapes[0] : { arms: shapes };
+}
+
+// The constituents of `type` that are Lua tables, in the order of its arms.
+function tableConstituents(type: ts.Type, checker: ts.TypeChecker): ts.Type[] {
+  return constituents(type, checker).filter((member) => {
+    const kinds = kindsOf(member, checker);
+    return kinds !== "any" && kinds.length === 1 && kinds[0] === "table";
+  });
+}
+
+// A field each arm of a union of tables types with its own branded constant:
+// the constants' Lua paths, read from their brands, in arm order.
+export interface Discriminant {
+  readonly field: string;
+  readonly constants: readonly string[];
+}
+
+function brandOf(type: ts.Type, checker: ts.TypeChecker): string | undefined {
+  const brand = checker.getPropertyOfType(type, "__brand");
+  if (brand === undefined) return undefined;
+  const value = checker.getTypeOfSymbol(brand);
+  return value.isStringLiteral() ? value.value : undefined;
+}
+
+// The field whose constant tells apart the arms of `shape`, `type`'s declared
+// shape, when every arm declares it with a distinct one.
+export function declaredDiscriminant(
+  type: ts.Type,
+  shape: DeclaredShape | undefined,
+  checker: ts.TypeChecker,
+): Discriminant | undefined {
+  if (shape === undefined || !("arms" in shape)) return undefined;
+  const tables = tableConstituents(type, checker);
+  const [first] = tables;
+  if (first === undefined || tables.length !== shape.arms.length) return undefined;
+  for (const property of checker.getPropertiesOfType(first)) {
+    const constants = tables.flatMap((table) => {
+      const field = checker.getPropertyOfType(table, property.name);
+      const brand =
+        field === undefined ? undefined : brandOf(checker.getTypeOfSymbol(field), checker);
+      return brand === undefined ? [] : [brand];
+    });
+    if (constants.length === tables.length && new Set(constants).size === constants.length) {
+      return { field: property.name, constants };
+    }
+  }
+  return undefined;
 }
 
 interface ReportNode {
@@ -302,12 +357,15 @@ function label(path: string): string {
   return path.startsWith(".") ? path.slice(1) : path;
 }
 
+// `merged` is set under an index key, where the report merges every value the
+// key holds: there a table is judged against what any of its arms may hold.
 function compareField(
   position: number,
   path: string,
   node: ReportNode | undefined,
   field: DeclaredField,
   problems: string[],
+  merged: boolean,
 ): void {
   if (field.kinds === "any") return;
   const declared = field.kinds.join("|");
@@ -323,21 +381,48 @@ function compareField(
     }
   }
   if (field.shape !== undefined && node.kinds.has("table")) {
-    compareShape(position, path, node, field.shape, problems);
+    compareTable(position, path, node, field.shape, problems, merged);
   }
+}
+
+// One value matches an arm in full; when it matches none, the arm it misses by
+// the fewest problems names them.
+function compareTable(
+  position: number,
+  path: string,
+  node: ReportNode,
+  shape: DeclaredShape,
+  problems: string[],
+  merged: boolean,
+): void {
+  const arms = shapeArms(shape);
+  if (arms.length === 1 || merged) {
+    const table = arms.length === 1 ? (arms[0] as TableShape) : unionShapes(arms);
+    compareShape(position, path, node, table, problems, merged);
+    return;
+  }
+  let closest: string[] | undefined;
+  for (const arm of arms) {
+    const found: string[] = [];
+    compareShape(position, path, node, arm, found, merged);
+    if (closest === undefined || found.length < closest.length) closest = found;
+    if (found.length === 0) break;
+  }
+  problems.push(...(closest ?? []));
 }
 
 function compareShape(
   position: number,
   path: string,
   node: ReportNode,
-  shape: DeclaredShape,
+  shape: TableShape,
   problems: string[],
+  merged: boolean,
 ): void {
   const rest = new Map(node.children);
   for (const [name, field] of Object.entries(shape.fields)) {
     const segment = `.${name}`;
-    compareField(position, `${path}${segment}`, rest.get(segment), field, problems);
+    compareField(position, `${path}${segment}`, rest.get(segment), field, problems, merged);
     rest.delete(segment);
   }
   const index = shape.index;
@@ -350,7 +435,7 @@ function compareShape(
       rest.delete(segment);
     }
     for (const [key, nodes] of groups) {
-      compareField(position, `${path}[${key}]`, mergeNodes(nodes), index.value, problems);
+      compareField(position, `${path}[${key}]`, mergeNodes(nodes), index.value, problems, true);
     }
   }
   for (const segment of rest.keys()) {
@@ -360,13 +445,17 @@ function compareShape(
 
 // How the fields the engine reported for returned value `position` differ from
 // its declared shape: a required field absent, a field of another kind, or a
-// key the shape does not declare, at every depth the shape describes.
+// key the shape does not declare, at every depth the shape describes. A union
+// of tables is met by one arm in full, or by the 1-based `arm` the engine's
+// value selected.
 export function shapeMismatches(
   position: number,
   shape: DeclaredShape,
   report: FieldReport,
+  arm?: number,
 ): string[] {
   const problems: string[] = [];
-  compareShape(position, "", reportTree(position, report), shape, problems);
+  const selected = arm === undefined ? shape : (shapeArms(shape)[arm - 1] ?? shape);
+  compareTable(position, "", reportTree(position, report), selected, problems, false);
   return problems;
 }
