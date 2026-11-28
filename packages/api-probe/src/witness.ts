@@ -25,6 +25,7 @@ import {
   SCRIPT_KINDS,
   type ScriptKind,
   WITNESS_OVERRIDES,
+  WITNESS_RESETS,
 } from "./contexts";
 import {
   indexBase,
@@ -971,10 +972,13 @@ export function renderFile(
   const final = (call: ProbeCall) => queued && FINAL_CALLS.has(`${call.name}:${call.variant}`);
   const direct = calls.filter((call) => call.message === undefined && !final(call));
   const last = calls.filter(final).map((call) => ({ ...call, post: call.call, id: call.name }));
+  const witnesses = direct.filter((call) => call.witness !== undefined);
+  const resets = [...new Set(witnesses.flatMap((call) => WITNESS_RESETS[call.name] ?? []))];
   const probes = [
-    ...direct.filter((call) => call.witness === undefined),
-    ...direct.filter((call) => call.witness !== undefined),
-  ].map(renderProbe);
+    ...direct.filter((call) => call.witness === undefined).map(renderProbe),
+    ...resets.map((statement) => `    ${statement}`),
+    ...witnesses.map(renderProbe),
+  ];
   // A material left enabled at the end of the frame crashes the engine's
   // command parse, so the render script resets it once its probes ran. A
   // physics event listener takes the collision events the go script waits for
