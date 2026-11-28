@@ -349,12 +349,12 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "gui.animate:2": '"position"',
   "gui.cancel_animations:2": '"position"',
   "gui.get:2": '"position"',
-  "gui.get:overload2:2": 'hash("position")',
-  "gui.get:overload3:2": 'hash("position")',
+  "gui.get:overload2:2": "NODE_PROPERTY",
+  "gui.get:overload3:2": "NODE_PROPERTY",
   "gui.set:1": 'gui.get_node("box")',
   "gui.set:2": '"position"',
-  "gui.set:overload2:2": 'hash("position")',
-  "gui.set:overload3:2": 'hash("position")',
+  "gui.set:overload2:2": "NODE_PROPERTY",
+  "gui.set:overload3:2": "NODE_PROPERTY",
   "gui.set:3": "vmath.vector3(1, 1, 1)",
   "gui.delete_node:1": 'gui.clone(gui.get_node("box"))',
   "gui.set_id:1": 'gui.clone(gui.get_node("box"))',
@@ -516,7 +516,9 @@ export const PRELUDES: Readonly<Record<ScriptKind, readonly string[]>> = {
     'pcall(() => physics.create_joint(physics.JOINT_TYPE_FIXED, COLLISION, "kept", vmath.vector3(), PEER_COLLISION, vmath.vector3()));',
     `pcall(() => ${DOOMED_JOINT});`,
   ],
-  gui: [],
+  // A hash only known at run time, which reaches the hash overloads of gui.get
+  // and gui.set; a literal `hash("position")` types as `"position"` instead.
+  gui: ['const NODE_PROPERTY: Hash = hash("position");'],
   render: [],
 };
 

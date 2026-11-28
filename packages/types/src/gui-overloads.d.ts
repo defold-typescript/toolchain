@@ -19,9 +19,44 @@ type ScalarName = "inner_radius" | "fill_angle" | "leading" | "tracking";
 
 type VectorName = Exclude<PropName<gui.Prop>, ScalarName>;
 
+// gui_script.cpp:LuaGet and LuaSet read the key with CheckHashOrString and
+// resolve it through GetPropertyDesc, so `hash("position")` names the same
+// descriptor `"position"` does. A bare `Hash` names nothing.
 type NodePropertyName<K> = K extends keyof gui.NodeProperties
   ? K
-  : Extract<PropName<K>, keyof gui.NodeProperties>;
+  : K extends Hash<infer S>
+    ? string extends S
+      ? never
+      : Extract<S, keyof gui.NodeProperties>
+    : Extract<PropName<K>, keyof gui.NodeProperties>;
+
+// A named overload's key: a property name, a `gui.PROP_*` constant, or a hash
+// of a property name.
+type NodePropertyKey = keyof gui.NodeProperties | gui.Prop | Hash<keyof gui.NodeProperties>;
+
+// `unknown` when every member of key union `K` names a node property, and
+// `never` when one does not. The key constraint admits a bare `Hash`, since
+// `Hash` and `Hash<"position">` are assignable to each other, so intersected
+// into `property` it sends such a key to the hash overloads.
+type NamesNodeProperties<K> = [
+  K extends unknown ? ([NodePropertyName<K>] extends [never] ? K : never) : never,
+] extends [never]
+  ? unknown
+  : never;
+
+// `never` when hash `H` names a node property, which the named overloads type,
+// and `unknown` for any other hash, such as a material constant's or a bare
+// `Hash`. Intersected into a hash overload's `property`, it keeps a refused
+// call on a node property from falling through to the wide value.
+type UnnamedHash<H> = [
+  H extends Hash<infer S>
+    ? string extends S
+      ? never
+      : Extract<S, keyof gui.NodeProperties>
+    : never,
+] extends [never]
+  ? unknown
+  : never;
 
 // gui_script.cpp:LuaSet: `rotation` takes only a quat, every other vector a
 // vector4 or a vector3, and a sub-key or scalar a number.
@@ -90,8 +125,9 @@ declare global {
 
     /**
      * Instead of using specific getters such as gui.get_position or gui.get_scale,
-     * you can use gui.get instead and supply the property as a string or a
-     * `gui.PROP_*` constant. Only these node properties are supported:
+     * you can use gui.get instead and supply the property as a string, a
+     * `gui.PROP_*` constant or a hash of the name. Only these node properties
+     * are supported:
      *
      * - `"position"`
      * - `"rotation"`
@@ -123,13 +159,15 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get<K extends keyof gui.NodeProperties | gui.Prop>(
+    function get<K extends NodePropertyKey>(
       node: Opaque<"node">,
-      property: K,
+      property: K & NamesNodeProperties<K>,
     ): gui.NodeProperties[NodePropertyName<K>];
     /**
-     * Gets a material constant of a node, or any property named by a hash. Pass
-     * the constant's name as a hash, such as `hash("tint")`. Reading an array
+     * Gets a material constant of a node, or a property named by a hash whose name
+     * is not known at compile time, such as a bare `Hash`. Pass the constant's
+     * name as a hash, such as `hash("tint")`. A hash of a node property name,
+     * such as `hash("position")`, reads as that name does. Reading an array
      * constant without `index` returns every element in a table.
      *
      * @param node - node to get the property for
@@ -146,13 +184,15 @@ declare global {
      * const second = gui.get(node, hash("tint_array"), { index: 2 });
      * ```
      */
-    function get(
+    function get<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
     ): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[];
     /**
-     * Gets a material constant of a node, or any property named by a hash. Pass
-     * the constant's name as a hash, such as `hash("tint")`. Reading an array
+     * Gets a material constant of a node, or a property named by a hash whose name
+     * is not known at compile time, such as a bare `Hash`. Pass the constant's
+     * name as a hash, such as `hash("tint")`. A hash of a node property name,
+     * such as `hash("position")`, reads as that name does. Reading an array
      * constant without `index` returns every element in a table.
      *
      * @param node - node to get the property for
@@ -169,9 +209,9 @@ declare global {
      * const second = gui.get(node, hash("tint_array"), { index: 2 });
      * ```
      */
-    function get(
+    function get<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
       options: gui.PropertyOptions,
     ): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[];
     /**
@@ -197,8 +237,9 @@ declare global {
       | Matrix4[];
     /**
      * Instead of using specific setters such as gui.set_position or gui.set_scale,
-     * you can use gui.set instead and supply the property as a string or a
-     * `gui.PROP_*` constant. Only the node properties gui.get lists are supported.
+     * you can use gui.set instead and supply the property as a string, a
+     * `gui.PROP_*` constant or a hash of the name. Only the node properties
+     * gui.get lists are supported.
      *
      * The value depends on the property name. Setting `"rotation"` takes a
      * vmath.quat, which differs from gui.set_rotation; to set the rotation in
@@ -230,13 +271,15 @@ declare global {
      * gui.set_rotation(node, vmath.vector3(0, 0, 45));
      * ```
      */
-    function set<K extends keyof gui.NodeProperties | gui.Prop>(
+    function set<K extends NodePropertyKey>(
       node: Opaque<"node">,
-      property: K,
+      property: K & NamesNodeProperties<K>,
       value: NodePropertyWriteEach<K>,
     ): void;
     /**
-     * Sets a material constant of a node, or any property named by a hash. If a
+     * Sets a material constant of a node, or a property named by a hash whose name
+     * is not known at compile time, such as a bare `Hash`; a hash of a node
+     * property name, such as `hash("position")`, takes what that name takes. If a
      * material specifies a constant called `tint` in the .material file, set it
      * with `gui.set(node, hash("tint"), vmath.vector4(1, 0, 0, 1))`, or pass a
      * vmath.matrix4 if the constant is a matrix. To set one element of an array
@@ -265,13 +308,15 @@ declare global {
      * gui.set(node, hash("tint_array.x"), 1, { index: 4 });
      * ```
      */
-    function set(
+    function set<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
       value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash,
     ): void;
     /**
-     * Sets a material constant of a node, or any property named by a hash. If a
+     * Sets a material constant of a node, or a property named by a hash whose name
+     * is not known at compile time, such as a bare `Hash`; a hash of a node
+     * property name, such as `hash("position")`, takes what that name takes. If a
      * material specifies a constant called `tint` in the .material file, set it
      * with `gui.set(node, hash("tint"), vmath.vector4(1, 0, 0, 1))`, or pass a
      * vmath.matrix4 if the constant is a matrix. To set one element of an array
@@ -300,9 +345,9 @@ declare global {
      * gui.set(node, hash("tint_array.x"), 1, { index: 4 });
      * ```
      */
-    function set(
+    function set<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
       value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash,
       options: gui.PropertyOptions,
     ): void;
@@ -448,9 +493,9 @@ declare global {
      * });
      * ```
      */
-    function animate<K extends keyof gui.NodeProperties | gui.Prop>(
+    function animate<K extends NodePropertyKey>(
       node: Opaque<"node">,
-      property: K,
+      property: K & NamesNodeProperties<K>,
       to: NodePropertyAnimateToEach<K>,
       easing: gui.Easing | Vector,
       duration: number,
@@ -532,9 +577,9 @@ declare global {
      * });
      * ```
      */
-    function animate<K extends keyof gui.NodeProperties | gui.Prop>(
+    function animate<K extends NodePropertyKey>(
       node: Opaque<"node">,
-      property: K,
+      property: K & NamesNodeProperties<K>,
       to: NodePropertyAnimateToEach<K>,
       easing: gui.Easing | Vector,
       duration: number,
@@ -543,10 +588,12 @@ declare global {
       playback?: gui.Playback,
     ): void;
     /**
-     * Animates a node property named by a hash, such as `hash("position.y")`. The
-     * engine resolves the name at run time, so the target value is not checked
-     * against the property: pass a number, a vmath.vector3, a vmath.vector4 or a
-     * vmath.quat as the named property expects.
+     * Animates a node property named by a hash whose name is not known at compile
+     * time, such as a bare `Hash`. The engine resolves the name at run time, so
+     * the target value is not checked against the property: pass a number, a
+     * vmath.vector3, a vmath.vector4 or a vmath.quat as the named property
+     * expects. A hash of a node property name, such as `hash("position.y")`,
+     * takes what that name takes.
      *
      * @param node - node to animate
      * @param property - property to animate, as a hash
@@ -559,18 +606,20 @@ declare global {
      * gui.animate(node, hash("position.y"), 100, gui.EASING_OUTQUAD, 0.5);
      * ```
      */
-    function animate(
+    function animate<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,
     ): void;
     /**
-     * Animates a node property named by a hash, such as `hash("position.y")`. The
-     * engine resolves the name at run time, so the target value is not checked
-     * against the property: pass a number, a vmath.vector3, a vmath.vector4 or a
-     * vmath.quat as the named property expects.
+     * Animates a node property named by a hash whose name is not known at compile
+     * time, such as a bare `Hash`. The engine resolves the name at run time, so
+     * the target value is not checked against the property: pass a number, a
+     * vmath.vector3, a vmath.vector4 or a vmath.quat as the named property
+     * expects. A hash of a node property name, such as `hash("position.y")`,
+     * takes what that name takes.
      *
      * @param node - node to animate
      * @param property - property to animate, as a hash
@@ -586,9 +635,9 @@ declare global {
      * gui.animate(node, hash("position.y"), 100, gui.EASING_OUTQUAD, 0.5, 0.2, undefined, gui.PLAYBACK_LOOP_PINGPONG);
      * ```
      */
-    function animate(
+    function animate<H extends Hash>(
       node: Opaque<"node">,
-      property: Hash,
+      property: H & UnnamedHash<H>,
       to: number | Vector3 | Vector4 | Quaternion,
       easing: gui.Easing | Vector,
       duration: number,

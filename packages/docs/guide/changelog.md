@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Stricter engine types](./typescript-gotchas.md)** for vmath pairs, `go` property keys, component addresses, and the Box2D shapes `b2d.shape.get_shape` and `b2d.fixture.get_shape` return.
+> - **[Stricter engine types](./typescript-gotchas.md)** for vmath pairs, `go` and `gui` property keys, component addresses, and the Box2D shapes `b2d.shape.get_shape` and `b2d.fixture.get_shape` return.
 > - **[Transform types need a game-object address](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** such as `"."` or a `Hash` id.
 > - **Engine caveats on hover** for [compute](/api/compute), [camera](/api/camera) and Box2D v2 velocity.
 > - **[Missing `#fragment` warning](./build.md)** for a component address such as `factory.create("/spawner")`.
@@ -22,7 +22,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **Some engine arguments and results are stricter, so code the engine rejects or misreads no longer compiles:**
   - **vmath pairs**: `vmath.lerp`, `vmath.slerp`, `vmath.mul_per_elem`, `vmath.dot` and `vmath.clamp` with vector bounds take two vectors of one type, so a `Vector3 | Vector4` argument needs `types.is_vector3` or `types.is_vector4` first.
-  - **Property keys**: `go.set` and `go.animate` take only a value that every key they name and every address in a union accepts, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion. `hash("rotation")` reads and writes as `"rotation"` does and a closed catalog refuses a hash of a name it does not list, while a dynamic string or a bare `Hash` adds no constraint.
+  - **Property keys**: `go.set` and `go.animate` take only a value that every key they name and every address in a union accepts, so a `"position" | "rotation"` key takes neither a vector3 nor a quaternion. `hash("rotation")` reads and writes as `"rotation"` does there and in `gui.get`, `gui.set` and `gui.animate`, and a closed catalog refuses a hash of a name it does not list, while a dynamic string or a bare `Hash` adds no constraint.
   - **go property receivers**: a literal path with no `#`, such as `"."`, and a `Hash` id are game objects, which take only their transform keys and refuse the `index` and `key` options of `go.get`, while `"#"`, `""`, a runtime string, a `Url` and an unlinked fragment read and write every key at the wide value. Address a game object as `"."` or `go.get_id("/hero")` to keep the transform types, or link a component's address with [`scene-types`](./scene-types.md#property-keys-follow-the-address).
   - **Component addresses**: functions that act on a component, such as `factory.create`, `label.get_text` and `physics.get_shape`, no longer accept a `Hash`, which always fails there because it carries no `#fragment`; pass the address as a string or `Url` ([URL addressing](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)).
   - **Box2D shape reads**: `b2d.shape.get_shape` and `b2d.fixture.get_shape` return the shapes the engine writes, so a box reads back as a polygon with `vertices` and comparing its `type` to `b2d.shape.SHAPE_TYPE_BOX` (or `b2d.shape.SHAPE_TYPE_EDGE` under Box2D v3) does not compile. The result type-checks as an argument to `b2d.shape.set_shape` or `b2d.fixture.set_shape`, though the engine refuses to update a Box2D v2 chain or a Box2D v3 chain segment.
