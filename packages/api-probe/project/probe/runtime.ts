@@ -47,9 +47,32 @@ function probeFields(
   ancestors.delete(table);
 }
 
+// A returned position declared as a union of tables whose arms each give
+// `field` their own constant, listed in arm order.
+export interface Discriminant {
+  readonly position: number;
+  readonly field: string;
+  readonly arms: readonly unknown[];
+}
+
+// The 1-based arm whose constant the table holds at `field`, or `none`.
+function armOf(table: LuaTable<AnyNotNil, unknown>, discriminant: Discriminant): string {
+  const value = table.get(discriminant.field);
+  for (let i = 0; i < discriminant.arms.length; i++) {
+    if (value === discriminant.arms[i]) return `${i + 1}`;
+  }
+  return "none";
+}
+
 // One `RET` line per value a call returned, trailing nils included, each table
-// followed by the `RETF` lines of what it holds.
-export function probeReturn(name: string, variant: string, ...values: unknown[]): void {
+// followed by the `RETF` lines of what it holds and, at a discriminated
+// position, the `RETA` line naming the arm it selects.
+export function probeReturn(
+  name: string,
+  variant: string,
+  discriminants: readonly Discriminant[],
+  ...values: unknown[]
+): void {
   const count = select("#", ...values);
   const printed = new LuaSet<string>();
   for (let i = 1; i <= count; i++) {
@@ -59,15 +82,24 @@ export function probeReturn(name: string, variant: string, ...values: unknown[])
     if (kind === "table") {
       const table = value as LuaTable<AnyNotNil, unknown>;
       probeFields(name, variant, `${i}`, table, printed, new LuaSet<object>());
+      for (const discriminant of discriminants) {
+        if (discriminant.position !== i) continue;
+        print(`RETA\t${name}\t${variant}\t${i}\t${armOf(table, discriminant)}`);
+      }
     }
   }
 }
 
 // `results` is what `pcall` returned: the ok flag, then the call's values or
 // the raised message.
-function report(name: string, variant: string, ...results: unknown[]): void {
+function report(
+  name: string,
+  variant: string,
+  discriminants: readonly Discriminant[],
+  ...results: unknown[]
+): void {
   const [ok] = select(1, ...results);
-  if (ok === true) probeReturn(name, variant, ...select(2, ...results));
+  if (ok === true) probeReturn(name, variant, discriminants, ...select(2, ...results));
   const [err] = select(2, ...results);
   const message = ok === true ? "" : string.gsub(tostring(err), "[\r\n]", " ")[0];
   print(`PROBE\t${name}\t${variant}\t${ok === true ? "ok" : "err"}\t${message}`);
@@ -75,8 +107,13 @@ function report(name: string, variant: string, ...results: unknown[]): void {
 
 // One `PROBE` line per call: function, variant, outcome and the raised message,
 // after the `RET` lines of what an ok call returned.
-export function probe(name: string, variant: string, call: () => unknown): void {
-  report(name, variant, ...pcall(call));
+export function probe(
+  name: string,
+  variant: string,
+  call: () => unknown,
+  discriminants: readonly Discriminant[] = [],
+): void {
+  report(name, variant, discriminants, ...pcall(call));
 }
 
 // A name no earlier call used, for calls that create something by id and

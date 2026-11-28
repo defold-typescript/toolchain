@@ -5,11 +5,13 @@ import type { DeclaredReturns } from "./witness";
 // position must be present, a nullable one as nil; a non-variadic return
 // declares its width exactly, so a trailing nil past it is a value too. A
 // returned table is compared with its declared shape through the fields the
-// engine reported for it.
+// engine reported for it, and a union of tables with the arm the engine's
+// value selected, where the runtime reported one in `arms`.
 export function returnMismatches(
   declared: DeclaredReturns,
   actual: readonly string[],
   fields: FieldReport = {},
+  arms: Readonly<Record<number, number | "none">> = {},
 ): string[] {
   const width = declared.kinds.length;
   const problems: string[] = [];
@@ -32,9 +34,14 @@ export function returnMismatches(
       continue;
     }
     const shape = declared.shapes?.[i];
-    if (kind === "table" && shape !== undefined) {
-      problems.push(...shapeMismatches(i + 1, shape, fields));
+    if (kind !== "table" || shape === undefined) continue;
+    const arm = arms[i + 1];
+    const field = declared.discriminants?.[i]?.field;
+    if (arm === "none" && field !== undefined) {
+      problems.push(`value ${i + 1} field ${field} matches no declared arm`);
+      continue;
     }
+    problems.push(...shapeMismatches(i + 1, shape, fields, arm === "none" ? undefined : arm));
   }
   return problems;
 }

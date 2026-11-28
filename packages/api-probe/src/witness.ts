@@ -37,7 +37,13 @@ import { messageProbes } from "./message-probes";
 import { acceptedWitnesses, narrowingVerdict, negativeWitness } from "./negative-witness";
 import { MEMBER_CALL_DENYLIST, PROBE_DENYLIST } from "./probe-denylist";
 import { propertyProbes } from "./property-probes";
-import { type DeclaredShape, declaredShape, kindsOf } from "./table-shapes";
+import {
+  type DeclaredShape,
+  type Discriminant,
+  declaredDiscriminant,
+  declaredShape,
+  kindsOf,
+} from "./table-shapes";
 // Type-only: `widening.ts` imports this module at runtime.
 import type { MemberCall } from "./widening";
 
@@ -45,10 +51,12 @@ const CORE_TYPES_FILE = resolve(import.meta.dir, "../../types/src/core-types.ts"
 
 // The values a signature declares it returns: one entry per position, and
 // whether a rest element allows more. `shapes` holds, per position, the keys a
-// returned table declares, where it declares any.
+// returned table declares, where it declares any, and `discriminants` the
+// field whose constant selects the arm of a returned union of tables.
 export interface DeclaredReturns {
   readonly kinds: readonly DeclaredKinds[];
   readonly shapes?: readonly (DeclaredShape | undefined)[];
+  readonly discriminants?: readonly (Discriminant | undefined)[];
   readonly variadic: boolean;
 }
 
@@ -501,17 +509,20 @@ export function declaredReturns(signature: ts.Signature, checker: ts.TypeChecker
   const tuple =
     returned.aliasSymbol?.name === "LuaMultiReturn" ? returned.aliasTypeArguments?.[0] : undefined;
   if (tuple === undefined) {
-    return {
+    const shape = declaredShape(returned, checker);
+    return withDiscriminants({
       kinds: [kindsOf(returned, checker)],
-      shapes: [declaredShape(returned, checker)],
+      shapes: [shape],
+      discriminants: [declaredDiscriminant(returned, shape, checker)],
       variadic: false,
-    };
+    });
   }
   if (!checker.isTupleType(tuple)) return { kinds: [], shapes: [], variadic: true };
   const target = (tuple as ts.TypeReference).target as ts.TupleType;
   const elements = checker.getTypeArguments(tuple as ts.TypeReference);
   const kinds: DeclaredKinds[] = [];
   const shapes: (DeclaredShape | undefined)[] = [];
+  const discriminants: (Discriminant | undefined)[] = [];
   let variadic = false;
   elements.forEach((element, i) => {
     const flags = target.elementFlags[i] ?? ts.ElementFlags.Required;
@@ -525,9 +536,31 @@ export function declaredReturns(signature: ts.Signature, checker: ts.TypeChecker
         ? [...new Set<LuaKind>([...elementKinds, "nil"])].sort()
         : elementKinds,
     );
-    shapes.push(declaredShape(element, checker));
+    const shape = declaredShape(element, checker);
+    shapes.push(shape);
+    discriminants.push(declaredDiscriminant(element, shape, checker));
   });
-  return { kinds, shapes, variadic };
+  return withDiscriminants({ kinds, shapes, discriminants, variadic });
+}
+
+// Leaves `discriminants` out when no position declares one.
+function withDiscriminants(returns: DeclaredReturns): DeclaredReturns {
+  if (returns.discriminants?.some((entry) => entry !== undefined) === true) return returns;
+  const { discriminants: _, ...rest } = returns;
+  return rest;
+}
+
+// The runtime's `{ position, field, arms }` list for the positions whose
+// declared union of tables a constant field tells apart.
+function renderDiscriminants(returns: DeclaredReturns | undefined): string | undefined {
+  const entries = (returns?.discriminants ?? []).flatMap((entry, i) =>
+    entry === undefined
+      ? []
+      : [
+          `{ position: ${i + 1}, field: ${JSON.stringify(entry.field)}, arms: [${entry.constants.join(", ")}] }`,
+        ],
+  );
+  return entries.length === 0 ? undefined : `[${entries.join(", ")}]`;
 }
 
 // The positive argument when it already is of `kind`, else restated as `kind`
@@ -863,7 +896,10 @@ function renderProbe(call: ProbeCall): string {
     call.witness?.expect === "raise" ||
     call.witness?.verdict !== undefined;
   if (!refused) {
-    return `    probe(${name}, ${variant}, () => ${call.call});`;
+    const discriminants = renderDiscriminants(call.returns);
+    return discriminants === undefined
+      ? `    probe(${name}, ${variant}, () => ${call.call});`
+      : `    probe(${name}, ${variant}, () => ${call.call}, ${discriminants});`;
   }
   return [
     `    probe(${name}, ${variant}, () =>`,
