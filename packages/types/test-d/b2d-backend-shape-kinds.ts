@@ -1,5 +1,6 @@
 /// <reference path="../index.d.ts" />
 import type { Opaque } from "../src/core-types";
+import type { Equal } from "./type-assert";
 
 declare const body: Opaque<"b2Body">;
 declare const shapeId: Opaque<"b2Shape">;
@@ -89,14 +90,41 @@ switch (read2.type) {
   case b2d.shape.SHAPE_TYPE_CHAIN:
     break;
 }
-// @ts-expect-error the engine writes no hx
-const _hx2 = read2.hx;
+// The engine writes no hx, so no arm declares it, even as optional.
+type DeclaresHx<T> = T extends unknown ? ("hx" extends keyof T ? T : never) : never;
+const _hx2: Equal<DeclaresHx<typeof read2>, never> = true;
 if ("vertices" in read2) {
   const _vertices2: Vector3[] = read2.vertices;
 }
 b2d.fixture.set_shape(body, 1, read2);
 
-for (const read3 of [b2d.shape.get_shape(shapeId), b2d.shape.get_shape(body, 1)]) {
+// Each form is checked alone: a merged array lets one form's arms stand in for the other's.
+{
+  const read3 = b2d.shape.get_shape(shapeId);
+  // @ts-expect-error a box reads back as a polygon
+  const _box3 = read3.type === b2d.shape.SHAPE_TYPE_BOX;
+  // @ts-expect-error v3 writes both segment kinds as SHAPE_TYPE_SEGMENT
+  const _edge3 = read3.type === b2d.shape.SHAPE_TYPE_EDGE;
+  switch (read3.type) {
+    // @ts-expect-error a box reads back as a polygon
+    case b2d.shape.SHAPE_TYPE_BOX:
+    // @ts-expect-error v3 writes both segment kinds as SHAPE_TYPE_SEGMENT
+    case b2d.shape.SHAPE_TYPE_EDGE:
+    // @ts-expect-error v3 writes a chain as its segments
+    case b2d.shape.SHAPE_TYPE_CHAIN:
+    case b2d.shape.SHAPE_TYPE_CIRCLE:
+    case b2d.shape.SHAPE_TYPE_CAPSULE:
+    case b2d.shape.SHAPE_TYPE_SEGMENT:
+    case b2d.shape.SHAPE_TYPE_POLYGON:
+      break;
+  }
+  if ("v1" in read3) {
+    const _ghost3: Vector3 | undefined = read3.v0;
+  }
+  b2d.shape.set_shape(shapeId, read3);
+}
+{
+  const read3 = b2d.shape.get_shape(body, 1);
   // @ts-expect-error a box reads back as a polygon
   const _box3 = read3.type === b2d.shape.SHAPE_TYPE_BOX;
   // @ts-expect-error v3 writes both segment kinds as SHAPE_TYPE_SEGMENT
