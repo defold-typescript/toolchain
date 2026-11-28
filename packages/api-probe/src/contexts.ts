@@ -224,6 +224,15 @@ export const FINAL_CALLS: ReadonlySet<string> = new Set([
   "go.delete:accepted-1-boolean",
 ]);
 
+// Statements a script runs between its positive and its witness calls, keyed by
+// the function whose witness calls need them. `window.set_listener` frees the
+// stored callback before it checks its argument, so a refused call leaves the
+// engine holding a freed callback that the next window event runs; with none
+// stored, the refused call has nothing to free.
+export const WITNESS_RESETS: Readonly<Record<string, string>> = {
+  "window.set_listener": "window.set_listener(undefined);",
+};
+
 // Messages whose receiver is not their namespace's: `enable` and `disable` go
 // to a component, and a force or a new parent goes to a dynamic peer so the
 // probe object's static body stays where the collision checks expect it.

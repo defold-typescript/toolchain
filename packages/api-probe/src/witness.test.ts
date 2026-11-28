@@ -154,6 +154,17 @@ describe("witness generation", () => {
     }
   });
 
+  test("the window listener is cleared after its positive call and before the call it must refuse", () => {
+    const go = (v2.files[PROBE_FILES.go] ?? "").split("\n");
+    const at = (text: string) => go.findIndex((line) => line.includes(text));
+    const positive = at('probe("window.set_listener", "required"');
+    const reset = at("window.set_listener(undefined);");
+    const negative = at('probe("window.set_listener", "negative-1"');
+    expect([positive, negative].every((i) => i >= 0)).toBe(true);
+    expect(reset).toBeGreaterThan(positive);
+    expect(reset).toBeLessThan(negative);
+  });
+
   test("a hash witness for an address names its object's path, never the whole address", () => {
     const hashed = (name: string) =>
       v2.calls.find((call) => call.name === name && call.variant === "accepted-1-hash")?.call;
