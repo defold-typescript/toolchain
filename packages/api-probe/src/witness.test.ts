@@ -154,6 +154,19 @@ describe("witness generation", () => {
     }
   });
 
+  test("a hash witness for an address names its object's path, never the whole address", () => {
+    const hashed = (name: string) =>
+      v2.calls.find((call) => call.name === name && call.variant === "accepted-1-hash")?.call;
+    expect(hashed("go.set")).toBe('go.set(hash("/probe"), "position", vmath.vector3(1, 1, 1))');
+    expect(hashed("go.animate")).toStartWith('go.animate(hash("/probe"), "position",');
+    const socketHashes = generations.flatMap((generation) =>
+      generation.calls
+        .filter((call) => /\bhash\("[^"]*:/.test(call.call))
+        .map((call) => `${generation.backend} ${call.name}:${call.variant}: ${call.call}`),
+    );
+    expect(socketHashes).toEqual([]);
+  });
+
   test("render state toggles keep a positive call and never pass the alpha-test state Metal rejects", () => {
     const toggles = ["render.enable_state", "render.disable_state"];
     for (const name of toggles) {
