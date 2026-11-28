@@ -4,7 +4,6 @@ import type { Equal } from "./type-assert";
 
 declare const body: Opaque<"b2Body">;
 declare const shapeId: Opaque<"b2Shape">;
-declare const world: Opaque<"b2World">;
 
 const origin = vmath.vector3(0, 0, 0);
 const east = vmath.vector3(1, 0, 0);
@@ -68,11 +67,7 @@ b2d.body.create_shape(body, {
 });
 b2d.body.create_shape(body, { shape: box, sensor: true });
 
-// World queries read every kind either backend builds.
-for (const shape of [box, polygon, circle, capsule, chain] as const) {
-  b2d.world.cast_shape(world, shape, east);
-  b2d.world.overlap_shape(world, shape);
-}
+// World queries read the kinds their backend builds: b2d-query-shape-inputs.ts.
 
 // Each backend's PushShape writes a box as a polygon with `vertices`, and only the
 // kinds it builds.

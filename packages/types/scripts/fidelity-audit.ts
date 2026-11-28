@@ -8,6 +8,7 @@ import {
   ARBITRARY_TABLE_SLOTS,
   applyFieldTypeOverrides,
   applyNestedFieldCurations,
+  box2dBackendOf,
   buildTableDocResolver,
   callbackTokenParameterNames,
   defaultMapType,
@@ -27,6 +28,7 @@ import {
   TABLE_SLOT_CURATIONS,
   type TableSlotCuration,
   TS_IDENTIFIER,
+  tableSlotCurationKey,
   trailingOptionalCutoff,
   UNBOUND_SKIPS,
   unknownDefoldTypeLeaves,
@@ -1002,6 +1004,13 @@ function auditEntry(
     }
     const params = paramList(element.parameters);
     const returns = paramList(element.returnvalues);
+    const backend =
+      typeof element.name === "string"
+        ? box2dBackendOf({
+            name: element.name,
+            returnValues: returns.map((ret) => ({ types: stringArray(ret.types) })),
+          })
+        : undefined;
     const arbitraryTable =
       typeof element.name === "string" && ARBITRARY_TABLE_SLOTS.has(element.name);
     const mappingSlot =
@@ -1050,7 +1059,9 @@ function auditEntry(
       }
       const tableSlotCuration =
         typeof element.name === "string" && typeof param.name === "string"
-          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "param", param.name))
+          ? TABLE_SLOT_CURATIONS.get(
+              tableSlotCurationKey(element.name, "param", param.name, backend),
+            )
           : undefined;
       considerTypes(
         stringArray(param.types),
@@ -1076,7 +1087,9 @@ function auditEntry(
       }
       const tableSlotCuration =
         typeof element.name === "string" && typeof ret.name === "string"
-          ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "return", ret.name))
+          ? TABLE_SLOT_CURATIONS.get(
+              tableSlotCurationKey(element.name, "return", ret.name, backend),
+            )
           : undefined;
       considerTypes(
         stringArray(ret.types),

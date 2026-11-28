@@ -609,7 +609,7 @@ for (const hit of hits) {
 }
 ```
 
-**Why.** The typings declare both Box2D backends at once, and a call cannot tell which one the project builds with. `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` take the same arguments on both backends but return different tables. A v2 hit sets `fixture` and `shape` to one fixture table; a v3 hit has no `fixture`, and its `shape` is a shape table with a `shape_id`. The overlaps return fixture tables on v2 and shape tables on v3. A call with no type argument returns the v2 tables.
+**Why.** The typings declare both Box2D backends at once, and a call cannot tell which one the project builds with. `b2d.world.cast_ray`, `b2d.world.cast_ray_closest`, `b2d.world.cast_shape`, `b2d.world.overlap_aabb` and `b2d.world.overlap_shape` return different tables on each backend. A v2 hit sets `fixture` and `shape` to one fixture table; a v3 hit has no `fixture`, and its `shape` is a shape table with a `shape_id`. The overlaps return fixture tables on v2 and shape tables on v3. A call with no type argument returns the v2 tables.
 
 **Typed alternative.** Pass `<"v3">` to pick the v3 form of each of the five queries:
 
@@ -628,7 +628,9 @@ if (world !== undefined) {
 
 The type argument exists on Defold 1.13.2 and later targets, and `<"v2">` names the default. It changes only the types: the Lua is the same call.
 
-**How we pin this in the type tests.** `packages/types/test-d/b2d-backend-query-hits.ts` reads the v3 fields through `<"v3">` on all five queries and puts `@ts-expect-error` on `fixture`. It reads the v2 fields with no type argument and with `<"v2">`, puts `@ts-expect-error` on `shape_id`, and rejects `<"v4">`. `packages/types/test/overload-reachability.test.ts` fails when any generated declaration has two forms that take the same arguments, since a call could never reach the second.
+On those targets, `b2d.world.cast_shape` and `b2d.world.overlap_shape` also take only the shapes their backend builds: the v2 form takes no capsule and the v3 form no chain, so a capsule passed with no type argument picks the v3 form and returns v3 hits. Every Box2D shape input takes a polygon as `hx` and `hy` or as `vertices`, never both, because the engine builds a box as soon as either `hx` or `hy` is set.
+
+**How we pin this in the type tests.** `packages/types/test-d/b2d-backend-query-hits.ts` reads the v3 fields through `<"v3">` on all five queries and puts `@ts-expect-error` on `fixture`. It reads the v2 fields with no type argument and with `<"v2">`, puts `@ts-expect-error` on `shape_id`, and rejects `<"v4">`. `packages/types/test-d/b2d-query-shape-inputs.ts` puts `@ts-expect-error` on a capsule passed to a `<"v2">` query, a chain passed to a `<"v3">` query, and a polygon that mixes both forms. `packages/types/test/overload-reachability.test.ts` fails when any generated declaration has two forms that take the same arguments, since a call could never reach the second.
 
 ## `async`/`await` work but there is no event loop
 

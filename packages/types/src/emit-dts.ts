@@ -3034,15 +3034,27 @@ export const BOX2D_BACKEND_ARMS: ReadonlyMap<string, Box2dBackend> = new Map<str
   ["b2d.world.overlap_shape:b2d.shape_info[]", "v3"],
 ]);
 
+// The parts of a function that tell its `BOX2D_BACKEND_ARMS` arm apart, which a
+// raw ref-doc element supplies as well as a parsed `ApiFunction`.
+export interface Box2dArmSignature {
+  readonly name: string;
+  readonly returnValues: readonly { readonly types: readonly string[] }[];
+}
+
 // `<fqn>:<first non-nil type of the first return>`: the two arms of each
 // `BOX2D_BACKEND_ARMS` query share every parameter and differ only there.
-export function box2dBackendArmKey(fn: ApiFunction): string {
+export function box2dBackendArmKey(fn: Box2dArmSignature): string {
   const first = fn.returnValues[0]?.types.find((type) => type !== "nil") ?? "";
   return `${fn.name}:${first}`;
 }
 
+// The backend a `BOX2D_BACKEND_ARMS` arm serves; `undefined` for any other function.
+export function box2dBackendOf(fn: Box2dArmSignature): Box2dBackend | undefined {
+  return BOX2D_BACKEND_ARMS.get(box2dBackendArmKey(fn));
+}
+
 function box2dBackendTypeParameters(fn: ApiFunction): string {
-  const backend = BOX2D_BACKEND_ARMS.get(box2dBackendArmKey(fn));
+  const backend = box2dBackendOf(fn);
   if (backend === undefined) return "";
   return backend === "v2" ? '<Backend extends "v2" = "v2">' : '<Backend extends "v3">';
 }
@@ -3177,12 +3189,18 @@ function handleTypedefNames(namespace: string, receivers: Iterable<string>): Set
 // `create_shape` and `shape.set_shape` are registered only by
 // v3/script_box2d_*_v3.cpp and take B2D_V3_SHAPE_TS (no chain, and a segment
 // that reads no ghost vertices). `world.cast_shape` and `world.overlap_shape`
-// are registered by both, so they keep the full union.
+// are registered by both, and each backend's overload takes that backend's
+// union, curated under `<slot key>@<backend>`. A target whose ref-doc types
+// both arms' returns `table` (1.13.0, 1.13.1) tags no backend, so its overloads
+// take the full union under the plain key.
 // The box arm leads: a v2 fixture keeps its shape type, and the runtime probe
 // witnesses a union by its first arm against a box collision shape.
+// The box and vertex arms each refuse the other's fields: CheckShapeDef takes
+// the box branch on `hx` or `hy` alone and raises "Polygon box shape requires
+// both hx and hy." when one is missing, so a polygon reads one form only.
 const B2D_SHAPE = "typeof b2d.shape";
-const B2D_BOX_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number }`;
-const B2D_POLYGON_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; vertices: Vector3[] }`;
+const B2D_BOX_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number; vertices?: never }`;
+const B2D_POLYGON_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; vertices: Vector3[]; hx?: never; hy?: never }`;
 const B2D_CIRCLE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }`;
 const B2D_CAPSULE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 }`;
 const B2D_EDGE_ARM = `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE | ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`;
@@ -3243,17 +3261,32 @@ const B2D_V2_SHAPE_BINDING: BindingPin = {
   contains:
     'out_shape->m_Edge.Set(v1, v2); out_shape->m_Edge.m_hasVertex0 = TryGetVec2Field(L, index, "v0", &out_shape->m_Edge.m_vertex0); out_shape->m_Edge.m_hasVertex3 = TryGetVec2Field(L, index, "v3", &out_shape->m_Edge.m_vertex3);',
 };
-// The v3 CheckShapeDef's capsule arm, which the full union shares.
+// The v3 CheckShapeDef's capsule arm, which the v3 and full unions carry.
 const B2D_V3_SHAPE_BINDING: BindingPin = {
   file: `${B2D_SCRIPTS}/v3/script_box2d_shape_v3.cpp`,
   cFunction: "CheckShapeDef",
   contains:
     'lua_getfield(L, index, "center1"); shape_def.m_Capsule.center1 = CheckVec2(L, -1, GetPhysicsScale()); lua_pop(L, 1); lua_getfield(L, index, "center2"); shape_def.m_Capsule.center2 = CheckVec2(L, -1, GetPhysicsScale());',
 };
+// A world query's shape on an overload no backend is tagged on.
 const B2D_SHAPE_DEFINITION: TableSlotCuration = {
   kind: "verbatim",
   ts: B2D_SHAPE_DEFINITION_TS,
   binding: B2D_V3_SHAPE_BINDING,
+};
+// A world query's shape on each backend. From 1.13.2 the ref-doc spells the
+// slot as the `b2d.shape.definition` typedef, which carries no per-backend union.
+const B2D_V2_QUERY_SHAPE: TableSlotCuration = {
+  kind: "verbatim",
+  ts: B2D_V2_SHAPE_TS,
+  binding: B2D_V2_SHAPE_BINDING,
+  retypedUpstream: ["b2d.shape.definition"],
+};
+const B2D_V3_QUERY_SHAPE: TableSlotCuration = {
+  kind: "verbatim",
+  ts: B2D_V3_SHAPE_TS,
+  binding: B2D_V3_SHAPE_BINDING,
+  retypedUpstream: ["b2d.shape.definition"],
 };
 // A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
 const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
@@ -4457,10 +4490,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       fields: B2D_QUERY_STATS_FIELDS,
     },
   ],
-  [
-    "b2d.world.overlap_shape:param:shape",
-    { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
-  ],
+  ["b2d.world.overlap_shape:param:shape", B2D_SHAPE_DEFINITION],
+  ["b2d.world.overlap_shape:param:shape@v2", B2D_V2_QUERY_SHAPE],
+  ["b2d.world.overlap_shape:param:shape@v3", B2D_V3_QUERY_SHAPE],
   [
     "b2d.world.overlap_shape:param:filter",
     {
@@ -4546,10 +4578,9 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  [
-    "b2d.world.cast_shape:param:shape",
-    { ...B2D_SHAPE_DEFINITION, retypedUpstream: ["b2d.shape.definition"] },
-  ],
+  ["b2d.world.cast_shape:param:shape", B2D_SHAPE_DEFINITION],
+  ["b2d.world.cast_shape:param:shape@v2", B2D_V2_QUERY_SHAPE],
+  ["b2d.world.cast_shape:param:shape@v3", B2D_V3_QUERY_SHAPE],
   [
     "b2d.world.cast_shape:param:filter",
     {
@@ -7668,6 +7699,7 @@ function memberSignature(
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
+  const backend = box2dBackendOf(prepared.original);
   const required = prepared.required ?? new Set<number>();
   const cutoff = Math.max(
     trailingOptionalCutoff(original, elementName),
@@ -7685,6 +7717,7 @@ function memberSignature(
       elementName,
       urlParameters,
       bindingEvidence,
+      backend,
       required.has(i),
       prepared.retype?.get(i),
     ),
@@ -7701,6 +7734,7 @@ function memberSignature(
           elementName,
           urlParameters,
           bindingEvidence,
+          backend,
         );
   const params = [...positional.map((p) => p.text), ...(rest ? [rest.text] : [])].join(", ");
   const ret = emitReturn(
@@ -7710,6 +7744,7 @@ function memberSignature(
     constantTokens,
     elementName,
     bindingEvidence,
+    backend,
   );
   const predicateToken = TYPE_PREDICATES.get(elementName);
   const soleParam = original[0];
@@ -8056,6 +8091,7 @@ function parameterType(
   elementName: string,
   urlParameters: UrlParameterTable,
   bindingEvidence: ReadonlySet<string>,
+  backend: Box2dBackend | undefined,
 ): string {
   const concrete = p.types.filter((t) => t !== "nil");
   // The caller supplies a parameter, so a string-keyed table in it also takes an
@@ -8078,6 +8114,7 @@ function parameterType(
           "param",
           p.name,
           bindingEvidence,
+          backend,
           p.fields,
         )
       : "unknown";
@@ -8171,6 +8208,7 @@ function emitRestParameter(
   elementName: string,
   urlParameters: UrlParameterTable,
   bindingEvidence: ReadonlySet<string>,
+  backend: Box2dBackend | undefined,
 ): { text: string; slots: EmittedSlot[] } {
   const vararg = params[varargIndex];
   if (vararg === undefined) return { text: "", slots: [] };
@@ -8185,6 +8223,7 @@ function emitRestParameter(
       elementName,
       urlParameters,
       bindingEvidence,
+      backend,
     ),
   }));
   const members = [...new Set(folded.map((slot) => slot.ts))];
@@ -8214,6 +8253,7 @@ function emitParameter(
   elementName: string,
   urlParameters: UrlParameterTable,
   bindingEvidence: ReadonlySet<string>,
+  backend: Box2dBackend | undefined,
   required = false,
   retype: (type: string) => string = (type) => type,
 ): { text: string; type: string; optional: boolean } {
@@ -8227,6 +8267,7 @@ function emitParameter(
       elementName,
       urlParameters,
       bindingEvidence,
+      backend,
     ),
   );
   // An interior doc-optional param (a required param follows, so the trailing-`?`
@@ -8259,6 +8300,7 @@ function emitReturn(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   bindingEvidence: ReadonlySet<string>,
+  backend: Box2dBackend | undefined,
 ): { type: string; trailing: string; slots: EmittedSlot[] } {
   // An authored whole-return override is not a per-slot render, so it reports no
   // slots and leaves the consumer on its token-derived fallback.
@@ -8308,6 +8350,7 @@ function emitReturn(
                 "return",
                 rv.name,
                 bindingEvidence,
+                backend,
                 rv.fields,
               )
             : "unknown"),
@@ -8348,6 +8391,7 @@ function emitReturn(
           "return",
           first.name,
           bindingEvidence,
+          backend,
           first.fields,
         )
       : "unknown";
@@ -8606,6 +8650,7 @@ function mapSlotUnion(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   bindingEvidence: ReadonlySet<string>,
+  backend: Box2dBackend | undefined,
   fields?: readonly ApiParameter[],
 ): string {
   const mapped: string[] = [];
@@ -8630,7 +8675,7 @@ function mapSlotUnion(
         ? evidencedEntry(
             "TABLE_SLOT_CURATIONS",
             TABLE_SLOT_CURATIONS,
-            tableSlotKey(elementName, slotKind, slotName),
+            tableSlotCurationKey(elementName, slotKind, slotName, backend),
             bindingEvidence,
           )
         : undefined;
@@ -8826,6 +8871,20 @@ function asLookupTable(ts: string): string {
 
 function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {
   return `${elementName}:${slotKind}:${slotName}`;
+}
+
+// The `TABLE_SLOT_CURATIONS` key a slot reads: a `BOX2D_BACKEND_ARMS` arm's
+// slot reads `<slot key>@<backend>` where that entry exists, so the two arms of
+// one query can take different shapes under one slot name.
+export function tableSlotCurationKey(
+  elementName: string,
+  slotKind: "param" | "return",
+  slotName: string,
+  backend: Box2dBackend | undefined,
+): string {
+  const key = tableSlotKey(elementName, slotKind, slotName);
+  const backendKey = `${key}@${backend}`;
+  return backend !== undefined && TABLE_SLOT_CURATIONS.has(backendKey) ? backendKey : key;
 }
 
 function nestedFieldKey(

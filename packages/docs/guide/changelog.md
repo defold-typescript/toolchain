@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Stricter engine types](./typescript-gotchas.md)** for vmath pairs, `go` and `gui` property keys, component addresses, and the Box2D shapes `b2d.shape.get_shape` and `b2d.fixture.get_shape` return.
+> - **[Stricter engine types](./typescript-gotchas.md)** for vmath pairs, `go` and `gui` property keys, component addresses, and the Box2D shapes the engine reads and writes.
 > - **[Transform types need a game-object address](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** such as `"."` or a `Hash` id.
 > - **Engine caveats on hover** for [compute](/api/compute), [camera](/api/camera) and Box2D v2 velocity.
 > - **[Missing `#fragment` warning](./build.md)** for a component address such as `factory.create("/spawner")`.
@@ -26,6 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **go property receivers**: a literal path with no `#`, such as `"."`, and a `Hash` id are game objects, which take only their transform keys and refuse the `index` and `key` options of `go.get`, while `"#"`, `""`, a runtime string, a `Url` and an unlinked fragment read and write every key at the wide value. Address a game object as `"."` or `go.get_id("/hero")` to keep the transform types, or link a component's address with [`scene-types`](./scene-types.md#property-keys-follow-the-address).
   - **Component addresses**: functions that act on a component, such as `factory.create`, `label.get_text` and `physics.get_shape`, no longer accept a `Hash`, which always fails there because it carries no `#fragment`; pass the address as a string or `Url` ([URL addressing](./typescript-gotchas.md#url-addressing-same-world-objects-are-relative-socket-crosses-worlds)).
   - **Box2D shape reads**: `b2d.shape.get_shape` and `b2d.fixture.get_shape` return the shapes the engine writes, so a box reads back as a polygon with `vertices` and comparing its `type` to `b2d.shape.SHAPE_TYPE_BOX` (or `b2d.shape.SHAPE_TYPE_EDGE` under Box2D v3) does not compile. The result type-checks as an argument to `b2d.shape.set_shape` or `b2d.fixture.set_shape`, though the engine refuses to update a Box2D v2 chain or a Box2D v3 chain segment.
+  - **Box2D shape inputs**: `b2d.world.cast_shape` and `b2d.world.overlap_shape` take only the shapes their backend builds, so the default v2 form refuses a capsule and the `<"v3">` form a chain, and every Box2D shape input refuses a polygon that sets `hx` or `hy` together with `vertices` ([Box2D queries](./typescript-gotchas.md#box2d-v3-query-hits-need-the-v3-type-argument)).
 
 ### Improved
 
