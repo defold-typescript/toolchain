@@ -584,13 +584,22 @@ function pairedWitness(positive: string, kind: LuaKind): string | undefined {
   if (own === kind) return positive;
   if (address !== undefined) {
     if (kind === "string") return JSON.stringify(address);
-    const path = /^[^:]*:(\/[^#]*)/.exec(address)?.[1];
-    return kind === "hash" && path !== undefined ? `hash(${JSON.stringify(path)})` : undefined;
+    return kind === "hash" ? pathHash(address) : undefined;
   }
   const hashed = /^hash\(("[^"]*")\)$/.exec(positive)?.[1];
   if (hashed !== undefined && kind === "string") return hashed;
-  if (own === "string" && kind === "hash") return `hash(${positive})`;
+  if (own === "string" && kind === "hash") {
+    const literal = /^"([^"]*:[^"]*)"$/.exec(positive)?.[1];
+    return literal === undefined ? `hash(${positive})` : pathHash(literal);
+  }
   return undefined;
+}
+
+// A hash id names an object by its path alone, so `main:/probe#script` is
+// `hash("/probe")`.
+function pathHash(address: string): string | undefined {
+  const path = /^[^:]*:(\/[^#]*)/.exec(address)?.[1];
+  return path === undefined ? undefined : `hash(${JSON.stringify(path)})`;
 }
 
 function tryWitness(type: ts.Type, scope: Scope): string | undefined {
